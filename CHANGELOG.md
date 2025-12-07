@@ -1,5 +1,11 @@
 # @fuzdev/fuz_code
 
+## 0.38.0
+
+### Minor Changes
+
+- upgrade fuz_css ([518b803](https://github.com/fuzdev/fuz_code/commit/518b803))
+
 ## 0.37.0
 
 ### Minor Changes
