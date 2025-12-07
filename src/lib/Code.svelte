@@ -128,7 +128,7 @@
 >
 
 <style>
-	/* inline code inherits Moss defaults: pre-wrap, inline-block, baseline alignment */
+	/* inline code inherits Fuz CSS defaults: pre-wrap, inline-block, baseline alignment */
 
 	code:not(.inline) {
 		/* block code: traditional no-wrap, horizontal scroll */
@@ -140,7 +140,7 @@
 	}
 
 	code.wrap:not(.inline) {
-		/* unset what we set above, otherwise rely on Moss base styles */
+		/* unset what we set above, otherwise rely on Fuz CSS base styles */
 		white-space: pre-wrap;
 	}
 </style>

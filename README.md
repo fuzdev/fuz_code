@@ -25,8 +25,8 @@ but there are two optional dependencies:
   based on [`prism-svelte`](https://github.com/pngwn/prism-svelte)
   and a [Svelte component](src/lib/Code.svelte) for convenient usage.
 - The [default theme](src/lib/theme.css) integrates
-  with my CSS library [Moss](https://github.com/fuzdev/fuz_css) for colors that adapt to the user's runtime `color-scheme` preference.
-  Non-Moss users should import [theme_variables.css](src/lib/theme_variables.css)
+  with my CSS library [Fuz CSS](https://github.com/fuzdev/fuz_css) for colors that adapt to the user's runtime `color-scheme` preference.
+  Non-Fuz CSS users should import [theme_variables.css](src/lib/theme_variables.css)
   or otherwise define those variables.
 
 Compared to [Shiki](https://github.com/shikijs/shiki),
@@ -79,14 +79,14 @@ import '@fuzdev/fuz_code/theme.css';
 ```
 
 The primary themes (currently just [one](src/lib/theme.css)) have a dependency
-on my CSS library [Moss](https://github.com/fuzdev/fuz_css)
+on my CSS library [Fuz CSS](https://github.com/fuzdev/fuz_css)
 for [color-scheme](https://css.fuz.dev/docs/themes) awareness.
-See the [Moss docs](https://css.fuz.dev/) for its usage.
+See the [Fuz CSS docs](https://css.fuz.dev/) for its usage.
 
-If you're not using Moss, import `theme_variables.css` alongside `theme.css`:
+If you're not using Fuz CSS, import `theme_variables.css` alongside `theme.css`:
 
 ```ts
-// Without Moss:
+// Without Fuz CSS:
 import '@fuzdev/fuz_code/theme.css';
 import '@fuzdev/fuz_code/theme_variables.css';
 ```
@@ -96,9 +96,9 @@ import '@fuzdev/fuz_code/theme_variables.css';
 - [@fuzdev/fuz_code/syntax_styler_global.js](src/lib/syntax_styler_global.ts) - pre-configured instance with all grammars
 - [@fuzdev/fuz_code/syntax_styler.js](src/lib/syntax_styler.ts) - base class for custom grammars
 - [@fuzdev/fuz_code/theme.css](src/lib/theme.css) -
-  default theme that depends on [Moss](https://github.com/fuzdev/fuz_css)
+  default theme that depends on [Fuz CSS](https://github.com/fuzdev/fuz_css)
 - [@fuzdev/fuz_code/theme_variables.css](src/lib/theme_variables.css) -
-  CSS variables for non-Moss users
+  CSS variables for non-Fuz CSS users
 - [@fuzdev/fuz_code/Code.svelte](src/lib/Code.svelte) -
   Svelte component for syntax highlighting with HTML generation
 

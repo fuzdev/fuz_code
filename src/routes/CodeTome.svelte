@@ -41,7 +41,7 @@ import '@fuzdev/fuz_code/theme.css'; // add this"
 <section>
 	<h3>Dependencies</h3>
 	<p>
-		By default fuz_code depends on my CSS framework <a href="https://css.fuz.dev">Moss</a> to
+		By default fuz_code depends on my CSS framework <a href="https://css.fuz.dev">Fuz CSS</a> to
 		provide color-schema-aware color variables. If you're not using it, import
 		<code>theme_variables.css</code> or bring your own:
 	</p>
@@ -49,7 +49,7 @@ import '@fuzdev/fuz_code/theme.css'; // add this"
 		lang="ts"
 		content="// +layout.svelte
 import '@fuzdev/fuz_code/theme.css';
-import '@fuzdev/fuz_code/theme_variables.css'; // also this if not using Moss"
+import '@fuzdev/fuz_code/theme_variables.css'; // also this if not using Fuz CSS"
 	/>
 </section>
 <section>

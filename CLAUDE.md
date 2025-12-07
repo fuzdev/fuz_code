@@ -48,8 +48,8 @@ The system uses regex-based tokenization inherited from PrismJS, maintaining com
 
 #### Themes
 
-- `src/lib/theme.css` - CSS classes for HTML mode (requires Moss or theme_variables.css)
-- `src/lib/theme_variables.css` - CSS variable definitions for non-Moss users
+- `src/lib/theme.css` - CSS classes for HTML mode (requires Fuz CSS or theme_variables.css)
+- `src/lib/theme_variables.css` - CSS variable definitions for non-Fuz CSS users
 
 ## How It Works
 
@@ -203,7 +203,7 @@ Results show relative performance (% of fastest) for each language and content s
 
 ## Color Variables
 
-Theme uses CSS variables from Moss:
+Theme uses CSS variables from Fuz CSS:
 
 - `--color_a` - Keywords, tags
 - `--color_b` - Strings, selectors
