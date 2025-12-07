@@ -1,0 +1,283 @@
+{
+  "name": "@fuzdev/fuz_code",
+  "version": "0.38.0",
+  "modules": [
+    {
+      "path": "code_sample.ts",
+      "declarations": [
+        {
+          "name": "CodeSample",
+          "kind": "type"
+        },
+        {
+          "name": "sample_langs",
+          "kind": "variable"
+        },
+        {
+          "name": "SampleLang",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "path": "grammar_clike.ts",
+      "declarations": [
+        {
+          "name": "class_keywords",
+          "kind": "variable"
+        },
+        {
+          "name": "add_grammar_clike",
+          "kind": "function"
+        }
+      ]
+    },
+    {
+      "path": "grammar_css.ts",
+      "declarations": [
+        {
+          "name": "add_grammar_css",
+          "kind": "function"
+        }
+      ]
+    },
+    {
+      "path": "grammar_js.ts",
+      "declarations": [
+        {
+          "name": "add_grammar_js",
+          "kind": "function"
+        }
+      ]
+    },
+    {
+      "path": "grammar_json.ts",
+      "declarations": [
+        {
+          "name": "add_grammar_json",
+          "kind": "function"
+        }
+      ]
+    },
+    {
+      "path": "grammar_markdown.ts",
+      "declarations": [
+        {
+          "name": "add_grammar_markdown",
+          "kind": "function"
+        }
+      ]
+    },
+    {
+      "path": "grammar_markup.ts",
+      "declarations": [
+        {
+          "name": "add_grammar_markup",
+          "kind": "function"
+        },
+        {
+          "name": "grammar_markup_add_inlined",
+          "kind": "function"
+        },
+        {
+          "name": "grammar_markup_add_attribute",
+          "kind": "function"
+        }
+      ]
+    },
+    {
+      "path": "grammar_svelte.ts",
+      "declarations": [
+        {
+          "name": "add_grammar_svelte",
+          "kind": "function"
+        },
+        {
+          "name": "grammar_svelte_add_inlined",
+          "kind": "function"
+        }
+      ]
+    },
+    {
+      "path": "grammar_ts.ts",
+      "declarations": [
+        {
+          "name": "add_grammar_ts",
+          "kind": "function"
+        }
+      ]
+    },
+    {
+      "path": "highlight_manager.ts",
+      "declarations": [
+        {
+          "name": "HighlightMode",
+          "kind": "type"
+        },
+        {
+          "name": "supports_css_highlight_api",
+          "kind": "function"
+        },
+        {
+          "name": "HighlightManager",
+          "kind": "class"
+        }
+      ]
+    },
+    {
+      "path": "highlight_priorities.gen.ts",
+      "declarations": [
+        {
+          "name": "gen",
+          "kind": "variable"
+        }
+      ]
+    },
+    {
+      "path": "highlight_priorities.ts",
+      "declarations": [
+        {
+          "name": "HighlightTokenName",
+          "kind": "type"
+        },
+        {
+          "name": "highlight_priorities",
+          "kind": "variable"
+        }
+      ]
+    },
+    {
+      "path": "syntax_styler_global.ts",
+      "declarations": [
+        {
+          "name": "syntax_styler_global",
+          "kind": "variable"
+        }
+      ]
+    },
+    {
+      "path": "syntax_styler.ts",
+      "declarations": [
+        {
+          "name": "AddSyntaxGrammar",
+          "kind": "type"
+        },
+        {
+          "name": "SyntaxStyler",
+          "kind": "class"
+        },
+        {
+          "name": "SyntaxGrammarValueRaw",
+          "kind": "type"
+        },
+        {
+          "name": "SyntaxGrammarRaw",
+          "kind": "type"
+        },
+        {
+          "name": "SyntaxGrammarTokenRaw",
+          "kind": "type"
+        },
+        {
+          "name": "SyntaxGrammarToken",
+          "kind": "type"
+        },
+        {
+          "name": "SyntaxGrammar",
+          "kind": "type"
+        },
+        {
+          "name": "HookBeforeTokenizeCallback",
+          "kind": "type"
+        },
+        {
+          "name": "HookAfterTokenizeCallback",
+          "kind": "type"
+        },
+        {
+          "name": "HookWrapCallback",
+          "kind": "type"
+        },
+        {
+          "name": "HookBeforeTokenizeCallbackContext",
+          "kind": "type"
+        },
+        {
+          "name": "HookAfterTokenizeCallbackContext",
+          "kind": "type"
+        },
+        {
+          "name": "HookWrapCallbackContext",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "path": "syntax_token.ts",
+      "declarations": [
+        {
+          "name": "SyntaxToken",
+          "kind": "class"
+        },
+        {
+          "name": "SyntaxTokenStream",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "path": "tokenize_syntax.ts",
+      "declarations": [
+        {
+          "name": "tokenize_syntax",
+          "kind": "function"
+        }
+      ]
+    },
+    {
+      "path": "Code.svelte",
+      "declarations": [
+        {
+          "name": "default",
+          "kind": "component"
+        }
+      ]
+    },
+    {
+      "path": "CodeHighlight.svelte",
+      "declarations": [
+        {
+          "name": "default",
+          "kind": "component"
+        }
+      ]
+    },
+    {
+      "path": "theme_highlight.css",
+      "declarations": [
+        {
+          "name": "default",
+          "kind": "css"
+        }
+      ]
+    },
+    {
+      "path": "theme_variables.css",
+      "declarations": [
+        {
+          "name": "default",
+          "kind": "css"
+        }
+      ]
+    },
+    {
+      "path": "theme.css",
+      "declarations": [
+        {
+          "name": "default",
+          "kind": "css"
+        }
+      ]
+    }
+  ]
+}
