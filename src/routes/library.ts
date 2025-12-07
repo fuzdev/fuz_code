@@ -5,7 +5,7 @@ import type {LibraryJson} from '@ryanatkn/belt/library_json.js';
 export const library_json: LibraryJson = {
 	package_json: {
 		name: '@fuzdev/fuz_code',
-		version: '0.36.0',
+		version: '0.37.0',
 		description: 'syntax styling utilities and components for TypeScript, Svelte, and Markdown',
 		glyph: '🎨',
 		logo: 'logo.svg',
@@ -113,7 +113,7 @@ export const library_json: LibraryJson = {
 	},
 	source_json: {
 		name: '@fuzdev/fuz_code',
-		version: '0.36.0',
+		version: '0.37.0',
 		modules: [
 			{
 				path: 'code_sample.ts',

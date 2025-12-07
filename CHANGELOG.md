@@ -1,5 +1,11 @@
 # @ryanatkn/fuz_code
 
+## 0.37.0
+
+### Minor Changes
+
+- move to fuzdev ([4ce078d](https://github.com/ryanatkn/fuz_code/commit/4ce078d))
+
 ## 0.36.0
 
 ### Minor Changes
