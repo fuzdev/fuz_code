@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '$lib/theme_highlight.css';
 
-	import Breadcrumb from '@ryanatkn/fuz/Breadcrumb.svelte';
+	import Breadcrumb from '@fuzdev/fuz_ui/Breadcrumb.svelte';
 
 	import Code from '$lib/Code.svelte';
 	import CodeHighlight from '$lib/CodeHighlight.svelte';

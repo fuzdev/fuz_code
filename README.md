@@ -1,4 +1,4 @@
-# @ryanatkn/fuz_code
+# @fuzdev/fuz_code
 
 [<img src="static/logo.svg" alt="a friendly pink spider facing you" align="right" width="192" height="192">](https://code.fuz.dev/)
 
@@ -15,7 +15,7 @@ The main changes:
 - has various incompatible changes, so using Prism grammars requires some tweaks
 - smaller (by 7kB minified and 3kB gzipped, ~1/3 less)
 - written in TypeScript
-- is a fork, see the [MIT license](https://github.com/ryanatkn/fuz_code/blob/main/LICENSE)
+- is a fork, see the [MIT license](https://github.com/fuzdev/fuz_code/blob/main/LICENSE)
 
 Like Prism, there are zero dependencies (unless you count Prism's `@types/prismjs`),
 but there are two optional dependencies:
@@ -25,7 +25,7 @@ but there are two optional dependencies:
   based on [`prism-svelte`](https://github.com/pngwn/prism-svelte)
   and a [Svelte component](src/lib/Code.svelte) for convenient usage.
 - The [default theme](src/lib/theme.css) integrates
-  with my CSS library [Moss](https://github.com/ryanatkn/moss) for colors that adapt to the user's runtime `color-scheme` preference.
+  with my CSS library [Moss](https://github.com/fuzdev/fuz_css) for colors that adapt to the user's runtime `color-scheme` preference.
   Non-Moss users should import [theme_variables.css](src/lib/theme_variables.css)
   or otherwise define those variables.
 
@@ -44,12 +44,12 @@ and Shiki is designed mainly for buildtime usage.
 ## Usage
 
 ```bash
-npm i -D @ryanatkn/fuz_code
+npm i -D @fuzdev/fuz_code
 ```
 
 ```svelte
 <script lang="ts">
-	import Code from '@ryanatkn/fuz_code/Code.svelte';
+	import Code from '@fuzdev/fuz_code/Code.svelte';
 </script>
 
 <!-- defaults to Svelte -->
@@ -59,13 +59,13 @@ npm i -D @ryanatkn/fuz_code
 ```
 
 ```ts
-import {syntax_styler_global} from '@ryanatkn/fuz_code/syntax_styler_global.js';
+import {syntax_styler_global} from '@fuzdev/fuz_code/syntax_styler_global.js';
 
 // Generate HTML with syntax highlighting
 const html = syntax_styler_global.stylize(code, 'ts');
 
 // Get raw tokens for custom processing
-import {tokenize_syntax} from '@ryanatkn/fuz_code/tokenize_syntax.js';
+import {tokenize_syntax} from '@fuzdev/fuz_code/tokenize_syntax.js';
 const tokens = tokenize_syntax(code, syntax_styler_global.get_lang('ts'));
 ```
 
@@ -75,31 +75,31 @@ With SvelteKit:
 
 ```ts
 // +layout.svelte
-import '@ryanatkn/fuz_code/theme.css';
+import '@fuzdev/fuz_code/theme.css';
 ```
 
 The primary themes (currently just [one](src/lib/theme.css)) have a dependency
-on my CSS library [Moss](https://github.com/ryanatkn/moss)
-for [color-scheme](https://moss.ryanatkn.com/docs/themes) awareness.
-See the [Moss docs](https://moss.ryanatkn.com/) for its usage.
+on my CSS library [Moss](https://github.com/fuzdev/fuz_css)
+for [color-scheme](https://css.fuz.dev/docs/themes) awareness.
+See the [Moss docs](https://css.fuz.dev/) for its usage.
 
 If you're not using Moss, import `theme_variables.css` alongside `theme.css`:
 
 ```ts
 // Without Moss:
-import '@ryanatkn/fuz_code/theme.css';
-import '@ryanatkn/fuz_code/theme_variables.css';
+import '@fuzdev/fuz_code/theme.css';
+import '@fuzdev/fuz_code/theme_variables.css';
 ```
 
 ### Modules
 
-- [@ryanatkn/fuz_code/syntax_styler_global.js](src/lib/syntax_styler_global.ts) - pre-configured instance with all grammars
-- [@ryanatkn/fuz_code/syntax_styler.js](src/lib/syntax_styler.ts) - base class for custom grammars
-- [@ryanatkn/fuz_code/theme.css](src/lib/theme.css) -
-  default theme that depends on [Moss](https://github.com/ryanatkn/moss)
-- [@ryanatkn/fuz_code/theme_variables.css](src/lib/theme_variables.css) -
+- [@fuzdev/fuz_code/syntax_styler_global.js](src/lib/syntax_styler_global.ts) - pre-configured instance with all grammars
+- [@fuzdev/fuz_code/syntax_styler.js](src/lib/syntax_styler.ts) - base class for custom grammars
+- [@fuzdev/fuz_code/theme.css](src/lib/theme.css) -
+  default theme that depends on [Moss](https://github.com/fuzdev/fuz_css)
+- [@fuzdev/fuz_code/theme_variables.css](src/lib/theme_variables.css) -
   CSS variables for non-Moss users
-- [@ryanatkn/fuz_code/Code.svelte](src/lib/Code.svelte) -
+- [@fuzdev/fuz_code/Code.svelte](src/lib/Code.svelte) -
   Svelte component for syntax highlighting with HTML generation
 
 I encourage you to poke around [`src/lib`](src/lib) if you're interested in using fuz_code.
@@ -145,7 +145,7 @@ using HTML generation is recommended for most use cases.
 
 ```svelte
 <script lang="ts">
-	import CodeHighlight from '@ryanatkn/fuz_code/CodeHighlight.svelte';
+	import CodeHighlight from '@fuzdev/fuz_code/CodeHighlight.svelte';
 </script>
 
 <!-- auto-detect and use CSS Highlight API when available -->
@@ -160,17 +160,17 @@ When using the experimental highlight component, import the corresponding theme:
 
 ```ts
 // instead of theme.css, import theme_highlight.css in +layout.svelte:
-import '@ryanatkn/fuz_code/theme_highlight.css';
+import '@fuzdev/fuz_code/theme_highlight.css';
 ```
 
 Experimental modules:
 
-- [@ryanatkn/fuz_code/CodeHighlight.svelte](src/lib/CodeHighlight.svelte) -
+- [@fuzdev/fuz_code/CodeHighlight.svelte](src/lib/CodeHighlight.svelte) -
   component supporting both HTML generation and CSS Custom Highlight API
-- [@ryanatkn/fuz_code/highlight_manager.js](src/lib/highlight_manager.ts) -
+- [@fuzdev/fuz_code/highlight_manager.js](src/lib/highlight_manager.ts) -
   manages browser [`Highlight`](https://developer.mozilla.org/en-US/docs/Web/API/Highlight)
   and [`Range`](https://developer.mozilla.org/en-US/docs/Web/API/Range) APIs
-- [@ryanatkn/fuz_code/theme_highlight.css](src/lib/theme_highlight.css) -
+- [@fuzdev/fuz_code/theme_highlight.css](src/lib/theme_highlight.css) -
   theme with `::highlight()` pseudo-elements for CSS Custom Highlight API
 
 ## License [🐦](https://wikipedia.org/wiki/Free_and_open-source_software)

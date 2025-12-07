@@ -1,4 +1,4 @@
-# @ryanatkn/fuz_code
+# @fuzdev/fuz_code
 
 ## 0.36.0
 
