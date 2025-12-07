@@ -1,9 +1,9 @@
 <script lang="ts">
 	import {resolve} from '$app/paths';
 
-	// import Tome from '@ryanatkn/fuz/Tome.svelte';
-	// import DocsItem from '@ryanatkn/fuz/DocsItem.svelte';
-	// import TomeLink from '@ryanatkn/fuz/TomeLink.svelte';
+	// import Tome from '@fuzdev/fuz_ui/Tome.svelte';
+	// import DocsItem from '@fuzdev/fuz_ui/DocsItem.svelte';
+	// import TomeLink from '@fuzdev/fuz_ui/TomeLink.svelte';
 	import TomeLink from '$routes/TomeLink.svelte';
 	import Code from '$lib/Code.svelte';
 
@@ -28,12 +28,12 @@
 	<Code
 		lang="ts"
 		content="// +layout.svelte
-import '@ryanatkn/fuz_code/theme.css'; // add this"
+import '@fuzdev/fuz_code/theme.css'; // add this"
 	/>
 	<p>then use <TomeLink name="Code" />:</p>
 	<Code
 		content={'<' +
-			`script>\n\t// Something.svelte\n\timport Code from '@ryanatkn/fuz_code/Code.svelte';\n</script>\n\n<Code content="<header>hello world</header>" />`}
+			`script>\n\t// Something.svelte\n\timport Code from '@fuzdev/fuz_code/Code.svelte';\n</script>\n\n<Code content="<header>hello world</header>" />`}
 	/>
 	<p>outputs:</p>
 	<Code content="<header>hello world</header>" />
@@ -41,15 +41,15 @@ import '@ryanatkn/fuz_code/theme.css'; // add this"
 <section>
 	<h3>Dependencies</h3>
 	<p>
-		By default fuz_code depends on my CSS framework <a href="https://moss.ryanatkn.com">Moss</a> to
+		By default fuz_code depends on my CSS framework <a href="https://css.fuz.dev">Moss</a> to
 		provide color-schema-aware color variables. If you're not using it, import
 		<code>theme_variables.css</code> or bring your own:
 	</p>
 	<Code
 		lang="ts"
 		content="// +layout.svelte
-import '@ryanatkn/fuz_code/theme.css';
-import '@ryanatkn/fuz_code/theme_variables.css'; // also this if not using Moss"
+import '@fuzdev/fuz_code/theme.css';
+import '@fuzdev/fuz_code/theme_variables.css'; // also this if not using Moss"
 	/>
 </section>
 <section>

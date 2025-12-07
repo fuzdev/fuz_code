@@ -1,5 +1,5 @@
 <script lang="ts">
-	import CopyToClipboard from '@ryanatkn/fuz/CopyToClipboard.svelte';
+	import CopyToClipboard from '@fuzdev/fuz_ui/CopyToClipboard.svelte';
 
 	import {fmt} from './benchmark_stats.js';
 	import {RESULT_COLUMNS, results_to_markdown} from './benchmark_results.js';

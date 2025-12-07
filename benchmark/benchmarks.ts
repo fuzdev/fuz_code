@@ -14,7 +14,7 @@ export interface BenchmarkResult {
 	name: string;
 	ops_per_sec: number;
 	mean_time: number;
-	samples: number;
+	samples: number | undefined;
 }
 
 export const run_benchmark = async (filter?: string): Promise<Array<BenchmarkResult>> => {
@@ -61,12 +61,12 @@ export const run_benchmark = async (filter?: string): Promise<Array<BenchmarkRes
 	const results: Array<BenchmarkResult> = [];
 
 	for (const task of bench.tasks) {
-		if (task.result) {
+		if (task.result.state === 'completed' || task.result.state === 'aborted-with-statistics') {
 			results.push({
 				name: task.name,
 				ops_per_sec: task.result.throughput.mean,
 				mean_time: task.result.latency.mean,
-				samples: task.result.latency.samples.length,
+				samples: task.result.latency.samples?.length,
 			});
 		}
 	}

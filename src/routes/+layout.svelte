@@ -5,8 +5,8 @@
 	import '$routes/moss.css';
 	import '$routes/style.css';
 
-	import Themed from '@ryanatkn/fuz/Themed.svelte';
-	import {Library, library_context} from '@ryanatkn/fuz/library.svelte.js';
+	import Themed from '@fuzdev/fuz_ui/Themed.svelte';
+	import {Library, library_context} from '@fuzdev/fuz_ui/library.svelte.js';
 	import type {Snippet} from 'svelte';
 
 	import {library_json} from '$routes/library.js';
@@ -21,7 +21,7 @@
 </script>
 
 <svelte:head>
-	<title>@ryanatkn/fuz_code</title>
+	<title>@fuzdev/fuz_code</title>
 </svelte:head>
 
 <Themed>

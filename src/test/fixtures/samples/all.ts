@@ -324,7 +324,7 @@ export const complex_regex = /^(?:\\/\\*.*?\\*\\/|\\/\\/.*|[^/])+$/;
 		};
 	};
 
-	let value = $state(thing['']);
+	let value = $derived(thing['']);
 	let element_ref: HTMLElement;
 </script>
 

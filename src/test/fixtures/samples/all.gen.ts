@@ -1,6 +1,6 @@
 import type {Gen} from '@ryanatkn/gro';
 import {readFileSync} from 'node:fs';
-import {fs_search} from '@ryanatkn/belt/fs.js';
+import {fs_search} from '@fuzdev/fuz_util/fs.js';
 import {basename} from 'node:path';
 
 import {sample_langs} from '../../../lib/code_sample.js';

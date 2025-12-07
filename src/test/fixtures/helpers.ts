@@ -1,5 +1,5 @@
 import {readFileSync} from 'node:fs';
-import {fs_search} from '@ryanatkn/belt/fs.js';
+import {fs_search} from '@fuzdev/fuz_util/fs.js';
 import {basename, join, relative} from 'node:path';
 import {syntax_styler_global} from '$lib/syntax_styler_global.js';
 import {tokenize_syntax} from '$lib/tokenize_syntax.js';

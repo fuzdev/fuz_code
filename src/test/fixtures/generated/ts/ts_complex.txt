@@ -1,5 +1,5 @@
 === STATS ===
-Sample length: 2905 characters
+Sample length: 2899 characters
 Total tokens: 632
 
 Token types (27 unique):
@@ -50,617 +50,617 @@ Token types (27 unique):
   52-53    punctuation               ;
   55-61    special_keyword           export
   62-66    keyword                   type
-  67-76    class_name                SomeType
-  67-76    capitalized_identifier    SomeType
-  77-78    operator                  =
-  79-80    number                    1
-  81-82    operator                  |
-  83-86    string                    'b'
-  87-88    operator                  |
-  89-93    boolean                   true
-  93-94    punctuation               ;
-  96-103   keyword                   declare
- 104-109   keyword                   const
- 124-125   operator                  :
- 126-129   builtin                   any
- 129-130   punctuation               ;
- 132-140   keyword                   abstract
- 141-146   keyword                   class
- 147-151   class_name                Base
- 147-151   capitalized_identifier    Base
- 152-153   punctuation               {
- 155-163   keyword                   abstract
- 164-179   function                  abstract_method
- 179-180   punctuation               (
- 180-181   punctuation               )
- 181-182   operator                  :
- 183-187   keyword                   void
- 187-188   punctuation               ;
- 189-190   punctuation               }
- 192-223   comment                   /* eslint-disable no-console */
- 225-240   decorator                 @some_decorator
- 225-226   at                        @
- 226-240   function                  some_decorator
- 241-246   keyword                   class
- 247-248   class_name                D
- 247-248   constant                  D
- 249-256   keyword                   extends
- 257-261   class_name                Base
- 257-261   capitalized_identifier    Base
- 262-263   punctuation               {
- 265-273   keyword                   readonly
- 276-285   type_annotation           : string 
- 276-277   :                         :
- 277-285   type                       string 
- 278-284   builtin                   string
- 285-286   operator                  =
- 287-290   string                    'd'
- 290-291   punctuation               ;
- 295-296   operator                  :
- 297-303   builtin                   number
- 303-304   punctuation               ;
- 309-310   operator                  =
- 311-317   function                  $state
- 317-318   punctuation               (
- 318-322   keyword                   null
- 322-323   punctuation               )
- 323-324   punctuation               ;
- 327-342   decorator                 @some_decorator
- 327-328   at                        @
- 328-342   function                  some_decorator
- 354-355   operator                  =
- 356-360   boolean                   true
- 360-361   punctuation               ;
- 364-375   function                  constructor
- 375-376   punctuation               (
- 378-379   operator                  :
- 380-386   builtin                   number
- 386-387   punctuation               )
- 388-389   punctuation               {
- 392-397   keyword                   super
- 397-398   punctuation               (
- 398-399   punctuation               )
- 399-400   punctuation               ;
- 403-407   keyword                   this
- 407-408   punctuation               .
- 411-412   operator                  =
- 415-416   punctuation               ;
- 418-419   punctuation               }
- 422-437   function                  abstract_method
- 437-438   punctuation               (
- 438-439   punctuation               )
- 439-440   operator                  :
- 441-445   keyword                   void
- 446-447   punctuation               {
- 450-467   comment                   // implementation
- 469-470   punctuation               }
- 473-488   decorator                 @some_decorator
- 473-474   at                        @
- 474-488   function                  some_decorator
- 488-489   punctuation               (
- 489-498   string                    'example'
- 498-499   punctuation               ,
- 500-501   punctuation               {
- 507-508   operator                  :
- 509-513   boolean                   true
- 513-514   punctuation               }
- 514-515   punctuation               )
- 517-529   function                  class_method
- 529-530   punctuation               (
- 530-531   punctuation               )
- 531-532   operator                  :
- 533-539   builtin                   string
- 540-541   punctuation               {
- 544-550   special_keyword           return
- 551-570   template_string           `Hello, ${this.d1}`
- 551-552   template_punctuation      `
- 552-559   string                    Hello, 
- 559-569   interpolation             ${this.d1}
- 559-561   interpolation_punctuation ${
- 561-565   keyword                   this
- 565-566   punctuation               .
- 568-569   interpolation_punctuation }
- 569-570   template_punctuation      `
- 570-571   punctuation               ;
- 573-574   punctuation               }
- 577-592   function_variable         instance_method
- 593-594   operator                  =
- 595-596   punctuation               (
- 596-597   punctuation               )
- 597-604   type_annotation           : void 
- 597-598   :                         :
- 598-604   type                       void 
- 599-603   keyword                   void
- 604-606   operator                  =>
- 607-608   punctuation               {
- 611-620   comment                   /* ... */
- 623-626   keyword                   let
- 629-630   operator                  =
- 631-632   number                    0
- 632-633   punctuation               ;
- 636-638   special_keyword           do
- 639-640   punctuation               {
- 645-647   operator                  ++
- 647-648   punctuation               ;
- 651-652   punctuation               }
- 653-658   special_keyword           while
- 659-660   punctuation               (
- 662-663   operator                  <
- 664-665   number                    3
- 665-666   punctuation               )
- 666-667   punctuation               ;
- 671-674   special_keyword           for
- 675-676   punctuation               (
- 676-681   keyword                   const
- 685-687   keyword                   of
- 688-692   keyword                   this
- 692-693   punctuation               .
- 695-696   punctuation               )
- 697-698   punctuation               {
- 702-704   special_keyword           if
- 705-706   punctuation               (
- 709-712   operator                  ===
- 713-716   string                    'd'
- 716-717   punctuation               )
- 718-726   special_keyword           continue
- 726-727   punctuation               ;
- 731-733   special_keyword           if
- 734-735   punctuation               (
- 735-736   operator                  !
- 738-739   punctuation               )
- 740-745   special_keyword           break
- 745-746   punctuation               ;
- 750-754   keyword                   this
- 754-755   punctuation               .
- 755-770   function                  #private_method
- 770-771   punctuation               (
- 772-773   punctuation               ,
- 776-777   punctuation               )
- 777-778   punctuation               ;
- 781-782   punctuation               }
- 786-792   special_keyword           switch
- 793-794   punctuation               (
- 794-798   keyword                   this
- 798-799   punctuation               .
- 801-802   punctuation               )
- 803-804   punctuation               {
- 808-812   special_keyword           case
- 813-816   string                    'a'
- 816-817   operator                  :
- 822-829   builtin                   console
- 829-830   punctuation               .
- 830-833   function                  log
- 833-834   punctuation               (
- 834-842   string                    'case a'
- 842-843   punctuation               )
- 843-844   punctuation               ;
- 849-854   special_keyword           break
- 854-855   punctuation               ;
- 859-863   special_keyword           case
- 864-867   string                    'b'
- 867-868   operator                  :
- 872-876   special_keyword           case
- 877-880   string                    'c'
- 880-881   operator                  :
- 886-893   builtin                   console
- 893-894   punctuation               .
- 894-897   function                  log
- 897-898   punctuation               (
- 898-911   string                    'case b or c'
- 911-912   punctuation               )
- 912-913   punctuation               ;
- 918-923   special_keyword           break
- 923-924   punctuation               ;
- 928-935   special_keyword           default
- 935-936   operator                  :
- 941-948   builtin                   console
- 948-949   punctuation               .
- 949-952   function                  log
- 952-953   punctuation               (
- 953-962   string                    'default'
- 962-963   punctuation               )
- 963-964   punctuation               ;
- 967-968   punctuation               }
- 972-977   keyword                   const
- 981-982   operator                  :
- 983-984   punctuation               {
- 990-991   operator                  ?
- 991-992   operator                  :
- 993-1000  builtin                   boolean
-1000-1001  punctuation               ;
-1006-1007  operator                  :
-1008-1015  builtin                   boolean
-1015-1016  punctuation               }
-1017-1018  operator                  =
-1019-1020  punctuation               {
-1030-1031  operator                  :
-1032-1036  string                    'd1'
-1037-1039  keyword                   in
-1040-1044  keyword                   this
-1044-1045  punctuation               ,
-1053-1054  operator                  :
-1055-1059  keyword                   this
-1060-1070  keyword                   instanceof
-1071-1072  class_name                D
-1071-1072  constant                  D
-1072-1073  punctuation               ,
-1076-1077  punctuation               }
-1077-1078  punctuation               ;
-1081-1087  keyword                   delete
-1091-1092  punctuation               .
-1098-1099  punctuation               ;
-1102-1108  comment                   // foo
-1110-1111  punctuation               }
-1111-1112  punctuation               ;
-1115-1130  function                  #private_method
-1130-1131  punctuation               (
-1133-1134  operator                  :
-1135-1141  builtin                   number
-1141-1142  punctuation               ,
-1145-1146  operator                  :
-1147-1150  builtin                   any
-1150-1151  punctuation               )
-1151-1152  operator                  :
-1153-1157  keyword                   void
-1158-1159  punctuation               {
-1162-1167  special_keyword           throw
-1168-1171  keyword                   new
-1172-1177  class_name                Error
-1172-1177  capitalized_identifier    Error
-1177-1178  punctuation               (
-1178-1224  template_string           `${this.d1}\n\t\t\tmultiline\n\t\t\tetc ${a2 + c2}\n\t\t`
-1178-1179  template_punctuation      `
-1179-1189  interpolation             ${this.d1}
-1179-1181  interpolation_punctuation ${
-1181-1185  keyword                   this
-1185-1186  punctuation               .
-1188-1189  interpolation_punctuation }
-1189-1210  string                    \n\t\t\tmultiline\n\t\t\tetc 
-1210-1220  interpolation             ${a2 + c2}
-1210-1212  interpolation_punctuation ${
-1215-1216  operator                  +
-1219-1220  interpolation_punctuation }
-1220-1223  string                    \n\t\t
-1223-1224  template_punctuation      `
-1224-1225  punctuation               )
-1225-1226  punctuation               ;
-1228-1229  punctuation               }
-1232-1233  operator                  *
-1233-1242  function                  generator
-1242-1243  punctuation               (
-1243-1244  punctuation               )
-1244-1245  operator                  :
-1246-1255  capitalized_identifier    Generator
-1255-1256  operator                  <
-1256-1262  builtin                   number
-1263-1264  operator                  |
-1265-1270  capitalized_identifier    Array
-1270-1271  operator                  <
-1271-1277  builtin                   number
-1277-1279  operator                  >>
-1280-1281  punctuation               {
-1284-1289  special_keyword           yield
-1290-1291  number                    1
-1291-1292  punctuation               ;
-1295-1300  special_keyword           yield
-1300-1301  operator                  *
-1302-1303  punctuation               [
-1303-1304  number                    2
-1304-1305  punctuation               ,
-1306-1307  number                    3
-1307-1308  punctuation               ]
-1308-1309  punctuation               ;
-1311-1312  punctuation               }
-1315-1320  keyword                   async
-1321-1322  operator                  *
-1322-1337  function                  async_generator
-1337-1338  punctuation               (
-1338-1339  punctuation               )
-1339-1340  operator                  :
-1341-1355  capitalized_identifier    AsyncGenerator
-1355-1356  operator                  <
-1356-1362  builtin                   number
-1362-1363  operator                  >
-1364-1365  punctuation               {
-1368-1373  special_keyword           yield
-1374-1379  special_keyword           await
-1380-1387  capitalized_identifier    Promise
-1387-1388  punctuation               .
-1388-1395  function                  resolve
-1395-1396  punctuation               (
-1396-1397  number                    4
-1397-1398  punctuation               )
-1398-1399  punctuation               ;
-1401-1402  punctuation               }
-1405-1414  keyword                   protected
-1415-1420  keyword                   async
-1421-1437  function                  protected_method
-1437-1438  punctuation               (
-1438-1439  punctuation               )
-1439-1440  operator                  :
-1441-1448  capitalized_identifier    Promise
-1448-1449  operator                  <
-1449-1453  keyword                   void
-1453-1454  operator                  >
-1455-1456  punctuation               {
-1459-1462  special_keyword           try
-1463-1464  punctuation               {
-1468-1473  special_keyword           await
-1474-1477  keyword                   new
-1478-1485  class_name                Promise
-1478-1485  capitalized_identifier    Promise
+  67-75    class_name                SomeType
+  67-75    capitalized_identifier    SomeType
+  76-77    operator                  =
+  78-79    number                    1
+  80-81    operator                  |
+  82-85    string                    'b'
+  86-87    operator                  |
+  88-92    boolean                   true
+  92-93    punctuation               ;
+  95-102   keyword                   declare
+ 103-108   keyword                   const
+ 123-124   operator                  :
+ 125-128   builtin                   any
+ 128-129   punctuation               ;
+ 131-139   keyword                   abstract
+ 140-145   keyword                   class
+ 146-150   class_name                Base
+ 146-150   capitalized_identifier    Base
+ 151-152   punctuation               {
+ 154-162   keyword                   abstract
+ 163-178   function                  abstract_method
+ 178-179   punctuation               (
+ 179-180   punctuation               )
+ 180-181   operator                  :
+ 182-186   keyword                   void
+ 186-187   punctuation               ;
+ 188-189   punctuation               }
+ 191-222   comment                   /* eslint-disable no-console */
+ 224-239   decorator                 @some_decorator
+ 224-225   at                        @
+ 225-239   function                  some_decorator
+ 240-245   keyword                   class
+ 246-247   class_name                D
+ 246-247   constant                  D
+ 248-255   keyword                   extends
+ 256-260   class_name                Base
+ 256-260   capitalized_identifier    Base
+ 261-262   punctuation               {
+ 264-272   keyword                   readonly
+ 275-284   type_annotation           : string 
+ 275-276   :                         :
+ 276-284   type                       string 
+ 277-283   builtin                   string
+ 284-285   operator                  =
+ 286-289   string                    'd'
+ 289-290   punctuation               ;
+ 294-295   operator                  :
+ 296-302   builtin                   number
+ 302-303   punctuation               ;
+ 308-309   operator                  =
+ 310-316   function                  $state
+ 316-317   punctuation               (
+ 317-321   keyword                   null
+ 321-322   punctuation               )
+ 322-323   punctuation               ;
+ 326-341   decorator                 @some_decorator
+ 326-327   at                        @
+ 327-341   function                  some_decorator
+ 353-354   operator                  =
+ 355-359   boolean                   true
+ 359-360   punctuation               ;
+ 363-374   function                  constructor
+ 374-375   punctuation               (
+ 377-378   operator                  :
+ 379-385   builtin                   number
+ 385-386   punctuation               )
+ 387-388   punctuation               {
+ 391-396   keyword                   super
+ 396-397   punctuation               (
+ 397-398   punctuation               )
+ 398-399   punctuation               ;
+ 402-406   keyword                   this
+ 406-407   punctuation               .
+ 410-411   operator                  =
+ 414-415   punctuation               ;
+ 417-418   punctuation               }
+ 421-436   function                  abstract_method
+ 436-437   punctuation               (
+ 437-438   punctuation               )
+ 438-439   operator                  :
+ 440-444   keyword                   void
+ 445-446   punctuation               {
+ 449-466   comment                   // implementation
+ 468-469   punctuation               }
+ 472-487   decorator                 @some_decorator
+ 472-473   at                        @
+ 473-487   function                  some_decorator
+ 487-488   punctuation               (
+ 488-497   string                    'example'
+ 497-498   punctuation               ,
+ 499-500   punctuation               {
+ 506-507   operator                  :
+ 508-512   boolean                   true
+ 512-513   punctuation               }
+ 513-514   punctuation               )
+ 516-528   function                  class_method
+ 528-529   punctuation               (
+ 529-530   punctuation               )
+ 530-531   operator                  :
+ 532-538   builtin                   string
+ 539-540   punctuation               {
+ 543-549   special_keyword           return
+ 550-569   template_string           `Hello, ${this.d1}`
+ 550-551   template_punctuation      `
+ 551-558   string                    Hello, 
+ 558-568   interpolation             ${this.d1}
+ 558-560   interpolation_punctuation ${
+ 560-564   keyword                   this
+ 564-565   punctuation               .
+ 567-568   interpolation_punctuation }
+ 568-569   template_punctuation      `
+ 569-570   punctuation               ;
+ 572-573   punctuation               }
+ 576-591   function_variable         instance_method
+ 592-593   operator                  =
+ 594-595   punctuation               (
+ 595-596   punctuation               )
+ 596-603   type_annotation           : void 
+ 596-597   :                         :
+ 597-603   type                       void 
+ 598-602   keyword                   void
+ 603-605   operator                  =>
+ 606-607   punctuation               {
+ 610-619   comment                   /* ... */
+ 622-625   keyword                   let
+ 628-629   operator                  =
+ 630-631   number                    0
+ 631-632   punctuation               ;
+ 635-637   special_keyword           do
+ 638-639   punctuation               {
+ 644-646   operator                  ++
+ 646-647   punctuation               ;
+ 650-651   punctuation               }
+ 652-657   special_keyword           while
+ 658-659   punctuation               (
+ 661-662   operator                  <
+ 663-664   number                    3
+ 664-665   punctuation               )
+ 665-666   punctuation               ;
+ 670-673   special_keyword           for
+ 674-675   punctuation               (
+ 675-680   keyword                   const
+ 684-686   keyword                   of
+ 687-691   keyword                   this
+ 691-692   punctuation               .
+ 694-695   punctuation               )
+ 696-697   punctuation               {
+ 701-703   special_keyword           if
+ 704-705   punctuation               (
+ 708-711   operator                  ===
+ 712-715   string                    'd'
+ 715-716   punctuation               )
+ 717-725   special_keyword           continue
+ 725-726   punctuation               ;
+ 730-732   special_keyword           if
+ 733-734   punctuation               (
+ 734-735   operator                  !
+ 737-738   punctuation               )
+ 739-744   special_keyword           break
+ 744-745   punctuation               ;
+ 749-753   keyword                   this
+ 753-754   punctuation               .
+ 754-769   function                  #private_method
+ 769-770   punctuation               (
+ 771-772   punctuation               ,
+ 775-776   punctuation               )
+ 776-777   punctuation               ;
+ 780-781   punctuation               }
+ 785-791   special_keyword           switch
+ 792-793   punctuation               (
+ 793-797   keyword                   this
+ 797-798   punctuation               .
+ 800-801   punctuation               )
+ 802-803   punctuation               {
+ 807-811   special_keyword           case
+ 812-815   string                    'a'
+ 815-816   operator                  :
+ 821-828   builtin                   console
+ 828-829   punctuation               .
+ 829-832   function                  log
+ 832-833   punctuation               (
+ 833-841   string                    'case a'
+ 841-842   punctuation               )
+ 842-843   punctuation               ;
+ 848-853   special_keyword           break
+ 853-854   punctuation               ;
+ 858-862   special_keyword           case
+ 863-866   string                    'b'
+ 866-867   operator                  :
+ 871-875   special_keyword           case
+ 876-879   string                    'c'
+ 879-880   operator                  :
+ 885-892   builtin                   console
+ 892-893   punctuation               .
+ 893-896   function                  log
+ 896-897   punctuation               (
+ 897-910   string                    'case b or c'
+ 910-911   punctuation               )
+ 911-912   punctuation               ;
+ 917-922   special_keyword           break
+ 922-923   punctuation               ;
+ 927-934   special_keyword           default
+ 934-935   operator                  :
+ 940-947   builtin                   console
+ 947-948   punctuation               .
+ 948-951   function                  log
+ 951-952   punctuation               (
+ 952-961   string                    'default'
+ 961-962   punctuation               )
+ 962-963   punctuation               ;
+ 966-967   punctuation               }
+ 971-976   keyword                   const
+ 980-981   operator                  :
+ 982-983   punctuation               {
+ 989-990   operator                  ?
+ 990-991   operator                  :
+ 992-999   builtin                   boolean
+ 999-1000  punctuation               ;
+1005-1006  operator                  :
+1007-1014  builtin                   boolean
+1014-1015  punctuation               }
+1016-1017  operator                  =
+1018-1019  punctuation               {
+1029-1030  operator                  :
+1031-1035  string                    'd1'
+1036-1038  keyword                   in
+1039-1043  keyword                   this
+1043-1044  punctuation               ,
+1052-1053  operator                  :
+1054-1058  keyword                   this
+1059-1069  keyword                   instanceof
+1070-1071  class_name                D
+1070-1071  constant                  D
+1071-1072  punctuation               ,
+1075-1076  punctuation               }
+1076-1077  punctuation               ;
+1080-1086  keyword                   delete
+1090-1091  punctuation               .
+1097-1098  punctuation               ;
+1101-1107  comment                   // foo
+1109-1110  punctuation               }
+1110-1111  punctuation               ;
+1114-1129  function                  #private_method
+1129-1130  punctuation               (
+1132-1133  operator                  :
+1134-1140  builtin                   number
+1140-1141  punctuation               ,
+1144-1145  operator                  :
+1146-1149  builtin                   any
+1149-1150  punctuation               )
+1150-1151  operator                  :
+1152-1156  keyword                   void
+1157-1158  punctuation               {
+1161-1166  special_keyword           throw
+1167-1170  keyword                   new
+1171-1176  class_name                Error
+1171-1176  capitalized_identifier    Error
+1176-1177  punctuation               (
+1177-1223  template_string           `${this.d1}\n\t\t\tmultiline\n\t\t\tetc ${a2 + c2}\n\t\t`
+1177-1178  template_punctuation      `
+1178-1188  interpolation             ${this.d1}
+1178-1180  interpolation_punctuation ${
+1180-1184  keyword                   this
+1184-1185  punctuation               .
+1187-1188  interpolation_punctuation }
+1188-1209  string                    \n\t\t\tmultiline\n\t\t\tetc 
+1209-1219  interpolation             ${a2 + c2}
+1209-1211  interpolation_punctuation ${
+1214-1215  operator                  +
+1218-1219  interpolation_punctuation }
+1219-1222  string                    \n\t\t
+1222-1223  template_punctuation      `
+1223-1224  punctuation               )
+1224-1225  punctuation               ;
+1227-1228  punctuation               }
+1231-1232  operator                  *
+1232-1241  function                  generator
+1241-1242  punctuation               (
+1242-1243  punctuation               )
+1243-1244  operator                  :
+1245-1254  capitalized_identifier    Generator
+1254-1255  operator                  <
+1255-1261  builtin                   number
+1262-1263  operator                  |
+1264-1269  capitalized_identifier    Array
+1269-1270  operator                  <
+1270-1276  builtin                   number
+1276-1278  operator                  >>
+1279-1280  punctuation               {
+1283-1288  special_keyword           yield
+1289-1290  number                    1
+1290-1291  punctuation               ;
+1294-1299  special_keyword           yield
+1299-1300  operator                  *
+1301-1302  punctuation               [
+1302-1303  number                    2
+1303-1304  punctuation               ,
+1305-1306  number                    3
+1306-1307  punctuation               ]
+1307-1308  punctuation               ;
+1310-1311  punctuation               }
+1314-1319  keyword                   async
+1320-1321  operator                  *
+1321-1336  function                  async_generator
+1336-1337  punctuation               (
+1337-1338  punctuation               )
+1338-1339  operator                  :
+1340-1354  capitalized_identifier    AsyncGenerator
+1354-1355  operator                  <
+1355-1361  builtin                   number
+1361-1362  operator                  >
+1363-1364  punctuation               {
+1367-1372  special_keyword           yield
+1373-1378  special_keyword           await
+1379-1386  capitalized_identifier    Promise
+1386-1387  punctuation               .
+1387-1394  function                  resolve
+1394-1395  punctuation               (
+1395-1396  number                    4
+1396-1397  punctuation               )
+1397-1398  punctuation               ;
+1400-1401  punctuation               }
+1404-1413  keyword                   protected
+1414-1419  keyword                   async
+1420-1436  function                  protected_method
+1436-1437  punctuation               (
+1437-1438  punctuation               )
+1438-1439  operator                  :
+1440-1447  capitalized_identifier    Promise
+1447-1448  operator                  <
+1448-1452  keyword                   void
+1452-1453  operator                  >
+1454-1455  punctuation               {
+1458-1461  special_keyword           try
+1462-1463  punctuation               {
+1467-1472  special_keyword           await
+1473-1476  keyword                   new
+1477-1484  class_name                Promise
+1477-1484  capitalized_identifier    Promise
+1484-1485  punctuation               (
 1485-1486  punctuation               (
-1486-1487  punctuation               (
-1494-1495  punctuation               )
-1496-1498  operator                  =>
-1499-1509  function                  setTimeout
-1509-1510  punctuation               (
-1517-1518  punctuation               ,
-1519-1522  number                    100
+1493-1494  punctuation               )
+1495-1497  operator                  =>
+1498-1508  function                  setTimeout
+1508-1509  punctuation               (
+1516-1517  punctuation               ,
+1518-1521  number                    100
+1521-1522  punctuation               )
 1522-1523  punctuation               )
-1523-1524  punctuation               )
-1524-1525  punctuation               ;
-1529-1531  special_keyword           if
-1532-1533  punctuation               (
-1533-1537  capitalized_identifier    Math
-1537-1538  punctuation               .
-1538-1544  function                  random
-1544-1545  punctuation               (
-1545-1546  punctuation               )
-1547-1548  operator                  >
-1549-1552  number                    0.5
-1552-1553  punctuation               )
-1554-1555  punctuation               {
-1560-1567  builtin                   console
-1567-1568  punctuation               .
-1568-1571  function                  log
-1571-1572  punctuation               (
-1572-1575  keyword                   new
-1576-1580  class_name                Date
-1576-1580  capitalized_identifier    Date
-1580-1581  punctuation               (
+1523-1524  punctuation               ;
+1528-1530  special_keyword           if
+1531-1532  punctuation               (
+1532-1536  capitalized_identifier    Math
+1536-1537  punctuation               .
+1537-1543  function                  random
+1543-1544  punctuation               (
+1544-1545  punctuation               )
+1546-1547  operator                  >
+1548-1551  number                    0.5
+1551-1552  punctuation               )
+1553-1554  punctuation               {
+1559-1566  builtin                   console
+1566-1567  punctuation               .
+1567-1570  function                  log
+1570-1571  punctuation               (
+1571-1574  keyword                   new
+1575-1579  class_name                Date
+1575-1579  capitalized_identifier    Date
+1579-1580  punctuation               (
+1580-1581  punctuation               )
 1581-1582  punctuation               )
-1582-1583  punctuation               )
-1583-1584  punctuation               ;
-1588-1589  punctuation               }
-1590-1594  special_keyword           else
-1595-1597  special_keyword           if
-1598-1599  punctuation               (
-1599-1603  capitalized_identifier    Math
-1603-1604  punctuation               .
-1604-1610  function                  random
-1610-1611  punctuation               (
-1611-1612  punctuation               )
-1613-1614  operator                  >
-1615-1618  number                    0.2
-1618-1619  punctuation               )
-1620-1621  punctuation               {
-1626-1633  builtin                   console
-1633-1634  punctuation               .
-1634-1637  function                  log
-1637-1638  punctuation               (
-1638-1654  string                    'else if branch'
-1654-1655  punctuation               )
-1655-1656  punctuation               ;
-1660-1661  punctuation               }
-1662-1666  special_keyword           else
-1667-1668  punctuation               {
-1673-1680  builtin                   console
-1680-1681  punctuation               .
-1681-1684  function                  log
-1684-1685  punctuation               (
-1685-1698  string                    'else branch'
-1698-1699  punctuation               )
-1699-1700  punctuation               ;
-1704-1705  punctuation               }
-1708-1709  punctuation               }
-1710-1715  special_keyword           catch
-1716-1717  punctuation               (
-1722-1723  operator                  :
-1724-1731  builtin                   unknown
-1731-1732  punctuation               )
-1733-1734  punctuation               {
-1738-1745  builtin                   console
-1745-1746  punctuation               .
-1746-1751  function                  error
-1751-1752  punctuation               (
-1757-1758  punctuation               )
-1758-1759  punctuation               ;
-1762-1763  punctuation               }
-1764-1771  special_keyword           finally
-1772-1773  punctuation               {
-1777-1784  builtin                   console
-1784-1785  punctuation               .
-1785-1788  function                  log
-1788-1789  punctuation               (
-1789-1804  string                    'finally block'
-1804-1805  punctuation               )
-1805-1806  punctuation               ;
-1809-1810  punctuation               }
-1812-1813  punctuation               }
-1814-1815  punctuation               }
-1817-1827  comment                   // comment
-1829-1872  comment                   /*\nother comment\n\nconst comment = false;\n*/
-1874-1898  comment                   /**\n * JSDoc comment\n */
-1900-1906  special_keyword           import
-1907-1908  punctuation               {
-1920-1921  punctuation               ,
-1922-1926  keyword                   type
-1927-1938  class_name                SampleLang
-1927-1938  capitalized_identifier    SampleLang
-1938-1939  punctuation               }
-1940-1944  special_keyword           from
-1945-1974  string                    '../../../lib/code_sample.js'
-1974-1975  punctuation               ;
-1976-1982  special_keyword           import
-1983-1984  operator                  *
-1985-1987  special_keyword           as
-1988-1989  constant                  A
-1990-1994  special_keyword           from
-1995-2024  string                    '../../../lib/code_sample.js'
-2024-2025  punctuation               ;
-2027-2033  special_keyword           export
-2034-2035  punctuation               {
-2036-2037  punctuation               ,
-2038-2039  constant                  A
-2039-2040  punctuation               ,
-2042-2043  punctuation               ,
-2045-2046  punctuation               ,
-2047-2048  constant                  D
-2048-2049  punctuation               }
-2049-2050  punctuation               ;
-2065-2067  special_keyword           as
-2068-2075  builtin                   unknown
-2076-2078  special_keyword           as
-2079-2090  capitalized_identifier    SampleLang
-2091-2100  keyword                   satisfies
-2101-2112  capitalized_identifier    SampleLang
-2112-2113  punctuation               ;
-2115-2121  special_keyword           export
-2122-2131  keyword                   interface
-2132-2148  class_name                SomeE<T = null>
-2132-2138  capitalized_identifier    SomeE
-2138-2139  operator                  <
-2139-2140  constant                  T
-2141-2142  operator                  =
-2143-2147  keyword                   null
-2147-2148  operator                  >
-2149-2150  punctuation               {
-2156-2157  operator                  :
-2158-2164  builtin                   string
-2164-2165  punctuation               ;
-2170-2171  operator                  :
-2172-2178  builtin                   number
-2178-2179  punctuation               ;
-2182-2183  operator                  ?
-2183-2184  operator                  :
-2185-2186  constant                  T
-2186-2187  punctuation               ;
-2188-2189  punctuation               }
-2191-2196  keyword                   const
-2198-2199  operator                  :
-2200-2201  punctuation               {
-2205-2206  operator                  :
-2207-2213  builtin                   string
-2213-2214  punctuation               ;
-2218-2219  operator                  :
-2220-2226  builtin                   number
-2226-2227  punctuation               }
-2228-2229  operator                  =
-2230-2231  punctuation               {
-2235-2236  operator                  :
-2237-2244  string                    'A. H.'
-2244-2245  punctuation               ,
-2249-2250  operator                  :
-2251-2254  number                    100
-2254-2255  punctuation               }
-2255-2256  punctuation               ;
-2257-2262  keyword                   const
-2265-2266  operator                  =
-2267-2268  punctuation               [
-2268-2269  punctuation               [
-2269-2271  string                    ''
-2271-2272  punctuation               ,
-2274-2275  punctuation               ]
-2275-2276  punctuation               ]
-2277-2279  special_keyword           as
-2280-2285  keyword                   const
-2285-2286  punctuation               ;
-2287-2293  special_keyword           export
-2294-2299  keyword                   const
-2306-2328  type_annotation           : Map<string, SomeE> 
-2306-2307  :                         :
-2307-2328  type                       Map<string, SomeE> 
-2308-2311  capitalized_identifier    Map
-2311-2312  operator                  <
-2312-2318  builtin                   string
-2318-2319  punctuation               ,
-2320-2326  capitalized_identifier    SomeE
-2326-2327  operator                  >
-2328-2329  operator                  =
-2330-2333  keyword                   new
-2334-2337  class_name                Map
-2334-2337  capitalized_identifier    Map
-2337-2338  punctuation               (
-2339-2340  punctuation               )
-2340-2341  punctuation               ;
-2343-2349  special_keyword           export
-2350-2358  keyword                   function
-2359-2362  function                  add
-2362-2363  punctuation               (
-2364-2365  operator                  :
-2366-2372  builtin                   number
-2372-2373  punctuation               ,
-2375-2376  operator                  :
-2377-2383  builtin                   number
-2383-2384  punctuation               )
-2384-2385  operator                  :
-2386-2392  builtin                   number
-2393-2394  punctuation               {
-2396-2402  special_keyword           return
-2405-2406  operator                  +
-2408-2409  punctuation               ;
-2410-2411  punctuation               }
-2413-2419  special_keyword           export
-2420-2425  keyword                   const
-2426-2430  function_variable         plus
-2431-2432  operator                  =
-2433-2434  punctuation               (
-2435-2436  operator                  :
-2437-2440  builtin                   any
-2440-2441  punctuation               ,
-2443-2444  operator                  :
+1582-1583  punctuation               ;
+1587-1588  punctuation               }
+1589-1593  special_keyword           else
+1594-1596  special_keyword           if
+1597-1598  punctuation               (
+1598-1602  capitalized_identifier    Math
+1602-1603  punctuation               .
+1603-1609  function                  random
+1609-1610  punctuation               (
+1610-1611  punctuation               )
+1612-1613  operator                  >
+1614-1617  number                    0.2
+1617-1618  punctuation               )
+1619-1620  punctuation               {
+1625-1632  builtin                   console
+1632-1633  punctuation               .
+1633-1636  function                  log
+1636-1637  punctuation               (
+1637-1653  string                    'else if branch'
+1653-1654  punctuation               )
+1654-1655  punctuation               ;
+1659-1660  punctuation               }
+1661-1665  special_keyword           else
+1666-1667  punctuation               {
+1672-1679  builtin                   console
+1679-1680  punctuation               .
+1680-1683  function                  log
+1683-1684  punctuation               (
+1684-1697  string                    'else branch'
+1697-1698  punctuation               )
+1698-1699  punctuation               ;
+1703-1704  punctuation               }
+1707-1708  punctuation               }
+1709-1714  special_keyword           catch
+1715-1716  punctuation               (
+1721-1722  operator                  :
+1723-1730  builtin                   unknown
+1730-1731  punctuation               )
+1732-1733  punctuation               {
+1737-1744  builtin                   console
+1744-1745  punctuation               .
+1745-1750  function                  error
+1750-1751  punctuation               (
+1756-1757  punctuation               )
+1757-1758  punctuation               ;
+1761-1762  punctuation               }
+1763-1770  special_keyword           finally
+1771-1772  punctuation               {
+1776-1783  builtin                   console
+1783-1784  punctuation               .
+1784-1787  function                  log
+1787-1788  punctuation               (
+1788-1803  string                    'finally block'
+1803-1804  punctuation               )
+1804-1805  punctuation               ;
+1808-1809  punctuation               }
+1811-1812  punctuation               }
+1813-1814  punctuation               }
+1816-1826  comment                   // comment
+1828-1871  comment                   /*\nother comment\n\nconst comment = false;\n*/
+1873-1897  comment                   /**\n * JSDoc comment\n */
+1899-1905  special_keyword           import
+1906-1907  punctuation               {
+1919-1920  punctuation               ,
+1921-1925  keyword                   type
+1926-1936  class_name                SampleLang
+1926-1936  capitalized_identifier    SampleLang
+1936-1937  punctuation               }
+1938-1942  special_keyword           from
+1943-1972  string                    '../../../lib/code_sample.js'
+1972-1973  punctuation               ;
+1974-1980  special_keyword           import
+1981-1982  operator                  *
+1983-1985  special_keyword           as
+1986-1987  constant                  A
+1988-1992  special_keyword           from
+1993-2022  string                    '../../../lib/code_sample.js'
+2022-2023  punctuation               ;
+2025-2031  special_keyword           export
+2032-2033  punctuation               {
+2034-2035  punctuation               ,
+2036-2037  constant                  A
+2037-2038  punctuation               ,
+2040-2041  punctuation               ,
+2043-2044  punctuation               ,
+2045-2046  constant                  D
+2046-2047  punctuation               }
+2047-2048  punctuation               ;
+2063-2065  special_keyword           as
+2066-2073  builtin                   unknown
+2074-2076  special_keyword           as
+2077-2087  capitalized_identifier    SampleLang
+2088-2097  keyword                   satisfies
+2098-2108  capitalized_identifier    SampleLang
+2108-2109  punctuation               ;
+2111-2117  special_keyword           export
+2118-2127  keyword                   interface
+2128-2143  class_name                SomeE<T = null>
+2128-2133  capitalized_identifier    SomeE
+2133-2134  operator                  <
+2134-2135  constant                  T
+2136-2137  operator                  =
+2138-2142  keyword                   null
+2142-2143  operator                  >
+2144-2145  punctuation               {
+2151-2152  operator                  :
+2153-2159  builtin                   string
+2159-2160  punctuation               ;
+2165-2166  operator                  :
+2167-2173  builtin                   number
+2173-2174  punctuation               ;
+2177-2178  operator                  ?
+2178-2179  operator                  :
+2180-2181  constant                  T
+2181-2182  punctuation               ;
+2183-2184  punctuation               }
+2186-2191  keyword                   const
+2193-2194  operator                  :
+2195-2196  punctuation               {
+2200-2201  operator                  :
+2202-2208  builtin                   string
+2208-2209  punctuation               ;
+2213-2214  operator                  :
+2215-2221  builtin                   number
+2221-2222  punctuation               }
+2223-2224  operator                  =
+2225-2226  punctuation               {
+2230-2231  operator                  :
+2232-2239  string                    'A. H.'
+2239-2240  punctuation               ,
+2244-2245  operator                  :
+2246-2249  number                    100
+2249-2250  punctuation               }
+2250-2251  punctuation               ;
+2252-2257  keyword                   const
+2260-2261  operator                  =
+2262-2263  punctuation               [
+2263-2264  punctuation               [
+2264-2266  string                    ''
+2266-2267  punctuation               ,
+2269-2270  punctuation               ]
+2270-2271  punctuation               ]
+2272-2274  special_keyword           as
+2275-2280  keyword                   const
+2280-2281  punctuation               ;
+2282-2288  special_keyword           export
+2289-2294  keyword                   const
+2301-2322  type_annotation           : Map<string, SomeE> 
+2301-2302  :                         :
+2302-2322  type                       Map<string, SomeE> 
+2303-2306  capitalized_identifier    Map
+2306-2307  operator                  <
+2307-2313  builtin                   string
+2313-2314  punctuation               ,
+2315-2320  capitalized_identifier    SomeE
+2320-2321  operator                  >
+2322-2323  operator                  =
+2324-2327  keyword                   new
+2328-2331  class_name                Map
+2328-2331  capitalized_identifier    Map
+2331-2332  punctuation               (
+2333-2334  punctuation               )
+2334-2335  punctuation               ;
+2337-2343  special_keyword           export
+2344-2352  keyword                   function
+2353-2356  function                  add
+2356-2357  punctuation               (
+2358-2359  operator                  :
+2360-2366  builtin                   number
+2366-2367  punctuation               ,
+2369-2370  operator                  :
+2371-2377  builtin                   number
+2377-2378  punctuation               )
+2378-2379  operator                  :
+2380-2386  builtin                   number
+2387-2388  punctuation               {
+2390-2396  special_keyword           return
+2399-2400  operator                  +
+2402-2403  punctuation               ;
+2404-2405  punctuation               }
+2407-2413  special_keyword           export
+2414-2419  keyword                   const
+2420-2424  function_variable         plus
+2425-2426  operator                  =
+2427-2428  punctuation               (
+2429-2430  operator                  :
+2431-2434  builtin                   any
+2434-2435  punctuation               ,
+2437-2438  operator                  :
+2439-2442  builtin                   any
+2442-2443  punctuation               )
+2443-2449  type_annotation           : any 
+2443-2444  :                         :
+2444-2449  type                       any 
 2445-2448  builtin                   any
-2448-2449  punctuation               )
-2449-2455  type_annotation           : any 
-2449-2450  :                         :
-2450-2455  type                       any 
-2451-2454  builtin                   any
-2455-2457  operator                  =>
-2460-2461  operator                  +
-2463-2464  punctuation               ;
-2466-2488  comment                   // boundary test cases
-2489-2495  special_keyword           export
-2496-2501  keyword                   const
-2520-2521  operator                  =
-2522-2551  string                    'const class function string'
-2551-2552  punctuation               ;
-2553-2559  special_keyword           export
-2560-2565  keyword                   const
-2583-2584  operator                  =
-2585-2611  string                    '// this is not a comment'
-2611-2612  punctuation               ;
-2613-2619  special_keyword           export
-2620-2625  keyword                   const
-2645-2646  operator                  =
-2647-2664  template_string           `Value: ${1 + 2}`
-2647-2648  template_punctuation      `
-2648-2655  string                    Value: 
-2655-2663  interpolation             ${1 + 2}
-2655-2657  interpolation_punctuation ${
-2657-2658  number                    1
-2659-2660  operator                  +
-2661-2662  number                    2
-2662-2663  interpolation_punctuation }
-2663-2664  template_punctuation      `
-2664-2665  punctuation               ;
-2667-2699  comment                   // regex that looks like comment
-2700-2706  special_keyword           export
-2707-2712  keyword                   const
-2719-2720  operator                  =
-2721-2730  regex                     /\/\/.*/g
-2721-2722  regex_delimiter           /
-2722-2728  regex_source              \/\/.*
-2728-2729  regex_delimiter           /
-2729-2730  regex_flags               g
-2730-2731  punctuation               ;
-2732-2738  special_keyword           export
-2739-2744  keyword                   const
-2759-2760  operator                  =
-2761-2793  regex                     /^(?:\/\*.*?\*\/|\/\/.*|[^/])+$/
-2761-2762  regex_delimiter           /
-2762-2792  regex_source              ^(?:\/\*.*?\*\/|\/\/.*|[^/])+$
-2792-2793  regex_delimiter           /
-2793-2794  punctuation               ;
-2796-2852  comment                   // string in comment should not be highlighted as string
-2853-2904  comment                   // const commented = "this string is in a comment";
+2449-2451  operator                  =>
+2454-2455  operator                  +
+2457-2458  punctuation               ;
+2460-2482  comment                   // boundary test cases
+2483-2489  special_keyword           export
+2490-2495  keyword                   const
+2514-2515  operator                  =
+2516-2545  string                    'const class function string'
+2545-2546  punctuation               ;
+2547-2553  special_keyword           export
+2554-2559  keyword                   const
+2577-2578  operator                  =
+2579-2605  string                    '// this is not a comment'
+2605-2606  punctuation               ;
+2607-2613  special_keyword           export
+2614-2619  keyword                   const
+2639-2640  operator                  =
+2641-2658  template_string           `Value: ${1 + 2}`
+2641-2642  template_punctuation      `
+2642-2649  string                    Value: 
+2649-2657  interpolation             ${1 + 2}
+2649-2651  interpolation_punctuation ${
+2651-2652  number                    1
+2653-2654  operator                  +
+2655-2656  number                    2
+2656-2657  interpolation_punctuation }
+2657-2658  template_punctuation      `
+2658-2659  punctuation               ;
+2661-2693  comment                   // regex that looks like comment
+2694-2700  special_keyword           export
+2701-2706  keyword                   const
+2713-2714  operator                  =
+2715-2724  regex                     /\/\/.*/g
+2715-2716  regex_delimiter           /
+2716-2722  regex_source              \/\/.*
+2722-2723  regex_delimiter           /
+2723-2724  regex_flags               g
+2724-2725  punctuation               ;
+2726-2732  special_keyword           export
+2733-2738  keyword                   const
+2753-2754  operator                  =
+2755-2787  regex                     /^(?:\/\*.*?\*\/|\/\/.*|[^/])+$/
+2755-2756  regex_delimiter           /
+2756-2786  regex_source              ^(?:\/\*.*?\*\/|\/\/.*|[^/])+$
+2786-2787  regex_delimiter           /
+2787-2788  punctuation               ;
+2790-2846  comment                   // string in comment should not be highlighted as string
+2847-2898  comment                   // const commented = "this string is in a comment";
