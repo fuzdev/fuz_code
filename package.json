@@ -1,6 +1,6 @@
 {
   "name": "@fuzdev/fuz_code",
-  "version": "0.36.0",
+  "version": "0.37.0",
   "description": "syntax styling utilities and components for TypeScript, Svelte, and Markdown",
   "glyph": "🎨",
   "logo": "logo.svg",
@@ -33,7 +33,7 @@
     "node": ">=22.15"
   },
   "peerDependencies": {
-    "@fuzdev/fuz_css": ">=0.39.0",
+    "@fuzdev/fuz_css": ">=0.40.0",
     "svelte": "^5"
   },
   "peerDependenciesMeta": {
@@ -46,7 +46,7 @@
   },
   "devDependencies": {
     "@changesets/changelog-git": "^0.2.1",
-    "@fuzdev/fuz_css": "^0.39.0",
+    "@fuzdev/fuz_css": "^0.40.0",
     "@fuzdev/fuz_ui": "^0.165.0",
     "@fuzdev/fuz_util": "^0.41.1",
     "@ryanatkn/eslint-config": "^0.9.0",

@@ -5,7 +5,7 @@ import type {LibraryJson} from '@fuzdev/fuz_util/library_json.js';
 export const library_json: LibraryJson = {
 	package_json: {
 		name: '@fuzdev/fuz_code',
-		version: '0.36.0',
+		version: '0.37.0',
 		description: 'syntax styling utilities and components for TypeScript, Svelte, and Markdown',
 		glyph: '🎨',
 		logo: 'logo.svg',
@@ -38,7 +38,7 @@ export const library_json: LibraryJson = {
 			node: '>=22.15',
 		},
 		peerDependencies: {
-			'@fuzdev/fuz_css': '>=0.39.0',
+			'@fuzdev/fuz_css': '>=0.40.0',
 			svelte: '^5',
 		},
 		peerDependenciesMeta: {
@@ -55,7 +55,7 @@ export const library_json: LibraryJson = {
 			'@ryanatkn/eslint-config': '^0.9.0',
 			'@fuzdev/fuz_ui': '^0.165.0',
 			'@ryanatkn/gro': '^0.179.0',
-			'@fuzdev/fuz_css': '^0.39.0',
+			'@fuzdev/fuz_css': '^0.40.0',
 			'@sveltejs/adapter-static': '^3.0.10',
 			'@sveltejs/kit': '^2.49.0',
 			'@sveltejs/package': '^2.5.6',
@@ -113,7 +113,7 @@ export const library_json: LibraryJson = {
 	},
 	source_json: {
 		name: '@fuzdev/fuz_code',
-		version: '0.36.0',
+		version: '0.37.0',
 		modules: [
 			{
 				path: 'code_sample.ts',
@@ -1379,7 +1379,7 @@ export const library_json: LibraryJson = {
 	logo_url: 'https://code.fuz.dev/logo.svg',
 	logo_alt: 'a friendly pink spider facing you',
 	npm_url: 'https://www.npmjs.com/package/@fuzdev/fuz_code',
-	changelog_url: 'https://github.com/fuzdev/fuz_code/blob/main/CHANGELOG.md',
+	changelog_url: 'https://github.com/ryanatkn/fuz_code/blob/main/CHANGELOG.md',
 	published: true,
 };
 
