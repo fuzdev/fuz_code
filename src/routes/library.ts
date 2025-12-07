@@ -38,7 +38,7 @@ export const library_json: LibraryJson = {
 			node: '>=22.15',
 		},
 		peerDependencies: {
-			'@fuzdev/fuz_css': '>=0.40.0',
+			'@fuzdev/fuz_css': '>=0.41.0',
 			svelte: '^5',
 		},
 		peerDependenciesMeta: {
@@ -51,7 +51,7 @@ export const library_json: LibraryJson = {
 		},
 		devDependencies: {
 			'@changesets/changelog-git': '^0.2.1',
-			'@fuzdev/fuz_css': '^0.40.0',
+			'@fuzdev/fuz_css': '^0.41.0',
 			'@fuzdev/fuz_ui': '^0.169.0',
 			'@fuzdev/fuz_util': '^0.42.0',
 			'@ryanatkn/eslint-config': '^0.9.0',
