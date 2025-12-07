@@ -190,7 +190,11 @@ export const run_comparison_benchmark = async (
 	const results: Array<ComparisonResult> = [];
 
 	for (const task of bench.tasks) {
-		if (task.result) {
+		if (
+			task.result.state === 'completed' ||
+			task.result.state === 'aborted' ||
+			task.result.state === 'aborted-with-statistics'
+		) {
 			// Parse benchmark name: implementation_operation_language_size
 			// Handle multi-word implementations like 'fuz_code' and 'shiki_js'
 			const parts = task.name.split('_');

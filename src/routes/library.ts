@@ -51,28 +51,28 @@ export const library_json: LibraryJson = {
 		},
 		devDependencies: {
 			'@changesets/changelog-git': '^0.2.1',
-			'@fuzdev/fuz_util': '^0.41.1',
-			'@ryanatkn/eslint-config': '^0.9.0',
-			'@fuzdev/fuz_ui': '^0.165.0',
-			'@ryanatkn/gro': '^0.179.0',
 			'@fuzdev/fuz_css': '^0.40.0',
+			'@fuzdev/fuz_ui': '^0.169.0',
+			'@fuzdev/fuz_util': '^0.42.0',
+			'@ryanatkn/eslint-config': '^0.9.0',
+			'@ryanatkn/gro': '^0.181.0',
 			'@sveltejs/adapter-static': '^3.0.10',
-			'@sveltejs/kit': '^2.49.0',
-			'@sveltejs/package': '^2.5.6',
+			'@sveltejs/kit': '^2.49.1',
+			'@sveltejs/package': '^2.5.7',
 			'@sveltejs/vite-plugin-svelte': '^6.2.1',
 			'@types/node': '^24.10.1',
 			eslint: '^9.39.1',
-			'eslint-plugin-svelte': '^3.13.0',
+			'eslint-plugin-svelte': '^3.13.1',
 			'esm-env': '^1.2.2',
-			prettier: '^3.6.2',
+			prettier: '^3.7.4',
 			'prettier-plugin-svelte': '^3.4.0',
-			svelte: '^5.44.1',
+			svelte: '^5.45.6',
 			'svelte-check': '^4.3.4',
-			tinybench: '^5.1.0',
+			tinybench: '^6.0.0',
 			tslib: '^2.8.1',
 			typescript: '^5.9.3',
-			'typescript-eslint': '^8.48.0',
-			vitest: '^4.0.14',
+			'typescript-eslint': '^8.48.1',
+			vitest: '^4.0.15',
 		},
 		prettier: {
 			plugins: ['prettier-plugin-svelte'],
@@ -165,7 +165,6 @@ export const library_json: LibraryJson = {
 							{
 								name: 'content',
 								type: 'string',
-								optional: false,
 								description: 'The source code to syntax highlight.',
 							},
 							{
@@ -226,7 +225,6 @@ export const library_json: LibraryJson = {
 							{
 								name: 'content',
 								type: 'string',
-								optional: false,
 								description: 'The source code to syntax highlight.',
 							},
 							{
@@ -306,7 +304,6 @@ export const library_json: LibraryJson = {
 							{
 								name: 'syntax_styler',
 								type: 'SyntaxStyler',
-								optional: false,
 							},
 						],
 					},
@@ -329,7 +326,6 @@ export const library_json: LibraryJson = {
 							{
 								name: 'syntax_styler',
 								type: 'SyntaxStyler',
-								optional: false,
 							},
 						],
 					},
@@ -353,7 +349,6 @@ export const library_json: LibraryJson = {
 							{
 								name: 'syntax_styler',
 								type: 'SyntaxStyler',
-								optional: false,
 							},
 						],
 					},
@@ -377,7 +372,6 @@ export const library_json: LibraryJson = {
 							{
 								name: 'syntax_styler',
 								type: 'SyntaxStyler',
-								optional: false,
 							},
 						],
 					},
@@ -399,7 +393,6 @@ export const library_json: LibraryJson = {
 							{
 								name: 'syntax_styler',
 								type: 'SyntaxStyler',
-								optional: false,
 							},
 						],
 					},
@@ -422,7 +415,6 @@ export const library_json: LibraryJson = {
 							{
 								name: 'syntax_styler',
 								type: 'SyntaxStyler',
-								optional: false,
 							},
 						],
 					},
@@ -439,25 +431,21 @@ export const library_json: LibraryJson = {
 							{
 								name: 'syntax_styler',
 								type: 'SyntaxStyler',
-								optional: false,
 							},
 							{
 								name: 'tag_name',
 								type: 'string',
-								optional: false,
 								description:
 									'- The name of the tag that contains the inlined language. This name will be treated as\ncase insensitive.',
 							},
 							{
 								name: 'lang',
 								type: 'string',
-								optional: false,
 								description: '- The language key.',
 							},
 							{
 								name: 'inside_lang',
 								type: 'string',
-								optional: false,
 								default_value: "'markup'",
 							},
 						],
@@ -474,19 +462,16 @@ export const library_json: LibraryJson = {
 							{
 								name: 'syntax_styler',
 								type: 'SyntaxStyler',
-								optional: false,
 							},
 							{
 								name: 'attr_name',
 								type: 'string',
-								optional: false,
 								description:
 									'- The name of the tag that contains the inlined language. This name will be treated as\ncase insensitive.',
 							},
 							{
 								name: 'lang',
 								type: 'string',
-								optional: false,
 								description: '- The language key.',
 							},
 						],
@@ -515,7 +500,6 @@ export const library_json: LibraryJson = {
 							{
 								name: 'syntax_styler',
 								type: 'SyntaxStyler',
-								optional: false,
 							},
 						],
 					},
@@ -529,17 +513,14 @@ export const library_json: LibraryJson = {
 							{
 								name: 'syntax_styler',
 								type: 'SyntaxStyler',
-								optional: false,
 							},
 							{
 								name: 'tag_name',
 								type: 'string',
-								optional: false,
 							},
 							{
 								name: 'lang',
 								type: 'string',
-								optional: false,
 							},
 						],
 					},
@@ -563,7 +544,6 @@ export const library_json: LibraryJson = {
 							{
 								name: 'syntax_styler',
 								type: 'SyntaxStyler',
-								optional: false,
 							},
 						],
 					},
@@ -617,12 +597,10 @@ export const library_json: LibraryJson = {
 									{
 										name: 'element',
 										type: 'Element',
-										optional: false,
 									},
 									{
 										name: 'tokens',
 										type: 'SyntaxTokenStream',
-										optional: false,
 									},
 								],
 							},
@@ -724,12 +702,10 @@ export const library_json: LibraryJson = {
 									{
 										name: 'id',
 										type: 'string',
-										optional: false,
 									},
 									{
 										name: 'grammar',
 										type: 'SyntaxGrammarRaw',
-										optional: false,
 									},
 									{
 										name: 'aliases',
@@ -748,17 +724,14 @@ export const library_json: LibraryJson = {
 									{
 										name: 'base_id',
 										type: 'string',
-										optional: false,
 									},
 									{
 										name: 'extension_id',
 										type: 'string',
-										optional: false,
 									},
 									{
 										name: 'extension',
 										type: 'SyntaxGrammarRaw',
-										optional: false,
 									},
 									{
 										name: 'aliases',
@@ -776,7 +749,6 @@ export const library_json: LibraryJson = {
 									{
 										name: 'id',
 										type: 'string',
-										optional: false,
 									},
 								],
 							},
@@ -794,20 +766,17 @@ export const library_json: LibraryJson = {
 									{
 										name: 'text',
 										type: 'string',
-										optional: false,
 										description: '- The source code to syntax highlight.',
 									},
 									{
 										name: 'lang',
 										type: 'string',
-										optional: false,
 										description:
 											"- Language identifier (e.g., 'ts', 'css', 'html'). Used for:\n- Grammar lookup when `grammar` is undefined\n- Hook context (`lang` field passed to hooks)\n- Language identification in output",
 									},
 									{
 										name: 'grammar',
 										type: 'SyntaxGrammar | undefined',
-										optional: false,
 										description:
 											'- Optional custom grammar object. When undefined, automatically\nlooks up the grammar via `this.get_lang(lang)`. Provide this to use a custom\nor modified grammar instead of the registered one.',
 										default_value: 'this.get_lang(lang)',
@@ -827,26 +796,22 @@ export const library_json: LibraryJson = {
 									{
 										name: 'inside',
 										type: 'string',
-										optional: false,
 										description:
 											'- The property of `root` (e.g. a language id in `syntax_styler.langs`) that contains the\nobject to be modified.',
 									},
 									{
 										name: 'before',
 										type: 'string',
-										optional: false,
 										description: '- The key to insert before.',
 									},
 									{
 										name: 'insert',
 										type: 'SyntaxGrammarRaw',
-										optional: false,
 										description: '- An object containing the key-value pairs to be inserted.',
 									},
 									{
 										name: 'root',
 										type: 'Record<string, any>',
-										optional: false,
 										description:
 											'- The object containing `inside`, i.e. the object that contains the\nobject to be modified.\n\nDefaults to `syntax_styler.langs`.',
 										default_value: 'this.langs',
@@ -866,13 +831,11 @@ export const library_json: LibraryJson = {
 									{
 										name: 'o',
 										type: 'string | SyntaxTokenStream | SyntaxToken',
-										optional: false,
 										description: '- The token or token stream to be converted.',
 									},
 									{
 										name: 'lang',
 										type: 'string',
-										optional: false,
 										description: '- The name of current language.',
 									},
 								],
@@ -889,14 +852,12 @@ export const library_json: LibraryJson = {
 									{
 										name: 'base_id',
 										type: 'string',
-										optional: false,
 										description:
 											'- The id of the language to extend. This has to be a key in `syntax_styler.langs`.',
 									},
 									{
 										name: 'extension',
 										type: 'SyntaxGrammarRaw',
-										optional: false,
 										description: '- The new tokens to append.',
 									},
 								],
@@ -914,12 +875,10 @@ export const library_json: LibraryJson = {
 									{
 										name: 'pattern',
 										type: 'RegExp | SyntaxGrammarTokenRaw',
-										optional: false,
 									},
 									{
 										name: 'visited',
 										type: 'Set<number>',
-										optional: false,
 									},
 								],
 							},
@@ -935,12 +894,10 @@ export const library_json: LibraryJson = {
 									{
 										name: 'grammar',
 										type: 'SyntaxGrammarRaw',
-										optional: false,
 									},
 									{
 										name: 'visited',
 										type: 'Set<number>',
-										optional: false,
 										description:
 											'- Set of grammar object IDs already normalized (for circular references)',
 									},
@@ -975,7 +932,6 @@ export const library_json: LibraryJson = {
 									{
 										name: 'cb',
 										type: 'HookBeforeTokenizeCallback',
-										optional: false,
 									},
 								],
 							},
@@ -988,7 +944,6 @@ export const library_json: LibraryJson = {
 									{
 										name: 'cb',
 										type: 'HookAfterTokenizeCallback',
-										optional: false,
 									},
 								],
 							},
@@ -1001,7 +956,6 @@ export const library_json: LibraryJson = {
 									{
 										name: 'cb',
 										type: 'HookWrapCallback',
-										optional: false,
 									},
 								],
 							},
@@ -1014,7 +968,6 @@ export const library_json: LibraryJson = {
 									{
 										name: 'ctx',
 										type: 'HookBeforeTokenizeCallbackContext',
-										optional: false,
 									},
 								],
 							},
@@ -1027,7 +980,6 @@ export const library_json: LibraryJson = {
 									{
 										name: 'ctx',
 										type: 'HookAfterTokenizeCallbackContext',
-										optional: false,
 									},
 								],
 							},
@@ -1040,7 +992,6 @@ export const library_json: LibraryJson = {
 									{
 										name: 'ctx',
 										type: 'HookWrapCallbackContext',
-										optional: false,
 									},
 								],
 							},
@@ -1301,22 +1252,18 @@ export const library_json: LibraryJson = {
 									{
 										name: 'type',
 										type: 'string',
-										optional: false,
 									},
 									{
 										name: 'content',
 										type: 'string | SyntaxTokenStream',
-										optional: false,
 									},
 									{
 										name: 'alias',
 										type: 'string | string[] | undefined',
-										optional: false,
 									},
 									{
 										name: 'matched_str',
 										type: 'string',
-										optional: false,
 										default_value: "''",
 									},
 								],
@@ -1353,13 +1300,11 @@ export const library_json: LibraryJson = {
 							{
 								name: 'text',
 								type: 'string',
-								optional: false,
 								description: '- a string with the code to be styled',
 							},
 							{
 								name: 'grammar',
 								type: 'SyntaxGrammar',
-								optional: false,
 								description:
 									"- an object containing the tokens to use\n\nUsually a language definition like `syntax_styler.get_lang('markup')`.",
 							},
@@ -1374,12 +1319,12 @@ export const library_json: LibraryJson = {
 	name: '@fuzdev/fuz_code',
 	repo_name: 'fuz_code',
 	repo_url: 'https://github.com/fuzdev/fuz_code',
-	owner_name: 'ryanatkn',
+	owner_name: 'fuzdev',
 	homepage_url: 'https://code.fuz.dev/',
 	logo_url: 'https://code.fuz.dev/logo.svg',
 	logo_alt: 'a friendly pink spider facing you',
 	npm_url: 'https://www.npmjs.com/package/@fuzdev/fuz_code',
-	changelog_url: 'https://github.com/ryanatkn/fuz_code/blob/main/CHANGELOG.md',
+	changelog_url: 'https://github.com/fuzdev/fuz_code/blob/main/CHANGELOG.md',
 	published: true,
 };
 
