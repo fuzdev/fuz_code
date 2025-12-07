@@ -4,7 +4,7 @@ import type {LibraryJson} from '@ryanatkn/belt/library_json.js';
 
 export const library_json: LibraryJson = {
 	package_json: {
-		name: '@ryanatkn/fuz_code',
+		name: '@fuzdev/fuz_code',
 		version: '0.36.0',
 		description: 'syntax styling utilities and components for TypeScript, Svelte, and Markdown',
 		glyph: '🎨',
@@ -38,11 +38,11 @@ export const library_json: LibraryJson = {
 			node: '>=22.15',
 		},
 		peerDependencies: {
-			'@ryanatkn/moss': '>=0.39.0',
+			'@fuzdev/fuz_css': '>=0.40.0',
 			svelte: '^5',
 		},
 		peerDependenciesMeta: {
-			'@ryanatkn/moss': {
+			'@fuzdev/fuz_css': {
 				optional: true,
 			},
 			svelte: {
@@ -55,7 +55,7 @@ export const library_json: LibraryJson = {
 			'@ryanatkn/eslint-config': '^0.9.0',
 			'@ryanatkn/fuz': '^0.165.0',
 			'@ryanatkn/gro': '^0.179.0',
-			'@ryanatkn/moss': '^0.39.0',
+			'@fuzdev/fuz_css': '^0.40.0',
 			'@sveltejs/adapter-static': '^3.0.10',
 			'@sveltejs/kit': '^2.49.0',
 			'@sveltejs/package': '^2.5.6',
@@ -112,7 +112,7 @@ export const library_json: LibraryJson = {
 		},
 	},
 	source_json: {
-		name: '@ryanatkn/fuz_code',
+		name: '@fuzdev/fuz_code',
 		version: '0.36.0',
 		modules: [
 			{
@@ -1371,14 +1371,14 @@ export const library_json: LibraryJson = {
 			},
 		],
 	},
-	name: '@ryanatkn/fuz_code',
+	name: '@fuzdev/fuz_code',
 	repo_name: 'fuz_code',
 	repo_url: 'https://github.com/ryanatkn/fuz_code',
 	owner_name: 'ryanatkn',
 	homepage_url: 'https://code.fuz.dev/',
 	logo_url: 'https://code.fuz.dev/logo.svg',
 	logo_alt: 'a friendly pink spider facing you',
-	npm_url: 'https://www.npmjs.com/package/@ryanatkn/fuz_code',
+	npm_url: 'https://www.npmjs.com/package/@fuzdev/fuz_code',
 	changelog_url: 'https://github.com/ryanatkn/fuz_code/blob/main/CHANGELOG.md',
 	published: true,
 };

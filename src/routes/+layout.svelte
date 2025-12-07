@@ -1,6 +1,6 @@
 <script lang="ts">
-	import '@ryanatkn/moss/style.css';
-	import '@ryanatkn/moss/theme.css';
+	import '@fuzdev/fuz_css/style.css';
+	import '@fuzdev/fuz_css/theme.css';
 	import '$lib/theme.css';
 	import '$routes/moss.css';
 	import '$routes/style.css';
