@@ -4,17 +4,15 @@
 	import type {BenchmarkComponentProps} from './benchmark_types.js';
 	import {ensure_paint} from './benchmark_dom.js';
 
-	interface Props {
-		BenchmarkedComponent: Component<BenchmarkComponentProps> | null;
-		props: BenchmarkComponentProps | null;
-		on_render_complete?: () => void;
-	}
-
 	const {
 		BenchmarkedComponent = null,
 		props = null,
 		on_render_complete = () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
-	}: Props = $props();
+	}: {
+		BenchmarkedComponent: Component<BenchmarkComponentProps> | null;
+		props: BenchmarkComponentProps | null;
+		on_render_complete?: () => void;
+	} = $props();
 
 	let container_el: HTMLDivElement;
 
