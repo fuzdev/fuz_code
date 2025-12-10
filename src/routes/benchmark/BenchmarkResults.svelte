@@ -4,6 +4,7 @@
 	import {fmt} from './benchmark_stats.js';
 	import {RESULT_COLUMNS, results_to_markdown} from './benchmark_results.js';
 	import type {BenchmarkResult, SummaryStats} from './benchmark_types.js';
+	import type {ImplementationName} from './benchmark_fixtures.js';
 
 	const {
 		results = [],
@@ -11,7 +12,7 @@
 		warnings = [],
 	}: {
 		results: Array<BenchmarkResult>;
-		summary: Record<string, SummaryStats> | null;
+		summary: Record<ImplementationName, SummaryStats> | null;
 		warnings: Array<string>;
 	} = $props();
 </script>
@@ -76,8 +77,8 @@
 				{#each results as result (result)}
 					<tr>
 						{#each RESULT_COLUMNS as column (column)}
-							<td class={column.class?.(result[column.key], result) || ''}>
-								{column.format(result[column.key], result)}
+							<td class={column.get_class?.(result) || ''}>
+								{column.get_value(result)}
 							</td>
 						{/each}
 					</tr>
@@ -98,9 +99,10 @@
 					<strong>CV</strong>: Coefficient of Variation (std_dev/mean) - lower is better, &lt;15% is
 					good
 				</li>
-				<li><strong>P95</strong>: 95th percentile - 95% of measurements were faster than this</li>
+				<li>
+					<strong>P75/P90/P95/P99</strong>: Percentiles - X% of measurements were faster than this
+				</li>
 				<li><strong>Ops/sec</strong>: Operations per second (throughput)</li>
-				<li><strong>Per Item</strong>: Time per individual component in batch</li>
 				<li><strong>Stability</strong>: Percentage of iterations with stable system metrics</li>
 			</ul>
 		</div>

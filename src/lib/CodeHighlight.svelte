@@ -172,6 +172,7 @@
 		highlight_manager?.destroy();
 	});
 
+	// TODO use intersect attachment from fuz_ui to optimize ranges
 	// TODO do syntax styling at compile-time in the normal case, and don't import these at runtime
 	// TODO @html making me nervous
 </script>

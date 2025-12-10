@@ -2,7 +2,7 @@
 // This allows CI to pass without running `npm install` for the benchmarks.
 // @ts-nocheck
 
-import {Bench} from 'tinybench';
+import {Benchmark} from '@fuzdev/fuz_util/benchmark.js';
 
 // Prism imports
 import Prism from 'prismjs';
@@ -32,7 +32,6 @@ import {tokenize_syntax} from '../../src/lib/syntax_styler.js';
 /* eslint-disable no-console */
 
 const BENCHMARK_TIME = 10000; //  10000
-const WARMUP_TIME = 1000; //  1000
 const WARMUP_ITERATIONS = 20; //  20
 const LARGE_CONTENT_MULTIPLIER = 100; //  100
 const MIN_ITERATIONS = 3; // Tiny minimum samples cause of Shiki's pathological cases with TS
@@ -112,10 +111,9 @@ const getSampleContent = (lang: SupportedLanguage, large = false) => {
 export const run_comparison_benchmark = async (
 	filter?: string,
 ): Promise<Array<ComparisonResult>> => {
-	const bench = new Bench({
-		time: BENCHMARK_TIME,
-		warmupTime: WARMUP_TIME,
-		warmupIterations: WARMUP_ITERATIONS,
+	const bench = new Benchmark({
+		time_ms: BENCHMARK_TIME,
+		warmup_iterations: WARMUP_ITERATIONS,
 		iterations: MIN_ITERATIONS,
 	});
 
@@ -190,65 +188,59 @@ export const run_comparison_benchmark = async (
 	const results: Array<ComparisonResult> = [];
 
 	for (const task of bench.tasks) {
-		if (
-			task.result.state === 'completed' ||
-			task.result.state === 'aborted' ||
-			task.result.state === 'aborted-with-statistics'
-		) {
-			// Parse benchmark name: implementation_operation_language_size
-			// Handle multi-word implementations like 'fuz_code' and 'shiki_js'
-			const parts = task.name.split('_');
-			let implementation: string;
-			let operation: 'tokenize' | 'stylize';
-			let language: string;
-			let content_size: 'small' | 'large';
+		// Parse benchmark name: implementation_operation_language_size
+		// Handle multi-word implementations like 'fuz_code' and 'shiki_js'
+		const parts = task.name.split('_');
+		let implementation: string;
+		let operation: 'tokenize' | 'stylize';
+		let language: string;
+		let content_size: 'small' | 'large';
 
-			if (task.name.startsWith('fuz_code_tokenize_')) {
-				implementation = 'fuz_code';
-				operation = 'tokenize';
-				language = parts[3];
-				content_size = parts[4] as 'small' | 'large';
-			} else if (task.name.startsWith('fuz_code_stylize_')) {
-				implementation = 'fuz_code';
-				operation = 'stylize';
-				language = parts[3];
-				content_size = parts[4] as 'small' | 'large';
-			} else if (task.name.startsWith('prism_tokenize_')) {
-				implementation = 'prism';
-				operation = 'tokenize';
-				language = parts[2];
-				content_size = parts[3] as 'small' | 'large';
-			} else if (task.name.startsWith('prism_stylize_')) {
-				implementation = 'prism';
-				operation = 'stylize';
-				language = parts[2];
-				content_size = parts[3] as 'small' | 'large';
-			} else if (task.name.startsWith('shiki_js_stylize_')) {
-				implementation = 'shiki_js';
-				operation = 'stylize';
-				language = parts[3];
-				content_size = parts[4] as 'small' | 'large';
-			} else if (task.name.startsWith('shiki_oniguruma_stylize_')) {
-				implementation = 'shiki_oniguruma';
-				operation = 'stylize';
-				language = parts[3];
-				content_size = parts[4] as 'small' | 'large';
-			} else {
-				console.warn(`Unknown benchmark name format: ${task.name}`);
-				continue;
-			}
-
-			results.push({
-				implementation,
-				language,
-				ops_per_sec: task.result.throughput.mean,
-				mean_time: task.result.latency.mean,
-				samples: task.result.latency.samples.length,
-				content_size,
-				total_time: task.result.totalTime,
-				operation,
-			});
+		if (task.name.startsWith('fuz_code_tokenize_')) {
+			implementation = 'fuz_code';
+			operation = 'tokenize';
+			language = parts[3];
+			content_size = parts[4] as 'small' | 'large';
+		} else if (task.name.startsWith('fuz_code_stylize_')) {
+			implementation = 'fuz_code';
+			operation = 'stylize';
+			language = parts[3];
+			content_size = parts[4] as 'small' | 'large';
+		} else if (task.name.startsWith('prism_tokenize_')) {
+			implementation = 'prism';
+			operation = 'tokenize';
+			language = parts[2];
+			content_size = parts[3] as 'small' | 'large';
+		} else if (task.name.startsWith('prism_stylize_')) {
+			implementation = 'prism';
+			operation = 'stylize';
+			language = parts[2];
+			content_size = parts[3] as 'small' | 'large';
+		} else if (task.name.startsWith('shiki_js_stylize_')) {
+			implementation = 'shiki_js';
+			operation = 'stylize';
+			language = parts[3];
+			content_size = parts[4] as 'small' | 'large';
+		} else if (task.name.startsWith('shiki_oniguruma_stylize_')) {
+			implementation = 'shiki_oniguruma';
+			operation = 'stylize';
+			language = parts[3];
+			content_size = parts[4] as 'small' | 'large';
+		} else {
+			console.warn(`Unknown benchmark name format: ${task.name}`);
+			continue;
 		}
+
+		results.push({
+			implementation,
+			language,
+			ops_per_sec: task.ops_per_sec,
+			mean_time: task.mean_time_ms,
+			samples: task.samples,
+			content_size,
+			total_time: task.total_time_ms,
+			operation,
+		});
 	}
 
 	return results;

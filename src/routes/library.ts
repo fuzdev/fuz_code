@@ -53,7 +53,7 @@ export const library_json: LibraryJson = {
 			'@changesets/changelog-git': '^0.2.1',
 			'@fuzdev/fuz_css': '^0.42.1',
 			'@fuzdev/fuz_ui': '^0.172.0',
-			'@fuzdev/fuz_util': '^0.42.0',
+			'@fuzdev/fuz_util': 'file:../fuz_util',
 			'@ryanatkn/eslint-config': '^0.9.0',
 			'@ryanatkn/gro': '^0.181.0',
 			'@sveltejs/adapter-static': '^3.0.10',
@@ -68,7 +68,6 @@ export const library_json: LibraryJson = {
 			'prettier-plugin-svelte': '^3.4.0',
 			svelte: '^5.45.6',
 			'svelte-check': '^4.3.4',
-			tinybench: '^6.0.0',
 			tslib: '^2.8.1',
 			typescript: '^5.9.3',
 			'typescript-eslint': '^8.48.1',
@@ -859,47 +858,6 @@ export const library_json: LibraryJson = {
 										name: 'extension',
 										type: 'SyntaxGrammarRaw',
 										description: '- The new tokens to append.',
-									},
-								],
-							},
-							{
-								name: 'normalize_pattern',
-								kind: 'function',
-								modifiers: ['private'],
-								doc_comment:
-									'Normalize a single pattern to have consistent shape.\nThis ensures all patterns have the same object shape for V8 optimization.',
-								type_signature:
-									'(pattern: RegExp | SyntaxGrammarTokenRaw, visited: Set<number>): SyntaxGrammarToken',
-								return_type: 'SyntaxGrammarToken',
-								parameters: [
-									{
-										name: 'pattern',
-										type: 'RegExp | SyntaxGrammarTokenRaw',
-									},
-									{
-										name: 'visited',
-										type: 'Set<number>',
-									},
-								],
-							},
-							{
-								name: 'normalize_grammar',
-								kind: 'function',
-								modifiers: ['private'],
-								doc_comment:
-									'Normalize a grammar to have consistent object shapes.\nThis performs several optimizations:\n1. Merges `rest` property into main grammar\n2. Ensures all pattern values are arrays\n3. Normalizes all pattern objects to have consistent shapes\n4. Adds global flag to greedy patterns\n\nThis is called once at registration time to avoid runtime overhead.',
-								type_signature: '(grammar: SyntaxGrammarRaw, visited: Set<number>): void',
-								return_type: 'void',
-								parameters: [
-									{
-										name: 'grammar',
-										type: 'SyntaxGrammarRaw',
-									},
-									{
-										name: 'visited',
-										type: 'Set<number>',
-										description:
-											'- Set of grammar object IDs already normalized (for circular references)',
 									},
 								],
 							},

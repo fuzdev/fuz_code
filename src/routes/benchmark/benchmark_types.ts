@@ -1,4 +1,6 @@
 import type {SvelteHTMLElements} from 'svelte/elements';
+import type {Component} from 'svelte';
+import type {BenchmarkStats as FuzBenchmarkStats} from '@fuzdev/fuz_util/benchmark_stats.js';
 
 import type {ImplementationName} from './benchmark_fixtures.js';
 
@@ -15,8 +17,6 @@ export interface BenchmarkConfig {
 	content_multiplier: number;
 }
 
-import type {Component} from 'svelte';
-
 export interface BenchmarkedImplementation {
 	name: string;
 	component: Component<BenchmarkComponentProps>;
@@ -31,34 +31,31 @@ export interface StabilityCheck {
 }
 
 export interface MeasurementData {
-	times: Array<number>;
+	times_ms: Array<number>;
 	stability_checks: Array<StabilityCheck>;
 	timestamps: Array<number>;
 }
 
-export interface BenchmarkStats {
-	mean: number;
-	median: number;
-	std_dev: number;
-	min: number;
-	max: number;
-	p95: number;
-	p99: number;
-	cv: number;
-	confidence_interval: [number, number];
-	outliers: number;
-	outlier_ratio: number;
-	sample_size: number;
-	raw_sample_size: number;
+/**
+ * Browser benchmark stats extending fuz_util's BenchmarkStats with stability tracking.
+ * Uses milliseconds for display (mean_ms, median_ms, etc.) while storing nanoseconds internally.
+ */
+export interface BrowserBenchmarkStats {
+	/** Core stats from fuz_util (in nanoseconds) */
+	core: FuzBenchmarkStats;
+	/** Browser-specific: ratio of stable iterations (0-1) */
 	stability_ratio: number;
+	/** Browser-specific: count of unstable iterations */
 	unstable_iterations: number;
-	ops_per_second: number;
-	failed_iterations: number;
 }
 
-export interface BenchmarkResult extends BenchmarkStats {
+/**
+ * Benchmark result combining stats with test metadata.
+ */
+export interface BenchmarkResult {
 	implementation: string;
 	language: string;
+	stats: BrowserBenchmarkStats;
 }
 
 export interface SummaryStats {
