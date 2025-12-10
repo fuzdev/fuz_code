@@ -13,7 +13,7 @@ export interface BenchmarkResult {
 	name: string;
 	ops_per_sec: number;
 	mean_time: number;
-	samples: number | undefined;
+	samples: number;
 }
 
 export const run_benchmark = async (filter?: string): Promise<Array<BenchmarkResult>> => {

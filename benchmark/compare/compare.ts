@@ -1,4 +1,4 @@
-// TODO this is a workaround for eslint failng without `"benchmark/**/*.ts"` in tsconfig.json
+// TODO this is a workaround for eslint failing without `"benchmark/**/*.ts"` in tsconfig.json
 // This allows CI to pass without running `npm install` for the benchmarks.
 // @ts-nocheck
 
