@@ -53,7 +53,7 @@ export const library_json: LibraryJson = {
 			'@changesets/changelog-git': '^0.2.1',
 			'@fuzdev/fuz_css': '^0.42.1',
 			'@fuzdev/fuz_ui': '^0.172.0',
-			'@fuzdev/fuz_util': 'file:../fuz_util',
+			'@fuzdev/fuz_util': '^0.43.0',
 			'@ryanatkn/eslint-config': '^0.9.0',
 			'@ryanatkn/gro': '^0.181.0',
 			'@sveltejs/adapter-static': '^3.0.10',
