@@ -1,7 +1,7 @@
 import {Benchmark} from '@fuzdev/fuz_util/benchmark.js';
 
-import {samples as all_samples} from '../src/test/fixtures/samples/all.js';
-import {syntax_styler_global} from '../src/lib/syntax_styler_global.js';
+import {samples as all_samples} from '../test/fixtures/samples/all.ts';
+import {syntax_styler_global} from '../lib/syntax_styler_global.ts';
 
 /* eslint-disable no-console */
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import {run_and_print_comparison} from './compare.js';
+import {run_and_print_comparison} from './compare.ts';
 
 const filter = process.argv[2];
 

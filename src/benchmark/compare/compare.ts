@@ -25,9 +25,9 @@ import svelte from 'shiki/langs/svelte.mjs';
 import nord from 'shiki/themes/nord.mjs';
 
 // Fuz Code imports
-import {samples as all_samples} from '../../src/test/fixtures/samples/all.js';
-import {syntax_styler_global} from '../../src/lib/syntax_styler_global.js';
-import {tokenize_syntax} from '../../src/lib/tokenize_syntax.js';
+import {samples as all_samples} from '../../test/fixtures/samples/all.ts';
+import {syntax_styler_global} from '../../lib/syntax_styler_global.ts';
+import {tokenize_syntax} from '../../lib/tokenize_syntax.ts';
 
 /* eslint-disable no-console */
 
