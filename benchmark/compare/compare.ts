@@ -31,9 +31,9 @@ import {tokenize_syntax} from '../../src/lib/syntax_styler.js';
 
 /* eslint-disable no-console */
 
-const BENCHMARK_TIME = 10000; //  10000
-const WARMUP_ITERATIONS = 20; //  20
-const LARGE_CONTENT_MULTIPLIER = 100; //  100
+const BENCHMARK_TIME = 10000;
+const WARMUP_ITERATIONS = 20;
+const LARGE_CONTENT_MULTIPLIER = 100;
 const MIN_ITERATIONS = 3; // Tiny minimum samples cause of Shiki's pathological cases with TS
 
 export interface ComparisonResult {
