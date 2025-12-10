@@ -30,8 +30,8 @@ export const library_json: LibraryJson = {
 			preview: 'vite preview',
 			deploy: 'gro deploy',
 			benchmark: 'gro run benchmark/run_benchmarks.ts',
-			'benchmark-compare': 'gro run benchmark/compare/run_compare.ts',
-			'update-generated-fixtures': 'gro src/test/fixtures/update',
+			'benchmark:compare': 'gro run benchmark/compare/run_compare.ts',
+			'fixtures:update': 'gro src/test/fixtures/update',
 		},
 		type: 'module',
 		engines: {

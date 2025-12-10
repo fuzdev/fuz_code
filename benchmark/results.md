@@ -4,39 +4,21 @@
 
 | Sample | Ops/sec | Mean Time (ms) | Samples |
 |--------|---------|----------------|---------|
-| json_complex | 28746.87 | 0.0373 | 268006 |
-| css_complex | 27154.80 | 0.0389 | 257068 |
-| ts_complex | 1811.93 | 0.5629 | 17765 |
-| html_complex | 7624.85 | 0.1344 | 74425 |
-| svelte_complex | 2191.20 | 0.4660 | 21462 |
-| md_complex | 1919.49 | 0.5377 | 18599 |
-| large:json_complex | 251.14 | 4.0689 | 2458 |
-| large:css_complex | 233.08 | 4.3726 | 2287 |
-| large:ts_complex | 7.27 | 140.2721 | 72 |
-| large:html_complex | 48.17 | 21.6499 | 463 |
-| large:svelte_complex | 11.89 | 87.4511 | 115 |
-| large:md_complex | 6.47 | 156.3995 | 64 |
+| json_complex | 29102.94 | 0.0344 | 97284 |
+| css_complex | 27087.28 | 0.0369 | 93104 |
+| ts_complex | 1857.77 | 0.5383 | 13182 |
+| html_complex | 7668.00 | 0.1304 | 72407 |
+| svelte_complex | 2122.21 | 0.4712 | 18851 |
+| md_complex | 1922.18 | 0.5202 | 18668 |
+| large:json_complex | 255.52 | 3.9135 | 2098 |
+| large:css_complex | 251.29 | 3.9794 | 2183 |
+| large:ts_complex | 7.39 | 135.2742 | 75 |
+| large:html_complex | 56.35 | 17.7476 | 501 |
+| large:svelte_complex | 11.04 | 90.6188 | 111 |
+| large:md_complex | 7.23 | 138.3028 | 73 |
 
 **Total samples benchmarked:** 12
-**Average ops/sec:** 5833.93
-
-| Sample | Ops/sec | Mean Time (ms) | Samples |
-|--------|---------|----------------|---------|
-| json_complex | 28865.33 | 0.0359 | 278880 |
-| css_complex | 27777.36 | 0.0368 | 272048 |
-| ts_complex | 1900.84 | 0.5299 | 18873 |
-| html_complex | 8204.91 | 0.1253 | 79783 |
-| svelte_complex | 2202.40 | 0.4673 | 21398 |
-| md_complex | 1858.77 | 0.5663 | 17658 |
-| large:json_complex | 243.87 | 4.2579 | 2349 |
-| large:css_complex | 247.65 | 4.1402 | 2417 |
-| large:ts_complex | 5.73 | 179.6819 | 64 |
-| large:html_complex | 56.14 | 18.5677 | 539 |
-| large:svelte_complex | 13.36 | 76.3735 | 131 |
-| large:md_complex | 7.64 | 132.1847 | 76 |
-
-**Total samples benchmarked:** 12
-**Average ops/sec:** 5948.67
+**Average ops/sec:** 5862.43
 
 ## Browser Benchmark Results
 
