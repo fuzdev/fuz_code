@@ -1,3 +1,5 @@
+import {TIME_NS_PER_MS} from '@fuzdev/fuz_util/time.js';
+
 import type {
 	BenchmarkedImplementation,
 	MeasurementData,
@@ -59,7 +61,7 @@ export const measurement_phase = async (
 	on_progress?: () => void,
 	should_stop?: () => boolean,
 ): Promise<MeasurementData> => {
-	const times: Array<number> = [];
+	const times_ms: Array<number> = [];
 	const stability_checks = [];
 	const timestamps = [];
 
@@ -97,22 +99,22 @@ export const measurement_phase = async (
 			// Validate the timing
 			if (elapsed <= 0) {
 				console.warn(`[Measurement] Suspicious timing (${elapsed}ms) - marking as failed`);
-				times.push(NaN);
+				times_ms.push(NaN);
 				timestamps.push(Date.now());
 			} else if (elapsed < MIN_VALID_TIMING_MS) {
 				console.warn(
 					`[Measurement] Suspiciously fast timing (${elapsed}ms) - possible no-op render`,
 				);
-				times.push(elapsed);
+				times_ms.push(elapsed);
 				timestamps.push(Date.now());
 				recent_timings.push(elapsed);
 			} else if (elapsed > MAX_VALID_TIMING_MS) {
 				console.warn(`[Measurement] Extremely slow timing (${elapsed}ms) - possible hang`);
-				times.push(NaN);
+				times_ms.push(NaN);
 				timestamps.push(Date.now());
 			} else {
 				console.log(`[Measurement] Iteration ${i + 1} complete: ${elapsed.toFixed(2)}ms`);
-				times.push(elapsed);
+				times_ms.push(elapsed);
 				timestamps.push(Date.now());
 				recent_timings.push(elapsed);
 			}
@@ -120,7 +122,7 @@ export const measurement_phase = async (
 			console.error(`[Measurement] Iteration ${i + 1} failed:`, error);
 			// Continue with next iteration instead of failing entire test
 			// Record a null/NaN to indicate failure
-			times.push(NaN);
+			times_ms.push(NaN);
 			timestamps.push(Date.now());
 		}
 
@@ -133,7 +135,7 @@ export const measurement_phase = async (
 		}
 	}
 
-	return {times, stability_checks, timestamps};
+	return {times_ms, stability_checks, timestamps};
 };
 
 // Run complete benchmark suite
@@ -211,27 +213,28 @@ export const run_all_benchmarks = async (
 
 				// Analysis
 				const stats = analyze_results(measurement_data);
+				const mean_ms = stats.core.mean_ns / TIME_NS_PER_MS;
 				console.log(
-					`[Runner] ${test_name} complete - mean: ${stats.mean.toFixed(2)}ms, ops/sec: ${stats.ops_per_second.toFixed(2)}`,
+					`[Runner] ${test_name} complete - mean: ${mean_ms.toFixed(2)}ms, ops/sec: ${stats.core.ops_per_second.toFixed(2)}`,
 				);
 
 				// Check for suspicious results
-				if (stats.failed_iterations > 0) {
-					warnings.push(`${test_name}: ${stats.failed_iterations} failed iterations`);
+				if (stats.core.failed_iterations > 0) {
+					warnings.push(`${test_name}: ${stats.core.failed_iterations} failed iterations`);
 				}
-				if (stats.mean < SUSPICIOUS_MEAN_MS) {
-					warnings.push(`${test_name}: Suspiciously fast mean time (${stats.mean.toFixed(3)}ms)`);
+				if (mean_ms < SUSPICIOUS_MEAN_MS) {
+					warnings.push(`${test_name}: Suspiciously fast mean time (${mean_ms.toFixed(3)}ms)`);
 				}
-				if (stats.outlier_ratio > HIGH_OUTLIER_RATIO) {
+				if (stats.core.outlier_ratio > HIGH_OUTLIER_RATIO) {
 					warnings.push(
-						`${test_name}: High outlier ratio (${(stats.outlier_ratio * 100).toFixed(1)}%)`,
+						`${test_name}: High outlier ratio (${(stats.core.outlier_ratio * 100).toFixed(1)}%)`,
 					);
 				}
 
 				results.push({
 					implementation: impl.name,
 					language: lang,
-					...stats,
+					stats,
 				});
 
 				if (callbacks?.on_test_complete) {

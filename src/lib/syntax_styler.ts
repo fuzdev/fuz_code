@@ -35,7 +35,7 @@ export class SyntaxStyler {
 	add_lang(id: string, grammar: SyntaxGrammarRaw, aliases?: Array<string>): void {
 		// Normalize grammar once at registration for optimal runtime performance
 		// Use a visited set to handle circular references
-		this.normalize_grammar(grammar, new Set());
+		this.#normalize_grammar(grammar, new Set());
 		// After normalization, grammar has the shape of SyntaxGrammar
 		const normalized = grammar as unknown as SyntaxGrammar;
 		this.langs[id] = normalized;
@@ -233,7 +233,7 @@ export class SyntaxStyler {
 		}
 
 		// Normalize the updated grammar to ensure inserted patterns have consistent shape
-		this.normalize_grammar(updated, new Set());
+		this.#normalize_grammar(updated, new Set());
 
 		// After normalization, cast to SyntaxGrammar
 		const normalized = updated as unknown as SyntaxGrammar;
@@ -334,7 +334,7 @@ export class SyntaxStyler {
 		// Merge normalized base with un-normalized extension
 		const extended = {...structuredClone(this.get_lang(base_id)), ...extension};
 		// Normalize the extension parts
-		this.normalize_grammar(extended as SyntaxGrammarRaw, new Set());
+		this.#normalize_grammar(extended as SyntaxGrammarRaw, new Set());
 		// Return as SyntaxGrammar
 		return extended as unknown as SyntaxGrammar;
 	}
@@ -343,7 +343,7 @@ export class SyntaxStyler {
 	 * Normalize a single pattern to have consistent shape.
 	 * This ensures all patterns have the same object shape for V8 optimization.
 	 */
-	private normalize_pattern(
+	#normalize_pattern(
 		pattern: RegExp | SyntaxGrammarTokenRaw,
 		visited: Set<number>,
 	): SyntaxGrammarToken {
@@ -366,7 +366,7 @@ export class SyntaxStyler {
 		// Recursively normalize the inside grammar if present
 		let normalized_inside: SyntaxGrammar | null = null;
 		if (p.inside) {
-			this.normalize_grammar(p.inside, visited);
+			this.#normalize_grammar(p.inside, visited);
 			// After normalization, cast to SyntaxGrammar
 			normalized_inside = p.inside as unknown as SyntaxGrammar;
 		}
@@ -391,7 +391,7 @@ export class SyntaxStyler {
 	 * This is called once at registration time to avoid runtime overhead.
 	 * @param visited - Set of grammar object IDs already normalized (for circular references)
 	 */
-	private normalize_grammar(grammar: SyntaxGrammarRaw, visited: Set<number>): void {
+	#normalize_grammar(grammar: SyntaxGrammarRaw, visited: Set<number>): void {
 		// Check if we've already normalized this grammar (circular reference)
 		const grammar_id = id_of(grammar);
 		if (visited.has(grammar_id)) {
@@ -422,7 +422,7 @@ export class SyntaxStyler {
 
 			// Always store as array of normalized patterns
 			const patterns = Array.isArray(value) ? value : [value];
-			grammar[key] = patterns.map((p) => this.normalize_pattern(p, visited));
+			grammar[key] = patterns.map((p) => this.#normalize_pattern(p, visited));
 		}
 	}
 

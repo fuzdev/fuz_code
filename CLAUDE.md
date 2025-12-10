@@ -13,7 +13,7 @@ gro test                            # run all tests
 gro test src/test/fixtures/check    # verify fixture generation
 gro src/test/fixtures/update        # regenerate fixtures
 npm run benchmark                   # run performance benchmarks
-npm run benchmark-compare           # compare performance with Prism and Shiki
+npm run benchmark:compare           # compare performance with Prism and Shiki
 ```
 
 ## Architecture
@@ -183,7 +183,7 @@ and is not widely supported across browsers. Use the standard `Code.svelte` comp
 
 ```bash
 npm run benchmark           # internal performance benchmark
-npm run benchmark-compare   # compare with Prism and Shiki
+npm run benchmark:compare   # compare with Prism and Shiki
 ```
 
 **Internal benchmark** tests fuz_code performance across all sample files with small and large (100x) content.

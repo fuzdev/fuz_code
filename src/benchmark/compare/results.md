@@ -1,0 +1,66 @@
+# Syntax Highlighting Performance Comparison
+
+## Results
+
+| Language+Operation+Size | Implementation  | %    | Ops/sec  | Mean Time (ms) |
+| ----------------------- | --------------- | ---- | -------- | -------------- |
+| css tokenize small      | fuz_code        | 100% | 63906.00 | 0.0156         |
+| css tokenize small      | prism           | 96%  | 61375.19 | 0.0163         |
+| css tokenize large      | fuz_code        | 100% | 625.05   | 1.5999         |
+| css tokenize large      | prism           | 94%  | 585.31   | 1.7085         |
+| css stylize small       | fuz_code        | 100% | 27674.88 | 0.0361         |
+| css stylize small       | prism           | 83%  | 22930.51 | 0.0436         |
+| css stylize small       | shiki_js        | 5%   | 1384.93  | 0.7221         |
+| css stylize small       | shiki_oniguruma | 2%   | 612.31   | 1.6331         |
+| css stylize large       | fuz_code        | 100% | 260.18   | 3.8435         |
+| css stylize large       | prism           | 85%  | 222.42   | 4.4960         |
+| css stylize large       | shiki_js        | 6%   | 14.57    | 68.6312        |
+| css stylize large       | shiki_oniguruma | 2%   | 5.88     | 169.9533       |
+| html tokenize small     | prism           | 100% | 20538.77 | 0.0487         |
+| html tokenize small     | fuz_code        | 71%  | 14635.80 | 0.0683         |
+| html tokenize large     | prism           | 100% | 196.47   | 5.0899         |
+| html tokenize large     | fuz_code        | 69%  | 135.55   | 7.3775         |
+| html stylize small      | prism           | 100% | 8268.82  | 0.1209         |
+| html stylize small      | fuz_code        | 95%  | 7869.23  | 0.1271         |
+| html stylize small      | shiki_js        | 7%   | 577.58   | 1.7314         |
+| html stylize small      | shiki_oniguruma | 6%   | 518.00   | 1.9305         |
+| html stylize large      | prism           | 100% | 69.76    | 14.3339        |
+| html stylize large      | fuz_code        | 85%  | 59.32    | 16.8586        |
+| html stylize large      | shiki_oniguruma | 8%   | 5.67     | 176.2921       |
+| html stylize large      | shiki_js        | 7%   | 5.22     | 191.4912       |
+| json tokenize small     | prism           | 100% | 70101.75 | 0.0143         |
+| json tokenize small     | fuz_code        | 90%  | 62894.89 | 0.0159         |
+| json tokenize large     | prism           | 100% | 730.45   | 1.3690         |
+| json tokenize large     | fuz_code        | 91%  | 664.24   | 1.5055         |
+| json stylize small      | fuz_code        | 100% | 28787.97 | 0.0347         |
+| json stylize small      | prism           | 91%  | 26155.46 | 0.0382         |
+| json stylize small      | shiki_js        | 7%   | 1976.23  | 0.5060         |
+| json stylize small      | shiki_oniguruma | 6%   | 1862.09  | 0.5370         |
+| json stylize large      | fuz_code        | 100% | 258.12   | 3.8741         |
+| json stylize large      | prism           | 90%  | 232.71   | 4.2971         |
+| json stylize large      | shiki_js        | 8%   | 19.57    | 51.0972        |
+| json stylize large      | shiki_oniguruma | 7%   | 18.65    | 53.6175        |
+| svelte tokenize small   | fuz_code        | 100% | 3591.71  | 0.2784         |
+| svelte tokenize small   | prism           | 94%  | 3370.56  | 0.2967         |
+| svelte tokenize large   | prism           | 100% | 34.16    | 29.2750        |
+| svelte tokenize large   | fuz_code        | 89%  | 30.24    | 33.0691        |
+| svelte stylize small    | fuz_code        | 100% | 2203.61  | 0.4538         |
+| svelte stylize small    | prism           | 90%  | 1993.47  | 0.5016         |
+| svelte stylize small    | shiki_js        | 3%   | 66.53    | 15.0300        |
+| svelte stylize small    | shiki_oniguruma | 3%   | 63.37    | 15.7814        |
+| svelte stylize large    | prism           | 100% | 12.80    | 78.1422        |
+| svelte stylize large    | fuz_code        | 93%  | 11.87    | 84.2803        |
+| svelte stylize large    | shiki_js        | 5%   | 0.66     | 1518.8657      |
+| svelte stylize large    | shiki_oniguruma | 5%   | 0.65     | 1529.7383      |
+| ts tokenize small       | prism           | 100% | 2893.71  | 0.3456         |
+| ts tokenize small       | fuz_code        | 95%  | 2737.42  | 0.3653         |
+| ts tokenize large       | prism           | 100% | 19.62    | 50.9801        |
+| ts tokenize large       | fuz_code        | 58%  | 11.42    | 87.5380        |
+| ts stylize small        | fuz_code        | 100% | 1847.38  | 0.5413         |
+| ts stylize small        | prism           | 100% | 1838.73  | 0.5439         |
+| ts stylize small        | shiki_oniguruma | 4%   | 80.20    | 12.4684        |
+| ts stylize small        | shiki_js        | 3%   | 62.61    | 15.9710        |
+| ts stylize large        | prism           | 100% | 10.57    | 94.6383        |
+| ts stylize large        | fuz_code        | 69%  | 7.32     | 136.6118       |
+| ts stylize large        | shiki_oniguruma | 8%   | 0.86     | 1164.1949      |
+| ts stylize large        | shiki_js        | 5%   | 0.48     | 2072.6083      |

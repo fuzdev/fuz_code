@@ -1,12 +1,11 @@
-import {Bench} from 'tinybench';
+import {Benchmark} from '@fuzdev/fuz_util/benchmark.js';
 
-import {samples as all_samples} from '../src/test/fixtures/samples/all.js';
-import {syntax_styler_global} from '../src/lib/syntax_styler_global.js';
+import {samples as all_samples} from '../test/fixtures/samples/all.ts';
+import {syntax_styler_global} from '../lib/syntax_styler_global.ts';
 
 /* eslint-disable no-console */
 
 const BENCHMARK_TIME = 10000;
-const WARMUP_TIME = 1000;
 const WARMUP_ITERATIONS = 50;
 const LARGE_CONTENT_MULTIPLIER = 100;
 
@@ -14,14 +13,13 @@ export interface BenchmarkResult {
 	name: string;
 	ops_per_sec: number;
 	mean_time: number;
-	samples: number | undefined;
+	samples: number;
 }
 
 export const run_benchmark = async (filter?: string): Promise<Array<BenchmarkResult>> => {
-	const bench = new Bench({
-		time: BENCHMARK_TIME,
-		warmupTime: WARMUP_TIME,
-		warmupIterations: WARMUP_ITERATIONS,
+	const bench = new Benchmark({
+		duration_ms: BENCHMARK_TIME,
+		warmup_iterations: WARMUP_ITERATIONS,
 	});
 
 	const samples = Object.values(all_samples);
@@ -59,16 +57,15 @@ export const run_benchmark = async (filter?: string): Promise<Array<BenchmarkRes
 	await bench.run();
 
 	const results: Array<BenchmarkResult> = [];
+	const bench_results = bench.results();
 
-	for (const task of bench.tasks) {
-		if (task.result.state === 'completed' || task.result.state === 'aborted-with-statistics') {
-			results.push({
-				name: task.name,
-				ops_per_sec: task.result.throughput.mean,
-				mean_time: task.result.latency.mean,
-				samples: task.result.latency.samples?.length,
-			});
-		}
+	for (const result of bench_results) {
+		results.push({
+			name: result.name,
+			ops_per_sec: result.stats.ops_per_second,
+			mean_time: result.stats.mean_ns / 1_000_000, // Convert ns to ms
+			samples: result.stats.sample_size,
+		});
 	}
 
 	return results;

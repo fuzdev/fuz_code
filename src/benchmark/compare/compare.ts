@@ -1,8 +1,8 @@
-// TODO this is a workaround for eslint failng without `"benchmark/**/*.ts"` in tsconfig.json
+// TODO this is a workaround for eslint failing without `"benchmark/**/*.ts"` in tsconfig.json
 // This allows CI to pass without running `npm install` for the benchmarks.
 // @ts-nocheck
 
-import {Bench} from 'tinybench';
+import {Benchmark} from '@fuzdev/fuz_util/benchmark.js';
 
 // Prism imports
 import Prism from 'prismjs';
@@ -25,17 +25,16 @@ import svelte from 'shiki/langs/svelte.mjs';
 import nord from 'shiki/themes/nord.mjs';
 
 // Fuz Code imports
-import {samples as all_samples} from '../../src/test/fixtures/samples/all.js';
-import {syntax_styler_global} from '../../src/lib/syntax_styler_global.js';
-import {tokenize_syntax} from '../../src/lib/syntax_styler.js';
+import {samples as all_samples} from '../../test/fixtures/samples/all.ts';
+import {syntax_styler_global} from '../../lib/syntax_styler_global.ts';
+import {tokenize_syntax} from '../../lib/tokenize_syntax.ts';
 
 /* eslint-disable no-console */
 
-const BENCHMARK_TIME = 10000; //  10000
-const WARMUP_TIME = 1000; //  1000
-const WARMUP_ITERATIONS = 20; //  20
-const LARGE_CONTENT_MULTIPLIER = 100; //  100
-const MIN_ITERATIONS = 3; // Tiny minimum samples cause of Shiki's pathological cases with TS
+const BENCHMARK_TIME = 10000;
+const WARMUP_ITERATIONS = 20;
+const LARGE_CONTENT_MULTIPLIER = 100;
+const MIN_ITERATIONS = 3; // Tiny minimum samples because of Shiki's pathological cases with TS
 
 export interface ComparisonResult {
 	implementation: string;
@@ -112,11 +111,10 @@ const getSampleContent = (lang: SupportedLanguage, large = false) => {
 export const run_comparison_benchmark = async (
 	filter?: string,
 ): Promise<Array<ComparisonResult>> => {
-	const bench = new Bench({
-		time: BENCHMARK_TIME,
-		warmupTime: WARMUP_TIME,
-		warmupIterations: WARMUP_ITERATIONS,
-		iterations: MIN_ITERATIONS,
+	const bench = new Benchmark({
+		duration_ms: BENCHMARK_TIME,
+		warmup_iterations: WARMUP_ITERATIONS,
+		min_iterations: MIN_ITERATIONS,
 	});
 
 	// Setup Shiki
@@ -188,67 +186,62 @@ export const run_comparison_benchmark = async (
 
 	// Process results
 	const results: Array<ComparisonResult> = [];
+	const bench_results = bench.results();
 
-	for (const task of bench.tasks) {
-		if (
-			task.result.state === 'completed' ||
-			task.result.state === 'aborted' ||
-			task.result.state === 'aborted-with-statistics'
-		) {
-			// Parse benchmark name: implementation_operation_language_size
-			// Handle multi-word implementations like 'fuz_code' and 'shiki_js'
-			const parts = task.name.split('_');
-			let implementation: string;
-			let operation: 'tokenize' | 'stylize';
-			let language: string;
-			let content_size: 'small' | 'large';
+	for (const result of bench_results) {
+		// Parse benchmark name: implementation_operation_language_size
+		// Handle multi-word implementations like 'fuz_code' and 'shiki_js'
+		const parts = result.name.split('_');
+		let implementation: string;
+		let operation: 'tokenize' | 'stylize';
+		let language: string;
+		let content_size: 'small' | 'large';
 
-			if (task.name.startsWith('fuz_code_tokenize_')) {
-				implementation = 'fuz_code';
-				operation = 'tokenize';
-				language = parts[3];
-				content_size = parts[4] as 'small' | 'large';
-			} else if (task.name.startsWith('fuz_code_stylize_')) {
-				implementation = 'fuz_code';
-				operation = 'stylize';
-				language = parts[3];
-				content_size = parts[4] as 'small' | 'large';
-			} else if (task.name.startsWith('prism_tokenize_')) {
-				implementation = 'prism';
-				operation = 'tokenize';
-				language = parts[2];
-				content_size = parts[3] as 'small' | 'large';
-			} else if (task.name.startsWith('prism_stylize_')) {
-				implementation = 'prism';
-				operation = 'stylize';
-				language = parts[2];
-				content_size = parts[3] as 'small' | 'large';
-			} else if (task.name.startsWith('shiki_js_stylize_')) {
-				implementation = 'shiki_js';
-				operation = 'stylize';
-				language = parts[3];
-				content_size = parts[4] as 'small' | 'large';
-			} else if (task.name.startsWith('shiki_oniguruma_stylize_')) {
-				implementation = 'shiki_oniguruma';
-				operation = 'stylize';
-				language = parts[3];
-				content_size = parts[4] as 'small' | 'large';
-			} else {
-				console.warn(`Unknown benchmark name format: ${task.name}`);
-				continue;
-			}
-
-			results.push({
-				implementation,
-				language,
-				ops_per_sec: task.result.throughput.mean,
-				mean_time: task.result.latency.mean,
-				samples: task.result.latency.samples.length,
-				content_size,
-				total_time: task.result.totalTime,
-				operation,
-			});
+		if (result.name.startsWith('fuz_code_tokenize_')) {
+			implementation = 'fuz_code';
+			operation = 'tokenize';
+			language = parts[3];
+			content_size = parts[4] as 'small' | 'large';
+		} else if (result.name.startsWith('fuz_code_stylize_')) {
+			implementation = 'fuz_code';
+			operation = 'stylize';
+			language = parts[3];
+			content_size = parts[4] as 'small' | 'large';
+		} else if (result.name.startsWith('prism_tokenize_')) {
+			implementation = 'prism';
+			operation = 'tokenize';
+			language = parts[2];
+			content_size = parts[3] as 'small' | 'large';
+		} else if (result.name.startsWith('prism_stylize_')) {
+			implementation = 'prism';
+			operation = 'stylize';
+			language = parts[2];
+			content_size = parts[3] as 'small' | 'large';
+		} else if (result.name.startsWith('shiki_js_stylize_')) {
+			implementation = 'shiki_js';
+			operation = 'stylize';
+			language = parts[3];
+			content_size = parts[4] as 'small' | 'large';
+		} else if (result.name.startsWith('shiki_oniguruma_stylize_')) {
+			implementation = 'shiki_oniguruma';
+			operation = 'stylize';
+			language = parts[3];
+			content_size = parts[4] as 'small' | 'large';
+		} else {
+			console.warn(`Unknown benchmark name format: ${result.name}`);
+			continue;
 		}
+
+		results.push({
+			implementation,
+			language,
+			ops_per_sec: result.stats.ops_per_second,
+			mean_time: result.stats.mean_ns / 1_000_000, // Convert ns to ms
+			samples: result.stats.sample_size,
+			content_size,
+			total_time: result.total_time_ms,
+			operation,
+		});
 	}
 
 	return results;

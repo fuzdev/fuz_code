@@ -13,10 +13,10 @@
 
 	// Configuration
 	const config: BenchmarkConfig = $state({
-		iterations: 10,
-		warmup_count: 3,
-		cooldown_ms: 100,
-		content_multiplier: 20, // 100 is hanging at CSS in html mode
+		iterations: 5,
+		warmup_count: 2,
+		cooldown_ms: 50,
+		content_multiplier: 10,
 	});
 
 	// UI state
@@ -93,22 +93,22 @@
 				<legend>config</legend>
 				<label>
 					<div class="title">iterations</div>
-					<input type="number" bind:value={config.iterations} min="10" disabled={running} />
+					<input type="number" bind:value={config.iterations} min="1" disabled={running} />
 				</label>
 
 				<label>
 					<div class="title">content multiplier</div>
-					<input type="number" bind:value={config.content_multiplier} min="50" disabled={running} />
+					<input type="number" bind:value={config.content_multiplier} min="1" disabled={running} />
 				</label>
 
 				<label>
 					<div class="title">warmup runs</div>
-					<input type="number" bind:value={config.warmup_count} min="3" disabled={running} />
+					<input type="number" bind:value={config.warmup_count} min="0" disabled={running} />
 				</label>
 
 				<label>
 					<div class="title">cooldown (ms)</div>
-					<input type="number" bind:value={config.cooldown_ms} min="10" disabled={running} />
+					<input type="number" bind:value={config.cooldown_ms} min="0" disabled={running} />
 				</label>
 			</fieldset>
 
