@@ -37,7 +37,7 @@ export const RESULT_COLUMNS: Array<ResultColumn> = [
 	},
 	{
 		header: 'Median (ms)',
-		get_value: (r) => fmt(ns_to_ms(r.stats.core.median_ns)),
+		get_value: (r) => fmt(ns_to_ms(r.stats.core.p50_ns)),
 	},
 	{
 		header: 'Std Dev',
