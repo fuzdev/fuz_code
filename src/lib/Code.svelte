@@ -12,6 +12,7 @@
 		grammar,
 		inline = false,
 		wrap = false,
+		nomargin = false,
 		syntax_styler = syntax_styler_global,
 		children,
 		...rest
@@ -75,6 +76,13 @@
 		 */
 		wrap?: boolean;
 		/**
+		 * Whether to disable the default margin-bottom on block code.
+		 * Block code has `margin-bottom: var(--space_lg)` by default when not `:last-child`.
+		 *
+		 * @default false
+		 */
+		nomargin?: boolean;
+		/**
 		 * Custom SyntaxStyler instance to use for highlighting.
 		 * Allows using a different styler with custom grammars or configuration.
 		 *
@@ -121,7 +129,7 @@
 
 <!-- eslint-disable svelte/no-at-html-tags -->
 
-<code {...rest} class:inline class:wrap data-lang={lang}
+<code {...rest} class:inline class:wrap class:nomargin data-lang={lang}
 	>{#if highlighting_disabled}{content}{:else if children}{@render children(
 			html_content,
 		)}{:else}{@html html_content}{/if}</code
@@ -142,5 +150,9 @@
 	code.wrap:not(.inline) {
 		/* unset what we set above, otherwise rely on Fuz CSS base styles */
 		white-space: pre-wrap;
+	}
+
+	code:not(.inline):not(.nomargin):not(:last-child) {
+		margin-bottom: var(--space_lg);
 	}
 </style>

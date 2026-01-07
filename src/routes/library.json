@@ -196,6 +196,12 @@
 								"description": "Whether to wrap long lines in block code.\nSets `white-space: pre-wrap` instead of `white-space: pre`.\n\n**Behavior:**\n- Wraps at whitespace (spaces, newlines)\n- Long tokens without spaces (URLs, hashes) will still scroll horizontally\n- Default `false` provides traditional code block behavior\n\nOnly affects block code (ignored for inline mode)."
 							},
 							{
+								"name": "nomargin",
+								"type": "boolean",
+								"optional": true,
+								"description": "Whether to disable the default margin-bottom on block code.\nBlock code has `margin-bottom: var(--space_lg)` by default when not `:last-child`."
+							},
+							{
 								"name": "syntax_styler",
 								"type": "SyntaxStyler",
 								"optional": true,

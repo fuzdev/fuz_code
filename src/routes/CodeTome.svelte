@@ -76,9 +76,7 @@ import '@fuzdev/fuz_code/theme_variables.css'; // also this if not using Fuz CSS
 		<a href="https://github.com/pngwn/prism-svelte"><code>prism-svelte</code></a>
 		by <a href="https://github.com/pngwn">@pngwn</a>:
 	</p>
-	<div class="mb_lg">
-		<Code content={'<Code content="<scr..." />'} />
-	</div>
+	<Code content={'<Code content="<scr..." />'} />
 	<p>styled:</p>
 	<div>
 		<Code
@@ -99,9 +97,7 @@ import '@fuzdev/fuz_code/theme_variables.css'; // also this if not using Fuz CSS
 	<p>
 		<TomeLink name="Code" /> supports TypeScript with <code>lang="ts"</code>:
 	</p>
-	<div class="mb_lg">
-		<Code content={`<Code lang="ts" content="export type A<T> = ('b' | 3) & T;" />`} />
-	</div>
+	<Code content={`<Code lang="ts" content="export type A<T> = ('b' | 3) & T;" />`} />
 	<div>
 		<Code lang="ts" content={`export type A<T> = ('b' | 3) & T;`} />
 	</div>
@@ -112,9 +108,7 @@ import '@fuzdev/fuz_code/theme_variables.css'; // also this if not using Fuz CSS
 		<TomeLink name="Code" /> supports Markdown with <code>lang="md"</code>, and fenced blocks for
 		all languages:
 	</p>
-	<div class="mb_lg">
-		<Code content={`<Code lang="md" content="# hello \`world\` ..." />`} />
-	</div>
+	<Code content={`<Code lang="md" content="# hello \`world\` ..." />`} />
 	<div>
 		<Code lang="md" content={`# hello \`world\`\n\n\`\`\`ts\n\tconst a = 1;\n\`\`\``} />
 	</div>
@@ -124,9 +118,7 @@ import '@fuzdev/fuz_code/theme_variables.css'; // also this if not using Fuz CSS
 	<p>
 		Passing <code>lang={'{'}null}</code> disables syntax styling:
 	</p>
-	<div class="mb_lg">
-		<Code content={'<Code lang={null} content="<aside>all is gray</aside>" />'} />
-	</div>
+	<Code content={'<Code lang={null} content="<aside>all is gray</aside>" />'} />
 	<Code lang={null} content={`<aside>all is gray</aside>`} />
 </section>
 <section>
