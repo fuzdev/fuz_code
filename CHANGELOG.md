@@ -1,5 +1,11 @@
 # @fuzdev/fuz_code
 
+## 0.39.0
+
+### Minor Changes
+
+- add bottom margin to `Code` with `nomargin` prop to opt out ([908896a](https://github.com/fuzdev/fuz_code/commit/908896a))
+
 ## 0.38.0
 
 ### Minor Changes
