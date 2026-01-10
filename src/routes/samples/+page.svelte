@@ -15,7 +15,7 @@
 	</header>
 
 	<section class="mb_xl5">
-		<h2 class="text_align_center">HTML rendering (default)</h2>
+		<h2 class="text-align:center">HTML rendering (default)</h2>
 		<aside
 			class="panel p_md mb_xl3 width_upto_md mx_auto
 		"
@@ -37,7 +37,7 @@
 	<hr class="my_xl5" />
 
 	<section id="experimental">
-		<h2 class="text_align_center">CSS Custom Highlight API (experimental)</h2>
+		<h2 class="text-align:center">CSS Custom Highlight API (experimental)</h2>
 		<aside
 			class="panel p_md mb_xl3 width_upto_md mx_auto
 		"
@@ -66,7 +66,7 @@
 		{#each Object.values(samples) as sample (sample.name)}
 			<section>
 				<h2 class="panel p_md mb_0 box">{sample.lang}</h2>
-				<div class="display_flex justify_content_center flex_wrap_wrap gap_sm py_xl5">
+				<div class="display:flex justify-content:center flex-wrap:wrap gap_sm py_xl5">
 					<div class="constrain_width">
 						<h3>{sample.lang} html strings</h3>
 						<CodeHighlight content={sample.content} lang={sample.lang} mode="html" />
