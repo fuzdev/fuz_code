@@ -28,7 +28,7 @@
 		</aside>
 		{#each Object.values(samples) as sample (sample.name)}
 			<div class="box mb_xl3">
-				<h3 class="panel p_md mb_xs width_100 box">{sample.lang}</h3>
+				<h3 class="panel p_md mb_xs width:100% box">{sample.lang}</h3>
 				<Code content={sample.content} lang={sample.lang} />
 			</div>
 		{/each}

@@ -12,7 +12,7 @@
 	const library = library_context.get();
 </script>
 
-<main class="box width_100">
+<main class="box width:100%">
 	<div class="width_upto_md">
 		<section class="box" style:padding-top="var(--docs_primary_nav_height, 60px)">
 			<LibrarySummary {library} />
