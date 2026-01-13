@@ -504,7 +504,7 @@ describe('error handling', () => {
 		const emoji = '🎨';
 		const element = create_code_element(`${emoji} = 1;`);
 
-		// JavaScript string length vs DOM position
+		// JS string length vs DOM position
 		assert.equal(emoji.length, 2); // UTF-16 code units
 
 		const tokens: SyntaxTokenStream = [
