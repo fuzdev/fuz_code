@@ -58,8 +58,8 @@ The system uses regex-based tokenization inherited from PrismJS, maintaining com
 
 #### Themes
 
-- `src/lib/theme.css` - CSS classes for HTML mode (requires Fuz CSS or theme_variables.css)
-- `src/lib/theme_variables.css` - CSS variable definitions for non-Fuz CSS users
+- `src/lib/theme.css` - CSS classes for HTML mode (requires fuz_css or theme_variables.css)
+- `src/lib/theme_variables.css` - CSS variable definitions for non-fuz_css users
 
 ## How It Works
 
@@ -152,10 +152,12 @@ An experimental alternative component (`CodeHighlight.svelte`) is available that
 for browsers that implement it. This is not recommended for general use due to limited browser support.
 
 **Components:**
+
 - `src/lib/CodeHighlight.svelte` - Hybrid component supporting both HTML and range modes with auto-detection
 - `src/lib/highlight_manager.ts` - Manages CSS Custom Highlights per element
 
 **Theme:**
+
 - `src/lib/theme_highlight.css` - CSS with both `.token_*` classes and `::highlight()` pseudo-elements
 
 #### Range Highlighting Implementation
@@ -213,7 +215,7 @@ Results show relative performance (% of fastest) for each language and content s
 
 ## Color Variables
 
-Theme uses CSS variables from Fuz CSS:
+Theme uses CSS variables from fuz_css:
 
 - `--color_a` - Keywords, tags
 - `--color_b` - Strings, selectors
