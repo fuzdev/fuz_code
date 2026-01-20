@@ -9,15 +9,15 @@
 	import Footer from '$routes/Footer.svelte';
 </script>
 
-<main class="width_upto_lg mx_auto py_xl5">
+<main class="width_atmost_lg mx_auto py_xl5">
 	<header class="box">
 		<Breadcrumb>🎨</Breadcrumb>
 	</header>
 
 	<section class="mb_xl5">
-		<h2 class="text_align_center">HTML rendering (default)</h2>
+		<h2 class="text-align:center">HTML rendering (default)</h2>
 		<aside
-			class="panel p_md mb_xl3 width_upto_md mx_auto
+			class="panel p_md mb_xl3 width_atmost_md mx_auto
 		"
 		>
 			<p>
@@ -28,7 +28,7 @@
 		</aside>
 		{#each Object.values(samples) as sample (sample.name)}
 			<div class="box mb_xl3">
-				<h3 class="panel p_md mb_xs width_100 box">{sample.lang}</h3>
+				<h3 class="panel p_md mb_xs width:100% box">{sample.lang}</h3>
 				<Code content={sample.content} lang={sample.lang} />
 			</div>
 		{/each}
@@ -37,9 +37,9 @@
 	<hr class="my_xl5" />
 
 	<section id="experimental">
-		<h2 class="text_align_center">CSS Custom Highlight API (experimental)</h2>
+		<h2 class="text-align:center">CSS Custom Highlight API (experimental)</h2>
 		<aside
-			class="panel p_md mb_xl3 width_upto_md mx_auto
+			class="panel p_md mb_xl3 width_atmost_md mx_auto
 		"
 		>
 			<p>
@@ -66,7 +66,7 @@
 		{#each Object.values(samples) as sample (sample.name)}
 			<section>
 				<h2 class="panel p_md mb_0 box">{sample.lang}</h2>
-				<div class="display_flex justify_content_center flex_wrap_wrap gap_sm py_xl5">
+				<div class="display:flex justify-content:center flex-wrap:wrap gap_sm py_xl5">
 					<div class="constrain_width">
 						<h3>{sample.lang} html strings</h3>
 						<CodeHighlight content={sample.content} lang={sample.lang} mode="html" />
