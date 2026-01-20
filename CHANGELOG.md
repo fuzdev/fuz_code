@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- update fuz_css ([ccc56e3](https://github.com/fuzdev/fuz_code/commit/ccc56e3))
+- update fuz_css ([#28](https://github.com/ryanatkn/fuz_code/pull/28))
 
 ## 0.39.0
 
