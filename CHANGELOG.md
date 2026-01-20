@@ -1,5 +1,11 @@
 # @fuzdev/fuz_code
 
+## 0.40.0
+
+### Minor Changes
+
+- update fuz_css ([ccc56e3](https://github.com/fuzdev/fuz_code/commit/ccc56e3))
+
 ## 0.39.0
 
 ### Minor Changes
