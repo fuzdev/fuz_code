@@ -9,7 +9,7 @@
 	import Footer from '$routes/Footer.svelte';
 </script>
 
-<main class="width_upto_lg mx_auto py_xl5">
+<main class="width_atmost_lg mx_auto py_xl5">
 	<header class="box">
 		<Breadcrumb>🎨</Breadcrumb>
 	</header>
@@ -17,7 +17,7 @@
 	<section class="mb_xl5">
 		<h2 class="text-align:center">HTML rendering (default)</h2>
 		<aside
-			class="panel p_md mb_xl3 width_upto_md mx_auto
+			class="panel p_md mb_xl3 width_atmost_md mx_auto
 		"
 		>
 			<p>
@@ -39,7 +39,7 @@
 	<section id="experimental">
 		<h2 class="text-align:center">CSS Custom Highlight API (experimental)</h2>
 		<aside
-			class="panel p_md mb_xl3 width_upto_md mx_auto
+			class="panel p_md mb_xl3 width_atmost_md mx_auto
 		"
 		>
 			<p>

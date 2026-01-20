@@ -21,17 +21,17 @@
 	text-overflow: ellipsis;
 }
 
-.width_upto_sm {
+.width_atmost_sm {
 	width: 100%;
 	max-width: var(--distance_sm);
 }
 
-.width_upto_md {
+.width_atmost_md {
 	width: 100%;
 	max-width: var(--distance_md);
 }
 
-.width_upto_lg {
+.width_atmost_lg {
 	width: 100%;
 	max-width: var(--distance_lg);
 }

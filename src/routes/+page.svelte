@@ -13,7 +13,7 @@
 </script>
 
 <main class="box width:100%">
-	<div class="width_upto_md">
+	<div class="width_atmost_md">
 		<section class="box" style:padding-top="var(--docs_primary_nav_height, 60px)">
 			<LibrarySummary {library} />
 		</section>
