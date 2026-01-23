@@ -31,7 +31,7 @@
 			</div>
 		</section>
 		<section class="panel">
-			<div class="surface shadow_sm border_radius_xs p_xl2">
+			<div class="shade_00 shadow_sm border_radius_xs p_xl2">
 				<CodeTome />
 			</div>
 		</section>
