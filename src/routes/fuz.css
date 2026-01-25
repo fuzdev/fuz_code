@@ -24,7 +24,11 @@
 	box-shadow: var(
 		--pane_shadow,
 		var(--shadow_bottom_md)
-			color-mix(in hsl, var(--shadow_color) var(--shadow_alpha_50), transparent)
+			color-mix(
+				in hsl,
+				var(--shadow_color, var(--shadow_color_umbra)) var(--shadow_alpha_50),
+				transparent
+			)
 	);
 	border-radius: var(--border_radius_xs);
 }
@@ -226,11 +230,19 @@ a.chip {
 }
 .shadow_sm {
 	box-shadow: var(--shadow_sm)
-		color-mix(in hsl, var(--shadow_color) var(--shadow_alpha, var(--shadow_alpha_40)), transparent);
+		color-mix(
+			in hsl,
+			var(--shadow_color, var(--shadow_color_umbra)) var(--shadow_alpha, var(--shadow_alpha_40)),
+			transparent
+		);
 }
 .shadow_inset_xs {
 	box-shadow: var(--shadow_inset_xs)
-		color-mix(in hsl, var(--shadow_color) var(--shadow_alpha, var(--shadow_alpha_30)), transparent);
+		color-mix(
+			in hsl,
+			var(--shadow_color, var(--shadow_color_umbra)) var(--shadow_alpha, var(--shadow_alpha_30)),
+			transparent
+		);
 }
 .width_atmost_sm {
 	width: 100%;
