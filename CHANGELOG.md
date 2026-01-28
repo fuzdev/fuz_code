@@ -1,5 +1,11 @@
 # @fuzdev/fuz_code
 
+## 0.41.0
+
+### Minor Changes
+
+- upgrade fuz_css ([#29](https://github.com/fuzdev/fuz_code/pull/29))
+
 ## 0.40.0
 
 ### Minor Changes
