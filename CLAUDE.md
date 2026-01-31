@@ -1,6 +1,10 @@
-# fuz_code - Syntax Highlighter
+# fuz_code
 
-A modernized fork of PrismJS optimized for runtime syntax highlighting.
+> Syntax highlighting - a modernized PrismJS fork
+
+fuz_code (`@fuzdev/fuz_code`) is optimized for runtime syntax highlighting.
+
+For coding conventions, see [`fuz-stack`](../fuz-stack/CLAUDE.md).
 
 ## Usage
 
@@ -15,6 +19,9 @@ gro test      # run tests with vitest
 gro gen       # regenerate .gen files
 gro build     # build the package for production
 ```
+
+IMPORTANT for AI agents: Do NOT run `gro dev` - the developer will manage the
+dev server.
 
 ## Commands
 
@@ -257,3 +264,18 @@ The position calculation happens during range creation. If positions are wrong:
 3. Register in `syntax_styler_global.ts`
 4. Add samples in `src/test/fixtures/samples/sample_{variant}.{lang}`
 5. Generate fixtures and test
+
+## Project standards
+
+- TypeScript strict mode
+- Svelte 5 with runes API (for demo site)
+- Prettier with tabs, 100 char width
+- Node >= 22.15
+- Tests in `src/test/` (not co-located)
+- Fixture-based testing for language grammars
+
+## Related projects
+
+- [`fuz_css`](../fuz_css/CLAUDE.md) - CSS framework (provides color variables for themes)
+- [`fuz_ui`](../fuz_ui/CLAUDE.md) - UI components
+- [`fuz_template`](../fuz_template/CLAUDE.md) - starter template using fuz_code
