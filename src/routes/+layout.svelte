@@ -1,8 +1,6 @@
 <script lang="ts">
-	import '@fuzdev/fuz_css/style.css';
-	import '@fuzdev/fuz_css/theme.css';
-	import '$lib/theme.css';
 	import '$routes/fuz.css';
+	import '$lib/theme.css';
 	import '$routes/style.css';
 
 	import Themed from '@fuzdev/fuz_ui/Themed.svelte';
