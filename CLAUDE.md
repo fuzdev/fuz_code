@@ -2,268 +2,244 @@
 
 > Syntax highlighting - a modernized PrismJS fork
 
-fuz_code (`@fuzdev/fuz_code`) is optimized for runtime syntax highlighting.
+fuz_code (`@fuzdev/fuz_code`) is a runtime syntax highlighting library optimized
+for HTML generation with CSS classes. It's a PrismJS fork with TypeScript types
+and modern module support.
 
 For coding conventions, see [`fuz-stack`](../fuz-stack/CLAUDE.md).
-
-## Usage
-
-See [README.md](./README.md).
 
 ## Gro commands
 
 ```bash
-gro check     # typecheck, test, lint, format check (run before committing)
-gro typecheck # typecheck only (faster iteration)
-gro test      # run tests with vitest
-gro gen       # regenerate .gen files
-gro build     # build the package for production
+gro check                       # typecheck, test, lint, format check (run before committing)
+gro typecheck                   # typecheck only (faster iteration)
+gro test                        # run tests with vitest
+gro gen                         # regenerate .gen files
+gro build                       # build the package for production
+gro src/test/fixtures/update    # regenerate test fixtures
 ```
 
 IMPORTANT for AI agents: Do NOT run `gro dev` - the developer will manage the
 dev server.
 
-## Commands
+## Key dependencies
 
-```bash
-gro test                            # run all tests
-gro test src/test/fixtures/check    # verify fixture generation
-gro src/test/fixtures/update        # regenerate fixtures
-npm run benchmark                   # run performance benchmarks
-npm run benchmark:compare           # compare performance with Prism and Shiki
-```
+- Svelte 5 - component framework (optional peer dep, for Code.svelte)
+- fuz_css (@fuzdev/fuz_css) - CSS variables for theming (optional peer dep)
+- fuz_util (@fuzdev/fuz_util) - utility library (dev only)
+- fuz_ui (@fuzdev/fuz_ui) - docs system (dev only)
+
+## Scope
+
+fuz_code is a **syntax highlighting library**:
+
+- Runtime HTML generation with CSS classes
+- PrismJS-compatible grammar definitions
+- 7 built-in languages (TS, JS, CSS, HTML, JSON, Svelte, Markdown)
+- Extensible grammar system with hooks
+- Optional Svelte component (`Code.svelte`)
+
+### What fuz_code does NOT include
+
+- Build-time/SSR-only highlighting (use Shiki)
+- TextMate grammar compatibility
+- VS Code theme support
+- Line numbers or code editing
+- Syntax validation or error detection
 
 ## Architecture
 
-### Core System
+### Directory structure
 
-**Syntax Styler** - A PrismJS fork focused on HTML generation with CSS classes.
-
-The system uses regex-based tokenization inherited from PrismJS, maintaining compatibility with existing language definitions. The primary use case is generating HTML with syntax highlighting at runtime.
-
-### Key Components
-
-#### Tokenization Engine
-
-- `src/lib/syntax_styler.ts` - Core tokenization engine with linked list processing
-- `src/lib/syntax_styler_global.ts` - Pre-configured global instance
-- `tokenize_syntax()` from `src/lib/tokenize_syntax.ts` - Main tokenization function
-
-#### Language Definitions
-
-- `src/lib/grammar_ts.ts` - TypeScript/JS
-- `src/lib/grammar_css.ts` - CSS stylesheets
-- `src/lib/grammar_markup.ts` - HTML/XML markup
-- `src/lib/grammar_json.ts` - JSON data
-- `src/lib/grammar_svelte.ts` - Svelte components
-- `src/lib/grammar_markdown.ts` - Markdown
-- `src/lib/grammar_clike.ts` - Base for C-like languages
-
-#### Components
-
-- `src/lib/Code.svelte` - Main component for syntax highlighting with HTML generation
-
-#### Themes
-
-- `src/lib/theme.css` - CSS classes for HTML mode (requires fuz_css or theme_variables.css)
-- `src/lib/theme_variables.css` - CSS variable definitions for non-fuz_css users
-
-## How It Works
-
-### Token Tree Structure
-
-Syntax styler creates a hierarchical token tree where tokens can contain nested tokens:
-
-```typescript
-interface SyntaxToken {
-	type: string; // token type (e.g., 'keyword', 'string')
-	content: string | SyntaxTokenStream; // text or nested tokens
-	alias: string | Array<string>; // CSS class aliases
-	length: number; // token text length
-}
+```
+src/
+├── lib/                        # exportable library code
+│   ├── syntax_styler.ts        # SyntaxStyler class, hook system
+│   ├── syntax_styler_global.ts # pre-configured global instance
+│   ├── tokenize_syntax.ts      # tokenize_syntax() function
+│   ├── syntax_token.ts         # SyntaxToken class, type definitions
+│   ├── grammar_*.ts            # language definitions (7 files)
+│   ├── Code.svelte             # main Svelte component
+│   ├── CodeHighlight.svelte    # experimental CSS Highlight API
+│   ├── highlight_manager.ts    # CSS Highlight API manager
+│   ├── highlight_priorities.ts # generated token priorities
+│   ├── theme.css               # token CSS classes
+│   ├── theme_variables.css     # CSS variable fallbacks
+│   └── theme_highlight.css     # CSS Highlight API theme
+├── test/                       # test files and fixtures
+│   ├── syntax_styler.test.ts
+│   ├── highlight_manager.test.ts
+│   └── fixtures/
+│       ├── samples/            # source of truth sample files
+│       ├── generated/          # generated fixture outputs
+│       ├── check.test.ts       # fixture validation
+│       └── update.task.ts      # fixture regeneration task
+├── benchmark/                  # performance testing
+│   ├── benchmarks.ts           # main benchmark runner
+│   └── compare/                # Prism/Shiki comparison
+└── routes/                     # demo/docs site
+    ├── samples/                # language samples showcase
+    ├── benchmark/              # interactive benchmark UI
+    └── docs/                   # API documentation
 ```
 
-### HTML Generation
+### Core system
 
-The syntax styler processes the token tree and generates HTML with CSS classes:
+**SyntaxStyler** - The main class for tokenization and HTML generation. Uses
+regex-based tokenization inherited from PrismJS, maintaining compatibility with
+existing language definitions.
 
-```typescript
-import {syntax_styler_global} from '$lib/syntax_styler_global.js';
+**syntax_styler_global** - Pre-configured instance with all built-in grammars
+registered. Import this for typical usage.
 
-// Generate HTML with syntax highlighting
-const html = syntax_styler_global.stylize(code, 'ts');
-```
+**tokenize_syntax()** - Core tokenization function that processes text through
+grammar patterns and returns a token stream.
 
-The generated HTML uses CSS classes like `.token_keyword`, `.token_string`, etc., which are styled by `theme.css`.
+### Token structure
 
-## Supported Languages
+Tokens form a hierarchical tree where tokens can contain nested tokens:
 
-- `ts` - TypeScript
-- `js` - JS
-- `css` - CSS
-- `html` - HTML/XML
-- `json` - JSON
-- `svelte` - Svelte components
-- `md` - Markdown
+- `type` - token type (e.g., 'keyword', 'string')
+- `content` - text or nested `SyntaxTokenStream`
+- `alias` - CSS class aliases
+- `length` - token text length
 
-## API Reference
+Generated HTML uses classes like `.token_keyword`, `.token_string`, styled by
+`theme.css`.
 
-### SyntaxStyler
+### Language definitions
 
-```typescript
-class SyntaxStyler {
-	// Generate HTML with syntax highlighting
-	stylize(text: string, lang: string): string;
+- `grammar_clike.ts` - base for C-like languages
+- `grammar_js.ts` - JavaScript
+- `grammar_ts.ts` - TypeScript (extends JS)
+- `grammar_css.ts` - CSS stylesheets
+- `grammar_markup.ts` - HTML/XML
+- `grammar_json.ts` - JSON
+- `grammar_svelte.ts` - Svelte components (extends markup)
+- `grammar_markdown.ts` - Markdown
 
-	// Get language grammar
-	get_lang(id: string): Grammar;
+### Hook system
 
-	// Add new language
-	add_lang(id: string, grammar: Grammar, aliases?: Array<string>): void;
-}
-```
+SyntaxStyler provides hooks for customizing tokenization and rendering:
 
-### Pre-configured instance
+- **before_tokenize** - modify code/grammar before tokenization
+- **after_tokenize** - modify token stream after tokenization
+- **wrap** - customize HTML output per token (add attributes, custom wrapping)
 
-```typescript
-import {syntax_styler_global} from '$lib/syntax_styler_global.js';
+Register with `add_hook_before_tokenize()`, `add_hook_after_tokenize()`,
+`add_hook_wrap()`.
 
-const html = syntax_styler_global.stylize(code, 'ts');
-```
+### Generated files
+
+- `highlight_priorities.gen.ts` → `highlight_priorities.ts` - extracts token
+  type names from theme CSS and generates TypeScript types
+
+### API
+
+**SyntaxStyler class:**
+
+- `stylize(text, lang)` - generate HTML with syntax highlighting
+- `get_lang(id)` - get language grammar
+- `add_lang(id, grammar, aliases?)` - register new language
+- `add_extended_lang(base_id, ext_id, extension, aliases?)` - register extended
+  language
+- `extend_grammar(base_id, extension)` - create extended grammar without
+  registration
+- `grammar_insert_before(inside, before, insert, root?)` - insert tokens before
+  existing
+
+**Code.svelte props:**
+
+- `content` (required) - source code to highlight
+- `lang` - language identifier (default: 'svelte')
+- `grammar` - optional custom grammar
+- `inline` - boolean for inline vs block
+- `wrap` - boolean for text wrapping
+- `nomargin` - boolean for margin control
+
+## Supported languages
+
+`ts`, `js`, `css`, `html`, `json`, `svelte`, `md`
 
 ## Testing
 
-### Sample Files
+### Fixture workflow
 
-Test samples in `src/test/fixtures/samples/sample_*.{lang}` are the source of truth.
-
-### Fixtures
-
-Generated fixtures in `src/test/fixtures/{lang}/`:
-
-- `{lang}_{variant}.json` - Token data and HTML output
-- `{lang}_{variant}.txt` - Human-readable debug output
-
-### Workflow
-
-1. Edit samples in `src/test/fixtures/samples/`
+1. Edit samples in `src/test/fixtures/samples/sample_*.{lang}`
 2. Run `gro src/test/fixtures/update` to regenerate
 3. Run `gro test src/test/fixtures/check` to verify
 4. Review changes with `git diff src/test/fixtures/`
 
-## Experimental Features
-
-### CSS Custom Highlight API Support
-
-An experimental alternative component (`CodeHighlight.svelte`) is available that supports the CSS Custom Highlight API
-for browsers that implement it. This is not recommended for general use due to limited browser support.
-
-**Components:**
-
-- `src/lib/CodeHighlight.svelte` - Hybrid component supporting both HTML and range modes with auto-detection
-- `src/lib/highlight_manager.ts` - Manages CSS Custom Highlights per element
-
-**Theme:**
-
-- `src/lib/theme_highlight.css` - CSS with both `.token_*` classes and `::highlight()` pseudo-elements
-
-#### Range Highlighting Implementation
-
-For CSS Custom Highlights, ranges are created directly from the token tree:
-
-```typescript
-// Generate tokens from syntax styler
-const tokens = tokenize_syntax(code, grammar);
-// Highlight manager creates ranges directly from the token tree
-highlight_manager.highlight_from_syntax_tokens(element, tokens);
-```
-
-#### HighlightManager API
-
-```typescript
-const manager = new HighlightManager();
-
-// Apply highlights from tokens
-manager.highlight_from_syntax_tokens(element, tokens);
-
-// Clear highlights
-manager.clear_element_ranges();
-
-// Clean up
-manager.destroy();
-```
-
-**Note:** The CSS Custom Highlight API has limitations (e.g., no font-weight or font-style support)
-and is not widely supported across browsers. Use the standard `Code.svelte` component for production use.
+Generated fixtures in `generated/{lang}/` include `.html` (tokenized output) and
+`.txt` (debug output with token names).
 
 ## Performance
-
-### Benchmarking
 
 ```bash
 npm run benchmark           # internal performance benchmark
 npm run benchmark:compare   # compare with Prism and Shiki
 ```
 
-**Internal benchmark** tests fuz_code performance across all sample files with small and large (100x) content.
+Internal benchmark tests all sample files at normal and 100x sizes. Comparison
+benchmark tests against Prism and Shiki (JS and Oniguruma engines).
 
-**Comparison benchmark** (`./benchmark/compare/`) tests fuz_code against:
+## Experimental features
 
-- Prism - Similar regex-based approach
-- Shiki JS - JS regex engine
-- Shiki Oniguruma - Full TextMate grammar engine
+### CSS Custom Highlight API
 
-Results show relative performance (% of fastest) for each language and content size.
+`CodeHighlight.svelte` supports the CSS Custom Highlight API for native browser
+highlighting. Limited browser support - use `Code.svelte` for production.
 
-### Optimization Notes
+- `mode` prop: 'auto', 'ranges', or 'html'
+- `HighlightManager` class manages highlights per element
+- `theme_highlight.css` provides both `.token_*` classes and `::highlight()`
+  pseudo-elements
 
-- **HTML Mode** (standard): Proven PrismJS approach, works everywhere, good for SSR
-- **Range Mode** (experimental): Native browser highlighting available in `CodeHighlight.svelte`, limited browser support
+Limitations: no font-weight/font-style support in range mode.
 
-## Color Variables
+## Color variables
 
 Theme uses CSS variables from fuz_css:
 
-- `--color_a` - Keywords, tags
-- `--color_b` - Strings, selectors
-- `--color_c` - Types (TypeScript)
-- `--color_d` - Functions, classes
-- `--color_e` - Numbers, regex
-- `--color_f` - Operators, keywords
-- `--color_g` - Attributes
-- `--color_h` - Properties
-- `--color_i` - Booleans, comments
+- `--color_a` - keywords, tags
+- `--color_b` - strings, selectors
+- `--color_c` - types (TypeScript)
+- `--color_d` - functions, classes
+- `--color_e` - numbers, regex
+- `--color_f` - operators
+- `--color_g` - attributes
+- `--color_h` - properties
+- `--color_i` - booleans, comments
 
-## Development Guidelines
+## Development guidelines
 
-1. **Maintain PrismJS compatibility** - Language definitions should work with upstream
-2. **Test with fixtures** - All changes must pass fixture tests
-3. **No automated commits** - Manual review required
-4. **Focus on HTML mode** - Primary development focus is HTML generation
-5. **Follow patterns** - Use existing language definitions as templates
+1. **Maintain PrismJS compatibility** - grammars should work with upstream
+2. **Test with fixtures** - all changes must pass fixture tests
+3. **Focus on HTML mode** - primary development focus
+4. **Follow patterns** - use existing grammars as templates
 
-## Demo Pages
-
-- `/samples` - Code samples in all supported languages
-- `/benchmark` - Performance testing
-
-## Troubleshooting
-
-### Positions Don't Match
-
-The position calculation happens during range creation. If positions are wrong:
-
-1. Check `highlight_manager.ts` range creation logic
-2. Verify token tree structure with debug output
-3. Look for nested tokens that might be miscounted
-
-### Adding a New Language
+### Adding a new language
 
 1. Create `src/lib/grammar_{lang}.ts`
 2. Define grammar patterns (see existing languages)
 3. Register in `syntax_styler_global.ts`
 4. Add samples in `src/test/fixtures/samples/sample_{variant}.{lang}`
 5. Generate fixtures and test
+
+## Known limitations
+
+- **Regex-based** - not TextMate grammar compatible, some edge cases may differ
+  from IDE highlighting
+- **CSS Custom Highlight API** - experimental, limited browser support
+- **No line numbers** - not built-in, handle separately
+- **Web-focused languages** - TypeScript/JS ecosystem only
+- **Position tracking** - range mode position calculation can have issues with
+  nested tokens
+
+## Demo pages
+
+- `/samples` - code samples in all supported languages
+- `/benchmark` - interactive performance testing
 
 ## Project standards
 
@@ -276,6 +252,6 @@ The position calculation happens during range creation. If positions are wrong:
 
 ## Related projects
 
-- [`fuz_css`](../fuz_css/CLAUDE.md) - CSS framework (provides color variables for themes)
+- [`fuz_css`](../fuz_css/CLAUDE.md) - CSS framework (provides color variables)
 - [`fuz_ui`](../fuz_ui/CLAUDE.md) - UI components
 - [`fuz_template`](../fuz_template/CLAUDE.md) - starter template using fuz_code
