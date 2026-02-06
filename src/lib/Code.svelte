@@ -27,7 +27,7 @@
 			| {
 					content?: undefined;
 					/**
-					 * Pre-highlighted HTML from the `svelte_preprocess_code_static` preprocessor.
+					 * Pre-highlighted HTML from the `svelte_preprocess_fuz_code` preprocessor.
 					 * When provided, skips runtime syntax highlighting entirely.
 					 *
 					 * Named `dangerous_raw_html` to signal that it bypasses sanitization,

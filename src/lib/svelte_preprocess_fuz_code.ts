@@ -5,7 +5,7 @@ import {walk} from 'zimmerframe';
 import {syntax_styler_global} from './syntax_styler_global.js';
 import type {SyntaxStyler} from './syntax_styler.js';
 
-export interface PreprocessCodeStaticOptions {
+export interface PreprocessFuzCodeOptions {
 	/** File patterns to exclude. */
 	exclude?: Array<string | RegExp>;
 
@@ -30,8 +30,8 @@ export interface PreprocessCodeStaticOptions {
 	on_error?: 'log' | 'throw';
 }
 
-export const svelte_preprocess_code_static = (
-	options: PreprocessCodeStaticOptions = {},
+export const svelte_preprocess_fuz_code = (
+	options: PreprocessFuzCodeOptions = {},
 ): PreprocessorGroup => {
 	const {
 		exclude = [],
@@ -45,7 +45,7 @@ export const svelte_preprocess_code_static = (
 	const highlight_cache: Map<string, string> = new Map();
 
 	return {
-		name: 'code-static',
+		name: 'fuz-code',
 
 		markup: ({content, filename}) => {
 			// Skip excluded files
@@ -340,7 +340,7 @@ const escape_js_string = (html: string): string => {
  * Handle errors during highlighting.
  */
 const handle_error = (error: unknown, options: FindCodeUsagesOptions): void => {
-	const message = `[code-static] Highlighting failed${options.filename ? ` in ${options.filename}` : ''}: ${error instanceof Error ? error.message : String(error)}`;
+	const message = `[fuz-code] Highlighting failed${options.filename ? ` in ${options.filename}` : ''}: ${error instanceof Error ? error.message : String(error)}`;
 
 	if (options.on_error === 'throw') {
 		throw new Error(message);

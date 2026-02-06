@@ -637,13 +637,13 @@
 				"dependents": ["highlight_manager.ts"]
 			},
 			{
-				"path": "svelte_preprocess_code_static.ts",
+				"path": "svelte_preprocess_fuz_code.ts",
 				"declarations": [
 					{
-						"name": "PreprocessCodeStaticOptions",
+						"name": "PreprocessFuzCodeOptions",
 						"kind": "type",
 						"source_line": 8,
-						"type_signature": "PreprocessCodeStaticOptions",
+						"type_signature": "PreprocessFuzCodeOptions",
 						"properties": [
 							{
 								"name": "exclude",
@@ -678,15 +678,15 @@
 						]
 					},
 					{
-						"name": "svelte_preprocess_code_static",
+						"name": "svelte_preprocess_fuz_code",
 						"kind": "function",
 						"source_line": 33,
-						"type_signature": "(options?: PreprocessCodeStaticOptions): PreprocessorGroup",
+						"type_signature": "(options?: PreprocessFuzCodeOptions): PreprocessorGroup",
 						"return_type": "PreprocessorGroup",
 						"parameters": [
 							{
 								"name": "options",
-								"type": "PreprocessCodeStaticOptions",
+								"type": "PreprocessFuzCodeOptions",
 								"default_value": "{}"
 							}
 						]
@@ -715,7 +715,7 @@
 					"grammar_ts.ts",
 					"syntax_styler.ts"
 				],
-				"dependents": ["Code.svelte", "CodeHighlight.svelte", "svelte_preprocess_code_static.ts"]
+				"dependents": ["Code.svelte", "CodeHighlight.svelte", "svelte_preprocess_fuz_code.ts"]
 			},
 			{
 				"path": "syntax_styler.ts",

@@ -56,19 +56,19 @@ import '@fuzdev/fuz_code/theme_variables.css'; // also this if not using fuz_css
 <section>
 	<h3>Static compilation</h3>
 	<p>
-		The <ModuleLink module_path="svelte_preprocess_code_static.ts"
-			>svelte_preprocess_code_static</ModuleLink
+		The <ModuleLink module_path="svelte_preprocess_fuz_code.ts"
+			>svelte_preprocess_fuz_code</ModuleLink
 		> preprocessor compiles static
 		<DeclarationLink name="Code" /> content at build time, eliminating runtime syntax highlighting:
 	</p>
 	<Code
 		lang="ts"
 		content={`// svelte.config.js
-import {svelte_preprocess_code_static} from '@fuzdev/fuz_code/svelte_preprocess_code_static.js';
+import {svelte_preprocess_fuz_code} from '@fuzdev/fuz_code/svelte_preprocess_fuz_code.js';
 
 export default {
   preprocess: [
-    svelte_preprocess_code_static(),
+    svelte_preprocess_fuz_code(),
     vitePreprocess(),
   ],
 };`}

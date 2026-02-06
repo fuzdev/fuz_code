@@ -8,10 +8,10 @@ import {csp_trusted_sources_of_ryanatkn} from '@fuzdev/fuz_ui/csp_of_ryanatkn.js
 /** @type {Array<import('svelte/compiler').PreprocessorGroup>} */
 let fuz_code_preprocessors = [];
 try {
-	const {svelte_preprocess_code_static} =
-		await import('@fuzdev/fuz_code/svelte_preprocess_code_static.js');
+	const {svelte_preprocess_fuz_code} =
+		await import('@fuzdev/fuz_code/svelte_preprocess_fuz_code.js');
 	fuz_code_preprocessors = [
-		svelte_preprocess_code_static({component_imports: ['$lib/Code.svelte']}),
+		svelte_preprocess_fuz_code({component_imports: ['$lib/Code.svelte']}),
 	];
 } catch {}
 

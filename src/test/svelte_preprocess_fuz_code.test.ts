@@ -1,11 +1,11 @@
 import {test, expect, describe} from 'vitest';
 import {preprocess, parse} from 'svelte/compiler';
 
-import {svelte_preprocess_code_static} from '$lib/svelte_preprocess_code_static.js';
+import {svelte_preprocess_fuz_code} from '$lib/svelte_preprocess_fuz_code.js';
 import {syntax_styler_global} from '$lib/syntax_styler_global.js';
 
 const run = async (input: string): Promise<string> => {
-	const result = await preprocess(input, [svelte_preprocess_code_static()], {
+	const result = await preprocess(input, [svelte_preprocess_fuz_code()], {
 		filename: 'Test.svelte',
 	});
 	return result.code;
@@ -24,7 +24,7 @@ const extract_raw_html = (result: string): string | null => {
 		.replace(/\\\\/g, '\\');
 };
 
-describe('svelte_preprocess_code_static', () => {
+describe('svelte_preprocess_fuz_code', () => {
 	describe('static content transformation', () => {
 		test('transforms double-quoted attribute', async () => {
 			const input = `<script lang="ts">
@@ -507,7 +507,7 @@ const y = 2;" lang="ts" />`;
 			const result = await preprocess(
 				input,
 				[
-					svelte_preprocess_code_static({
+					svelte_preprocess_fuz_code({
 						component_imports: ['$lib/MyCode.svelte'],
 					}),
 				],
@@ -526,7 +526,7 @@ const y = 2;" lang="ts" />`;
 			const result = await preprocess(
 				input,
 				[
-					svelte_preprocess_code_static({
+					svelte_preprocess_fuz_code({
 						component_imports: ['$lib/Highlighter.svelte'],
 					}),
 				],
@@ -710,7 +710,7 @@ const y = 2;" lang="ts" />`;
 </script>
 
 <Code content="const x = 1;" lang="ts" />`;
-			const result = await preprocess(input, [svelte_preprocess_code_static()], {
+			const result = await preprocess(input, [svelte_preprocess_fuz_code()], {
 				filename: 'Test.svelte',
 			});
 
@@ -729,7 +729,7 @@ const y = 2;" lang="ts" />`;
 <Code content="const x = 1;" lang="ts" />`;
 			const result = await preprocess(
 				input,
-				[svelte_preprocess_code_static({exclude: [/Test\.svelte$/]})],
+				[svelte_preprocess_fuz_code({exclude: [/Test\.svelte$/]})],
 				{filename: 'Test.svelte'},
 			);
 
@@ -745,7 +745,7 @@ const y = 2;" lang="ts" />`;
 <Code content="const x = 1;" lang="ts" />`;
 			const result = await preprocess(
 				input,
-				[svelte_preprocess_code_static({exclude: ['fixtures/']})],
+				[svelte_preprocess_fuz_code({exclude: ['fixtures/']})],
 				{filename: 'src/test/fixtures/Test.svelte'},
 			);
 
@@ -758,7 +758,7 @@ const y = 2;" lang="ts" />`;
 </script>
 
 <Code content="const x = 1;" lang="ts" />`;
-			const result = await preprocess(input, [svelte_preprocess_code_static({cache: false})], {
+			const result = await preprocess(input, [svelte_preprocess_fuz_code({cache: false})], {
 				filename: 'Test.svelte',
 			});
 
@@ -785,7 +785,7 @@ const y = 2;" lang="ts" />`;
 			await expect(
 				preprocess(
 					input,
-					[svelte_preprocess_code_static({syntax_styler: bad_styler, on_error: 'throw'})],
+					[svelte_preprocess_fuz_code({syntax_styler: bad_styler, on_error: 'throw'})],
 					{filename: 'Test.svelte'},
 				),
 			).rejects.toThrow('test error');
@@ -806,7 +806,7 @@ const y = 2;" lang="ts" />`;
 <Code content="const x = 1;" lang="ts" />`;
 			const result = await preprocess(
 				input,
-				[svelte_preprocess_code_static({syntax_styler: bad_styler, on_error: 'log'})],
+				[svelte_preprocess_fuz_code({syntax_styler: bad_styler, on_error: 'log'})],
 				{filename: 'Test.svelte'},
 			);
 
