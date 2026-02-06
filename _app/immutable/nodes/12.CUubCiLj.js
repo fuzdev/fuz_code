@@ -1,1 +1,0 @@
-import"../chunks/Bzak7iHL.js";import{p as r,c as s}from"../chunks/CKlgu62-.js";import{T as p}from"../chunks/Bqn80D8V.js";import{g as n}from"../chunks/BLZNbBAU.js";import{C as a}from"../chunks/CRzRFJLr.js";function l(o,t){r(t,!0);const e=n("usage");p(o,{get tome(){return e},children:(m,i)=>{a(m,{})},$$slots:{default:!0}}),s()}export{l as component};
