@@ -178,18 +178,6 @@
 						"kind": "component",
 						"props": [
 							{
-								"name": "content",
-								"type": "string",
-								"optional": true,
-								"description": "The source code to syntax highlight."
-							},
-							{
-								"name": "dangerous_raw_html",
-								"type": "string",
-								"optional": true,
-								"description": "Pre-highlighted HTML from the `svelte_preprocess_code_static` preprocessor.\nWhen provided, skips runtime syntax highlighting entirely.\n\nNamed `dangerous_raw_html` to signal that it bypasses sanitization,\nmatching the `{@html}` pattern already used by this component."
-							},
-							{
 								"name": "lang",
 								"type": "string | null",
 								"optional": true,

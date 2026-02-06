@@ -470,6 +470,25 @@ const y = 2;" lang="ts" />`;
 			const raw_html = extract_raw_html(result);
 			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
 		});
+
+		test('handles non-self-closing Code with children snippet', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+</script>
+
+<Code content="const x = 1;" lang="ts">
+	{#snippet children(html)}
+		<pre>{@html html}</pre>
+	{/snippet}
+</Code>`;
+			const result = await run(input);
+
+			// content should be transformed
+			const raw_html = extract_raw_html(result);
+			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+			// children snippet should be preserved
+			expect(result).toContain('{#snippet children(html)}');
+		});
 	});
 
 	describe('output validity', () => {
