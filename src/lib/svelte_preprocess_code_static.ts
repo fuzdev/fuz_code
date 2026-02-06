@@ -259,7 +259,6 @@ type Attribute_Value = AST.Attribute['value'];
 const evaluate_static_expr = (expr: any): string | null => {
 	if (expr.type === 'Literal' && typeof expr.value === 'string') return expr.value;
 	if (expr.type === 'TemplateLiteral' && expr.expressions.length === 0) {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		return expr.quasis.map((q: any) => q.value.cooked ?? q.value.raw).join('');
 	}
 	if (expr.type === 'BinaryExpression' && expr.operator === '+') {

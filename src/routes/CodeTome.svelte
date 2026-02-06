@@ -2,14 +2,10 @@
 	import {resolve} from '$app/paths';
 
 	// import Tome from '@fuzdev/fuz_ui/Tome.svelte';
-	// TODO BLOCK correct TomeLink?
-	// TODO BLOCK see the build error from the fixtures dir
 	// import TomeLink from '@fuzdev/fuz_ui/TomeLink.svelte';
 	import ModuleLink from '@fuzdev/fuz_ui/ModuleLink.svelte';
-	// TODO BLOCK use this below instead of the github/TomeLink
 	import DeclarationLink from '@fuzdev/fuz_ui/DeclarationLink.svelte';
 
-	import TomeLink from '$routes/TomeLink.svelte';
 	import Code from '$lib/Code.svelte';
 
 	// TODO what convention? `DocsTome`? Maybe just `Tome`? `/tomes`? both? what other options?
@@ -24,7 +20,7 @@
 	<h2 class="mt_0">Usage</h2>
 	<p>
 		The
-		<TomeLink name="Code" />
+		<DeclarationLink name="Code" />
 		Svelte component supports syntax styling originally based on
 		<a href="https://github.com/PrismJS/prism">Prism</a> by
 		<a href="https://lea.verou.me/">Lea Verou</a>.
@@ -35,7 +31,7 @@
 		content="// +layout.svelte
 import '@fuzdev/fuz_code/theme.css'; // add this"
 	/>
-	<p>then use <TomeLink name="Code" />:</p>
+	<p>then use <DeclarationLink name="Code" />:</p>
 	<Code
 		content={'<' +
 			`script>\n\t// Something.svelte\n\timport Code from '@fuzdev/fuz_code/Code.svelte';\n</script>\n\n<Code content="<header>hello world</header>" />`}
@@ -63,7 +59,7 @@ import '@fuzdev/fuz_code/theme_variables.css'; // also this if not using fuz_css
 		The <ModuleLink module_path="svelte_preprocess_code_static.ts"
 			>svelte_preprocess_code_static</ModuleLink
 		> preprocessor compiles static
-		<TomeLink name="Code" /> content at build time, eliminating runtime syntax highlighting:
+		<DeclarationLink name="Code" /> content at build time, eliminating runtime syntax highlighting:
 	</p>
 	<Code
 		lang="ts"
@@ -85,7 +81,7 @@ export default {
 <section>
 	<h3>Svelte support</h3>
 	<p>
-		<TomeLink name="Code" /> styles
+		<DeclarationLink name="Code" /> styles
 		<a href="https://svelte.dev/">Svelte</a>
 		by default, originally based on
 		<a href="https://github.com/pngwn/prism-svelte"><code>prism-svelte</code></a>
@@ -110,7 +106,7 @@ export default {
 <section>
 	<h3>TypeScript support</h3>
 	<p>
-		<TomeLink name="Code" /> supports TypeScript with <code>lang="ts"</code>:
+		<DeclarationLink name="Code" /> supports TypeScript with <code>lang="ts"</code>:
 	</p>
 	<Code content={`<Code lang="ts" content="export type A<T> = ('b' | 3) & T;" />`} />
 	<div>
@@ -120,8 +116,8 @@ export default {
 <section>
 	<h3>Markdown support</h3>
 	<p>
-		<TomeLink name="Code" /> supports Markdown with <code>lang="md"</code>, and fenced blocks for
-		all languages:
+		<DeclarationLink name="Code" /> supports Markdown with <code>lang="md"</code>, and fenced blocks
+		for all languages:
 	</p>
 	<Code content={`<Code lang="md" content="# hello \`world\` ..." />`} />
 	<div>
@@ -139,7 +135,7 @@ export default {
 <section>
 	<h3>Layout</h3>
 	<p>
-		<TomeLink name="Code" /> is a block by default:
+		<DeclarationLink name="Code" /> is a block by default:
 	</p>
 	<div>ab<Code content="c" /></div>
 	<Code content={'<div>ab<Code content="c" /></div>'} />
