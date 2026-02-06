@@ -3,9 +3,21 @@ import adapter from '@sveltejs/adapter-static';
 import {create_csp_directives} from '@fuzdev/fuz_ui/csp.js';
 import {csp_trusted_sources_of_ryanatkn} from '@fuzdev/fuz_ui/csp_of_ryanatkn.js';
 
+// Self-referencing import from dist — unavailable on first build after clean checkout,
+// but subsequent builds use the preprocessor for static Code compilation.
+/** @type {Array<import('svelte/compiler').PreprocessorGroup>} */
+let fuz_code_preprocessors = [];
+try {
+	const {svelte_preprocess_code_static} =
+		await import('@fuzdev/fuz_code/svelte_preprocess_code_static.js');
+	fuz_code_preprocessors = [
+		svelte_preprocess_code_static({component_imports: ['$lib/Code.svelte']}),
+	];
+} catch {}
+
 /** @type {import('@sveltejs/kit').Config} */
 export default {
-	preprocess: [vitePreprocess()],
+	preprocess: [...fuz_code_preprocessors, vitePreprocess()],
 	compilerOptions: {runes: true},
 	vitePlugin: {inspector: true},
 	kit: {

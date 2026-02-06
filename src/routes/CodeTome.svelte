@@ -2,8 +2,13 @@
 	import {resolve} from '$app/paths';
 
 	// import Tome from '@fuzdev/fuz_ui/Tome.svelte';
-	// import DocsItem from '@fuzdev/fuz_ui/DocsItem.svelte';
+	// TODO BLOCK correct TomeLink?
+	// TODO BLOCK see the build error from the fixtures dir
 	// import TomeLink from '@fuzdev/fuz_ui/TomeLink.svelte';
+	import ModuleLink from '@fuzdev/fuz_ui/ModuleLink.svelte';
+	// TODO BLOCK use this below instead of the github/TomeLink
+	import DeclarationLink from '@fuzdev/fuz_ui/DeclarationLink.svelte';
+
 	import TomeLink from '$routes/TomeLink.svelte';
 	import Code from '$lib/Code.svelte';
 
@@ -53,18 +58,28 @@ import '@fuzdev/fuz_code/theme_variables.css'; // also this if not using fuz_css
 	/>
 </section>
 <section>
-	<h3>Caveats</h3>
+	<h3>Static compilation</h3>
 	<p>
-		The <code>Code</code> component generates HTML with CSS classes for text highlighting. It also
-		includes experimental support for the CSS Custom Highlight API with <code>CodeHighlight</code>,
-		see the
-		<a href={resolve('/samples')}>samples</a>
-		for more.
+		The <ModuleLink module_path="svelte_preprocess_code_static.ts"
+			>svelte_preprocess_code_static</ModuleLink
+		> preprocessor compiles static
+		<TomeLink name="Code" /> content at build time, eliminating runtime syntax highlighting:
 	</p>
+	<Code
+		lang="ts"
+		content={`// svelte.config.js
+import {svelte_preprocess_code_static} from '@fuzdev/fuz_code/svelte_preprocess_code_static.js';
+
+export default {
+  preprocess: [
+    svelte_preprocess_code_static(),
+    vitePreprocess(),
+  ],
+};`}
+	/>
 	<p>
-		Performing syntax styling at runtime like this is often wasteful. The plan is to provide a Vite
-		plugin to optimize static cases. For now you can use <code>lang={'{'}null}</code> with pre-highligted
-		HTML.
+		Static string <code>content</code> props are highlighted at build time and replaced with pre-rendered
+		HTML. Dynamic content is left unchanged for runtime highlighting.
 	</p>
 </section>
 <section>
@@ -132,5 +147,14 @@ import '@fuzdev/fuz_code/theme_variables.css'; // also this if not using fuz_css
 		It can be inlined with <Code inline content={`<Code inline content="..." />`} />
 	</p>
 </section>
-
+<section>
+	<h3>Experimental highlighting API</h3>
+	<p>
+		The <DeclarationLink name="Code" /> component generates HTML with CSS classes for text highlighting.
+		It also includes experimental support for the CSS Custom Highlight API with
+		<code>CodeHighlight</code>, see the
+		<a href={resolve('/samples')}>samples</a>
+		for more.
+	</p>
+</section>
 <!-- </DocsItem> -->

@@ -72,6 +72,7 @@ export const svelte_preprocess_code_static = (
 				cache: cache ? highlight_cache : null,
 				on_error,
 				filename,
+				source: content,
 			});
 
 			if (transformations.length === 0) {
@@ -138,7 +139,32 @@ interface Find_Code_Usages_Options {
 	cache: Map<string, string> | null;
 	on_error: 'log' | 'throw';
 	filename: string | undefined;
+	source: string;
 }
+
+/**
+ * Attempt to highlight content, using cache if available.
+ * Returns the highlighted HTML, or `null` on error.
+ */
+const try_highlight = (
+	text: string,
+	lang: string,
+	syntax_styler: SyntaxStyler,
+	options: Find_Code_Usages_Options,
+): string | null => {
+	const cache_key = `${lang}:${text}`;
+	let html = options.cache?.get(cache_key);
+	if (!html) {
+		try {
+			html = syntax_styler.stylize(text, lang);
+			options.cache?.set(cache_key, html);
+		} catch (error) {
+			handle_error(error, options);
+			return null;
+		}
+	}
+	return html;
+};
 
 /**
  * Walks the AST to find Code component usages with static `content` props
@@ -164,48 +190,52 @@ const find_code_usages = (
 			const content_attr = find_attribute(node, 'content');
 			if (!content_attr) return;
 
-			const content_value = extract_static_string(content_attr.value);
-			if (content_value === null) return;
-
 			// Skip if custom grammar or custom syntax_styler is provided
 			if (find_attribute(node, 'grammar') || find_attribute(node, 'syntax_styler')) {
 				return;
 			}
 
+			// Resolve language - must be static and supported
 			const lang_attr = find_attribute(node, 'lang');
 			const lang_value = lang_attr ? extract_static_string(lang_attr.value) : 'svelte';
-
-			// Skip if lang is dynamic or null
 			if (lang_value === null) return;
+			if (!syntax_styler.langs[lang_value]) return;
 
-			// Skip unsupported language - runtime will handle
-			if (!syntax_styler.langs[lang_value]) {
+			// Try simple static string
+			const content_value = extract_static_string(content_attr.value);
+			if (content_value !== null) {
+				const html = try_highlight(content_value, lang_value, syntax_styler, options);
+				if (html === null) return;
+				transformations.push({
+					start: content_attr.start,
+					end: content_attr.end,
+					replacement: `dangerous_raw_html={'${escape_js_string(html)}'}`,
+				});
 				return;
 			}
 
-			// Generate highlighted HTML
-			const cache_key = `${lang_value}:${content_value}`;
-			let html = options.cache?.get(cache_key);
-
-			if (!html) {
-				try {
-					html = syntax_styler.stylize(content_value, lang_value);
-					options.cache?.set(cache_key, html);
-				} catch (error) {
-					handle_error(error, options);
-					return;
-				}
+			// Try conditional expression with static string branches
+			const conditional = try_extract_conditional(content_attr.value, options.source);
+			if (conditional) {
+				const html_a = try_highlight(
+					conditional.consequent,
+					lang_value,
+					syntax_styler,
+					options,
+				);
+				const html_b = try_highlight(
+					conditional.alternate,
+					lang_value,
+					syntax_styler,
+					options,
+				);
+				if (html_a === null || html_b === null) return;
+				transformations.push({
+					start: content_attr.start,
+					end: content_attr.end,
+					replacement: `dangerous_raw_html={${conditional.test_source} ? '${escape_js_string(html_a)}' : '${escape_js_string(html_b)}'}`,
+				});
 			}
-
-			// Create replacement: swap content attr to dangerous_raw_html expression
-			const escaped_html = escape_js_string(html);
-			const new_attr = `dangerous_raw_html={'${escaped_html}'}`;
-
-			transformations.push({
-				start: content_attr.start,
-				end: content_attr.end,
-				replacement: new_attr,
-			});
 		},
 	});
 
@@ -227,8 +257,30 @@ const find_attribute = (node: AST.Component, name: string): AST.Attribute | unde
 type Attribute_Value = AST.Attribute['value'];
 
 /**
+ * Recursively evaluate an expression AST node to a static string value.
+ * Handles string literals, template literals (no interpolation), and string concatenation.
+ * Returns `null` for dynamic or non-string expressions.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const evaluate_static_expr = (expr: any): string | null => {
+	if (expr.type === 'Literal' && typeof expr.value === 'string') return expr.value;
+	if (expr.type === 'TemplateLiteral' && expr.expressions.length === 0) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		return expr.quasis.map((q: any) => q.value.cooked ?? q.value.raw).join('');
+	}
+	if (expr.type === 'BinaryExpression' && expr.operator === '+') {
+		const left = evaluate_static_expr(expr.left);
+		if (left === null) return null;
+		const right = evaluate_static_expr(expr.right);
+		if (right === null) return null;
+		return left + right;
+	}
+	return null;
+};
+
+/**
  * Extract the string value from a static attribute value.
- * Returns `null` for dynamic or non-string values.
+ * Returns `null` for dynamic, non-string, or null literal values.
  */
 const extract_static_string = (value: Attribute_Value): string | null => {
 	// Boolean attribute
@@ -245,15 +297,38 @@ const extract_static_string = (value: Attribute_Value): string | null => {
 
 	// ExpressionTag
 	const expr = value.expression;
-	if (expr.type === 'Literal' && typeof expr.value === 'string') return expr.value;
-	if (expr.type === 'TemplateLiteral' && expr.expressions.length === 0) {
-		// Template literal quasis contain the string parts
-		return expr.quasis.map((q) => q.value.cooked ?? q.value.raw).join('');
-	}
-	// Literal null
+	// Null literal
 	if (expr.type === 'Literal' && expr.value === null) return null;
+	return evaluate_static_expr(expr);
+};
 
-	return null;
+interface Conditional_Static_Strings {
+	test_source: string;
+	consequent: string;
+	alternate: string;
+}
+
+/**
+ * Try to extract a conditional expression where both branches are static strings.
+ * Returns the condition source text and both branch values, or `null` if not applicable.
+ */
+const try_extract_conditional = (
+	value: Attribute_Value,
+	source: string,
+): Conditional_Static_Strings | null => {
+	if (value === true || Array.isArray(value)) return null;
+	const expr = value.expression;
+	if (expr.type !== 'ConditionalExpression') return null;
+
+	const consequent = evaluate_static_expr(expr.consequent);
+	if (consequent === null) return null;
+	const alternate = evaluate_static_expr(expr.alternate);
+	if (alternate === null) return null;
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const test = expr.test as any;
+	const test_source = source.slice(test.start, test.end);
+	return {test_source, consequent, alternate};
 };
 
 /**

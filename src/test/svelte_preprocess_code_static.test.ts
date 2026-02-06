@@ -119,6 +119,39 @@ const y = 2;" lang="ts" />`;
 			const raw_html = extract_raw_html(result);
 			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;\nconst y = 2;', 'ts'));
 		});
+
+		test('transforms string concatenation', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+</script>
+
+<Code content={'hello' + ' world'} lang="ts" />`;
+			const result = await run(input);
+
+			const raw_html = extract_raw_html(result);
+			expect(raw_html).toBe(syntax_styler_global.stylize('hello world', 'ts'));
+		});
+
+		test('transforms chained concatenation', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+</script>
+
+<Code content={'a' + 'b' + 'c'} lang="ts" />`;
+			const result = await run(input);
+
+			const raw_html = extract_raw_html(result);
+			expect(raw_html).toBe(syntax_styler_global.stylize('abc', 'ts'));
+		});
+
+		test('transforms concatenation with template literal', async () => {
+			const input =
+				'<script lang="ts">\n\timport Code from \'@fuzdev/fuz_code/Code.svelte\';\n</script>\n\n<Code content={\'<\' + `script>`} />';
+			const result = await run(input);
+
+			const raw_html = extract_raw_html(result);
+			expect(raw_html).toBe(syntax_styler_global.stylize('<script>', 'svelte'));
+		});
 	});
 
 	describe('escaping', () => {
@@ -152,6 +185,87 @@ const y = 2;" lang="ts" />`;
 		});
 	});
 
+	describe('conditional expressions', () => {
+		test('transforms ternary with static string branches', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+	let show = true;
+</script>
+
+<Code content={show ? 'const x = 1;' : 'let y = 2;'} lang="ts" />`;
+			const result = await run(input);
+
+			expect(result).toContain('dangerous_raw_html=');
+			expect(result).toContain('show ?');
+			expect(result).toContain('token_keyword');
+		});
+
+		test('ternary produces correct HTML for both branches', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+	let show = true;
+</script>
+
+<Code content={show ? 'const x = 1;' : 'let y = 2;'} lang="ts" />`;
+			const result = await run(input);
+
+			// Extract both branches from: dangerous_raw_html={show ? '...' : '...'}
+			const match =
+				/dangerous_raw_html=\{(\w+) \? '((?:[^'\\]|\\.)*)' : '((?:[^'\\]|\\.)*)'\}/.exec(result);
+			expect(match).toBeTruthy();
+			expect(match![1]).toBe('show');
+
+			const unescape = (s: string) =>
+				s
+					.replace(/\\'/g, "'")
+					.replace(/\\n/g, '\n')
+					.replace(/\\r/g, '\r')
+					.replace(/\\\\/g, '\\');
+
+			expect(unescape(match![2]!)).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+			expect(unescape(match![3]!)).toBe(syntax_styler_global.stylize('let y = 2;', 'ts'));
+		});
+
+		test('ternary with concatenation in branches', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+	let show = true;
+</script>
+
+<Code content={show ? 'const ' + 'x = 1;' : 'let y = 2;'} lang="ts" />`;
+			const result = await run(input);
+
+			expect(result).toContain('dangerous_raw_html=');
+			expect(result).toContain('show ?');
+		});
+
+		test('skips ternary with dynamic branch', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+	let show = true;
+	const code = 'x';
+</script>
+
+<Code content={show ? code : 'let y = 2;'} lang="ts" />`;
+			const result = await run(input);
+
+			expect(result).not.toContain('dangerous_raw_html');
+		});
+
+		test('ternary output is parseable by Svelte compiler', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+	let show = true;
+</script>
+
+<Code content={show ? 'const x = 1;' : 'let y = 2;'} lang="ts" />`;
+			const result = await run(input);
+
+			const ast = parse(result, {filename: 'Test.svelte', modern: true});
+			expect(ast.fragment.nodes.length).toBeGreaterThan(0);
+		});
+	});
+
 	describe('dynamic content preservation', () => {
 		test('preserves variable reference', async () => {
 			const input = `<script lang="ts">
@@ -174,13 +288,14 @@ const y = 2;" lang="ts" />`;
 			expect(result).not.toContain('dangerous_raw_html');
 		});
 
-		test('preserves ternary expression', async () => {
+		test('preserves ternary with dynamic branch', async () => {
 			const input = `<script lang="ts">
 	import Code from '@fuzdev/fuz_code/Code.svelte';
 	let show = true;
+	const code = 'a';
 </script>
 
-<Code content={show ? 'a' : 'b'} lang="ts" />`;
+<Code content={show ? code : 'b'} lang="ts" />`;
 			const result = await run(input);
 
 			expect(result).not.toContain('dangerous_raw_html');
