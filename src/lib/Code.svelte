@@ -8,6 +8,7 @@
 
 	const {
 		content,
+		dangerous_raw_html,
 		lang = 'svelte',
 		grammar,
 		inline = false,
@@ -18,7 +19,15 @@
 		...rest
 	}: SvelteHTMLElements['code'] & {
 		/** The source code to syntax highlight. */
-		content: string;
+		content?: string;
+		/**
+		 * Pre-highlighted HTML from the `svelte_preprocess_code_static` preprocessor.
+		 * When provided, skips runtime syntax highlighting entirely.
+		 *
+		 * Named `dangerous_raw_html` to signal that it bypasses sanitization,
+		 * matching the `{@html}` pattern already used by this component.
+		 */
+		dangerous_raw_html?: string;
 		/**
 		 * Language identifier (e.g., 'ts', 'css', 'html', 'json', 'svelte', 'md').
 		 *
@@ -103,6 +112,8 @@
 	// DEV-only validation warnings
 	if (DEV) {
 		$effect(() => {
+			if (dangerous_raw_html) return;
+
 			if (lang && !language_supported && !grammar) {
 				const langs = Object.keys(syntax_styler.langs).join(', ');
 				// eslint-disable-next-line no-console
@@ -116,23 +127,21 @@
 
 	// Generate HTML markup for syntax highlighting
 	const html_content = $derived.by(() => {
-		if (!content || highlighting_disabled) {
-			return '';
-		}
-
+		if (dangerous_raw_html) return '';
+		if (!content || highlighting_disabled) return '';
 		return syntax_styler.stylize(content, lang!, grammar); // ! is safe bc of the `highlighting_disabled` calculation
 	});
 
-	// TODO do syntax styling at compile-time in the normal case, and don't import these at runtime
-	// TODO @html making me nervous
+	// Unified value for template and children snippet
+	const rendered_html = $derived(dangerous_raw_html || html_content);
 </script>
 
 <!-- eslint-disable svelte/no-at-html-tags -->
 
 <code {...rest} class:inline class:wrap class:nomargin data-lang={lang}
-	>{#if highlighting_disabled}{content}{:else if children}{@render children(
-			html_content,
-		)}{:else}{@html html_content}{/if}</code
+	>{#if highlighting_disabled && !dangerous_raw_html}{content}{:else if children}{@render children(
+			rendered_html,
+		)}{:else}{@html rendered_html}{/if}</code
 >
 
 <style>
