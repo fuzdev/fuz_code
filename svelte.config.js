@@ -10,9 +10,7 @@ let fuz_code_preprocessors = [];
 try {
 	const {svelte_preprocess_fuz_code} =
 		await import('@fuzdev/fuz_code/svelte_preprocess_fuz_code.js');
-	fuz_code_preprocessors = [
-		svelte_preprocess_fuz_code({component_imports: ['$lib/Code.svelte']}),
-	];
+	fuz_code_preprocessors = [svelte_preprocess_fuz_code({component_imports: ['$lib/Code.svelte']})];
 } catch {}
 
 /** @type {import('@sveltejs/kit').Config} */
