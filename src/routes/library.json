@@ -44,13 +44,21 @@
 		},
 		"peerDependencies": {
 			"@fuzdev/fuz_css": ">=0.44.1",
-			"svelte": "^5"
+			"magic-string": "^0.30",
+			"svelte": "^5",
+			"zimmerframe": "^1"
 		},
 		"peerDependenciesMeta": {
 			"@fuzdev/fuz_css": {
 				"optional": true
 			},
+			"magic-string": {
+				"optional": true
+			},
 			"svelte": {
+				"optional": true
+			},
+			"zimmerframe": {
 				"optional": true
 			}
 		},
@@ -70,6 +78,7 @@
 			"eslint": "^9.39.1",
 			"eslint-plugin-svelte": "^3.13.1",
 			"esm-env": "^1.2.2",
+			"magic-string": "^0.30.21",
 			"prettier": "^3.7.4",
 			"prettier-plugin-svelte": "^3.4.1",
 			"svelte": "^5.49.1",
@@ -77,7 +86,8 @@
 			"tslib": "^2.8.1",
 			"typescript": "^5.9.3",
 			"typescript-eslint": "^8.48.1",
-			"vitest": "^4.0.15"
+			"vitest": "^4.0.15",
+			"zimmerframe": "^1.1.4"
 		},
 		"prettier": {
 			"plugins": ["prettier-plugin-svelte"],
@@ -167,11 +177,6 @@
 						"name": "Code",
 						"kind": "component",
 						"props": [
-							{
-								"name": "content",
-								"type": "string",
-								"description": "The source code to syntax highlight."
-							},
 							{
 								"name": "lang",
 								"type": "string | null",
@@ -632,6 +637,64 @@
 				"dependents": ["highlight_manager.ts"]
 			},
 			{
+				"path": "svelte_preprocess_code_static.ts",
+				"declarations": [
+					{
+						"name": "PreprocessCodeStaticOptions",
+						"kind": "type",
+						"source_line": 8,
+						"type_signature": "PreprocessCodeStaticOptions",
+						"properties": [
+							{
+								"name": "exclude",
+								"kind": "variable",
+								"type_signature": "Array<string | RegExp>",
+								"doc_comment": "File patterns to exclude."
+							},
+							{
+								"name": "syntax_styler",
+								"kind": "variable",
+								"type_signature": "SyntaxStyler",
+								"doc_comment": "Custom syntax styler."
+							},
+							{
+								"name": "cache",
+								"kind": "variable",
+								"type_signature": "boolean",
+								"doc_comment": "Enable in-memory caching."
+							},
+							{
+								"name": "component_imports",
+								"kind": "variable",
+								"type_signature": "Array<string>",
+								"doc_comment": "Import sources that resolve to the Code component.\nUsed to verify that `<Code>` in templates actually refers to fuz_code's Code.svelte."
+							},
+							{
+								"name": "on_error",
+								"kind": "variable",
+								"type_signature": "'log' | 'throw'",
+								"doc_comment": "How to handle errors."
+							}
+						]
+					},
+					{
+						"name": "svelte_preprocess_code_static",
+						"kind": "function",
+						"source_line": 33,
+						"type_signature": "(options?: PreprocessCodeStaticOptions): PreprocessorGroup",
+						"return_type": "PreprocessorGroup",
+						"parameters": [
+							{
+								"name": "options",
+								"type": "PreprocessCodeStaticOptions",
+								"default_value": "{}"
+							}
+						]
+					}
+				],
+				"dependencies": ["syntax_styler_global.ts"]
+			},
+			{
 				"path": "syntax_styler_global.ts",
 				"declarations": [
 					{
@@ -652,7 +715,7 @@
 					"grammar_ts.ts",
 					"syntax_styler.ts"
 				],
-				"dependents": ["Code.svelte", "CodeHighlight.svelte"]
+				"dependents": ["Code.svelte", "CodeHighlight.svelte", "svelte_preprocess_code_static.ts"]
 			},
 			{
 				"path": "syntax_styler.ts",

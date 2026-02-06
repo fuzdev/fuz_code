@@ -2,9 +2,10 @@
 	import {resolve} from '$app/paths';
 
 	// import Tome from '@fuzdev/fuz_ui/Tome.svelte';
-	// import DocsItem from '@fuzdev/fuz_ui/DocsItem.svelte';
 	// import TomeLink from '@fuzdev/fuz_ui/TomeLink.svelte';
-	import TomeLink from '$routes/TomeLink.svelte';
+	import ModuleLink from '@fuzdev/fuz_ui/ModuleLink.svelte';
+	import DeclarationLink from '@fuzdev/fuz_ui/DeclarationLink.svelte';
+
 	import Code from '$lib/Code.svelte';
 
 	// TODO what convention? `DocsTome`? Maybe just `Tome`? `/tomes`? both? what other options?
@@ -19,7 +20,7 @@
 	<h2 class="mt_0">Usage</h2>
 	<p>
 		The
-		<TomeLink name="Code" />
+		<DeclarationLink name="Code" />
 		Svelte component supports syntax styling originally based on
 		<a href="https://github.com/PrismJS/prism">Prism</a> by
 		<a href="https://lea.verou.me/">Lea Verou</a>.
@@ -30,7 +31,7 @@
 		content="// +layout.svelte
 import '@fuzdev/fuz_code/theme.css'; // add this"
 	/>
-	<p>then use <TomeLink name="Code" />:</p>
+	<p>then use <DeclarationLink name="Code" />:</p>
 	<Code
 		content={'<' +
 			`script>\n\t// Something.svelte\n\timport Code from '@fuzdev/fuz_code/Code.svelte';\n</script>\n\n<Code content="<header>hello world</header>" />`}
@@ -53,24 +54,34 @@ import '@fuzdev/fuz_code/theme_variables.css'; // also this if not using fuz_css
 	/>
 </section>
 <section>
-	<h3>Caveats</h3>
+	<h3>Static compilation</h3>
 	<p>
-		The <code>Code</code> component generates HTML with CSS classes for text highlighting. It also
-		includes experimental support for the CSS Custom Highlight API with <code>CodeHighlight</code>,
-		see the
-		<a href={resolve('/samples')}>samples</a>
-		for more.
+		The <ModuleLink module_path="svelte_preprocess_code_static.ts"
+			>svelte_preprocess_code_static</ModuleLink
+		> preprocessor compiles static
+		<DeclarationLink name="Code" /> content at build time, eliminating runtime syntax highlighting:
 	</p>
+	<Code
+		lang="ts"
+		content={`// svelte.config.js
+import {svelte_preprocess_code_static} from '@fuzdev/fuz_code/svelte_preprocess_code_static.js';
+
+export default {
+  preprocess: [
+    svelte_preprocess_code_static(),
+    vitePreprocess(),
+  ],
+};`}
+	/>
 	<p>
-		Performing syntax styling at runtime like this is often wasteful. The plan is to provide a Vite
-		plugin to optimize static cases. For now you can use <code>lang={'{'}null}</code> with pre-highligted
-		HTML.
+		Static string <code>content</code> props are highlighted at build time and replaced with pre-rendered
+		HTML. Dynamic content is left unchanged for runtime highlighting.
 	</p>
 </section>
 <section>
 	<h3>Svelte support</h3>
 	<p>
-		<TomeLink name="Code" /> styles
+		<DeclarationLink name="Code" /> styles
 		<a href="https://svelte.dev/">Svelte</a>
 		by default, originally based on
 		<a href="https://github.com/pngwn/prism-svelte"><code>prism-svelte</code></a>
@@ -95,7 +106,7 @@ import '@fuzdev/fuz_code/theme_variables.css'; // also this if not using fuz_css
 <section>
 	<h3>TypeScript support</h3>
 	<p>
-		<TomeLink name="Code" /> supports TypeScript with <code>lang="ts"</code>:
+		<DeclarationLink name="Code" /> supports TypeScript with <code>lang="ts"</code>:
 	</p>
 	<Code content={`<Code lang="ts" content="export type A<T> = ('b' | 3) & T;" />`} />
 	<div>
@@ -105,8 +116,8 @@ import '@fuzdev/fuz_code/theme_variables.css'; // also this if not using fuz_css
 <section>
 	<h3>Markdown support</h3>
 	<p>
-		<TomeLink name="Code" /> supports Markdown with <code>lang="md"</code>, and fenced blocks for
-		all languages:
+		<DeclarationLink name="Code" /> supports Markdown with <code>lang="md"</code>, and fenced blocks
+		for all languages:
 	</p>
 	<Code content={`<Code lang="md" content="# hello \`world\` ..." />`} />
 	<div>
@@ -124,7 +135,7 @@ import '@fuzdev/fuz_code/theme_variables.css'; // also this if not using fuz_css
 <section>
 	<h3>Layout</h3>
 	<p>
-		<TomeLink name="Code" /> is a block by default:
+		<DeclarationLink name="Code" /> is a block by default:
 	</p>
 	<div>ab<Code content="c" /></div>
 	<Code content={'<div>ab<Code content="c" /></div>'} />
@@ -132,5 +143,14 @@ import '@fuzdev/fuz_code/theme_variables.css'; // also this if not using fuz_css
 		It can be inlined with <Code inline content={`<Code inline content="..." />`} />
 	</p>
 </section>
-
+<section>
+	<h3>Experimental highlighting API</h3>
+	<p>
+		The <DeclarationLink name="Code" /> component generates HTML with CSS classes for text highlighting.
+		It also includes experimental support for the CSS Custom Highlight API with
+		<code>CodeHighlight</code>, see the
+		<a href={resolve('/samples')}>samples</a>
+		for more.
+	</p>
+</section>
 <!-- </DocsItem> -->
