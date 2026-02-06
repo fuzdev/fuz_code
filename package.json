@@ -1,6 +1,6 @@
 {
   "name": "@fuzdev/fuz_code",
-  "version": "0.41.0",
+  "version": "0.41.1",
   "description": "syntax styling utilities and components for TypeScript, Svelte, and Markdown",
   "glyph": "🎨",
   "logo": "logo.svg",

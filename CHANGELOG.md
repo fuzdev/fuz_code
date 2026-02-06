@@ -1,5 +1,12 @@
 # @fuzdev/fuz_code
 
+## 0.41.1
+
+### Patch Changes
+
+- add `dangerous_raw_html` to `Code` ([#30](https://github.com/fuzdev/fuz_code/pull/30))
+- add `svelte_preprocess_code_static` ([#30](https://github.com/fuzdev/fuz_code/pull/30))
+
 ## 0.41.0
 
 ### Minor Changes
