@@ -1,5 +1,11 @@
 # @fuzdev/fuz_code
 
+## 0.42.0
+
+### Minor Changes
+
+- rename `svelte_preprocess_fuz_code` from `svelte_preprocess_code_static` ([b35029d](https://github.com/fuzdev/fuz_code/commit/b35029d))
+
 ## 0.41.1
 
 ### Patch Changes
