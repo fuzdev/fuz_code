@@ -30,6 +30,7 @@
 		</section>
 		<section class="panel">
 			<div class="shade_00 shadow_sm border_radius_xs p_xl2">
+				<h2 class="mt_0">Usage</h2>
 				<CodeTome />
 			</div>
 		</section>

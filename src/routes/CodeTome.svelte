@@ -17,12 +17,13 @@
 
 <!-- <DocsItem name={LIBRARY_ITEM_NAME}> -->
 <section>
-	<h2 class="mt_0">Usage</h2>
 	<p>
 		The
 		<DeclarationLink name="Code" />
-		Svelte component supports syntax styling originally based on
-		<a href="https://github.com/PrismJS/prism">Prism</a> by
+		Svelte component supports syntax styling, originally based on
+		<a href="https://github.com/PrismJS/prism">Prism</a> (<a href="https://prismjs.com/"
+			>prismjs.com</a
+		>) by
 		<a href="https://lea.verou.me/">Lea Verou</a>.
 	</p>
 	<p>To use it, import the default theme or your own:</p>

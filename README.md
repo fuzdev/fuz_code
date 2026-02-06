@@ -175,7 +175,7 @@ Experimental modules:
 
 ## License [🐦](https://wikipedia.org/wiki/Free_and_open-source_software)
 
-based on [Prism](https://github.com/PrismJS/prism)
+based on [Prism](https://github.com/PrismJS/prism) ([prismjs.com](https://prismjs.com/))
 by [Lea Verou](https://lea.verou.me/)
 
 the [Svelte grammar](src/lib/grammar_svelte.ts)
