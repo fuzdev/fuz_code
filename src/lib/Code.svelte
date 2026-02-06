@@ -135,21 +135,18 @@
 
 	// Generate HTML markup for syntax highlighting
 	const html_content = $derived.by(() => {
-		if (dangerous_raw_html != null) return '';
+		if (dangerous_raw_html != null) return dangerous_raw_html;
 		if (!content || highlighting_disabled) return '';
 		return syntax_styler.stylize(content, lang!, grammar); // ! is safe bc of the `highlighting_disabled` calculation
 	});
-
-	// Unified value for template and children snippet
-	const rendered_html = $derived(dangerous_raw_html ?? html_content);
 </script>
 
 <!-- eslint-disable svelte/no-at-html-tags -->
 
 <code {...rest} class:inline class:wrap class:nomargin data-lang={lang}
 	>{#if highlighting_disabled && dangerous_raw_html == null}{content}{:else if children}{@render children(
-			rendered_html,
-		)}{:else}{@html rendered_html}{/if}</code
+			html_content,
+		)}{:else}{@html html_content}{/if}</code
 >
 
 <style>
