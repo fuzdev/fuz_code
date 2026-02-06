@@ -5,7 +5,7 @@ import {walk} from 'zimmerframe';
 import {syntax_styler_global} from './syntax_styler_global.js';
 import type {SyntaxStyler} from './syntax_styler.js';
 
-export interface Preprocess_Code_Static_Options {
+export interface PreprocessCodeStaticOptions {
 	/** File patterns to exclude. */
 	exclude?: Array<string | RegExp>;
 
@@ -31,7 +31,7 @@ export interface Preprocess_Code_Static_Options {
 }
 
 export const svelte_preprocess_code_static = (
-	options: Preprocess_Code_Static_Options = {},
+	options: PreprocessCodeStaticOptions = {},
 ): PreprocessorGroup => {
 	const {
 		exclude = [],
@@ -53,8 +53,8 @@ export const svelte_preprocess_code_static = (
 				return {code: content};
 			}
 
-			// Quick check: does file contain Code component?
-			if (!content.includes('Code')) {
+			// Quick check: does file import from a known Code component source?
+			if (!component_imports.some((source) => content.includes(source))) {
 				return {code: content};
 			}
 
@@ -135,7 +135,7 @@ interface Transformation {
 	replacement: string;
 }
 
-interface Find_Code_Usages_Options {
+interface FindCodeUsagesOptions {
 	cache: Map<string, string> | null;
 	on_error: 'log' | 'throw';
 	filename: string | undefined;
@@ -150,11 +150,11 @@ const try_highlight = (
 	text: string,
 	lang: string,
 	syntax_styler: SyntaxStyler,
-	options: Find_Code_Usages_Options,
+	options: FindCodeUsagesOptions,
 ): string | null => {
 	const cache_key = `${lang}:${text}`;
 	let html = options.cache?.get(cache_key);
-	if (!html) {
+	if (html == null) {
 		try {
 			html = syntax_styler.stylize(text, lang);
 			options.cache?.set(cache_key, html);
@@ -174,7 +174,7 @@ const find_code_usages = (
 	ast: AST.Root,
 	syntax_styler: SyntaxStyler,
 	code_names: Set<string>,
-	options: Find_Code_Usages_Options,
+	options: FindCodeUsagesOptions,
 ): Array<Transformation> => {
 	const transformations: Array<Transformation> = [];
 
@@ -295,7 +295,7 @@ const extract_static_string = (value: Attribute_Value): string | null => {
 	return evaluate_static_expr(expr);
 };
 
-interface Conditional_Static_Strings {
+interface ConditionalStaticStrings {
 	test_source: string;
 	consequent: string;
 	alternate: string;
@@ -308,7 +308,7 @@ interface Conditional_Static_Strings {
 const try_extract_conditional = (
 	value: Attribute_Value,
 	source: string,
-): Conditional_Static_Strings | null => {
+): ConditionalStaticStrings | null => {
 	if (value === true || Array.isArray(value)) return null;
 	const expr = value.expression;
 	if (expr.type !== 'ConditionalExpression') return null;
@@ -339,7 +339,7 @@ const escape_js_string = (html: string): string => {
 /**
  * Handle errors during highlighting.
  */
-const handle_error = (error: unknown, options: Find_Code_Usages_Options): void => {
+const handle_error = (error: unknown, options: FindCodeUsagesOptions): void => {
 	const message = `[code-static] Highlighting failed${options.filename ? ` in ${options.filename}` : ''}: ${error instanceof Error ? error.message : String(error)}`;
 
 	if (options.on_error === 'throw') {

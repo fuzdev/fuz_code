@@ -640,10 +640,10 @@
 				"path": "svelte_preprocess_code_static.ts",
 				"declarations": [
 					{
-						"name": "Preprocess_Code_Static_Options",
+						"name": "PreprocessCodeStaticOptions",
 						"kind": "type",
 						"source_line": 8,
-						"type_signature": "Preprocess_Code_Static_Options",
+						"type_signature": "PreprocessCodeStaticOptions",
 						"properties": [
 							{
 								"name": "exclude",
@@ -681,12 +681,12 @@
 						"name": "svelte_preprocess_code_static",
 						"kind": "function",
 						"source_line": 33,
-						"type_signature": "(options?: Preprocess_Code_Static_Options): PreprocessorGroup",
+						"type_signature": "(options?: PreprocessCodeStaticOptions): PreprocessorGroup",
 						"return_type": "PreprocessorGroup",
 						"parameters": [
 							{
 								"name": "options",
-								"type": "Preprocess_Code_Static_Options",
+								"type": "PreprocessCodeStaticOptions",
 								"default_value": "{}"
 							}
 						]

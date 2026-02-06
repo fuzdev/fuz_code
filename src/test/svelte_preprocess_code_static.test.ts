@@ -516,6 +516,26 @@ const y = 2;" lang="ts" />`;
 
 			expect(result.code).toContain('dangerous_raw_html=');
 		});
+
+		test('custom component_imports with path not containing "Code"', async () => {
+			const input = `<script lang="ts">
+	import Highlighter from '$lib/Highlighter.svelte';
+</script>
+
+<Highlighter content="const x = 1;" lang="ts" />`;
+			const result = await preprocess(
+				input,
+				[
+					svelte_preprocess_code_static({
+						component_imports: ['$lib/Highlighter.svelte'],
+					}),
+				],
+				{filename: 'Test.svelte'},
+			);
+
+			const raw_html = extract_raw_html(result.code);
+			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+		});
 	});
 
 	describe('prop preservation', () => {
