@@ -5,12 +5,18 @@
 	// import TomeLink from '@fuzdev/fuz_ui/TomeLink.svelte';
 	import ModuleLink from '@fuzdev/fuz_ui/ModuleLink.svelte';
 	import DeclarationLink from '@fuzdev/fuz_ui/DeclarationLink.svelte';
+	import TomeSection from '@fuzdev/fuz_ui/TomeSection.svelte';
+	import TomeSectionHeader from '@fuzdev/fuz_ui/TomeSectionHeader.svelte';
 
 	import Code from '$lib/Code.svelte';
+	import {syntax_styler_global} from '$lib/syntax_styler_global.js';
 
 	// TODO what convention? `DocsTome`? Maybe just `Tome`? `/tomes`? both? what other options?
 
 	// const LIBRARY_ITEM_NAME = 'Code';
+
+	const programmatic_example = `const x: number = 42;`;
+	const programmatic_result = syntax_styler_global.stylize(programmatic_example, 'ts');
 </script>
 
 <!-- eslint-disable svelte/no-useless-mustaches -->
@@ -40,8 +46,8 @@ import '@fuzdev/fuz_code/theme.css'; // add this"
 	<p>outputs:</p>
 	<Code content="<header>hello world</header>" />
 </section>
-<section>
-	<h3>Dependencies</h3>
+<TomeSection>
+	<TomeSectionHeader text="Dependencies" />
 	<p>
 		By default fuz_code depends on <a href="https://css.fuz.dev">fuz_css</a> to provide
 		color-schema-aware color variables. If you're not using it, import
@@ -53,9 +59,9 @@ import '@fuzdev/fuz_code/theme.css'; // add this"
 import '@fuzdev/fuz_code/theme.css';
 import '@fuzdev/fuz_code/theme_variables.css'; // also this if not using fuz_css"
 	/>
-</section>
-<section>
-	<h3>Static compilation</h3>
+</TomeSection>
+<TomeSection>
+	<TomeSectionHeader text="Static compilation" />
 	<p>
 		The <ModuleLink module_path="svelte_preprocess_fuz_code.ts"
 			>svelte_preprocess_fuz_code</ModuleLink
@@ -78,9 +84,9 @@ export default {
 		Static string <code>content</code> props are highlighted at build time and replaced with pre-rendered
 		HTML. Dynamic content is left unchanged for runtime highlighting.
 	</p>
-</section>
-<section>
-	<h3>Svelte support</h3>
+</TomeSection>
+<TomeSection>
+	<TomeSectionHeader text="Svelte support" />
 	<p>
 		<DeclarationLink name="Code" /> styles
 		<a href="https://svelte.dev/">Svelte</a>
@@ -103,9 +109,9 @@ export default {
 </Card>`}
 		/>
 	</div>
-</section>
-<section>
-	<h3>TypeScript support</h3>
+</TomeSection>
+<TomeSection>
+	<TomeSectionHeader text="TypeScript support" />
 	<p>
 		<DeclarationLink name="Code" /> supports TypeScript with <code>lang="ts"</code>:
 	</p>
@@ -113,9 +119,9 @@ export default {
 	<div>
 		<Code lang="ts" content={`export type A<T> = ('b' | 3) & T;`} />
 	</div>
-</section>
-<section>
-	<h3>Markdown support</h3>
+</TomeSection>
+<TomeSection>
+	<TomeSectionHeader text="Markdown support" />
 	<p>
 		<DeclarationLink name="Code" /> supports Markdown with <code>lang="md"</code>, and fenced blocks
 		for all languages:
@@ -124,17 +130,17 @@ export default {
 	<div>
 		<Code lang="md" content={`# hello \`world\`\n\n\`\`\`ts\n\tconst a = 1;\n\`\`\``} />
 	</div>
-</section>
-<section>
-	<h3>Fallback to no styling</h3>
+</TomeSection>
+<TomeSection>
+	<TomeSectionHeader text="Fallback to no styling" />
 	<p>
 		Passing <code>lang={'{'}null}</code> disables syntax styling:
 	</p>
 	<Code content={'<Code lang={null} content="<aside>all is gray</aside>" />'} />
 	<Code lang={null} content={`<aside>all is gray</aside>`} />
-</section>
-<section>
-	<h3>Layout</h3>
+</TomeSection>
+<TomeSection>
+	<TomeSectionHeader text="Layout" />
 	<p>
 		<DeclarationLink name="Code" /> is a block by default:
 	</p>
@@ -143,9 +149,48 @@ export default {
 	<p>
 		It can be inlined with <Code inline content={`<Code inline content="..." />`} />
 	</p>
-</section>
-<section>
-	<h3>Experimental highlighting API</h3>
+</TomeSection>
+<TomeSection>
+	<TomeSectionHeader text="Programmatic usage" />
+	<p>
+		fuz_code can be used directly from TypeScript without Svelte. Import <DeclarationLink
+			name="syntax_styler_global"
+		/> for a pre-configured instance with all built-in grammars:
+	</p>
+	<Code
+		lang="ts"
+		content={`import {syntax_styler_global} from '@fuzdev/fuz_code/syntax_styler_global.js';
+
+const html = syntax_styler_global.stylize('${programmatic_example}', 'ts');`}
+	/>
+	<p>returns HTML string:</p>
+	<Code content={programmatic_result} />
+	<p>then rendered with:</p>
+	<Code content={'<code data-lang="ts">{@html programmatic_result}</code>'} />
+	<p>we get:</p>
+	<p>
+		<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+		<code data-lang="ts">{@html programmatic_result}</code>
+	</p>
+	<p>
+		For a custom configuration, create your own <DeclarationLink name="SyntaxStyler" /> and register only
+		the grammars you need:
+	</p>
+	<Code
+		lang="ts"
+		content={`import {SyntaxStyler} from '@fuzdev/fuz_code/syntax_styler.js';
+import {add_grammar_css} from '@fuzdev/fuz_code/grammar_css.js';
+import {add_grammar_markup} from '@fuzdev/fuz_code/grammar_markup.js';
+
+const styler = new SyntaxStyler();
+add_grammar_markup(styler);
+add_grammar_css(styler);
+
+const html = styler.stylize('<div class="example">hello</div>', 'html');`}
+	/>
+</TomeSection>
+<TomeSection>
+	<TomeSectionHeader text="Experimental highlighting API" />
 	<p>
 		The <DeclarationLink name="Code" /> component generates HTML with CSS classes for text highlighting.
 		It also includes experimental support for the CSS Custom Highlight API with
@@ -153,5 +198,5 @@ export default {
 		<a href={resolve('/samples')}>samples</a>
 		for more.
 	</p>
-</section>
+</TomeSection>
 <!-- </DocsItem> -->

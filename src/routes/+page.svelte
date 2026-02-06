@@ -2,12 +2,18 @@
 	import LibrarySummary from '@fuzdev/fuz_ui/LibrarySummary.svelte';
 	import DocsFooter from '@fuzdev/fuz_ui/DocsFooter.svelte';
 	import Card from '@fuzdev/fuz_ui/Card.svelte';
+	import TomeContent from '@fuzdev/fuz_ui/TomeContent.svelte';
+	import {DocsLinks, docs_links_context} from '@fuzdev/fuz_ui/docs_helpers.svelte.js';
 	import {library_context} from '@fuzdev/fuz_ui/library.svelte.js';
 	import {resolve} from '$app/paths';
 
 	import CodeTome from '$routes/CodeTome.svelte';
+	import {tomes} from '$routes/docs/tomes.js';
 
 	const library = library_context.get();
+	const tome = tomes.find((t) => t.name === 'usage')!;
+
+	docs_links_context.set(new DocsLinks());
 </script>
 
 <main class="box width:100%">
@@ -30,8 +36,10 @@
 		</section>
 		<section class="panel">
 			<div class="shade_00 shadow_sm border_radius_xs p_xl2">
-				<h2 class="mt_0">Usage</h2>
-				<CodeTome />
+				<TomeContent {tome}>
+					{#snippet header()}<h1 class="mt_0">Using fuz_code</h1>{/snippet}
+					<CodeTome />
+				</TomeContent>
 			</div>
 		</section>
 		<section>
