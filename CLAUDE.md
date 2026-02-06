@@ -52,6 +52,9 @@ fuz_code is a **syntax highlighting library**:
 ### Directory structure
 
 ```
+benchmark/                          # performance testing
+├── benchmarks.ts               # main benchmark runner
+└── compare/                    # Prism/Shiki comparison
 src/
 ├── lib/                        # exportable library code
 │   ├── syntax_styler.ts        # SyntaxStyler class, hook system
@@ -74,9 +77,6 @@ src/
 │       ├── generated/          # generated fixture outputs
 │       ├── check.test.ts       # fixture validation
 │       └── update.task.ts      # fixture regeneration task
-├── benchmark/                  # performance testing
-│   ├── benchmarks.ts           # main benchmark runner
-│   └── compare/                # Prism/Shiki comparison
 └── routes/                     # demo/docs site
     ├── samples/                # language samples showcase
     ├── benchmark/              # interactive benchmark UI

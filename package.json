@@ -23,8 +23,8 @@
     "test": "gro test",
     "preview": "vite preview",
     "deploy": "gro deploy",
-    "benchmark": "gro run src/benchmark/run_benchmarks.ts",
-    "benchmark:compare": "gro run src/benchmark/compare/run_compare.ts",
+    "benchmark": "gro run benchmark/run_benchmarks.ts",
+    "benchmark:compare": "gro run benchmark/compare/run_compare.ts",
     "fixtures:update": "gro src/test/fixtures/update"
   },
   "type": "module",

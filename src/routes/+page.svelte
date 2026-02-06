@@ -7,8 +7,6 @@
 
 	import CodeTome from '$routes/CodeTome.svelte';
 
-	// import '$lib/benchmark.js';
-
 	const library = library_context.get();
 </script>
 
