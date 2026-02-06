@@ -91,7 +91,7 @@ describe('svelte_preprocess_code_static', () => {
 			expect(raw_html).toBe(syntax_styler_global.stylize('<button>Click</button>', 'svelte'));
 		});
 
-		test('handles empty string content', async () => {
+		test('skips empty string content (no highlighting benefit)', async () => {
 			const input = `<script lang="ts">
 	import Code from '@fuzdev/fuz_code/Code.svelte';
 </script>
@@ -99,8 +99,8 @@ describe('svelte_preprocess_code_static', () => {
 <Code content="" lang="ts" />`;
 			const result = await run(input);
 
-			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBe(syntax_styler_global.stylize('', 'ts'));
+			expect(result).toContain('content=""');
+			expect(result).not.toContain('dangerous_raw_html');
 		});
 
 		test('handles multiline content with escaped newlines', async () => {
@@ -120,7 +120,7 @@ const y = 2;" lang="ts" />`;
 			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;\nconst y = 2;', 'ts'));
 		});
 
-		test('transforms string concatenation', async () => {
+		test('skips concatenation when output equals input (no tokens)', async () => {
 			const input = `<script lang="ts">
 	import Code from '@fuzdev/fuz_code/Code.svelte';
 </script>
@@ -128,25 +128,25 @@ const y = 2;" lang="ts" />`;
 <Code content={'hello' + ' world'} lang="ts" />`;
 			const result = await run(input);
 
-			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBe(syntax_styler_global.stylize('hello world', 'ts'));
+			// 'hello world' has no TS tokens, stylize returns same string
+			expect(result).not.toContain('dangerous_raw_html');
 		});
 
-		test('transforms chained concatenation', async () => {
+		test('transforms concatenation when output has tokens', async () => {
 			const input = `<script lang="ts">
 	import Code from '@fuzdev/fuz_code/Code.svelte';
 </script>
 
-<Code content={'a' + 'b' + 'c'} lang="ts" />`;
+<Code content={'const ' + 'x = 1;'} lang="ts" />`;
 			const result = await run(input);
 
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBe(syntax_styler_global.stylize('abc', 'ts'));
+			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
 		});
 
 		test('transforms concatenation with template literal', async () => {
 			const input =
-				'<script lang="ts">\n\timport Code from \'@fuzdev/fuz_code/Code.svelte\';\n</script>\n\n<Code content={\'<\' + `script>`} />';
+				"<script lang=\"ts\">\n\timport Code from '@fuzdev/fuz_code/Code.svelte';\n</script>\n\n<Code content={'<' + `script>`} />";
 			const result = await run(input);
 
 			const raw_html = extract_raw_html(result);
@@ -216,11 +216,7 @@ const y = 2;" lang="ts" />`;
 			expect(match![1]).toBe('show');
 
 			const unescape = (s: string) =>
-				s
-					.replace(/\\'/g, "'")
-					.replace(/\\n/g, '\n')
-					.replace(/\\r/g, '\r')
-					.replace(/\\\\/g, '\\');
+				s.replace(/\\'/g, "'").replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\\\/g, '\\');
 
 			expect(unescape(match![2]!)).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
 			expect(unescape(match![3]!)).toBe(syntax_styler_global.stylize('let y = 2;', 'ts'));
@@ -327,6 +323,34 @@ const y = 2;" lang="ts" />`;
 		});
 	});
 
+	describe('no-op skip (output equals input)', () => {
+		test('skips when neither ternary branch has tokens', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+	let show = true;
+</script>
+
+<Code content={show ? 'hello' : 'world'} lang="ts" />`;
+			const result = await run(input);
+
+			expect(result).not.toContain('dangerous_raw_html');
+		});
+
+		test('transforms content with HTML special characters', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+</script>
+
+<Code content="a < b" lang="ts" />`;
+			const result = await run(input);
+
+			// stylize HTML-encodes < so output differs from input
+			expect(result).toContain('dangerous_raw_html=');
+			const raw_html = extract_raw_html(result);
+			expect(raw_html).toContain('&lt;');
+		});
+	});
+
 	describe('skip conditions', () => {
 		test('skips custom grammar', async () => {
 			const input = `<script lang="ts">
@@ -424,6 +448,18 @@ const y = 2;" lang="ts" />`;
 			expect(result).not.toContain('dangerous_raw_html');
 		});
 
+		test('skips when dangerous_raw_html already present', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+</script>
+
+<Code dangerous_raw_html={'precomputed'} content="const x = 1;" lang="ts" />`;
+			const result = await run(input);
+
+			expect(result).toContain('content="const x = 1;"');
+			expect(result).toContain("dangerous_raw_html={'precomputed'}");
+		});
+
 		test('skips spread attributes (no content to detect)', async () => {
 			const input = `<script lang="ts">
 	import Code from '@fuzdev/fuz_code/Code.svelte';
@@ -444,6 +480,18 @@ const y = 2;" lang="ts" />`;
 </script>
 
 <Highlighter content="const x = 1;" lang="ts" />`;
+			const result = await run(input);
+
+			const raw_html = extract_raw_html(result);
+			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+		});
+
+		test('handles import in script module block', async () => {
+			const input = `<script module>
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+</script>
+
+<Code content="const x = 1;" lang="ts" />`;
 			const result = await run(input);
 
 			const raw_html = extract_raw_html(result);

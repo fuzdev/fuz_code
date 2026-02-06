@@ -190,8 +190,12 @@ const find_code_usages = (
 			const content_attr = find_attribute(node, 'content');
 			if (!content_attr) return;
 
-			// Skip if custom grammar or custom syntax_styler is provided
-			if (find_attribute(node, 'grammar') || find_attribute(node, 'syntax_styler')) {
+			// Skip if already preprocessed or custom grammar/syntax_styler is provided
+			if (
+				find_attribute(node, 'dangerous_raw_html') ||
+				find_attribute(node, 'grammar') ||
+				find_attribute(node, 'syntax_styler')
+			) {
 				return;
 			}
 
@@ -205,7 +209,7 @@ const find_code_usages = (
 			const content_value = extract_static_string(content_attr.value);
 			if (content_value !== null) {
 				const html = try_highlight(content_value, lang_value, syntax_styler, options);
-				if (html === null) return;
+				if (html === null || html === content_value) return;
 				transformations.push({
 					start: content_attr.start,
 					end: content_attr.end,
@@ -217,19 +221,10 @@ const find_code_usages = (
 			// Try conditional expression with static string branches
 			const conditional = try_extract_conditional(content_attr.value, options.source);
 			if (conditional) {
-				const html_a = try_highlight(
-					conditional.consequent,
-					lang_value,
-					syntax_styler,
-					options,
-				);
-				const html_b = try_highlight(
-					conditional.alternate,
-					lang_value,
-					syntax_styler,
-					options,
-				);
+				const html_a = try_highlight(conditional.consequent, lang_value, syntax_styler, options);
+				const html_b = try_highlight(conditional.alternate, lang_value, syntax_styler, options);
 				if (html_a === null || html_b === null) return;
+				if (html_a === conditional.consequent && html_b === conditional.alternate) return;
 				transformations.push({
 					start: content_attr.start,
 					end: content_attr.end,
@@ -261,7 +256,6 @@ type Attribute_Value = AST.Attribute['value'];
  * Handles string literals, template literals (no interpolation), and string concatenation.
  * Returns `null` for dynamic or non-string expressions.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const evaluate_static_expr = (expr: any): string | null => {
 	if (expr.type === 'Literal' && typeof expr.value === 'string') return expr.value;
 	if (expr.type === 'TemplateLiteral' && expr.expressions.length === 0) {
@@ -325,7 +319,6 @@ const try_extract_conditional = (
 	const alternate = evaluate_static_expr(expr.alternate);
 	if (alternate === null) return null;
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const test = expr.test as any;
 	const test_source = source.slice(test.start, test.end);
 	return {test_source, consequent, alternate};
