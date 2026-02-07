@@ -165,7 +165,7 @@ const find_code_usages = (
 			if (!code_names.has(node.name)) return;
 
 			// Skip if spread attributes present — can't determine content statically
-			if (node.attributes.some((attr: any) => attr.type === 'SpreadAttribute')) return;
+			if (node.attributes.some((attr) => attr.type === 'SpreadAttribute')) return;
 
 			const content_attr = find_attribute(node, 'content');
 			if (!content_attr) return;
