@@ -317,7 +317,8 @@ const y = 2;" lang="ts" />`;
 			expect(result).not.toContain('dangerous_raw_html');
 		});
 
-		test('preserves template literal with interpolation', async () => {
+		test('preserves template literal with numeric const interpolation', async () => {
+			// `const value = 1` is a numeric literal — only string consts are traced
 			const input =
 				'<script lang="ts">\n\timport Code from \'@fuzdev/fuz_code/Code.svelte\';\n\tconst value = 1;\n</script>\n\n<Code content={`const x = ${value};`} lang="ts" />';
 			const result = await run(input);
@@ -347,6 +348,19 @@ const y = 2;" lang="ts" />`;
 <Code content={get_code()} lang="ts" />`;
 			const result = await run(input);
 
+			expect(result).not.toContain('dangerous_raw_html');
+		});
+
+		test('preserves $state rune const', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+	const code = $state('const x = 1;');
+</script>
+
+<Code content={code} lang="ts" />`;
+			const result = await run(input);
+
+			expect(result).toContain('content={code}');
 			expect(result).not.toContain('dangerous_raw_html');
 		});
 
