@@ -7,6 +7,7 @@ import {
 	find_attribute,
 	evaluate_static_expr,
 	extract_static_string,
+	build_static_bindings,
 	resolve_component_names,
 	type ResolvedComponentImport,
 } from '@fuzdev/fuz_util/svelte_preprocess_helpers.js';
@@ -76,12 +77,15 @@ export const svelte_preprocess_fuz_code = (
 				return {code: content};
 			}
 
+			const bindings = build_static_bindings(ast);
+
 			// Find Code component usages with static content
 			const transformations = find_code_usages(ast, syntax_styler, code_names, {
 				cache: cache ? highlight_cache : null,
 				on_error,
 				filename,
 				source: content,
+				bindings,
 			});
 
 			if (transformations.length === 0) {
@@ -112,6 +116,7 @@ interface FindCodeUsagesOptions {
 	on_error: 'log' | 'throw';
 	filename: string | undefined;
 	source: string;
+	bindings: ReadonlyMap<string, string>;
 }
 
 /**
@@ -176,12 +181,12 @@ const find_code_usages = (
 
 			// Resolve language - must be static and supported
 			const lang_attr = find_attribute(node, 'lang');
-			const lang_value = lang_attr ? extract_static_string(lang_attr.value) : 'svelte';
+			const lang_value = lang_attr ? extract_static_string(lang_attr.value, options.bindings) : 'svelte';
 			if (lang_value === null) return;
 			if (!syntax_styler.langs[lang_value]) return;
 
 			// Try simple static string
-			const content_value = extract_static_string(content_attr.value);
+			const content_value = extract_static_string(content_attr.value, options.bindings);
 			if (content_value !== null) {
 				const html = try_highlight(content_value, lang_value, syntax_styler, options);
 				if (html === null || html === content_value) return;
@@ -194,7 +199,7 @@ const find_code_usages = (
 			}
 
 			// Try conditional expression with static string branches
-			const conditional = try_extract_conditional(content_attr.value, options.source);
+			const conditional = try_extract_conditional(content_attr.value, options.source, options.bindings);
 			if (conditional) {
 				const html_a = try_highlight(conditional.consequent, lang_value, syntax_styler, options);
 				const html_b = try_highlight(conditional.alternate, lang_value, syntax_styler, options);
@@ -227,14 +232,15 @@ interface ConditionalStaticStrings {
 const try_extract_conditional = (
 	value: Attribute_Value,
 	source: string,
+	bindings: ReadonlyMap<string, string>,
 ): ConditionalStaticStrings | null => {
 	if (value === true || Array.isArray(value)) return null;
 	const expr = value.expression;
 	if (expr.type !== 'ConditionalExpression') return null;
 
-	const consequent = evaluate_static_expr(expr.consequent);
+	const consequent = evaluate_static_expr(expr.consequent, bindings);
 	if (consequent === null) return null;
-	const alternate = evaluate_static_expr(expr.alternate);
+	const alternate = evaluate_static_expr(expr.alternate, bindings);
 	if (alternate === null) return null;
 
 	const test = expr.test as any;
