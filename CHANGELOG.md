@@ -1,5 +1,11 @@
 # @fuzdev/fuz_code
 
+## 0.43.0
+
+### Minor Changes
+
+- update peer deps ([#31](https://github.com/fuzdev/fuz_code/pull/31))
+
 ## 0.42.0
 
 ### Minor Changes
