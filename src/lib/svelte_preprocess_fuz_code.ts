@@ -1,3 +1,7 @@
+// TODO: import shared helpers from @fuzdev/fuz_util/svelte_preprocess_helpers.js
+// after fuz_util is published, and remove the inline copies below
+// (should_exclude, find_attribute, evaluate_static_expr, extract_static_string, escape_js_string).
+
 import {parse, type PreprocessorGroup, type AST} from 'svelte/compiler';
 import MagicString from 'magic-string';
 import {walk} from 'zimmerframe';
@@ -95,6 +99,7 @@ export const svelte_preprocess_fuz_code = (
 /**
  * Check if a filename matches any exclusion pattern.
  */
+// TODO: replace with import from @fuzdev/fuz_util
 const should_exclude = (filename: string | undefined, exclude: Array<string | RegExp>): boolean => {
 	if (!filename || exclude.length === 0) return false;
 	return exclude.some((pattern) =>
@@ -104,11 +109,17 @@ const should_exclude = (filename: string | undefined, exclude: Array<string | Re
 
 /**
  * Scans import declarations to find local names that import from known Code component sources.
- * Handles default imports, named imports, and aliased imports.
+ * Handles default imports, named imports, and aliased imports. Skips namespace imports.
  * Checks both instance (`<script>`) and module (`<script module>`) scripts.
+ * Returns import node references alongside names to support future import removal.
  */
-const resolve_code_names = (ast: AST.Root, component_imports: Array<string>): Set<string> => {
-	const names: Set<string> = new Set();
+// TODO: replace with resolve_component_names from @fuzdev/fuz_util
+const resolve_code_names = (
+	ast: AST.Root,
+	component_imports: Array<string>,
+	// TODO: use proper ESTree types instead of `any`
+): Map<string, {import_node: any; specifier: any}> => {
+	const names: Map<string, {import_node: any; specifier: any}> = new Map();
 
 	for (const script of [ast.instance, ast.module]) {
 		if (!script) continue;
@@ -118,10 +129,12 @@ const resolve_code_names = (ast: AST.Root, component_imports: Array<string>): Se
 			if (!component_imports.includes(node.source.value as string)) continue;
 
 			for (const specifier of node.specifiers) {
+				// Skip namespace imports — `import * as Code` is not a valid component reference
+				if (specifier.type === 'ImportNamespaceSpecifier') continue;
 				// default import: `import Code from '...'`
 				// aliased: `import Highlighter from '...'`
 				// named: `import { default as Code } from '...'`
-				names.add(specifier.local.name);
+				names.set(specifier.local.name, {import_node: node, specifier});
 			}
 		}
 	}
@@ -173,7 +186,7 @@ const try_highlight = (
 const find_code_usages = (
 	ast: AST.Root,
 	syntax_styler: SyntaxStyler,
-	code_names: Set<string>,
+	code_names: Map<string, {import_node: any; specifier: any}>,
 	options: FindCodeUsagesOptions,
 ): Array<Transformation> => {
 	const transformations: Array<Transformation> = [];
@@ -186,6 +199,9 @@ const find_code_usages = (
 			context.next();
 
 			if (!code_names.has(node.name)) return;
+
+			// Skip if spread attributes present — can't determine content statically
+			if (node.attributes.some((attr: any) => attr.type === 'SpreadAttribute')) return;
 
 			const content_attr = find_attribute(node, 'content');
 			if (!content_attr) return;
@@ -240,6 +256,7 @@ const find_code_usages = (
 /**
  * Find an attribute by name on a component node.
  */
+// TODO: replace with import from @fuzdev/fuz_util
 const find_attribute = (node: AST.Component, name: string): AST.Attribute | undefined => {
 	for (const attr of node.attributes) {
 		if (attr.type === 'Attribute' && attr.name === name) {
@@ -256,7 +273,9 @@ type Attribute_Value = AST.Attribute['value'];
  * Handles string literals, template literals (no interpolation), and string concatenation.
  * Returns `null` for dynamic or non-string expressions.
  */
+// TODO: replace with import from @fuzdev/fuz_util
 const evaluate_static_expr = (expr: any): string | null => {
+	// TODO: use proper ESTree expression type
 	if (expr.type === 'Literal' && typeof expr.value === 'string') return expr.value;
 	if (expr.type === 'TemplateLiteral' && expr.expressions.length === 0) {
 		return expr.quasis.map((q: any) => q.value.cooked ?? q.value.raw).join('');
@@ -275,6 +294,7 @@ const evaluate_static_expr = (expr: any): string | null => {
  * Extract the string value from a static attribute value.
  * Returns `null` for dynamic, non-string, or null literal values.
  */
+// TODO: replace with import from @fuzdev/fuz_util
 const extract_static_string = (value: Attribute_Value): string | null => {
 	// Boolean attribute
 	if (value === true) return null;
@@ -328,6 +348,7 @@ const try_extract_conditional = (
  * Single quotes are used because `stylize()` output contains double quotes
  * on every token span, so wrapping with single quotes avoids escaping those.
  */
+// TODO: replace with import from @fuzdev/fuz_util
 const escape_js_string = (html: string): string => {
 	return html
 		.replace(/\\/g, '\\\\') // backslashes first
