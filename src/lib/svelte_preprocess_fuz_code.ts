@@ -1,6 +1,15 @@
 import {parse, type PreprocessorGroup, type AST} from 'svelte/compiler';
 import MagicString from 'magic-string';
 import {walk} from 'zimmerframe';
+import {should_exclude_path} from '@fuzdev/fuz_util/path.js';
+import {escape_js_string} from '@fuzdev/fuz_util/string.js';
+import {
+	find_attribute,
+	evaluate_static_expr,
+	extract_static_string,
+	resolve_component_names,
+	type ResolvedComponentImport,
+} from '@fuzdev/fuz_util/svelte_preprocess_helpers.js';
 
 import {syntax_styler_global} from './syntax_styler_global.js';
 import type {SyntaxStyler} from './syntax_styler.js';
@@ -49,7 +58,7 @@ export const svelte_preprocess_fuz_code = (
 
 		markup: ({content, filename}) => {
 			// Skip excluded files
-			if (should_exclude(filename, exclude)) {
+			if (should_exclude_path(filename, exclude)) {
 				return {code: content};
 			}
 
@@ -62,7 +71,7 @@ export const svelte_preprocess_fuz_code = (
 			const ast = parse(content, {filename, modern: true});
 
 			// Resolve which local names map to the Code component
-			const code_names = resolve_code_names(ast, component_imports);
+			const code_names = resolve_component_names(ast, component_imports);
 			if (code_names.size === 0) {
 				return {code: content};
 			}
@@ -90,43 +99,6 @@ export const svelte_preprocess_fuz_code = (
 			};
 		},
 	};
-};
-
-/**
- * Check if a filename matches any exclusion pattern.
- */
-const should_exclude = (filename: string | undefined, exclude: Array<string | RegExp>): boolean => {
-	if (!filename || exclude.length === 0) return false;
-	return exclude.some((pattern) =>
-		typeof pattern === 'string' ? filename.includes(pattern) : pattern.test(filename),
-	);
-};
-
-/**
- * Scans import declarations to find local names that import from known Code component sources.
- * Handles default imports, named imports, and aliased imports.
- * Checks both instance (`<script>`) and module (`<script module>`) scripts.
- */
-const resolve_code_names = (ast: AST.Root, component_imports: Array<string>): Set<string> => {
-	const names: Set<string> = new Set();
-
-	for (const script of [ast.instance, ast.module]) {
-		if (!script) continue;
-
-		for (const node of script.content.body) {
-			if (node.type !== 'ImportDeclaration') continue;
-			if (!component_imports.includes(node.source.value as string)) continue;
-
-			for (const specifier of node.specifiers) {
-				// default import: `import Code from '...'`
-				// aliased: `import Highlighter from '...'`
-				// named: `import { default as Code } from '...'`
-				names.add(specifier.local.name);
-			}
-		}
-	}
-
-	return names;
 };
 
 interface Transformation {
@@ -173,7 +145,7 @@ const try_highlight = (
 const find_code_usages = (
 	ast: AST.Root,
 	syntax_styler: SyntaxStyler,
-	code_names: Set<string>,
+	code_names: Map<string, ResolvedComponentImport>,
 	options: FindCodeUsagesOptions,
 ): Array<Transformation> => {
 	const transformations: Array<Transformation> = [];
@@ -186,6 +158,9 @@ const find_code_usages = (
 			context.next();
 
 			if (!code_names.has(node.name)) return;
+
+			// Skip if spread attributes present — can't determine content statically
+			if (node.attributes.some((attr: any) => attr.type === 'SpreadAttribute')) return;
 
 			const content_attr = find_attribute(node, 'content');
 			if (!content_attr) return;
@@ -237,63 +212,7 @@ const find_code_usages = (
 	return transformations;
 };
 
-/**
- * Find an attribute by name on a component node.
- */
-const find_attribute = (node: AST.Component, name: string): AST.Attribute | undefined => {
-	for (const attr of node.attributes) {
-		if (attr.type === 'Attribute' && attr.name === name) {
-			return attr;
-		}
-	}
-	return undefined;
-};
-
 type Attribute_Value = AST.Attribute['value'];
-
-/**
- * Recursively evaluate an expression AST node to a static string value.
- * Handles string literals, template literals (no interpolation), and string concatenation.
- * Returns `null` for dynamic or non-string expressions.
- */
-const evaluate_static_expr = (expr: any): string | null => {
-	if (expr.type === 'Literal' && typeof expr.value === 'string') return expr.value;
-	if (expr.type === 'TemplateLiteral' && expr.expressions.length === 0) {
-		return expr.quasis.map((q: any) => q.value.cooked ?? q.value.raw).join('');
-	}
-	if (expr.type === 'BinaryExpression' && expr.operator === '+') {
-		const left = evaluate_static_expr(expr.left);
-		if (left === null) return null;
-		const right = evaluate_static_expr(expr.right);
-		if (right === null) return null;
-		return left + right;
-	}
-	return null;
-};
-
-/**
- * Extract the string value from a static attribute value.
- * Returns `null` for dynamic, non-string, or null literal values.
- */
-const extract_static_string = (value: Attribute_Value): string | null => {
-	// Boolean attribute
-	if (value === true) return null;
-
-	// Plain attribute: content="text"
-	if (Array.isArray(value)) {
-		const first = value[0];
-		if (value.length === 1 && first?.type === 'Text') {
-			return first.data;
-		}
-		return null;
-	}
-
-	// ExpressionTag
-	const expr = value.expression;
-	// Null literal
-	if (expr.type === 'Literal' && expr.value === null) return null;
-	return evaluate_static_expr(expr);
-};
 
 interface ConditionalStaticStrings {
 	test_source: string;
@@ -321,19 +240,6 @@ const try_extract_conditional = (
 	const test = expr.test as any;
 	const test_source = source.slice(test.start, test.end);
 	return {test_source, consequent, alternate};
-};
-
-/**
- * Escapes a string for use inside a single-quoted JS string literal.
- * Single quotes are used because `stylize()` output contains double quotes
- * on every token span, so wrapping with single quotes avoids escaping those.
- */
-const escape_js_string = (html: string): string => {
-	return html
-		.replace(/\\/g, '\\\\') // backslashes first
-		.replace(/'/g, "\\'") // single quotes
-		.replace(/\n/g, '\\n') // newlines
-		.replace(/\r/g, '\\r'); // carriage returns
 };
 
 /**
