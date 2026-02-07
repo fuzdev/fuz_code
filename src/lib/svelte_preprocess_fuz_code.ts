@@ -223,7 +223,7 @@ const find_code_usages = (
 	return transformations;
 };
 
-type Attribute_Value = AST.Attribute['value'];
+type AttributeValue = AST.Attribute['value'];
 
 interface ConditionalStaticStrings {
 	test_source: string;
@@ -236,7 +236,7 @@ interface ConditionalStaticStrings {
  * Returns the condition source text and both branch values, or `null` if not applicable.
  */
 const try_extract_conditional = (
-	value: Attribute_Value,
+	value: AttributeValue,
 	source: string,
 	bindings: ReadonlyMap<string, string>,
 ): ConditionalStaticStrings | null => {
