@@ -32,8 +32,8 @@
     "node": ">=22.15"
   },
   "peerDependencies": {
-    "@fuzdev/fuz_css": ">=0.44.1",
-    "@fuzdev/fuz_util": ">=0.49.1",
+    "@fuzdev/fuz_css": ">=0.47.0",
+    "@fuzdev/fuz_util": ">=0.49.2",
     "esm-env": "^1",
     "magic-string": "^0.30",
     "svelte": "^5",
