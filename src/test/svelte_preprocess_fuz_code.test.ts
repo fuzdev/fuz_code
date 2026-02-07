@@ -239,7 +239,7 @@ const y = 2;" lang="ts" />`;
 			const input = `<script lang="ts">
 	import Code from '@fuzdev/fuz_code/Code.svelte';
 	let show = true;
-	const code = 'x';
+	let code = 'x';
 </script>
 
 <Code content={show ? code : 'let y = 2;'} lang="ts" />`;
@@ -262,11 +262,52 @@ const y = 2;" lang="ts" />`;
 		});
 	});
 
+	describe('const variable tracing', () => {
+		test('transforms const variable reference', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+	const code = 'const x = 1;';
+</script>
+
+<Code content={code} lang="ts" />`;
+			const result = await run(input);
+
+			expect(result).toContain('dangerous_raw_html=');
+			const raw_html = extract_raw_html(result);
+			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+		});
+
+		test('transforms ternary with const branch references', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+	let show = true;
+	const a = 'const x = 1;';
+	const b = 'let y = 2;';
+</script>
+
+<Code content={show ? a : b} lang="ts" />`;
+			const result = await run(input);
+
+			expect(result).toContain('dangerous_raw_html=');
+			expect(result).toContain('show ?');
+		});
+
+		test('transforms template literal with const interpolation', async () => {
+			const input =
+				'<script lang="ts">\n\timport Code from \'@fuzdev/fuz_code/Code.svelte\';\n\tconst v = \'1\';\n</script>\n\n<Code content={`const x = ${v};`} lang="ts" />';
+			const result = await run(input);
+
+			expect(result).toContain('dangerous_raw_html=');
+			const raw_html = extract_raw_html(result);
+			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+		});
+	});
+
 	describe('dynamic content preservation', () => {
 		test('preserves variable reference', async () => {
 			const input = `<script lang="ts">
 	import Code from '@fuzdev/fuz_code/Code.svelte';
-	const code = 'const x = 1;';
+	let code = 'const x = 1;';
 </script>
 
 <Code content={code} lang="ts" />`;
@@ -276,7 +317,8 @@ const y = 2;" lang="ts" />`;
 			expect(result).not.toContain('dangerous_raw_html');
 		});
 
-		test('preserves template literal with interpolation', async () => {
+		test('preserves template literal with numeric const interpolation', async () => {
+			// `const value = 1` is a numeric literal — only string consts are traced
 			const input =
 				'<script lang="ts">\n\timport Code from \'@fuzdev/fuz_code/Code.svelte\';\n\tconst value = 1;\n</script>\n\n<Code content={`const x = ${value};`} lang="ts" />';
 			const result = await run(input);
@@ -288,7 +330,7 @@ const y = 2;" lang="ts" />`;
 			const input = `<script lang="ts">
 	import Code from '@fuzdev/fuz_code/Code.svelte';
 	let show = true;
-	const code = 'a';
+	let code = 'a';
 </script>
 
 <Code content={show ? code : 'b'} lang="ts" />`;
@@ -306,6 +348,19 @@ const y = 2;" lang="ts" />`;
 <Code content={get_code()} lang="ts" />`;
 			const result = await run(input);
 
+			expect(result).not.toContain('dangerous_raw_html');
+		});
+
+		test('preserves $state rune const', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+	const code = $state('const x = 1;');
+</script>
+
+<Code content={code} lang="ts" />`;
+			const result = await run(input);
+
+			expect(result).toContain('content={code}');
 			expect(result).not.toContain('dangerous_raw_html');
 		});
 
@@ -575,7 +630,7 @@ const y = 2;" lang="ts" />`;
 		test('handles mixed static/dynamic', async () => {
 			const input = `<script lang="ts">
 	import Code from '@fuzdev/fuz_code/Code.svelte';
-	const dynamic_code = 'x';
+	let dynamic_code = 'x';
 </script>
 
 <Code content="const x = 1;" lang="ts" />
