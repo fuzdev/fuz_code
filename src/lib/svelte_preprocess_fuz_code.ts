@@ -48,7 +48,7 @@ export const svelte_preprocess_fuz_code = (
 		syntax_styler = syntax_styler_global,
 		cache = true,
 		component_imports = ['@fuzdev/fuz_code/Code.svelte'],
-		on_error = process.env.CI ? 'throw' : 'log',
+		on_error = process.env.CI === 'true' ? 'throw' : 'log',
 	} = options;
 
 	// In-memory cache: content+lang hash → highlighted HTML
