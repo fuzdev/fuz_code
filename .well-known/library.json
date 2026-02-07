@@ -11,7 +11,7 @@
 	"published": true,
 	"package_json": {
 		"name": "@fuzdev/fuz_code",
-		"version": "0.42.0",
+		"version": "0.43.0",
 		"description": "syntax styling utilities and components for TypeScript, Svelte, and Markdown",
 		"glyph": "🎨",
 		"logo": "logo.svg",
@@ -44,12 +44,17 @@
 		},
 		"peerDependencies": {
 			"@fuzdev/fuz_css": ">=0.44.1",
+			"@fuzdev/fuz_util": ">=0.49.0",
+			"esm-env": "^1",
 			"magic-string": "^0.30",
 			"svelte": "^5",
 			"zimmerframe": "^1"
 		},
 		"peerDependenciesMeta": {
 			"@fuzdev/fuz_css": {
+				"optional": true
+			},
+			"@fuzdev/fuz_util": {
 				"optional": true
 			},
 			"magic-string": {
@@ -66,7 +71,7 @@
 			"@changesets/changelog-git": "^0.2.1",
 			"@fuzdev/fuz_css": "^0.47.0",
 			"@fuzdev/fuz_ui": "^0.181.1",
-			"@fuzdev/fuz_util": "^0.48.3",
+			"@fuzdev/fuz_util": "^0.49.0",
 			"@ryanatkn/eslint-config": "^0.9.0",
 			"@ryanatkn/gro": "^0.190.0",
 			"@sveltejs/adapter-static": "^3.0.10",
@@ -137,7 +142,7 @@
 	},
 	"source_json": {
 		"name": "@fuzdev/fuz_code",
-		"version": "0.42.0",
+		"version": "0.43.0",
 		"modules": [
 			{
 				"path": "code_sample.ts",
@@ -702,7 +707,7 @@
 					{
 						"name": "PreprocessFuzCodeOptions",
 						"kind": "type",
-						"source_line": 8,
+						"source_line": 17,
 						"type_signature": "PreprocessFuzCodeOptions",
 						"properties": [
 							{
@@ -740,7 +745,7 @@
 					{
 						"name": "svelte_preprocess_fuz_code",
 						"kind": "function",
-						"source_line": 33,
+						"source_line": 42,
 						"type_signature": "(options?: PreprocessFuzCodeOptions): PreprocessorGroup",
 						"return_type": "PreprocessorGroup",
 						"parameters": [
