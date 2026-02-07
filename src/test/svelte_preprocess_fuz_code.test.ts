@@ -294,7 +294,7 @@ const y = 2;" lang="ts" />`;
 
 		test('transforms template literal with const interpolation', async () => {
 			const input =
-				"<script lang=\"ts\">\n\timport Code from '@fuzdev/fuz_code/Code.svelte';\n\tconst v = '1';\n</script>\n\n<Code content={`const x = ${v};`} lang=\"ts\" />";
+				'<script lang="ts">\n\timport Code from \'@fuzdev/fuz_code/Code.svelte\';\n\tconst v = \'1\';\n</script>\n\n<Code content={`const x = ${v};`} lang="ts" />';
 			const result = await run(input);
 
 			expect(result).toContain('dangerous_raw_html=');

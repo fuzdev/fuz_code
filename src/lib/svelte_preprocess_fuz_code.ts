@@ -181,7 +181,9 @@ const find_code_usages = (
 
 			// Resolve language - must be static and supported
 			const lang_attr = find_attribute(node, 'lang');
-			const lang_value = lang_attr ? extract_static_string(lang_attr.value, options.bindings) : 'svelte';
+			const lang_value = lang_attr
+				? extract_static_string(lang_attr.value, options.bindings)
+				: 'svelte';
 			if (lang_value === null) return;
 			if (!syntax_styler.langs[lang_value]) return;
 
@@ -199,7 +201,11 @@ const find_code_usages = (
 			}
 
 			// Try conditional expression with static string branches
-			const conditional = try_extract_conditional(content_attr.value, options.source, options.bindings);
+			const conditional = try_extract_conditional(
+				content_attr.value,
+				options.source,
+				options.bindings,
+			);
 			if (conditional) {
 				const html_a = try_highlight(conditional.consequent, lang_value, syntax_styler, options);
 				const html_b = try_highlight(conditional.alternate, lang_value, syntax_styler, options);
