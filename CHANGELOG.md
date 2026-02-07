@@ -1,5 +1,11 @@
 # @fuzdev/fuz_code
 
+## 0.44.0
+
+### Minor Changes
+
+- extract static bindings for the preprocessor ([#32](https://github.com/fuzdev/fuz_code/pull/32))
+
 ## 0.43.0
 
 ### Minor Changes
