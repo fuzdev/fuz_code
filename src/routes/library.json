@@ -642,7 +642,7 @@
 					{
 						"name": "PreprocessFuzCodeOptions",
 						"kind": "type",
-						"source_line": 12,
+						"source_line": 17,
 						"type_signature": "PreprocessFuzCodeOptions",
 						"properties": [
 							{
@@ -680,7 +680,7 @@
 					{
 						"name": "svelte_preprocess_fuz_code",
 						"kind": "function",
-						"source_line": 37,
+						"source_line": 42,
 						"type_signature": "(options?: PreprocessFuzCodeOptions): PreprocessorGroup",
 						"return_type": "PreprocessorGroup",
 						"parameters": [
