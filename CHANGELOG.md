@@ -1,5 +1,11 @@
 # @fuzdev/fuz_code
 
+## 0.44.1
+
+### Patch Changes
+
+- improve `svelte_preprocess_fuz_code` to handle more cases ([676e71c](https://github.com/fuzdev/fuz_code/commit/676e71c))
+
 ## 0.44.0
 
 ### Minor Changes
