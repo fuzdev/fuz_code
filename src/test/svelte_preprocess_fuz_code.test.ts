@@ -260,6 +260,98 @@ const y = 2;" lang="ts" />`;
 			const ast = parse(result, {filename: 'Test.svelte', modern: true});
 			expect(ast.fragment.nodes.length).toBeGreaterThan(0);
 		});
+
+		test('transforms nested ternary (3 branches)', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+	let a = true;
+	let b = false;
+</script>
+
+<Code content={a ? 'const x = 1;' : b ? 'let y = 2;' : 'var z = 3;'} lang="ts" />`;
+			const result = await run(input);
+
+			expect(result).toContain('dangerous_raw_html=');
+			expect(result).toContain('a ?');
+			expect(result).toContain('b ?');
+			expect(result).toContain('token_keyword');
+		});
+
+		test('nested ternary produces correct HTML for all branches', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+	let a = true;
+	let b = false;
+</script>
+
+<Code content={a ? 'const x = 1;' : b ? 'let y = 2;' : 'var z = 3;'} lang="ts" />`;
+			const result = await run(input);
+
+			// Extract the nested ternary expression from: dangerous_raw_html={a ? '...' : b ? '...' : '...'}
+			const match =
+				/dangerous_raw_html=\{(\w+) \? '((?:[^'\\]|\\.)*)' : (\w+) \? '((?:[^'\\]|\\.)*)' : '((?:[^'\\]|\\.)*)'\}/.exec(
+					result,
+				);
+			expect(match).toBeTruthy();
+			expect(match![1]).toBe('a');
+			expect(match![3]).toBe('b');
+
+			const unescape = (s: string) =>
+				s.replace(/\\'/g, "'").replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\\\/g, '\\');
+
+			expect(unescape(match![2]!)).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+			expect(unescape(match![4]!)).toBe(syntax_styler_global.stylize('let y = 2;', 'ts'));
+			expect(unescape(match![5]!)).toBe(syntax_styler_global.stylize('var z = 3;', 'ts'));
+		});
+
+		test('skips nested ternary with dynamic branch', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+	let a = true;
+	let b = false;
+	let code = 'x';
+</script>
+
+<Code content={a ? 'const x = 1;' : b ? code : 'var z = 3;'} lang="ts" />`;
+			const result = await run(input);
+
+			expect(result).not.toContain('dangerous_raw_html');
+		});
+
+		test('nested ternary output is parseable by Svelte compiler', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+	let a = true;
+	let b = false;
+</script>
+
+<Code content={a ? 'const x = 1;' : b ? 'let y = 2;' : 'var z = 3;'} lang="ts" />`;
+			const result = await run(input);
+
+			const ast = parse(result, {filename: 'Test.svelte', modern: true});
+			expect(ast.fragment.nodes.length).toBeGreaterThan(0);
+		});
+
+		test('transforms 4-branch nested ternary', async () => {
+			const input = `<script lang="ts">
+	import Code from '@fuzdev/fuz_code/Code.svelte';
+	let a = true;
+	let b = false;
+	let c = false;
+</script>
+
+<Code content={a ? 'const w = 1;' : b ? 'let x = 2;' : c ? 'var y = 3;' : 'type Z = 4;'} lang="ts" />`;
+			const result = await run(input);
+
+			expect(result).toContain('dangerous_raw_html=');
+			expect(result).toContain('a ?');
+			expect(result).toContain('b ?');
+			expect(result).toContain('c ?');
+			expect(result).toContain('token_keyword');
+
+			const ast = parse(result, {filename: 'Test.svelte', modern: true});
+			expect(ast.fragment.nodes.length).toBeGreaterThan(0);
+		});
 	});
 
 	describe('const variable tracing', () => {

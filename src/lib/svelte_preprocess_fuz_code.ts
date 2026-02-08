@@ -5,10 +5,11 @@ import {should_exclude_path} from '@fuzdev/fuz_util/path.js';
 import {escape_js_string} from '@fuzdev/fuz_util/string.js';
 import {
 	find_attribute,
-	evaluate_static_expr,
 	extract_static_string,
+	try_extract_conditional_chain,
 	build_static_bindings,
 	resolve_component_names,
+	handle_preprocess_error,
 	type ResolvedComponentImport,
 } from '@fuzdev/fuz_util/svelte_preprocess_helpers.js';
 
@@ -136,7 +137,7 @@ const try_highlight = (
 			html = syntax_styler.stylize(text, lang);
 			options.cache?.set(cache_key, html);
 		} catch (error) {
-			handle_error(error, options);
+			handle_preprocess_error(error, '[fuz-code]', options.filename, options.on_error);
 			return null;
 		}
 	}
@@ -200,69 +201,46 @@ const find_code_usages = (
 				return;
 			}
 
-			// Try conditional expression with static string branches
-			const conditional = try_extract_conditional(
+			// Try conditional chain (handles both simple and nested ternaries)
+			const chain = try_extract_conditional_chain(
 				content_attr.value,
 				options.source,
 				options.bindings,
 			);
-			if (conditional) {
-				const html_a = try_highlight(conditional.consequent, lang_value, syntax_styler, options);
-				const html_b = try_highlight(conditional.alternate, lang_value, syntax_styler, options);
-				if (html_a === null || html_b === null) return;
-				if (html_a === conditional.consequent && html_b === conditional.alternate) return;
+			if (chain) {
+				// Highlight all branches
+				const highlighted: Array<{html: string; original: string}> = [];
+				let any_changed = false;
+				for (const branch of chain) {
+					const html = try_highlight(branch.value, lang_value, syntax_styler, options);
+					if (html === null) return;
+					if (html !== branch.value) any_changed = true;
+					highlighted.push({html, original: branch.value});
+				}
+				if (!any_changed) return;
+
+				// Build nested ternary expression for dangerous_raw_html
+				// chain: [{test_source: 'a', value: ...}, {test_source: 'b', value: ...}, {test_source: null, value: ...}]
+				// → a ? 'html_a' : b ? 'html_b' : 'html_c'
+				let expr = '';
+				for (let i = 0; i < chain.length; i++) {
+					const branch = chain[i]!;
+					const html = highlighted[i]!.html;
+					if (branch.test_source !== null) {
+						expr += `${branch.test_source} ? '${escape_js_string(html)}' : `;
+					} else {
+						expr += `'${escape_js_string(html)}'`;
+					}
+				}
+
 				transformations.push({
 					start: content_attr.start,
 					end: content_attr.end,
-					replacement: `dangerous_raw_html={${conditional.test_source} ? '${escape_js_string(html_a)}' : '${escape_js_string(html_b)}'}`,
+					replacement: `dangerous_raw_html={${expr}}`,
 				});
 			}
 		},
 	});
 
 	return transformations;
-};
-
-type AttributeValue = AST.Attribute['value'];
-
-interface ConditionalStaticStrings {
-	test_source: string;
-	consequent: string;
-	alternate: string;
-}
-
-/**
- * Try to extract a conditional expression where both branches are static strings.
- * Returns the condition source text and both branch values, or `null` if not applicable.
- */
-const try_extract_conditional = (
-	value: AttributeValue,
-	source: string,
-	bindings: ReadonlyMap<string, string>,
-): ConditionalStaticStrings | null => {
-	if (value === true || Array.isArray(value)) return null;
-	const expr = value.expression;
-	if (expr.type !== 'ConditionalExpression') return null;
-
-	const consequent = evaluate_static_expr(expr.consequent, bindings);
-	if (consequent === null) return null;
-	const alternate = evaluate_static_expr(expr.alternate, bindings);
-	if (alternate === null) return null;
-
-	const test = expr.test as any;
-	const test_source = source.slice(test.start, test.end);
-	return {test_source, consequent, alternate};
-};
-
-/**
- * Handle errors during highlighting.
- */
-const handle_error = (error: unknown, options: FindCodeUsagesOptions): void => {
-	const message = `[fuz-code] Highlighting failed${options.filename ? ` in ${options.filename}` : ''}: ${error instanceof Error ? error.message : String(error)}`;
-
-	if (options.on_error === 'throw') {
-		throw new Error(message);
-	}
-	// eslint-disable-next-line no-console
-	console.error(message);
 };
