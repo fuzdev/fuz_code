@@ -2,6 +2,7 @@ import {vitePreprocess} from '@sveltejs/vite-plugin-svelte';
 import adapter from '@sveltejs/adapter-static';
 import {create_csp_directives} from '@fuzdev/fuz_ui/csp.js';
 import {csp_trusted_sources_of_ryanatkn} from '@fuzdev/fuz_ui/csp_of_ryanatkn.js';
+import {svelte_preprocess_mdz} from '@fuzdev/fuz_ui/svelte_preprocess_mdz.js';
 
 // Self-referencing import from dist — unavailable on first build after clean checkout,
 // but subsequent builds use the preprocessor for static Code compilation.
@@ -15,7 +16,7 @@ try {
 
 /** @type {import('@sveltejs/kit').Config} */
 export default {
-	preprocess: [...fuz_code_preprocessors, vitePreprocess()],
+	preprocess: [svelte_preprocess_mdz(), ...fuz_code_preprocessors, vitePreprocess()],
 	compilerOptions: {runes: true},
 	vitePlugin: {inspector: true},
 	kit: {
