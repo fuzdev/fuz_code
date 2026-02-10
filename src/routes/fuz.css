@@ -172,7 +172,6 @@
 	--shadow_inset_top_sm: inset 0 1.5px 4px 0px;
 	--shadow_inset_top_xs: inset 0 1px 3px 0px;
 	--shadow_inset_xs: inset 0 0 3px 0px;
-	--shadow_sm: 0 0 4px 0px;
 	--shadow_top_xs: 0 -1px 3px 0px;
 	--space_lg: 1.3rem;
 	--space_md: 1rem;
@@ -1214,19 +1213,8 @@ a.chip {
 	color: var(--color_h_50);
 	--text_color: var(--color_h_50);
 }
-.border_radius_xs {
-	border-radius: var(--border_radius_xs);
-}
 .border_radius_sm {
 	border-radius: var(--border_radius_sm);
-}
-.shadow_sm {
-	box-shadow: var(--shadow_sm)
-		color-mix(
-			in hsl,
-			var(--shadow_color, var(--shadow_color_umbra)) var(--shadow_alpha, var(--shadow_alpha_40)),
-			transparent
-		);
 }
 .shadow_inset_xs {
 	box-shadow: var(--shadow_inset_xs)
@@ -1256,9 +1244,6 @@ a.chip {
 }
 .p_xl {
 	padding: var(--space_xl);
-}
-.p_xl2 {
-	padding: var(--space_xl2);
 }
 .pt_xl3 {
 	padding-top: var(--space_xl3);
