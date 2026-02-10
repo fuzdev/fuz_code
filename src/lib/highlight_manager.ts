@@ -10,8 +10,16 @@ export const supports_css_highlight_api = (): boolean =>
 	!!(globalThis.CSS?.highlights && globalThis.Highlight); // eslint-disable-line @typescript-eslint/no-unnecessary-condition
 
 /**
- * Manages highlights for a single element.
+ * Manages CSS Custom Highlight API ranges for a single element.
  * Tracks ranges per element and only removes its own ranges when clearing.
+ *
+ * **Experimental** — limited browser support. Use `Code` for production.
+ *
+ * @example
+ * ```ts
+ * const manager = new HighlightManager();
+ * manager.highlight_from_syntax_tokens(element, tokens);
+ * ```
  */
 export class HighlightManager {
 	element_ranges: Map<string, Array<Range>>;

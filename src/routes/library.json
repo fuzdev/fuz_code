@@ -69,8 +69,8 @@
 		},
 		"devDependencies": {
 			"@changesets/changelog-git": "^0.2.1",
-			"@fuzdev/fuz_css": "^0.47.0",
-			"@fuzdev/fuz_ui": "^0.182.0",
+			"@fuzdev/fuz_css": "^0.48.0",
+			"@fuzdev/fuz_ui": "^0.182.1",
 			"@fuzdev/fuz_util": "^0.50.1",
 			"@jridgewell/trace-mapping": "^0.3.31",
 			"@ryanatkn/eslint-config": "^0.9.0",
@@ -571,8 +571,11 @@
 					{
 						"name": "HighlightManager",
 						"kind": "class",
-						"doc_comment": "Manages highlights for a single element.\nTracks ranges per element and only removes its own ranges when clearing.",
-						"source_line": 16,
+						"doc_comment": "Manages CSS Custom Highlight API ranges for a single element.\nTracks ranges per element and only removes its own ranges when clearing.\n\n**Experimental** — limited browser support. Use `Code` for production.",
+						"examples": [
+							"```ts\nconst manager = new HighlightManager();\nmanager.highlight_from_syntax_tokens(element, tokens);\n```"
+						],
+						"source_line": 24,
 						"members": [
 							{
 								"name": "element_ranges",
@@ -651,7 +654,8 @@
 					{
 						"name": "PreprocessFuzCodeOptions",
 						"kind": "type",
-						"source_line": 19,
+						"doc_comment": "Options for `svelte_preprocess_fuz_code`.",
+						"source_line": 22,
 						"type_signature": "PreprocessFuzCodeOptions",
 						"properties": [
 							{
@@ -689,13 +693,19 @@
 					{
 						"name": "svelte_preprocess_fuz_code",
 						"kind": "function",
-						"source_line": 44,
+						"doc_comment": "Svelte preprocessor that compiles static `Code` component content at build time,\nreplacing runtime syntax highlighting with pre-rendered HTML.",
+						"examples": [
+							"```ts\n// svelte.config.js\nimport {svelte_preprocess_fuz_code} from '@fuzdev/fuz_code/svelte_preprocess_fuz_code.js';\n\nexport default {\n  preprocess: [svelte_preprocess_fuz_code(), vitePreprocess()],\n};\n```"
+						],
+						"source_line": 64,
 						"type_signature": "(options?: PreprocessFuzCodeOptions): PreprocessorGroup",
 						"return_type": "PreprocessorGroup",
+						"return_description": "a Svelte preprocessor group",
 						"parameters": [
 							{
 								"name": "options",
 								"type": "PreprocessFuzCodeOptions",
+								"description": "preprocessor configuration",
 								"default_value": "{}"
 							}
 						]
@@ -709,7 +719,11 @@
 					{
 						"name": "syntax_styler_global",
 						"kind": "variable",
-						"source_line": 11,
+						"doc_comment": "Pre-configured `SyntaxStyler` instance with all built-in grammars registered.",
+						"examples": [
+							"```ts\nimport {syntax_styler_global} from '@fuzdev/fuz_code/syntax_styler_global.js';\n\nconst html = syntax_styler_global.stylize('const x = 1;', 'ts');\n```"
+						],
+						"source_line": 21,
 						"type_signature": "SyntaxStyler"
 					}
 				],
@@ -999,20 +1013,20 @@
 					{
 						"name": "SyntaxGrammarValueRaw",
 						"kind": "type",
-						"source_line": 464,
+						"source_line": 470,
 						"type_signature": "SyntaxGrammarValueRaw"
 					},
 					{
 						"name": "SyntaxGrammarRaw",
 						"kind": "type",
-						"source_line": 469,
+						"source_line": 475,
 						"type_signature": "SyntaxGrammarRaw"
 					},
 					{
 						"name": "SyntaxGrammarTokenRaw",
 						"kind": "type",
 						"doc_comment": "The expansion of a simple `RegExp` literal to support additional properties.\n\nThe `inside` grammar will be used to tokenize the text value of each token of this kind.\n\nThis can be used to make nested and even recursive language definitions.\n\nNote: This can cause infinite recursion. Be careful when you embed different languages or even the same language into\neach another.\n\nNote: Grammar authors can use optional properties, but they will be normalized\nto required properties at registration time for optimal performance.",
-						"source_line": 486,
+						"source_line": 492,
 						"type_signature": "SyntaxGrammarTokenRaw",
 						"properties": [
 							{
@@ -1051,7 +1065,7 @@
 						"name": "SyntaxGrammarToken",
 						"kind": "type",
 						"doc_comment": "Grammar token with all properties required.\nThis is the normalized representation used at runtime.",
-						"source_line": 516,
+						"source_line": 522,
 						"type_signature": "SyntaxGrammarToken",
 						"properties": [
 							{
@@ -1085,31 +1099,31 @@
 						"name": "SyntaxGrammar",
 						"kind": "type",
 						"doc_comment": "A grammar after normalization.\nAll values are arrays of normalized tokens with consistent shapes.",
-						"source_line": 528,
+						"source_line": 534,
 						"type_signature": "SyntaxGrammar"
 					},
 					{
 						"name": "HookBeforeTokenizeCallback",
 						"kind": "type",
-						"source_line": 552,
+						"source_line": 558,
 						"type_signature": "HookBeforeTokenizeCallback"
 					},
 					{
 						"name": "HookAfterTokenizeCallback",
 						"kind": "type",
-						"source_line": 553,
+						"source_line": 559,
 						"type_signature": "HookAfterTokenizeCallback"
 					},
 					{
 						"name": "HookWrapCallback",
 						"kind": "type",
-						"source_line": 554,
+						"source_line": 560,
 						"type_signature": "HookWrapCallback"
 					},
 					{
 						"name": "HookBeforeTokenizeCallbackContext",
 						"kind": "type",
-						"source_line": 556,
+						"source_line": 562,
 						"type_signature": "HookBeforeTokenizeCallbackContext",
 						"properties": [
 							{
@@ -1137,7 +1151,7 @@
 					{
 						"name": "HookAfterTokenizeCallbackContext",
 						"kind": "type",
-						"source_line": 562,
+						"source_line": 568,
 						"type_signature": "HookAfterTokenizeCallbackContext",
 						"properties": [
 							{
@@ -1165,7 +1179,7 @@
 					{
 						"name": "HookWrapCallbackContext",
 						"kind": "type",
-						"source_line": 568,
+						"source_line": 574,
 						"type_signature": "HookWrapCallbackContext",
 						"properties": [
 							{
@@ -1279,9 +1293,9 @@
 						"kind": "function",
 						"doc_comment": "Accepts a string of text as input and the language definitions to use,\nand returns an array with the tokenized code.\n\nWhen the language definition includes nested tokens, the function is called recursively on each of these tokens.\n\nThis method could be useful in other contexts as well, as a very crude parser.",
 						"examples": [
-							"var code = `var foo = 0;`;\nvar tokens = tokenize_syntax(code, SyntaxStyler.langs.js);\nfor (var token of tokens) {\n    if (token instanceof SyntaxToken && token.type === 'number') {\n        console.log(`Found numeric literal: ${token.content}`);\n    }\n}"
+							"```ts\nvar code = `var foo = 0;`;\nvar tokens = tokenize_syntax(code, SyntaxStyler.langs.js);\nfor (var token of tokens) {\n    if (token instanceof SyntaxToken && token.type === 'number') {\n        console.log(`Found numeric literal: ${token.content}`);\n    }\n}\n```"
 						],
-						"source_line": 28,
+						"source_line": 30,
 						"type_signature": "(text: string, grammar: SyntaxGrammar): SyntaxTokenStream",
 						"return_type": "SyntaxTokenStream",
 						"return_description": "an array of strings and tokens, a token stream",

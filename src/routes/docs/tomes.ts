@@ -11,8 +11,12 @@ export const tomes: Array<Tome> = [
 		category: 'guide',
 		Component: UsagePage,
 		related_tomes: ['api', 'samples'],
-		related_modules: [],
-		related_declarations: [],
+		related_modules: [
+			'syntax_styler.ts',
+			'syntax_styler_global.ts',
+			'svelte_preprocess_fuz_code.ts',
+		],
+		related_declarations: ['Code', 'SyntaxStyler', 'syntax_styler_global'],
 	},
 	{
 		name: 'api',
@@ -36,7 +40,7 @@ export const tomes: Array<Tome> = [
 		Component: SamplesPage,
 		related_tomes: ['usage', 'benchmark'],
 		related_modules: [],
-		related_declarations: [],
+		related_declarations: ['Code', 'CodeHighlight'],
 	},
 	{
 		name: 'benchmark',

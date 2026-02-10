@@ -16,6 +16,9 @@ import {
 import {syntax_styler_global} from './syntax_styler_global.js';
 import type {SyntaxStyler} from './syntax_styler.js';
 
+/**
+ * Options for `svelte_preprocess_fuz_code`.
+ */
 export interface PreprocessFuzCodeOptions {
 	/** File patterns to exclude. */
 	exclude?: Array<string | RegExp>;
@@ -41,6 +44,23 @@ export interface PreprocessFuzCodeOptions {
 	on_error?: 'log' | 'throw';
 }
 
+/**
+ * Svelte preprocessor that compiles static `Code` component content at build time,
+ * replacing runtime syntax highlighting with pre-rendered HTML.
+ *
+ * @param options preprocessor configuration
+ * @returns a Svelte preprocessor group
+ *
+ * @example
+ * ```ts
+ * // svelte.config.js
+ * import {svelte_preprocess_fuz_code} from '@fuzdev/fuz_code/svelte_preprocess_fuz_code.js';
+ *
+ * export default {
+ *   preprocess: [svelte_preprocess_fuz_code(), vitePreprocess()],
+ * };
+ * ```
+ */
 export const svelte_preprocess_fuz_code = (
 	options: PreprocessFuzCodeOptions = {},
 ): PreprocessorGroup => {

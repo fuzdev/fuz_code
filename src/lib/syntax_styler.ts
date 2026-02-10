@@ -104,18 +104,24 @@ export class SyntaxStyler {
 	 * @returns HTML string with syntax highlighting using CSS classes (`.token_*`)
 	 *
 	 * @example
+	 * ```ts
 	 * // Standard usage - uses registered grammar
 	 * stylize('var foo = true;', 'ts');
+	 * ```
 	 *
 	 * @example
+	 * ```ts
 	 * // Custom grammar - overrides registered grammar
 	 * const customGrammar = { keyword: [...], string: [...] };
 	 * stylize('var foo = false;', 'ts', customGrammar);
+	 * ```
 	 *
 	 * @example
+	 * ```ts
 	 * // Extended grammar - builds on existing grammar
 	 * const extended = this.extend_grammar('ts', { customToken: [...] });
 	 * stylize('var foo = 42;', 'ts-extended', extended);
+	 * ```
 	 */
 	stylize(
 		text: string,

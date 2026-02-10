@@ -17,6 +17,7 @@ import {SyntaxToken, type SyntaxTokenStream} from './syntax_token.js';
  * @returns an array of strings and tokens, a token stream
  *
  * @example
+ * ```ts
  * var code = `var foo = 0;`;
  * var tokens = tokenize_syntax(code, SyntaxStyler.langs.js);
  * for (var token of tokens) {
@@ -24,6 +25,7 @@ import {SyntaxToken, type SyntaxTokenStream} from './syntax_token.js';
  *         console.log(`Found numeric literal: ${token.content}`);
  *     }
  * }
+ * ```
  */
 export const tokenize_syntax = (text: string, grammar: SyntaxGrammar): SyntaxTokenStream => {
 	// Grammar is already normalized (rest merged, patterns in arrays, etc.)

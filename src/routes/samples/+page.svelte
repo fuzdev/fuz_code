@@ -2,6 +2,7 @@
 	import '$lib/theme_highlight.css';
 
 	import Breadcrumb from '@fuzdev/fuz_ui/Breadcrumb.svelte';
+	import DeclarationLink from '@fuzdev/fuz_ui/DeclarationLink.svelte';
 
 	import Code from '$lib/Code.svelte';
 	import CodeHighlight from '$lib/CodeHighlight.svelte';
@@ -21,9 +22,11 @@
 		"
 		>
 			<p>
-				These samples use the normal <code>Code</code> component, which renders using HTML. See
-				<a href="#experimental">below</a> for the experimental <code>CodeHighlight</code> that uses the
-				Highlight API.
+				These samples use the normal <DeclarationLink name="Code" /> component, which renders using HTML.
+				See
+				<a href="#experimental">below</a> for the experimental <DeclarationLink
+					name="CodeHighlight"
+				/> that uses the Highlight API.
 			</p>
 		</aside>
 		{#each Object.values(samples) as sample (sample.name)}
@@ -44,7 +47,7 @@
 		>
 			<p>
 				⚠️ <strong>Experimental:</strong> the comparison below uses
-				<code>CodeHighlight.svelte</code> instead of <code>Code.svelte</code>
+				<DeclarationLink name="CodeHighlight" /> instead of <DeclarationLink name="Code" />
 				with both HTML mode and
 				<a href="https://developer.mozilla.org/en-US/docs/Web/API/CSS_Custom_Highlight_API"
 					>CSS Custom Highlight API</a

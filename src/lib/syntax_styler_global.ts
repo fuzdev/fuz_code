@@ -8,6 +8,16 @@ import {add_grammar_svelte} from './grammar_svelte.js';
 import {add_grammar_json} from './grammar_json.js';
 import {add_grammar_markdown} from './grammar_markdown.js';
 
+/**
+ * Pre-configured `SyntaxStyler` instance with all built-in grammars registered.
+ *
+ * @example
+ * ```ts
+ * import {syntax_styler_global} from '@fuzdev/fuz_code/syntax_styler_global.js';
+ *
+ * const html = syntax_styler_global.stylize('const x = 1;', 'ts');
+ * ```
+ */
 export const syntax_styler_global = new SyntaxStyler();
 
 add_grammar_markup(syntax_styler_global);

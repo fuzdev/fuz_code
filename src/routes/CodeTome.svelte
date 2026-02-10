@@ -1,8 +1,5 @@
 <script lang="ts">
-	import {resolve} from '$app/paths';
-
-	// import Tome from '@fuzdev/fuz_ui/Tome.svelte';
-	// import TomeLink from '@fuzdev/fuz_ui/TomeLink.svelte';
+	import TomeLink from '@fuzdev/fuz_ui/TomeLink.svelte';
 	import ModuleLink from '@fuzdev/fuz_ui/ModuleLink.svelte';
 	import DeclarationLink from '@fuzdev/fuz_ui/DeclarationLink.svelte';
 	import TomeSection from '@fuzdev/fuz_ui/TomeSection.svelte';
@@ -194,8 +191,8 @@ const html = styler.stylize('<div class="example">hello</div>', 'html');`}
 	<p>
 		The <DeclarationLink name="Code" /> component generates HTML with CSS classes for text highlighting.
 		It also includes experimental support for the CSS Custom Highlight API with
-		<code>CodeHighlight</code>, see the
-		<a href={resolve('/samples')}>samples</a>
+		<DeclarationLink name="CodeHighlight" />, see the
+		<TomeLink name="samples" />
 		for more.
 	</p>
 </TomeSection>
