@@ -1,4 +1,4 @@
-import type {Task} from '@ryanatkn/gro';
+import type {Task} from '@fuzdev/gro';
 import {writeFileSync, mkdirSync, rmSync, existsSync} from 'node:fs';
 import {join, resolve} from 'node:path';
 import {

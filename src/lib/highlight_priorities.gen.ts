@@ -1,4 +1,4 @@
-import type {Gen} from '@ryanatkn/gro';
+import type {Gen} from '@fuzdev/gro';
 import {readFileSync} from 'node:fs';
 
 const theme_css_path = 'src/lib/theme_highlight.css';

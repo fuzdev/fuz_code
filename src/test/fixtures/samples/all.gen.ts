@@ -1,4 +1,4 @@
-import type {Gen} from '@ryanatkn/gro';
+import type {Gen} from '@fuzdev/gro';
 import {readFileSync} from 'node:fs';
 import {fs_search} from '@fuzdev/fuz_util/fs.js';
 import {basename} from 'node:path';
