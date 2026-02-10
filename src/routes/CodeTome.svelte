@@ -61,12 +61,12 @@ import '@fuzdev/fuz_code/theme_variables.css'; // also this if not using fuz_css
 	/>
 </TomeSection>
 <TomeSection>
-	<TomeSectionHeader text="Static compilation" />
+	<TomeSectionHeader text="Preprocessor" />
 	<p>
 		The <ModuleLink module_path="svelte_preprocess_fuz_code.ts"
 			>svelte_preprocess_fuz_code</ModuleLink
 		> preprocessor compiles static
-		<DeclarationLink name="Code" /> content at build time, eliminating runtime syntax highlighting:
+		<DeclarationLink name="Code" /> content at build time, replacing runtime syntax highlighting:
 	</p>
 	<Code
 		lang="ts"

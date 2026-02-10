@@ -25,7 +25,17 @@
 			>
 		</section>
 		<section>
-			<p>Import the theme and component:</p>
+			<p>
+				fuz_code is a library for syntax highlighting. It can output strings of HTML and Svelte
+				components, and it has a <a href={resolve('/docs/usage#Static-compilation' as any)}
+					>preprocessor</a
+				>
+				for static compilation. It's based on <a href="https://github.com/PrismJS/prism">Prism</a>
+				(<a href="https://prismjs.com/">prismjs.com</a>) by
+				<a href="https://lea.verou.me/">Lea Verou</a>. More at the
+				<a href={resolve('/docs')}>docs</a>.
+			</p>
+			<p>To use fuz_css with Svelte, import the theme and component:</p>
 			<Code
 				lang="ts"
 				content={`import '@fuzdev/fuz_code/theme.css';
@@ -40,7 +50,7 @@ import Code from '@fuzdev/fuz_code/Code.svelte';`}
 			<Code content={`<Code lang="css" content={"${css_example}"} />`} />
 			<Code lang="css" content={css_example} />
 			<p>
-				<a href={resolve('/docs')}>See the docs</a> for all options, languages, and programmatic usage.
+				See the <a href={resolve('/docs')}>docs</a> for options, languages, and programmatic usage.
 			</p>
 		</section>
 		<section class="box gap_xl3 font_size_xl2">
