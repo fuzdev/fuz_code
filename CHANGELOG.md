@@ -1,5 +1,11 @@
 # @fuzdev/fuz_code
 
+## 0.45.0
+
+### Minor Changes
+
+- upgrade gro after fuzdev transfer ([40103c3](https://github.com/fuzdev/fuz_code/commit/40103c3))
+
 ## 0.44.1
 
 ### Patch Changes
