@@ -11,7 +11,7 @@
 	"published": true,
 	"package_json": {
 		"name": "@fuzdev/fuz_code",
-		"version": "0.44.1",
+		"version": "0.45.0",
 		"description": "syntax styling utilities and components for TypeScript, Svelte, and Markdown",
 		"glyph": "🎨",
 		"logo": "logo.svg",
@@ -72,6 +72,7 @@
 			"@fuzdev/fuz_css": "^0.48.0",
 			"@fuzdev/fuz_ui": "^0.182.1",
 			"@fuzdev/fuz_util": "^0.50.1",
+			"@fuzdev/gro": "^0.192.1",
 			"@jridgewell/trace-mapping": "^0.3.31",
 			"@ryanatkn/eslint-config": "^0.9.0",
 			"@ryanatkn/gro": "^0.191.0",
@@ -146,7 +147,7 @@
 	},
 	"source_json": {
 		"name": "@fuzdev/fuz_code",
-		"version": "0.44.1",
+		"version": "0.45.0",
 		"modules": [
 			{
 				"path": "code_sample.ts",
