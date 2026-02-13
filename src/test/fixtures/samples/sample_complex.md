@@ -137,6 +137,14 @@ const fifteen = multiply(5, 3);
 </style>
 ```
 
+### Bash
+
+```bash
+if [[ $name =~ ^[a-z]+$ ]]; then
+	echo "hello $(whoami)"
+fi
+```
+
 ### Unknown Language
 
 ```python

@@ -1,26 +1,26 @@
 === STATS ===
-Sample length: 2716 characters
-Total tokens: 504
+Sample length: 2799 characters
+Total tokens: 527
 
-Token types (56 unique):
-  punctuation: 215
+Token types (60 unique):
+  punctuation: 225
   tag: 56
-  code_fence: 33
-  heading: 22
-  operator: 19
-  keyword: 10
+  code_fence: 35
+  heading: 23
+  operator: 20
+  keyword: 13
   list: 9
   inline_code: 7
   content: 7
   lang_ts: 7
+  builtin: 7
   number: 7
   attr_name: 7
   bold: 6
   italic: 6
-  builtin: 6
+  string: 5
   attr_value: 5
   function: 4
-  string: 4
   property: 4
   blockquote: 3
   fenced_code_ts: 3
@@ -56,6 +56,10 @@ Token types (56 unique):
   lang_svelte: 1
   script: 1
   function_variable: 1
+  fenced_code_bash: 1
+  lang_bash: 1
+  variable: 1
+  command_substitution: 1
   fenced_code_5tick_md: 1
   fenced_code_4tick_md: 1
   fenced_code_4tick_ts: 1
@@ -411,157 +415,180 @@ Token types (56 unique):
 1704-1706  punctuation               </
 1711-1712  punctuation               >
 1713-1716  code_fence                ```
-1718-1738  heading                   ### Unknown Language
+1718-1726  heading                   ### Bash
 1718-1721  punctuation               ###
-1740-1815  fenced_code               ```python\ndef hello(name):\n    print(f"Hello, {name}!")\n\nhello("world")\n```
-1740-1749  code_fence                ```python
-1812-1815  code_fence                ```
-1817-1830  heading                   ## Edge Cases
-1817-1819  punctuation               ##
-1832-1840  bold                      **bold**
-1832-1834  punctuation               **
-1838-1840  punctuation               **
-1845-1853  bold                      **bold**
-1845-1847  punctuation               **
-1851-1853  punctuation               **
-1873-1881  italic                    _italic_
-1873-1874  punctuation               _
-1880-1881  punctuation               _
-1886-1894  italic                    _italic_
-1886-1887  punctuation               _
-1893-1894  punctuation               _
-1914-1922  bold                      **bold**
-1914-1916  punctuation               **
-1920-1922  punctuation               **
-1928-1936  italic                    _italic_
-1928-1929  punctuation               _
-1935-1936  punctuation               _
-1941-1958  strikethrough             ~~strikethrough~~
-1941-1943  punctuation               ~~
-1956-1958  punctuation               ~~
-1971-1977  inline_code               `code`
-1971-1972  punctuation               `
-1972-1976  content                   code
-1976-1977  punctuation               `
-1979-1987  bold                      **bold**
-1979-1981  punctuation               **
-1985-1987  punctuation               **
-1989-1997  italic                    _italic_
-1989-1990  punctuation               _
-1996-1997  punctuation               _
-2000-2029  link                      [a link](https://example.com)
-2000-2008  link_text_wrapper         [a link]
-2000-2001  punctuation               [
-2001-2007  link_text                 a link
-2007-2008  punctuation               ]
-2008-2029  url_wrapper               (https://example.com)
-2008-2009  punctuation               (
-2009-2028  url                       https://example.com
-2028-2029  punctuation               )
-2161-2257  fenced_code               ```\n\nEmpty fence above.\n\n```unknownlang\nPlain text for unknown language.\nconst variable = 2;\n```
-2161-2164  code_fence                ```
-2186-2200  code_fence                ```unknownlang
-2254-2257  code_fence                ```
-2284-2468  fenced_code_5tick_md      `````md\nwith `five` fences\n````md\nwith `four` fences\n```html\n<style>\n\tbody { color: red; }\n</style>\n```\nending `four`\n````\nanother `four`\n````ts\nconst a = '5';\n````\nending `five`\n`````
-2284-2291  code_fence                `````md
-2291-2463  lang_md                   \nwith `five` fences\n````md\nwith `four` fences\n```html\n<style>\n\tbody { color: red; }\n</style>\n```\nending `four`\n````\nanother `four`\n````ts\nconst a = '5';\n````\nending `five`\n
-2297-2303  inline_code               `five`
-2297-2298  punctuation               `
-2298-2302  content                   five
-2302-2303  punctuation               `
-2311-2406  fenced_code_4tick_md      ````md\nwith `four` fences\n```html\n<style>\n\tbody { color: red; }\n</style>\n```\nending `four`\n````
-2311-2317  code_fence                ````md
-2317-2402  lang_md                   \nwith `four` fences\n```html\n<style>\n\tbody { color: red; }\n</style>\n```\nending `four`\n
-2323-2329  inline_code               `four`
-2323-2324  punctuation               `
-2324-2328  content                   four
-2328-2329  punctuation               `
-2337-2387  fenced_code_html          ```html\n<style>\n\tbody { color: red; }\n</style>\n```
-2337-2344  code_fence                ```html
-2344-2384  lang_markup               \n<style>\n\tbody { color: red; }\n</style>\n
-2345-2352  tag                       <style>
-2345-2351  tag                       <style
-2345-2346  punctuation               <
-2351-2352  punctuation               >
-2352-2375  style                     \n\tbody { color: red; }\n
-2352-2375  lang_css                  \n\tbody { color: red; }\n
-2354-2358  selector                  body
-2359-2360  punctuation               {
-2361-2366  property                  color
-2366-2367  punctuation               :
-2371-2372  punctuation               ;
-2373-2374  punctuation               }
-2375-2383  tag                       </style>
-2375-2382  tag                       </style
-2375-2377  punctuation               </
-2382-2383  punctuation               >
-2384-2387  code_fence                ```
-2395-2401  inline_code               `four`
-2395-2396  punctuation               `
-2396-2400  content                   four
-2400-2401  punctuation               `
-2402-2406  code_fence                ````
-2415-2421  inline_code               `four`
-2415-2416  punctuation               `
-2416-2420  content                   four
-2420-2421  punctuation               `
-2422-2448  fenced_code_4tick_ts      ````ts\nconst a = '5';\n````
-2422-2428  code_fence                ````ts
-2428-2444  lang_ts                   \nconst a = '5';\n
-2429-2434  keyword                   const
-2437-2438  operator                  =
-2439-2442  string                    '5'
-2442-2443  punctuation               ;
-2444-2448  code_fence                ````
-2456-2462  inline_code               `five`
-2456-2457  punctuation               `
-2457-2461  content                   five
-2461-2462  punctuation               `
-2463-2468  code_fence                `````
-2470-2485  heading                   ## HTML Support
-2470-2472  punctuation               ##
-2542-2565  tag                       <div class="container">
-2542-2546  tag                       <div
-2542-2543  punctuation               <
-2547-2552  attr_name                 class
-2552-2564  attr_value                ="container"
-2552-2553  punctuation               =
-2553-2554  punctuation               "
-2563-2564  punctuation               "
-2564-2565  punctuation               >
-2567-2570  tag                       <p>
-2567-2569  tag                       <p
-2567-2568  punctuation               <
-2569-2570  punctuation               >
-2583-2591  tag                       <strong>
-2583-2590  tag                       <strong
-2583-2584  punctuation               <
-2590-2591  punctuation               >
-2597-2606  tag                       </strong>
-2597-2605  tag                       </strong
-2597-2599  punctuation               </
-2605-2606  punctuation               >
-2617-2621  tag                       </p>
-2617-2620  tag                       </p
-2617-2619  punctuation               </
-2620-2621  punctuation               >
-2622-2628  tag                       </div>
-2622-2627  tag                       </div
-2622-2624  punctuation               </
-2627-2628  punctuation               >
-2658-2663  tag                       <div>
-2658-2662  tag                       <div
-2658-2659  punctuation               <
-2662-2663  punctuation               >
-2665-2707  fenced_code_ts            ```ts\nconst example = 'embedded code';\n```
-2665-2670  code_fence                ```ts
-2670-2704  lang_ts                   \nconst example = 'embedded code';\n
-2671-2676  keyword                   const
-2685-2686  operator                  =
-2687-2702  string                    'embedded code'
-2702-2703  punctuation               ;
-2704-2707  code_fence                ```
-2709-2715  tag                       </div>
-2709-2714  tag                       </div
-2709-2711  punctuation               </
-2714-2715  punctuation               >
+1728-1799  fenced_code_bash          ```bash\nif [[ $name =~ ^[a-z]+$ ]]; then\n\techo "hello $(whoami)"\nfi\n```
+1728-1735  code_fence                ```bash
+1735-1796  lang_bash                 \nif [[ $name =~ ^[a-z]+$ ]]; then\n\techo "hello $(whoami)"\nfi\n
+1736-1738  keyword                   if
+1739-1740  punctuation               [
+1740-1741  punctuation               [
+1742-1747  variable                  $name
+1748-1750  operator                  =~
+1752-1753  punctuation               [
+1756-1757  punctuation               ]
+1760-1761  punctuation               ]
+1761-1762  punctuation               ]
+1762-1763  punctuation               ;
+1764-1768  keyword                   then
+1770-1774  builtin                   echo
+1775-1792  string                    "hello $(whoami)"
+1782-1791  command_substitution      $(whoami)
+1782-1784  punctuation               $(
+1790-1791  punctuation               )
+1793-1795  keyword                   fi
+1796-1799  code_fence                ```
+1801-1821  heading                   ### Unknown Language
+1801-1804  punctuation               ###
+1823-1898  fenced_code               ```python\ndef hello(name):\n    print(f"Hello, {name}!")\n\nhello("world")\n```
+1823-1832  code_fence                ```python
+1895-1898  code_fence                ```
+1900-1913  heading                   ## Edge Cases
+1900-1902  punctuation               ##
+1915-1923  bold                      **bold**
+1915-1917  punctuation               **
+1921-1923  punctuation               **
+1928-1936  bold                      **bold**
+1928-1930  punctuation               **
+1934-1936  punctuation               **
+1956-1964  italic                    _italic_
+1956-1957  punctuation               _
+1963-1964  punctuation               _
+1969-1977  italic                    _italic_
+1969-1970  punctuation               _
+1976-1977  punctuation               _
+1997-2005  bold                      **bold**
+1997-1999  punctuation               **
+2003-2005  punctuation               **
+2011-2019  italic                    _italic_
+2011-2012  punctuation               _
+2018-2019  punctuation               _
+2024-2041  strikethrough             ~~strikethrough~~
+2024-2026  punctuation               ~~
+2039-2041  punctuation               ~~
+2054-2060  inline_code               `code`
+2054-2055  punctuation               `
+2055-2059  content                   code
+2059-2060  punctuation               `
+2062-2070  bold                      **bold**
+2062-2064  punctuation               **
+2068-2070  punctuation               **
+2072-2080  italic                    _italic_
+2072-2073  punctuation               _
+2079-2080  punctuation               _
+2083-2112  link                      [a link](https://example.com)
+2083-2091  link_text_wrapper         [a link]
+2083-2084  punctuation               [
+2084-2090  link_text                 a link
+2090-2091  punctuation               ]
+2091-2112  url_wrapper               (https://example.com)
+2091-2092  punctuation               (
+2092-2111  url                       https://example.com
+2111-2112  punctuation               )
+2244-2340  fenced_code               ```\n\nEmpty fence above.\n\n```unknownlang\nPlain text for unknown language.\nconst variable = 2;\n```
+2244-2247  code_fence                ```
+2269-2283  code_fence                ```unknownlang
+2337-2340  code_fence                ```
+2367-2551  fenced_code_5tick_md      `````md\nwith `five` fences\n````md\nwith `four` fences\n```html\n<style>\n\tbody { color: red; }\n</style>\n```\nending `four`\n````\nanother `four`\n````ts\nconst a = '5';\n````\nending `five`\n`````
+2367-2374  code_fence                `````md
+2374-2546  lang_md                   \nwith `five` fences\n````md\nwith `four` fences\n```html\n<style>\n\tbody { color: red; }\n</style>\n```\nending `four`\n````\nanother `four`\n````ts\nconst a = '5';\n````\nending `five`\n
+2380-2386  inline_code               `five`
+2380-2381  punctuation               `
+2381-2385  content                   five
+2385-2386  punctuation               `
+2394-2489  fenced_code_4tick_md      ````md\nwith `four` fences\n```html\n<style>\n\tbody { color: red; }\n</style>\n```\nending `four`\n````
+2394-2400  code_fence                ````md
+2400-2485  lang_md                   \nwith `four` fences\n```html\n<style>\n\tbody { color: red; }\n</style>\n```\nending `four`\n
+2406-2412  inline_code               `four`
+2406-2407  punctuation               `
+2407-2411  content                   four
+2411-2412  punctuation               `
+2420-2470  fenced_code_html          ```html\n<style>\n\tbody { color: red; }\n</style>\n```
+2420-2427  code_fence                ```html
+2427-2467  lang_markup               \n<style>\n\tbody { color: red; }\n</style>\n
+2428-2435  tag                       <style>
+2428-2434  tag                       <style
+2428-2429  punctuation               <
+2434-2435  punctuation               >
+2435-2458  style                     \n\tbody { color: red; }\n
+2435-2458  lang_css                  \n\tbody { color: red; }\n
+2437-2441  selector                  body
+2442-2443  punctuation               {
+2444-2449  property                  color
+2449-2450  punctuation               :
+2454-2455  punctuation               ;
+2456-2457  punctuation               }
+2458-2466  tag                       </style>
+2458-2465  tag                       </style
+2458-2460  punctuation               </
+2465-2466  punctuation               >
+2467-2470  code_fence                ```
+2478-2484  inline_code               `four`
+2478-2479  punctuation               `
+2479-2483  content                   four
+2483-2484  punctuation               `
+2485-2489  code_fence                ````
+2498-2504  inline_code               `four`
+2498-2499  punctuation               `
+2499-2503  content                   four
+2503-2504  punctuation               `
+2505-2531  fenced_code_4tick_ts      ````ts\nconst a = '5';\n````
+2505-2511  code_fence                ````ts
+2511-2527  lang_ts                   \nconst a = '5';\n
+2512-2517  keyword                   const
+2520-2521  operator                  =
+2522-2525  string                    '5'
+2525-2526  punctuation               ;
+2527-2531  code_fence                ````
+2539-2545  inline_code               `five`
+2539-2540  punctuation               `
+2540-2544  content                   five
+2544-2545  punctuation               `
+2546-2551  code_fence                `````
+2553-2568  heading                   ## HTML Support
+2553-2555  punctuation               ##
+2625-2648  tag                       <div class="container">
+2625-2629  tag                       <div
+2625-2626  punctuation               <
+2630-2635  attr_name                 class
+2635-2647  attr_value                ="container"
+2635-2636  punctuation               =
+2636-2637  punctuation               "
+2646-2647  punctuation               "
+2647-2648  punctuation               >
+2650-2653  tag                       <p>
+2650-2652  tag                       <p
+2650-2651  punctuation               <
+2652-2653  punctuation               >
+2666-2674  tag                       <strong>
+2666-2673  tag                       <strong
+2666-2667  punctuation               <
+2673-2674  punctuation               >
+2680-2689  tag                       </strong>
+2680-2688  tag                       </strong
+2680-2682  punctuation               </
+2688-2689  punctuation               >
+2700-2704  tag                       </p>
+2700-2703  tag                       </p
+2700-2702  punctuation               </
+2703-2704  punctuation               >
+2705-2711  tag                       </div>
+2705-2710  tag                       </div
+2705-2707  punctuation               </
+2710-2711  punctuation               >
+2741-2746  tag                       <div>
+2741-2745  tag                       <div
+2741-2742  punctuation               <
+2745-2746  punctuation               >
+2748-2790  fenced_code_ts            ```ts\nconst example = 'embedded code';\n```
+2748-2753  code_fence                ```ts
+2753-2787  lang_ts                   \nconst example = 'embedded code';\n
+2754-2759  keyword                   const
+2768-2769  operator                  =
+2770-2785  string                    'embedded code'
+2785-2786  punctuation               ;
+2787-2790  code_fence                ```
+2792-2798  tag                       </div>
+2792-2797  tag                       </div
+2792-2794  punctuation               </
+2797-2798  punctuation               >

@@ -137,6 +137,14 @@ This is a <span class="token_link"><span class="token_link_text_wrapper"><span c
 </span></span><span class="token_tag"><span class="token_tag"><span class="token_punctuation token_tag_punctuation">&lt;/</span>style</span><span class="token_punctuation token_tag_punctuation">></span></span>
 </span><span class="token_code_fence token_punctuation">```</span></span>
 
+<span class="token_heading"><span class="token_punctuation token_heading_punctuation">###</span> Bash</span>
+
+<span class="token_fenced_code_bash"><span class="token_code_fence token_punctuation">```bash</span><span class="token_lang_bash">
+<span class="token_keyword">if</span> <span class="token_punctuation">[</span><span class="token_punctuation">[</span> <span class="token_variable">$name</span> <span class="token_operator">=~</span> ^<span class="token_punctuation">[</span>a-z<span class="token_punctuation">]</span>+$ <span class="token_punctuation">]</span><span class="token_punctuation">]</span><span class="token_punctuation">;</span> <span class="token_keyword">then</span>
+	<span class="token_builtin">echo</span> <span class="token_string">"hello <span class="token_command_substitution"><span class="token_punctuation">$(</span>whoami<span class="token_punctuation">)</span></span>"</span>
+<span class="token_keyword">fi</span>
+</span><span class="token_code_fence token_punctuation">```</span></span>
+
 <span class="token_heading"><span class="token_punctuation token_heading_punctuation">###</span> Unknown Language</span>
 
 <span class="token_fenced_code"><span class="token_code_fence token_punctuation">```python</span>
