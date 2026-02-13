@@ -28,5 +28,5 @@ add_grammar_js(syntax_styler_global);
 add_grammar_ts(syntax_styler_global);
 add_grammar_svelte(syntax_styler_global);
 add_grammar_json(syntax_styler_global);
-add_grammar_bash(syntax_styler_global);
+add_grammar_bash(syntax_styler_global); // before markdown — markdown references bash for fenced code blocks
 add_grammar_markdown(syntax_styler_global);
