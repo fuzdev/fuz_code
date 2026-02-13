@@ -1,0 +1,203 @@
+<span class="token_shebang token_comment">#!/bin/bash</span>
+
+<span class="token_comment"># This is a comment</span>
+name=<span class="token_string">"world"</span>
+<span class="token_keyword">readonly</span> PI=<span class="token_number">3</span>.<span class="token_number">14</span>
+local_var=<span class="token_string">'single quoted'</span>
+ansi_string=<span class="token_string">$'tab\there\nnewline'</span>
+
+<span class="token_comment"># Special variables</span>
+<span class="token_builtin">echo</span> <span class="token_variable">$0</span> <span class="token_variable">$1</span> <span class="token_variable">$@</span> <span class="token_variable">$#</span> <span class="token_variable">$?</span> <span class="token_variable">$$</span> <span class="token_variable">$!</span>
+
+<span class="token_comment"># Parameter expansion</span>
+<span class="token_builtin">echo</span> <span class="token_variable">${name}</span>
+<span class="token_builtin">echo</span> <span class="token_variable">${name:-default}</span>
+<span class="token_builtin">echo</span> <span class="token_variable">${name:=fallback}</span>
+<span class="token_builtin">echo</span> <span class="token_variable">${name:+alternate}</span>
+<span class="token_builtin">echo</span> <span class="token_variable">${name:?error message}</span>
+<span class="token_builtin">echo</span> <span class="token_variable">${#name}</span>
+<span class="token_builtin">echo</span> <span class="token_variable">${name##*/}</span>
+<span class="token_builtin">echo</span> <span class="token_variable">${name%.*}</span>
+<span class="token_builtin">echo</span> <span class="token_variable">${name^^}</span>
+<span class="token_builtin">echo</span> <span class="token_variable">${name,,}</span>
+<span class="token_builtin">echo</span> <span class="token_variable">${name/old/new}</span>
+<span class="token_builtin">echo</span> <span class="token_variable">${name//all/replaced}</span>
+
+<span class="token_comment"># Arrays</span>
+arr=<span class="token_punctuation">(</span>one two three<span class="token_punctuation">)</span>
+<span class="token_builtin">echo</span> <span class="token_variable">${arr[0]}</span>
+<span class="token_builtin">echo</span> <span class="token_variable">${arr[@]}</span>
+<span class="token_builtin">echo</span> <span class="token_variable">${#arr[@]}</span>
+arr+=<span class="token_punctuation">(</span>four<span class="token_punctuation">)</span>
+
+<span class="token_comment"># Associative arrays</span>
+<span class="token_keyword">declare</span> -A map
+map<span class="token_punctuation">[</span>key<span class="token_punctuation">]</span>=<span class="token_string">"value"</span>
+<span class="token_builtin">echo</span> <span class="token_variable">${map[key]}</span>
+<span class="token_builtin">echo</span> <span class="token_variable">${!map[@]}</span>
+
+<span class="token_comment"># Control flow</span>
+<span class="token_keyword">if</span> <span class="token_punctuation">[</span> -f <span class="token_string">"<span class="token_variable">$name</span>"</span> <span class="token_punctuation">]</span><span class="token_punctuation">;</span> <span class="token_keyword">then</span>
+	<span class="token_builtin">echo</span> <span class="token_string">"file exists"</span>
+<span class="token_keyword">elif</span> <span class="token_punctuation">[</span><span class="token_punctuation">[</span> <span class="token_variable">$name</span> <span class="token_operator">==</span> <span class="token_string">"world"</span> <span class="token_punctuation">]</span><span class="token_punctuation">]</span><span class="token_punctuation">;</span> <span class="token_keyword">then</span>
+	<span class="token_builtin">echo</span> <span class="token_string">"hello world"</span>
+<span class="token_keyword">else</span>
+	<span class="token_builtin">echo</span> <span class="token_string">"something else"</span>
+<span class="token_keyword">fi</span>
+
+<span class="token_comment"># Regex match in [[</span>
+<span class="token_keyword">if</span> <span class="token_punctuation">[</span><span class="token_punctuation">[</span> <span class="token_variable">$name</span> =~ ^<span class="token_punctuation">[</span>a-z<span class="token_punctuation">]</span>+$ <span class="token_punctuation">]</span><span class="token_punctuation">]</span><span class="token_punctuation">;</span> <span class="token_keyword">then</span>
+	<span class="token_builtin">echo</span> <span class="token_string">"lowercase"</span>
+<span class="token_keyword">fi</span>
+
+<span class="token_comment"># Loops</span>
+<span class="token_keyword">for</span> i <span class="token_keyword">in</span> <span class="token_number">1</span> <span class="token_number">2</span> <span class="token_number">3</span><span class="token_punctuation">;</span> <span class="token_keyword">do</span>
+	<span class="token_builtin">echo</span> <span class="token_variable">$i</span>
+<span class="token_keyword">done</span>
+
+<span class="token_keyword">for</span> <span class="token_punctuation">(</span><span class="token_punctuation">(</span>i = <span class="token_number">0</span><span class="token_punctuation">;</span> i <span class="token_operator">&lt;</span> <span class="token_number">10</span><span class="token_punctuation">;</span> i++<span class="token_punctuation">)</span><span class="token_punctuation">)</span><span class="token_punctuation">;</span> <span class="token_keyword">do</span>
+	<span class="token_builtin">echo</span> <span class="token_variable">$i</span>
+<span class="token_keyword">done</span>
+
+<span class="token_keyword">while</span> <span class="token_builtin">read</span> -r line<span class="token_punctuation">;</span> <span class="token_keyword">do</span>
+	<span class="token_builtin">echo</span> <span class="token_string">"<span class="token_variable">$line</span>"</span>
+<span class="token_keyword">done</span> <span class="token_operator">&lt;</span> input.txt
+
+<span class="token_keyword">until</span> <span class="token_boolean">false</span><span class="token_punctuation">;</span> <span class="token_keyword">do</span>
+	<span class="token_keyword">break</span>
+<span class="token_keyword">done</span>
+
+<span class="token_comment"># Select menu</span>
+<span class="token_keyword">select</span> opt <span class="token_keyword">in</span> <span class="token_string">"Option 1"</span> <span class="token_string">"Option 2"</span> <span class="token_string">"Quit"</span><span class="token_punctuation">;</span> <span class="token_keyword">do</span>
+	<span class="token_keyword">case</span> <span class="token_variable">$opt</span> <span class="token_keyword">in</span>
+		Quit<span class="token_punctuation">)</span> <span class="token_keyword">break</span> <span class="token_operator">;;</span>
+		*<span class="token_punctuation">)</span> <span class="token_builtin">echo</span> <span class="token_string">"You chose <span class="token_variable">$opt</span>"</span> <span class="token_operator">;;</span>
+	<span class="token_keyword">esac</span>
+<span class="token_keyword">done</span>
+
+<span class="token_comment"># Case statement</span>
+<span class="token_keyword">case</span> <span class="token_string">"<span class="token_variable">$name</span>"</span> <span class="token_keyword">in</span>
+	hello<span class="token_punctuation">)</span>
+		<span class="token_builtin">echo</span> <span class="token_string">"hi"</span>
+		<span class="token_operator">;;</span>
+	world<span class="token_operator">|</span>earth<span class="token_punctuation">)</span>
+		<span class="token_builtin">echo</span> <span class="token_string">"globe"</span>
+		<span class="token_operator">;;</span>
+	*<span class="token_punctuation">)</span>
+		<span class="token_builtin">echo</span> <span class="token_string">"unknown"</span>
+		<span class="token_operator">;;</span>
+<span class="token_keyword">esac</span>
+
+<span class="token_comment"># Functions</span>
+<span class="token_function">greet</span><span class="token_punctuation">(</span><span class="token_punctuation">)</span> <span class="token_punctuation">{</span>
+	<span class="token_keyword">local</span> greeting=<span class="token_string">"Hello"</span>
+	<span class="token_builtin">echo</span> <span class="token_string">"<span class="token_variable">$greeting</span>, <span class="token_variable">$1</span>!"</span>
+	<span class="token_keyword">return</span> <span class="token_number">0</span>
+<span class="token_punctuation">}</span>
+
+<span class="token_keyword">function</span> <span class="token_function">cleanup</span> <span class="token_punctuation">{</span>
+	<span class="token_builtin">echo</span> <span class="token_string">"cleaning up"</span>
+<span class="token_punctuation">}</span>
+
+<span class="token_comment"># Command substitution</span>
+today=$<span class="token_punctuation">(</span>date +%Y-%m-%d<span class="token_punctuation">)</span>
+files=$<span class="token_punctuation">(</span>ls -la <span class="token_operator">|</span> grep <span class="token_string">"\.txt$"</span><span class="token_punctuation">)</span>
+
+<span class="token_comment"># Arithmetic expansion</span>
+result=$<span class="token_punctuation">(</span><span class="token_punctuation">(</span> <span class="token_number">2</span> + <span class="token_number">3</span> * <span class="token_number">4</span> <span class="token_punctuation">)</span><span class="token_punctuation">)</span>
+<span class="token_punctuation">(</span><span class="token_punctuation">(</span> count++ <span class="token_punctuation">)</span><span class="token_punctuation">)</span>
+<span class="token_punctuation">(</span><span class="token_punctuation">(</span> x = y <span class="token_operator">></span> <span class="token_number">0</span> ? y : -y <span class="token_punctuation">)</span><span class="token_punctuation">)</span>
+
+<span class="token_comment"># Here-document</span>
+cat <span class="token_operator">&lt;&lt;</span>EOF
+Hello<span class="token_punctuation">,</span> <span class="token_variable">${name}</span><span class="token_operator">!</span>
+Today is <span class="token_variable">$today</span>.
+EOF
+
+cat <span class="token_operator">&lt;&lt;</span>-<span class="token_string">'NOEXPAND'</span>
+	No <span class="token_variable">$variable</span> expansion here.
+	Tabs are stripped with <span class="token_operator">&lt;&lt;</span>-
+NOEXPAND
+
+<span class="token_comment"># Here-string</span>
+<span class="token_builtin">read</span> -r first_word <span class="token_operator">&lt;&lt;&lt;</span> <span class="token_string">"hello world"</span>
+<span class="token_builtin">read</span> -r val <span class="token_operator">&lt;&lt;&lt;</span> <span class="token_string">"<span class="token_variable">$name</span>"</span>
+
+<span class="token_comment"># Process substitution</span>
+diff <span class="token_operator">&lt;</span><span class="token_punctuation">(</span>sort file1.txt<span class="token_punctuation">)</span> <span class="token_operator">&lt;</span><span class="token_punctuation">(</span>sort file2.txt<span class="token_punctuation">)</span>
+tee <span class="token_operator">></span><span class="token_punctuation">(</span>grep error <span class="token_operator">></span> errors.log<span class="token_punctuation">)</span> <span class="token_operator">></span><span class="token_punctuation">(</span>grep warn <span class="token_operator">></span> warns.log<span class="token_punctuation">)</span>
+
+<span class="token_comment"># Operators and redirections</span>
+<span class="token_builtin">echo</span> <span class="token_string">"output"</span> <span class="token_operator">></span> file.txt
+<span class="token_builtin">echo</span> <span class="token_string">"append"</span> <span class="token_operator">>></span> file.txt
+cat <span class="token_operator">&lt;</span> input.txt
+cmd <span class="token_file_descriptor token_important">2</span><span class="token_operator">></span><span class="token_file_descriptor token_important">&amp;1</span>
+cmd <span class="token_operator">&amp;></span>/dev/null
+cmd <span class="token_file_descriptor token_important">2</span><span class="token_operator">></span>/dev/null
+
+<span class="token_comment"># Pipeline</span>
+ls -la <span class="token_operator">|</span> sort <span class="token_operator">|</span> head -<span class="token_number">5</span>
+cmd1 <span class="token_operator">|</span> cmd2 <span class="token_operator">|</span> cmd3
+
+<span class="token_comment"># Logical operators</span>
+<span class="token_boolean">true</span> <span class="token_operator">&amp;&amp;</span> <span class="token_builtin">echo</span> <span class="token_string">"success"</span> <span class="token_operator">||</span> <span class="token_builtin">echo</span> <span class="token_string">"failure"</span>
+<span class="token_operator">!</span> <span class="token_boolean">false</span> <span class="token_operator">&amp;&amp;</span> <span class="token_builtin">echo</span> <span class="token_string">"negated"</span>
+
+<span class="token_comment"># Subshells and grouping</span>
+<span class="token_punctuation">(</span><span class="token_builtin">cd</span> /tmp <span class="token_operator">&amp;&amp;</span> ls -la<span class="token_punctuation">)</span>
+<span class="token_punctuation">{</span> <span class="token_builtin">echo</span> <span class="token_string">"grouped"</span><span class="token_punctuation">;</span> <span class="token_builtin">echo</span> <span class="token_string">"commands"</span><span class="token_punctuation">;</span> <span class="token_punctuation">}</span>
+
+<span class="token_comment"># Nested quotes and escaping</span>
+<span class="token_builtin">echo</span> <span class="token_string">"it's a \"test\""</span>
+<span class="token_builtin">echo</span> <span class="token_string">"path is: <span class="token_variable">$HOME</span>/dir"</span>
+<span class="token_builtin">echo</span> <span class="token_string">'no $expansion here'</span>
+<span class="token_builtin">echo</span> <span class="token_string">"nested $(echo "</span>inner $<span class="token_punctuation">(</span><span class="token_builtin">echo</span> deep<span class="token_punctuation">)</span><span class="token_string">")"</span>
+
+<span class="token_comment"># Multiline with backslash</span>
+<span class="token_builtin">command</span> --flag1 \
+	--flag2 \
+	--flag3
+
+<span class="token_comment"># Builtins</span>
+<span class="token_keyword">export</span> PATH=<span class="token_string">"/usr/local/bin:<span class="token_variable">$PATH</span>"</span>
+<span class="token_builtin">cd</span> /tmp
+<span class="token_builtin">pwd</span>
+<span class="token_builtin">source</span> ~/.bashrc
+<span class="token_builtin">eval</span> <span class="token_string">"echo hello"</span>
+<span class="token_builtin">exec</span> bash
+<span class="token_builtin">test</span> -d /tmp
+<span class="token_keyword">set</span> -euo pipefail
+<span class="token_keyword">trap</span> <span class="token_string">'cleanup'</span> EXIT INT TERM
+<span class="token_keyword">declare</span> -a array
+<span class="token_keyword">declare</span> -A assoc_array
+<span class="token_keyword">shift</span> <span class="token_number">2</span>
+<span class="token_builtin">command</span> ls
+<span class="token_builtin">hash</span> -r
+<span class="token_builtin">type</span> ls
+<span class="token_builtin">ulimit</span> -n <span class="token_number">1024</span>
+<span class="token_builtin">umask</span> <span class="token_number">022</span>
+<span class="token_builtin">wait</span> <span class="token_variable">$!</span>
+<span class="token_builtin">jobs</span> -l
+<span class="token_builtin">bg</span> %<span class="token_number">1</span>
+<span class="token_builtin">fg</span> %<span class="token_number">1</span>
+<span class="token_builtin">disown</span> %<span class="token_number">1</span>
+<span class="token_builtin">shopt</span> -s globstar
+
+<span class="token_comment"># Glob patterns</span>
+<span class="token_keyword">for</span> f <span class="token_keyword">in</span> *.txt<span class="token_punctuation">;</span> <span class="token_keyword">do</span>
+	<span class="token_builtin">echo</span> <span class="token_string">"<span class="token_variable">$f</span>"</span>
+<span class="token_keyword">done</span>
+
+<span class="token_keyword">for</span> f <span class="token_keyword">in</span> /tmp/**/*.log<span class="token_punctuation">;</span> <span class="token_keyword">do</span>
+	<span class="token_builtin">echo</span> <span class="token_string">"<span class="token_variable">$f</span>"</span>
+<span class="token_keyword">done</span>
+
+<span class="token_comment"># Numbers</span>
+hex=<span class="token_number">0xFF</span>
+octal=<span class="token_number">077</span>
+binary=<span class="token_number">2#1010</span>
+decimal=<span class="token_number">42</span>
+
+<span class="token_comment"># Boolean commands</span>
+<span class="token_boolean">true</span>
+<span class="token_boolean">false</span>
