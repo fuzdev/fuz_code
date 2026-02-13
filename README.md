@@ -116,6 +116,7 @@ Enabled by default in `syntax_styler_global`:
 - [`js`](src/lib/grammar_js.ts)
 - [`json`](src/lib/grammar_json.ts)
 - [`clike`](src/lib/grammar_clike.ts)
+- [`bash`](src/lib/grammar_bash.ts)
 
 ### More
 
