@@ -15,6 +15,15 @@ import type {AddSyntaxGrammar, SyntaxGrammarRaw} from './syntax_styler.js';
  * @see LICENSE
  */
 export const add_grammar_bash: AddSyntaxGrammar = (syntax_styler) => {
+	// Shared inside grammar for command substitution — `rest` wired after construction
+	const command_sub_inside: SyntaxGrammarRaw = {
+		punctuation: /^\$\(|\)$/,
+	};
+
+	// Reusable balanced-paren pattern for $(...) — handles 2 levels of inner () nesting,
+	// which supports up to 3 levels of $() command substitution (4+ is vanishingly rare)
+	const command_sub_pattern = /\$\((?:[^()]*|\((?:[^()]*|\([^()]*\))*\))*\)/;
+
 	const grammar_bash = {
 		// Shebang at file start — matched before general comments
 		shebang: {
@@ -29,14 +38,70 @@ export const add_grammar_bash: AddSyntaxGrammar = (syntax_styler) => {
 			greedy: true,
 		},
 
+		// Here-documents — must precede string to avoid delimiter consumption
+		heredoc: [
+			// Quoted delimiter (<<'DELIM' or <<"DELIM") — no expansion
+			{
+				pattern: /(^|[^<])<<-?\s*(?:['"])(\w+)(?:['"])[\t ]*\n[\s\S]*?\n[\t ]*\2(?=\s*$)/m,
+				lookbehind: true,
+				greedy: true,
+				alias: 'string',
+				inside: {
+					// No `m` flag — `^` matches start-of-string (opening) and `$` matches
+					// end-of-string (closing), so single-word content lines can't false-positive
+					heredoc_delimiter: [
+						{
+							pattern: /^<<-?\s*(?:['"])\w+(?:['"])/,
+							alias: 'punctuation',
+						},
+						{
+							pattern: /\w+$/,
+							alias: 'punctuation',
+						},
+					],
+				} as SyntaxGrammarRaw,
+			},
+			// Unquoted delimiter (<<DELIM) — with variable/command expansion
+			{
+				pattern: /(^|[^<])<<-?\s*(\w+)[\t ]*\n[\s\S]*?\n[\t ]*\2(?=\s*$)/m,
+				lookbehind: true,
+				greedy: true,
+				alias: 'string',
+				inside: {
+					heredoc_delimiter: [
+						{
+							pattern: /^<<-?\s*\w+/,
+							alias: 'punctuation',
+						},
+						{
+							pattern: /\w+$/,
+							alias: 'punctuation',
+						},
+					],
+					command_substitution: {
+						pattern: command_sub_pattern,
+						greedy: true,
+						inside: command_sub_inside,
+					},
+					variable: /\$\{[^}]+\}|\$(?:\w+|[!@#$*?\-0-9])/,
+				} as SyntaxGrammarRaw,
+			},
+		],
+
 		// Strings — three variants
 		string: [
-			// Double-quoted: supports escape sequences, variable interpolation
+			// Double-quoted: supports escape sequences, variable interpolation, command substitution
 			{
-				pattern: /(^|[^\\](?:\\\\)*)"(?:\\[\s\S]|[^"\\])*"/,
+				pattern:
+					/(^|[^\\](?:\\\\)*)"(?:\\[\s\S]|\$\((?:[^()]*|\((?:[^()]*|\([^()]*\))*\))*\)|\$(?!\()|[^"\\$])*"/,
 				lookbehind: true,
 				greedy: true,
 				inside: {
+					command_substitution: {
+						pattern: command_sub_pattern,
+						greedy: true,
+						inside: command_sub_inside,
+					},
 					variable: /\$\{[^}]+\}|\$(?:\w+|[!@#$*?\-0-9])/,
 				} as SyntaxGrammarRaw,
 			},
@@ -52,6 +117,13 @@ export const add_grammar_bash: AddSyntaxGrammar = (syntax_styler) => {
 				greedy: true,
 			},
 		],
+
+		// Command substitution $(...) — before variable since both start with $
+		command_substitution: {
+			pattern: command_sub_pattern,
+			greedy: true,
+			inside: command_sub_inside,
+		},
 
 		// Variables and parameter expansion
 		variable: /\$\{[^}]+\}|\$(?:\w+|[!@#$*?\-0-9])/,
@@ -90,11 +162,14 @@ export const add_grammar_bash: AddSyntaxGrammar = (syntax_styler) => {
 		number: /\b(?:0x[\da-fA-F]+|0[0-7]+|\d+#[\da-zA-Z]+|\d+)\b/,
 
 		// Operators — longest first
-		operator: /\|\||&&|;;|&>>?|<<<?|>>?|[!=]=|[<>]|[|&!]/,
+		operator: /\|\||&&|;;|&>>?|<<<?|>>?|=~|[!=]=|[<>]|[|&!]/,
 
 		// Punctuation
 		punctuation: /[{}[\]();,]/,
 	} satisfies SyntaxGrammarRaw;
+
+	// Wire circular reference so command substitutions get full bash highlighting
+	command_sub_inside.rest = grammar_bash;
 
 	syntax_styler.add_lang('bash', grammar_bash, ['sh', 'shell']);
 };

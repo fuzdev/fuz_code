@@ -46,7 +46,7 @@ map<span class="token_punctuation">[</span>key<span class="token_punctuation">]<
 <span class="token_keyword">fi</span>
 
 <span class="token_comment"># Regex match in [[</span>
-<span class="token_keyword">if</span> <span class="token_punctuation">[</span><span class="token_punctuation">[</span> <span class="token_variable">$name</span> =~ ^<span class="token_punctuation">[</span>a-z<span class="token_punctuation">]</span>+$ <span class="token_punctuation">]</span><span class="token_punctuation">]</span><span class="token_punctuation">;</span> <span class="token_keyword">then</span>
+<span class="token_keyword">if</span> <span class="token_punctuation">[</span><span class="token_punctuation">[</span> <span class="token_variable">$name</span> <span class="token_operator">=~</span> ^<span class="token_punctuation">[</span>a-z<span class="token_punctuation">]</span>+$ <span class="token_punctuation">]</span><span class="token_punctuation">]</span><span class="token_punctuation">;</span> <span class="token_keyword">then</span>
 	<span class="token_builtin">echo</span> <span class="token_string">"lowercase"</span>
 <span class="token_keyword">fi</span>
 
@@ -100,24 +100,31 @@ map<span class="token_punctuation">[</span>key<span class="token_punctuation">]<
 <span class="token_punctuation">}</span>
 
 <span class="token_comment"># Command substitution</span>
-today=$<span class="token_punctuation">(</span>date +%Y-%m-%d<span class="token_punctuation">)</span>
-files=$<span class="token_punctuation">(</span>ls -la <span class="token_operator">|</span> grep <span class="token_string">"\.txt$"</span><span class="token_punctuation">)</span>
+today=<span class="token_command_substitution"><span class="token_punctuation">$(</span>date +%Y-%m-%d<span class="token_punctuation">)</span></span>
+files=<span class="token_command_substitution"><span class="token_punctuation">$(</span>ls -la <span class="token_operator">|</span> grep <span class="token_string">"\.txt$"</span><span class="token_punctuation">)</span></span>
 
 <span class="token_comment"># Arithmetic expansion</span>
-result=$<span class="token_punctuation">(</span><span class="token_punctuation">(</span> <span class="token_number">2</span> + <span class="token_number">3</span> * <span class="token_number">4</span> <span class="token_punctuation">)</span><span class="token_punctuation">)</span>
+result=<span class="token_command_substitution"><span class="token_punctuation">$(</span>( <span class="token_number">2</span> + <span class="token_number">3</span> * <span class="token_number">4</span> )<span class="token_punctuation">)</span></span>
 <span class="token_punctuation">(</span><span class="token_punctuation">(</span> count++ <span class="token_punctuation">)</span><span class="token_punctuation">)</span>
 <span class="token_punctuation">(</span><span class="token_punctuation">(</span> x = y <span class="token_operator">></span> <span class="token_number">0</span> ? y : -y <span class="token_punctuation">)</span><span class="token_punctuation">)</span>
 
 <span class="token_comment"># Here-document</span>
-cat <span class="token_operator">&lt;&lt;</span>EOF
-Hello<span class="token_punctuation">,</span> <span class="token_variable">${name}</span><span class="token_operator">!</span>
-Today is <span class="token_variable">$today</span>.
-EOF
+cat <span class="token_heredoc token_string"><span class="token_heredoc_delimiter token_punctuation">&lt;&lt;EOF</span>
+Hello, <span class="token_variable">${name}</span>!
+Today is <span class="token_command_substitution"><span class="token_punctuation">$(</span>date<span class="token_punctuation">)</span></span>.
+single
+word
+lines
+<span class="token_heredoc_delimiter token_punctuation">EOF</span></span>
 
-cat <span class="token_operator">&lt;&lt;</span>-<span class="token_string">'NOEXPAND'</span>
-	No <span class="token_variable">$variable</span> expansion here.
-	Tabs are stripped with <span class="token_operator">&lt;&lt;</span>-
-NOEXPAND
+cat <span class="token_heredoc token_string"><span class="token_heredoc_delimiter token_punctuation">&lt;&lt;-'NOEXPAND'</span>
+	No $variable expansion here.
+	Tabs are stripped with &lt;&lt;-
+<span class="token_heredoc_delimiter token_punctuation">NOEXPAND</span></span>
+
+cat <span class="token_heredoc token_string"><span class="token_heredoc_delimiter token_punctuation">&lt;&lt;"QUOTED"</span>
+Also no $expansion here.
+<span class="token_heredoc_delimiter token_punctuation">QUOTED</span></span>
 
 <span class="token_comment"># Here-string</span>
 <span class="token_builtin">read</span> -r first_word <span class="token_operator">&lt;&lt;&lt;</span> <span class="token_string">"hello world"</span>
@@ -143,6 +150,9 @@ cmd1 <span class="token_operator">|</span> cmd2 <span class="token_operator">|</
 <span class="token_boolean">true</span> <span class="token_operator">&amp;&amp;</span> <span class="token_builtin">echo</span> <span class="token_string">"success"</span> <span class="token_operator">||</span> <span class="token_builtin">echo</span> <span class="token_string">"failure"</span>
 <span class="token_operator">!</span> <span class="token_boolean">false</span> <span class="token_operator">&amp;&amp;</span> <span class="token_builtin">echo</span> <span class="token_string">"negated"</span>
 
+<span class="token_comment"># Inline comment</span>
+<span class="token_builtin">echo</span> <span class="token_string">"hello"</span> <span class="token_comment"># after code</span>
+
 <span class="token_comment"># Subshells and grouping</span>
 <span class="token_punctuation">(</span><span class="token_builtin">cd</span> /tmp <span class="token_operator">&amp;&amp;</span> ls -la<span class="token_punctuation">)</span>
 <span class="token_punctuation">{</span> <span class="token_builtin">echo</span> <span class="token_string">"grouped"</span><span class="token_punctuation">;</span> <span class="token_builtin">echo</span> <span class="token_string">"commands"</span><span class="token_punctuation">;</span> <span class="token_punctuation">}</span>
@@ -151,7 +161,7 @@ cmd1 <span class="token_operator">|</span> cmd2 <span class="token_operator">|</
 <span class="token_builtin">echo</span> <span class="token_string">"it's a \"test\""</span>
 <span class="token_builtin">echo</span> <span class="token_string">"path is: <span class="token_variable">$HOME</span>/dir"</span>
 <span class="token_builtin">echo</span> <span class="token_string">'no $expansion here'</span>
-<span class="token_builtin">echo</span> <span class="token_string">"nested $(echo "</span>inner $<span class="token_punctuation">(</span><span class="token_builtin">echo</span> deep<span class="token_punctuation">)</span><span class="token_string">")"</span>
+<span class="token_builtin">echo</span> <span class="token_string">"nested <span class="token_command_substitution"><span class="token_punctuation">$(</span><span class="token_builtin">echo</span> <span class="token_string">"inner <span class="token_command_substitution"><span class="token_punctuation">$(</span><span class="token_builtin">echo</span> deep<span class="token_punctuation">)</span></span>"</span><span class="token_punctuation">)</span></span>"</span>
 
 <span class="token_comment"># Multiline with backslash</span>
 <span class="token_builtin">command</span> --flag1 \

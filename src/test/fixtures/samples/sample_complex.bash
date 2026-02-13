@@ -111,13 +111,20 @@ result=$(( 2 + 3 * 4 ))
 # Here-document
 cat <<EOF
 Hello, ${name}!
-Today is $today.
+Today is $(date).
+single
+word
+lines
 EOF
 
 cat <<-'NOEXPAND'
 	No $variable expansion here.
 	Tabs are stripped with <<-
 NOEXPAND
+
+cat <<"QUOTED"
+Also no $expansion here.
+QUOTED
 
 # Here-string
 read -r first_word <<< "hello world"
@@ -142,6 +149,9 @@ cmd1 | cmd2 | cmd3
 # Logical operators
 true && echo "success" || echo "failure"
 ! false && echo "negated"
+
+# Inline comment
+echo "hello" # after code
 
 # Subshells and grouping
 (cd /tmp && ls -la)
