@@ -6,7 +6,7 @@ fuz_code (`@fuzdev/fuz_code`) is a runtime syntax highlighting library optimized
 for HTML generation with CSS classes. It's a PrismJS fork with TypeScript types
 and modern module support.
 
-For coding conventions, see [`fuz-stack`](../fuz-stack/CLAUDE.md).
+For coding conventions, see Skill(fuz_stack).
 
 ## Gro commands
 

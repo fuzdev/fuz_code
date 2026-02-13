@@ -5,6 +5,6 @@ export interface CodeSample {
 }
 
 // Languages ordered from simple to complex
-export const sample_langs = ['json', 'css', 'ts', 'html', 'svelte', 'md'] as const;
+export const sample_langs = ['json', 'css', 'ts', 'html', 'svelte', 'md', 'bash'] as const;
 
 export type SampleLang = (typeof sample_langs)[number];

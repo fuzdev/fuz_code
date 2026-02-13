@@ -10,6 +10,7 @@ import {add_grammar_json} from '$lib/grammar_json.js';
 import {add_grammar_svelte} from '$lib/grammar_svelte.js';
 import {add_grammar_markdown} from '$lib/grammar_markdown.js';
 import {add_grammar_clike} from '$lib/grammar_clike.js';
+import {add_grammar_bash} from '$lib/grammar_bash.js';
 import {syntax_styler_global} from '$lib/syntax_styler_global.js';
 import {samples} from './fixtures/samples/all.js';
 
@@ -23,6 +24,7 @@ const create_styler_with_grammars = (): SyntaxStyler => {
 	add_grammar_js(s);
 	add_grammar_ts(s);
 	add_grammar_json(s);
+	add_grammar_bash(s);
 	add_grammar_svelte(s);
 	add_grammar_markdown(s);
 	return s;

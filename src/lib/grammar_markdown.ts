@@ -103,6 +103,7 @@ export const add_grammar_markdown: AddSyntaxGrammar = (syntax_styler) => {
 		{aliases: ['html', 'markup'], id: 'markup'},
 		{aliases: ['json'], id: 'json'},
 		{aliases: ['svelte'], id: 'svelte'},
+		{aliases: ['bash', 'sh', 'shell'], id: 'bash'},
 	];
 
 	// Fence types: higher counts first (for proper precedence in tokenization)

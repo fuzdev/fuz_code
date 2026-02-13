@@ -6,6 +6,7 @@ import {add_grammar_js} from './grammar_js.js';
 import {add_grammar_ts} from './grammar_ts.js';
 import {add_grammar_svelte} from './grammar_svelte.js';
 import {add_grammar_json} from './grammar_json.js';
+import {add_grammar_bash} from './grammar_bash.js';
 import {add_grammar_markdown} from './grammar_markdown.js';
 
 /**
@@ -27,4 +28,5 @@ add_grammar_js(syntax_styler_global);
 add_grammar_ts(syntax_styler_global);
 add_grammar_svelte(syntax_styler_global);
 add_grammar_json(syntax_styler_global);
+add_grammar_bash(syntax_styler_global);
 add_grammar_markdown(syntax_styler_global);

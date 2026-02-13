@@ -12,7 +12,7 @@
 	"package_json": {
 		"name": "@fuzdev/fuz_code",
 		"version": "0.45.0",
-		"description": "syntax styling utilities and components for TypeScript, Svelte, and Markdown",
+		"description": "syntax styling utilities and components for TypeScript, Svelte, Markdown, and more",
 		"glyph": "🎨",
 		"logo": "logo.svg",
 		"logo_alt": "a friendly pink spider facing you",
@@ -169,13 +169,13 @@
 						"name": "sample_langs",
 						"kind": "variable",
 						"source_line": 8,
-						"type_signature": "readonly [\"json\", \"css\", \"ts\", \"html\", \"svelte\", \"md\"]"
+						"type_signature": "readonly [\"json\", \"css\", \"ts\", \"html\", \"svelte\", \"md\", \"bash\"]"
 					},
 					{
 						"name": "SampleLang",
 						"kind": "type",
 						"source_line": 10,
-						"type_signature": "\"json\" | \"css\" | \"ts\" | \"html\" | \"svelte\" | \"md\""
+						"type_signature": "\"json\" | \"css\" | \"ts\" | \"html\" | \"svelte\" | \"md\" | \"bash\""
 					}
 				]
 			},
@@ -293,6 +293,27 @@
 					}
 				],
 				"dependencies": ["highlight_manager.ts", "syntax_styler_global.ts", "tokenize_syntax.ts"]
+			},
+			{
+				"path": "grammar_bash.ts",
+				"declarations": [
+					{
+						"name": "add_grammar_bash",
+						"kind": "function",
+						"doc_comment": "Bash/shell grammar for syntax highlighting.\n\nStandalone grammar (no base extension). Covers core bash syntax:\ncomments, strings, variables, functions, keywords, builtins,\noperators, and redirections.\n\nBased on Prism (https://github.com/PrismJS/prism)\nby Lea Verou (https://lea.verou.me/)\n\nMIT license",
+						"see_also": ["LICENSE"],
+						"source_line": 17,
+						"type_signature": "(syntax_styler: SyntaxStyler): void",
+						"return_type": "void",
+						"parameters": [
+							{
+								"name": "syntax_styler",
+								"type": "SyntaxStyler"
+							}
+						]
+					}
+				],
+				"dependents": ["syntax_styler_global.ts"]
 			},
 			{
 				"path": "grammar_clike.ts",
@@ -723,11 +744,12 @@
 						"examples": [
 							"```ts\nimport {syntax_styler_global} from '@fuzdev/fuz_code/syntax_styler_global.js';\n\nconst html = syntax_styler_global.stylize('const x = 1;', 'ts');\n```"
 						],
-						"source_line": 21,
+						"source_line": 22,
 						"type_signature": "SyntaxStyler"
 					}
 				],
 				"dependencies": [
+					"grammar_bash.ts",
 					"grammar_clike.ts",
 					"grammar_css.ts",
 					"grammar_js.ts",
