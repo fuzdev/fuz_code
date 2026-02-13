@@ -1,5 +1,11 @@
 # @fuzdev/fuz_code
 
+## 0.45.1
+
+### Patch Changes
+
+- add `bash` lang ([#33](https://github.com/fuzdev/fuz_code/pull/33))
+
 ## 0.45.0
 
 ### Minor Changes
