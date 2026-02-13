@@ -68,7 +68,7 @@ describe('grammar mutation behavior', () => {
 			string,
 			Array<{path: string; pattern: RegExp; source: string; flags: string}>
 		> = new Map();
-		const languages = ['js', 'ts', 'css', 'html', 'json', 'svelte', 'md'];
+		const languages = ['js', 'ts', 'css', 'html', 'json', 'svelte', 'md', 'bash'];
 
 		for (const lang of languages) {
 			const grammar = syntax_styler.get_lang(lang);
