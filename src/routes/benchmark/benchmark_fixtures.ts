@@ -44,5 +44,5 @@ export const implementations: Array<BenchmarkedImplementation> = [
 ];
 
 // Languages to test
-export const languages = ['ts', 'css', 'html', 'json', 'svelte', 'md'] as const;
+export const languages = ['ts', 'css', 'html', 'json', 'svelte', 'md', 'bash'] as const;
 export type Language = (typeof languages)[number];

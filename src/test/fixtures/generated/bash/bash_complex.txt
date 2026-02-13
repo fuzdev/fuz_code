@@ -1,0 +1,376 @@
+=== STATS ===
+Sample length: 2726 characters
+Total tokens: 354
+
+Token types (15 unique):
+  punctuation: 77
+  builtin: 57
+  keyword: 45
+  string: 40
+  operator: 32
+  variable: 30
+  comment: 26
+  number: 23
+  command_substitution: 6
+  heredoc_delimiter: 6
+  boolean: 3
+  heredoc: 3
+  file_descriptor: 3
+  function: 2
+  shebang: 1
+
+=== TOKENS ===
+   0-11    shebang                   #!/bin/bash
+  13-32    comment                   # This is a comment
+  38-45    string                    "world"
+  46-54    keyword                   readonly
+  58-59    number                    3
+  60-62    number                    14
+  73-88    string                    'single quoted'
+ 101-122   string                    $'tab\there\nnewline'
+ 124-143   comment                   # Special variables
+ 144-148   builtin                   echo
+ 149-151   variable                  $0
+ 152-154   variable                  $1
+ 155-157   variable                  $@
+ 158-160   variable                  $#
+ 161-163   variable                  $?
+ 164-166   variable                  $$
+ 167-169   variable                  $!
+ 171-192   comment                   # Parameter expansion
+ 193-197   builtin                   echo
+ 198-205   variable                  ${name}
+ 206-210   builtin                   echo
+ 211-227   variable                  ${name:-default}
+ 228-232   builtin                   echo
+ 233-241   variable                  ${#name}
+ 243-251   comment                   # Arrays
+ 256-257   punctuation               (
+ 270-271   punctuation               )
+ 272-276   builtin                   echo
+ 277-286   variable                  ${arr[0]}
+ 287-291   builtin                   echo
+ 292-301   variable                  ${arr[@]}
+ 302-306   builtin                   echo
+ 307-317   variable                  ${#arr[@]}
+ 323-324   punctuation               (
+ 328-329   punctuation               )
+ 331-351   comment                   # Associative arrays
+ 352-359   keyword                   declare
+ 370-371   punctuation               [
+ 374-375   punctuation               ]
+ 376-383   string                    "value"
+ 384-388   builtin                   echo
+ 389-400   variable                  ${map[key]}
+ 401-405   builtin                   echo
+ 406-416   variable                  ${!map[@]}
+ 418-432   comment                   # Control flow
+ 433-435   keyword                   if
+ 436-437   punctuation               [
+ 441-448   string                    "$name"
+ 442-447   variable                  $name
+ 449-450   punctuation               ]
+ 450-451   punctuation               ;
+ 452-456   keyword                   then
+ 458-462   builtin                   echo
+ 463-476   string                    "file exists"
+ 477-481   keyword                   elif
+ 482-483   punctuation               [
+ 483-484   punctuation               [
+ 485-490   variable                  $name
+ 491-493   operator                  ==
+ 494-501   string                    "world"
+ 502-503   punctuation               ]
+ 503-504   punctuation               ]
+ 504-505   punctuation               ;
+ 506-510   keyword                   then
+ 512-516   builtin                   echo
+ 517-530   string                    "hello world"
+ 531-535   keyword                   else
+ 537-541   builtin                   echo
+ 542-558   string                    "something else"
+ 559-561   keyword                   fi
+ 563-582   comment                   # Regex match in [[
+ 583-585   keyword                   if
+ 586-587   punctuation               [
+ 587-588   punctuation               [
+ 589-594   variable                  $name
+ 595-597   operator                  =~
+ 599-600   punctuation               [
+ 603-604   punctuation               ]
+ 607-608   punctuation               ]
+ 608-609   punctuation               ]
+ 609-610   punctuation               ;
+ 611-615   keyword                   then
+ 617-621   builtin                   echo
+ 622-633   string                    "lowercase"
+ 634-636   keyword                   fi
+ 638-645   comment                   # Loops
+ 646-649   keyword                   for
+ 652-654   keyword                   in
+ 655-656   number                    1
+ 657-658   number                    2
+ 659-660   number                    3
+ 660-661   punctuation               ;
+ 662-664   keyword                   do
+ 666-670   builtin                   echo
+ 671-673   variable                  $i
+ 674-678   keyword                   done
+ 680-683   keyword                   for
+ 684-685   punctuation               (
+ 685-686   punctuation               (
+ 690-691   number                    0
+ 691-692   punctuation               ;
+ 695-696   operator                  <
+ 697-699   number                    10
+ 699-700   punctuation               ;
+ 704-705   punctuation               )
+ 705-706   punctuation               )
+ 706-707   punctuation               ;
+ 708-710   keyword                   do
+ 712-716   builtin                   echo
+ 717-719   variable                  $i
+ 720-724   keyword                   done
+ 726-731   keyword                   while
+ 732-736   builtin                   read
+ 744-745   punctuation               ;
+ 746-748   keyword                   do
+ 750-754   builtin                   echo
+ 755-762   string                    "$line"
+ 756-761   variable                  $line
+ 763-767   keyword                   done
+ 768-769   operator                  <
+ 781-786   keyword                   until
+ 787-792   boolean                   false
+ 792-793   punctuation               ;
+ 794-796   keyword                   do
+ 798-803   keyword                   break
+ 804-808   keyword                   done
+ 810-823   comment                   # Select menu
+ 824-830   keyword                   select
+ 835-837   keyword                   in
+ 838-848   string                    "Option 1"
+ 849-859   string                    "Option 2"
+ 860-866   string                    "Quit"
+ 866-867   punctuation               ;
+ 868-870   keyword                   do
+ 872-876   keyword                   case
+ 877-881   variable                  $opt
+ 882-884   keyword                   in
+ 891-892   punctuation               )
+ 893-898   keyword                   break
+ 899-901   operator                  ;;
+ 905-906   punctuation               )
+ 907-911   builtin                   echo
+ 912-928   string                    "You chose $opt"
+ 923-927   variable                  $opt
+ 929-931   operator                  ;;
+ 933-937   keyword                   esac
+ 938-942   keyword                   done
+ 944-960   comment                   # Case statement
+ 961-965   keyword                   case
+ 966-973   string                    "$name"
+ 967-972   variable                  $name
+ 974-976   keyword                   in
+ 983-984   punctuation               )
+ 987-991   builtin                   echo
+ 992-996   string                    "hi"
+ 999-1001  operator                  ;;
+1008-1009  operator                  |
+1014-1015  punctuation               )
+1018-1022  builtin                   echo
+1023-1030  string                    "globe"
+1033-1035  operator                  ;;
+1038-1039  punctuation               )
+1042-1046  builtin                   echo
+1047-1056  string                    "unknown"
+1059-1061  operator                  ;;
+1062-1066  keyword                   esac
+1068-1079  comment                   # Functions
+1080-1085  function                  greet
+1085-1086  punctuation               (
+1086-1087  punctuation               )
+1088-1089  punctuation               {
+1091-1096  keyword                   local
+1106-1113  string                    "Hello"
+1115-1119  builtin                   echo
+1120-1136  string                    "$greeting, $1!"
+1121-1130  variable                  $greeting
+1132-1134  variable                  $1
+1138-1144  keyword                   return
+1145-1146  number                    0
+1147-1148  punctuation               }
+1150-1158  keyword                   function
+1159-1166  function                  cleanup
+1167-1168  punctuation               {
+1170-1174  builtin                   echo
+1175-1188  string                    "cleaning up"
+1189-1190  punctuation               }
+1192-1214  comment                   # Command substitution
+1221-1238  command_substitution      $(date +%Y-%m-%d)
+1221-1223  punctuation               $(
+1237-1238  punctuation               )
+1245-1270  command_substitution      $(ls -la | grep "\.txt$")
+1245-1247  punctuation               $(
+1254-1255  operator                  |
+1261-1269  string                    "\.txt$"
+1269-1270  punctuation               )
+1272-1294  comment                   # Arithmetic expansion
+1302-1318  command_substitution      $(( 2 + 3 * 4 ))
+1302-1304  punctuation               $(
+1306-1307  number                    2
+1310-1311  number                    3
+1314-1315  number                    4
+1317-1318  punctuation               )
+1319-1320  punctuation               (
+1320-1321  punctuation               (
+1330-1331  punctuation               )
+1331-1332  punctuation               )
+1333-1334  punctuation               (
+1334-1335  punctuation               (
+1342-1343  operator                  >
+1344-1345  number                    0
+1355-1356  punctuation               )
+1356-1357  punctuation               )
+1359-1374  comment                   # Here-document
+1379-1440  heredoc                   <<EOF\nHello, ${name}!\nToday is $(date).\nsingle\nword\nlines\nEOF
+1379-1384  heredoc_delimiter         <<EOF
+1392-1399  variable                  ${name}
+1410-1417  command_substitution      $(date)
+1410-1412  punctuation               $(
+1416-1417  punctuation               )
+1437-1440  heredoc_delimiter         EOF
+1446-1526  heredoc                   <<-'NOEXPAND'\n\tNo $variable expansion here.\n\tTabs are stripped with <<-\nNOEXPAND
+1446-1459  heredoc_delimiter         <<-'NOEXPAND'
+1518-1526  heredoc_delimiter         NOEXPAND
+1532-1574  heredoc                   <<"QUOTED"\nAlso no $expansion here.\nQUOTED
+1532-1542  heredoc_delimiter         <<"QUOTED"
+1568-1574  heredoc_delimiter         QUOTED
+1576-1589  comment                   # Here-string
+1590-1594  builtin                   read
+1609-1612  operator                  <<<
+1613-1626  string                    "hello world"
+1628-1650  comment                   # Process substitution
+1656-1657  operator                  <
+1657-1658  punctuation               (
+1672-1673  punctuation               )
+1674-1675  operator                  <
+1675-1676  punctuation               (
+1690-1691  punctuation               )
+1696-1697  operator                  >
+1697-1698  punctuation               (
+1709-1710  operator                  >
+1721-1722  punctuation               )
+1723-1724  operator                  >
+1724-1725  punctuation               (
+1735-1736  operator                  >
+1746-1747  punctuation               )
+1749-1777  comment                   # Operators and redirections
+1778-1782  builtin                   echo
+1783-1791  string                    "output"
+1792-1793  operator                  >
+1803-1807  builtin                   echo
+1808-1816  string                    "append"
+1817-1819  operator                  >>
+1833-1834  operator                  <
+1849-1850  file_descriptor           2
+1850-1851  operator                  >
+1851-1853  file_descriptor           &1
+1858-1860  operator                  &>
+1874-1875  file_descriptor           2
+1875-1876  operator                  >
+1887-1897  comment                   # Pipeline
+1905-1906  operator                  |
+1912-1913  operator                  |
+1920-1921  number                    5
+1923-1942  comment                   # Logical operators
+1943-1947  boolean                   true
+1948-1950  operator                  &&
+1951-1955  builtin                   echo
+1956-1965  string                    "success"
+1966-1968  operator                  ||
+1969-1973  builtin                   echo
+1974-1983  string                    "failure"
+1984-1985  operator                  !
+1986-1991  boolean                   false
+1992-1994  operator                  &&
+1995-1999  builtin                   echo
+2000-2009  string                    "negated"
+2011-2027  comment                   # Inline comment
+2028-2032  builtin                   echo
+2033-2040  string                    "hello"
+2041-2053  comment                   # after code
+2055-2079  comment                   # Subshells and grouping
+2080-2081  punctuation               (
+2081-2083  builtin                   cd
+2089-2091  operator                  &&
+2098-2099  punctuation               )
+2100-2101  punctuation               {
+2102-2106  builtin                   echo
+2107-2116  string                    "grouped"
+2116-2117  punctuation               ;
+2118-2122  builtin                   echo
+2123-2133  string                    "commands"
+2133-2134  punctuation               ;
+2135-2136  punctuation               }
+2138-2166  comment                   # Nested quotes and escaping
+2167-2171  builtin                   echo
+2172-2189  string                    "it's a \"test\""
+2190-2194  builtin                   echo
+2195-2215  string                    "path is: $HOME/dir"
+2205-2210  variable                  $HOME
+2216-2220  builtin                   echo
+2221-2241  string                    'no $expansion here'
+2242-2246  builtin                   echo
+2247-2284  string                    "nested $(echo "inner $(echo deep)")"
+2255-2283  command_substitution      $(echo "inner $(echo deep)")
+2255-2257  punctuation               $(
+2257-2261  builtin                   echo
+2262-2282  string                    "inner $(echo deep)"
+2269-2281  command_substitution      $(echo deep)
+2269-2271  punctuation               $(
+2271-2275  builtin                   echo
+2280-2281  punctuation               )
+2282-2283  punctuation               )
+2286-2312  comment                   # Multiline with backslash
+2313-2320  builtin                   command
+2352-2362  comment                   # Builtins
+2363-2369  keyword                   export
+2375-2397  string                    "/usr/local/bin:$PATH"
+2391-2396  variable                  $PATH
+2398-2400  builtin                   cd
+2406-2409  builtin                   pwd
+2410-2416  builtin                   source
+2427-2431  builtin                   eval
+2432-2444  string                    "echo hello"
+2445-2449  builtin                   exec
+2455-2459  builtin                   test
+2468-2471  keyword                   set
+2486-2490  keyword                   trap
+2491-2500  string                    'cleanup'
+2515-2522  keyword                   declare
+2532-2539  keyword                   declare
+2555-2560  keyword                   shift
+2561-2562  number                    2
+2563-2570  builtin                   command
+2574-2578  builtin                   hash
+2582-2586  builtin                   type
+2590-2596  builtin                   ulimit
+2600-2604  number                    1024
+2605-2610  builtin                   umask
+2611-2614  number                    022
+2615-2619  builtin                   wait
+2620-2622  variable                  $!
+2623-2627  builtin                   jobs
+2631-2633  builtin                   bg
+2635-2636  number                    1
+2637-2639  builtin                   fg
+2641-2642  number                    1
+2643-2649  builtin                   disown
+2651-2652  number                    1
+2653-2658  builtin                   shopt
+2672-2681  comment                   # Numbers
+2686-2690  number                    0xFF
+2697-2700  number                    077
+2708-2714  number                    2#1010
+2723-2725  number                    42

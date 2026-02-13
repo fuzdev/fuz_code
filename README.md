@@ -2,7 +2,7 @@
 
 [<img src="static/logo.svg" alt="a friendly pink spider facing you" align="right" width="192" height="192">](https://code.fuz.dev/)
 
-> syntax styling utilities and components for TypeScript, Svelte, and Markdown 🎨
+> syntax styling utilities and components for TypeScript, Svelte, Markdown, and more 🎨
 
 **[code.fuz.dev](https://code.fuz.dev/)**
 

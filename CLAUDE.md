@@ -6,7 +6,7 @@ fuz_code (`@fuzdev/fuz_code`) is a runtime syntax highlighting library optimized
 for HTML generation with CSS classes. It's a PrismJS fork with TypeScript types
 and modern module support.
 
-For coding conventions, see [`fuz-stack`](../fuz-stack/CLAUDE.md).
+For coding conventions, see Skill(fuz_stack).
 
 ## Gro commands
 
@@ -35,7 +35,7 @@ fuz_code is a **syntax highlighting library**:
 
 - Runtime HTML generation with CSS classes
 - PrismJS-compatible grammar definitions
-- 7 built-in languages (TS, JS, CSS, HTML, JSON, Svelte, Markdown)
+- 8 built-in languages (TS, JS, CSS, HTML, JSON, Svelte, Markdown, Bash)
 - Extensible grammar system with hooks
 - Optional Svelte component (`Code.svelte`)
 
@@ -61,7 +61,7 @@ src/
 │   ├── syntax_styler_global.ts # pre-configured global instance
 │   ├── tokenize_syntax.ts      # tokenize_syntax() function
 │   ├── syntax_token.ts         # SyntaxToken class, type definitions
-│   ├── grammar_*.ts            # language definitions (7 files)
+│   ├── grammar_*.ts            # language definitions (8 files)
 │   ├── Code.svelte             # main Svelte component
 │   ├── CodeHighlight.svelte    # experimental CSS Highlight API
 │   ├── highlight_manager.ts    # CSS Highlight API manager
@@ -116,6 +116,7 @@ Generated HTML uses classes like `.token_keyword`, `.token_string`, styled by
 - `grammar_markup.ts` - HTML/XML
 - `grammar_json.ts` - JSON
 - `grammar_svelte.ts` - Svelte components (extends markup)
+- `grammar_bash.ts` - Bash/shell
 - `grammar_markdown.ts` - Markdown
 
 ### Hook system
@@ -159,7 +160,7 @@ Register with `add_hook_before_tokenize()`, `add_hook_after_tokenize()`,
 
 ## Supported languages
 
-`ts`, `js`, `css`, `html`, `json`, `svelte`, `md`
+`ts`, `js`, `css`, `html`, `json`, `svelte`, `md`, `bash`
 
 ## Testing
 

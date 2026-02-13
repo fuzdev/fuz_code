@@ -3,13 +3,13 @@ import {readFileSync} from 'node:fs';
 import {fs_search} from '@fuzdev/fuz_util/fs.js';
 import {basename} from 'node:path';
 
-import {sample_langs} from '../../../lib/code_sample.js';
+import {sample_langs} from '../../lib/code_sample.ts';
 
 /** @nodocs */
 export const gen: Gen = async ({origin_path}) => {
 	// Discover all sample files dynamically
 	const sample_files = await fs_search('src/test/fixtures/samples', {
-		file_filter: (path) => /sample_[^/]+\.(ts|css|html|json|svelte|md)$/.test(path),
+		file_filter: (path) => /sample_[^/]+\.(ts|css|html|json|svelte|md|bash)$/.test(path),
 	});
 
 	// Create flat structure with lang_variant keys
@@ -61,7 +61,7 @@ export const gen: Gen = async ({origin_path}) => {
 
 	return `${banner}
 
-		import {sample_langs, type CodeSample} from '../../../lib/code_sample.js';
+		import {sample_langs, type CodeSample} from '../../lib/code_sample.js';
 
 		export type SampleKey = ${type_keys};
 
