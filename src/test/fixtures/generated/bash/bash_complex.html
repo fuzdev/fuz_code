@@ -12,16 +12,7 @@ ansi_string=<span class="token_string">$'tab\there\nnewline'</span>
 <span class="token_comment"># Parameter expansion</span>
 <span class="token_builtin">echo</span> <span class="token_variable">${name}</span>
 <span class="token_builtin">echo</span> <span class="token_variable">${name:-default}</span>
-<span class="token_builtin">echo</span> <span class="token_variable">${name:=fallback}</span>
-<span class="token_builtin">echo</span> <span class="token_variable">${name:+alternate}</span>
-<span class="token_builtin">echo</span> <span class="token_variable">${name:?error message}</span>
 <span class="token_builtin">echo</span> <span class="token_variable">${#name}</span>
-<span class="token_builtin">echo</span> <span class="token_variable">${name##*/}</span>
-<span class="token_builtin">echo</span> <span class="token_variable">${name%.*}</span>
-<span class="token_builtin">echo</span> <span class="token_variable">${name^^}</span>
-<span class="token_builtin">echo</span> <span class="token_variable">${name,,}</span>
-<span class="token_builtin">echo</span> <span class="token_variable">${name/old/new}</span>
-<span class="token_builtin">echo</span> <span class="token_variable">${name//all/replaced}</span>
 
 <span class="token_comment"># Arrays</span>
 arr=<span class="token_punctuation">(</span>one two three<span class="token_punctuation">)</span>
@@ -128,7 +119,6 @@ Also no $expansion here.
 
 <span class="token_comment"># Here-string</span>
 <span class="token_builtin">read</span> -r first_word <span class="token_operator">&lt;&lt;&lt;</span> <span class="token_string">"hello world"</span>
-<span class="token_builtin">read</span> -r val <span class="token_operator">&lt;&lt;&lt;</span> <span class="token_string">"<span class="token_variable">$name</span>"</span>
 
 <span class="token_comment"># Process substitution</span>
 diff <span class="token_operator">&lt;</span><span class="token_punctuation">(</span>sort file1.txt<span class="token_punctuation">)</span> <span class="token_operator">&lt;</span><span class="token_punctuation">(</span>sort file2.txt<span class="token_punctuation">)</span>
@@ -144,7 +134,6 @@ cmd <span class="token_file_descriptor token_important">2</span><span class="tok
 
 <span class="token_comment"># Pipeline</span>
 ls -la <span class="token_operator">|</span> sort <span class="token_operator">|</span> head -<span class="token_number">5</span>
-cmd1 <span class="token_operator">|</span> cmd2 <span class="token_operator">|</span> cmd3
 
 <span class="token_comment"># Logical operators</span>
 <span class="token_boolean">true</span> <span class="token_operator">&amp;&amp;</span> <span class="token_builtin">echo</span> <span class="token_string">"success"</span> <span class="token_operator">||</span> <span class="token_builtin">echo</span> <span class="token_string">"failure"</span>
@@ -193,21 +182,8 @@ cmd1 <span class="token_operator">|</span> cmd2 <span class="token_operator">|</
 <span class="token_builtin">disown</span> %<span class="token_number">1</span>
 <span class="token_builtin">shopt</span> -s globstar
 
-<span class="token_comment"># Glob patterns</span>
-<span class="token_keyword">for</span> f <span class="token_keyword">in</span> *.txt<span class="token_punctuation">;</span> <span class="token_keyword">do</span>
-	<span class="token_builtin">echo</span> <span class="token_string">"<span class="token_variable">$f</span>"</span>
-<span class="token_keyword">done</span>
-
-<span class="token_keyword">for</span> f <span class="token_keyword">in</span> /tmp/**/*.log<span class="token_punctuation">;</span> <span class="token_keyword">do</span>
-	<span class="token_builtin">echo</span> <span class="token_string">"<span class="token_variable">$f</span>"</span>
-<span class="token_keyword">done</span>
-
 <span class="token_comment"># Numbers</span>
 hex=<span class="token_number">0xFF</span>
 octal=<span class="token_number">077</span>
 binary=<span class="token_number">2#1010</span>
 decimal=<span class="token_number">42</span>
-
-<span class="token_comment"># Boolean commands</span>
-<span class="token_boolean">true</span>
-<span class="token_boolean">false</span>

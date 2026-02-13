@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import {fs_search} from '@fuzdev/fuz_util/fs.js';
 import {basename} from 'node:path';
 
-import {sample_langs} from '../../../lib/code_sample.js';
+import {sample_langs} from '../../lib/code_sample.ts';
 
 /** @nodocs */
 export const gen: Gen = async ({origin_path}) => {
@@ -61,7 +61,7 @@ export const gen: Gen = async ({origin_path}) => {
 
 	return `${banner}
 
-		import {sample_langs, type CodeSample} from '../../../lib/code_sample.js';
+		import {sample_langs, type CodeSample} from '../../lib/code_sample.js';
 
 		export type SampleKey = ${type_keys};
 

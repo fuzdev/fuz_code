@@ -12,7 +12,7 @@ import {add_grammar_markdown} from '$lib/grammar_markdown.js';
 import {add_grammar_clike} from '$lib/grammar_clike.js';
 import {add_grammar_bash} from '$lib/grammar_bash.js';
 import {syntax_styler_global} from '$lib/syntax_styler_global.js';
-import {samples} from './fixtures/samples/all.js';
+import {samples} from '../routes/samples/all.ts';
 
 // Helper to create a properly initialized syntax styler
 const create_styler_with_grammars = (): SyntaxStyler => {

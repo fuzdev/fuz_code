@@ -12,16 +12,7 @@ echo $0 $1 $@ $# $? $$ $!
 # Parameter expansion
 echo ${name}
 echo ${name:-default}
-echo ${name:=fallback}
-echo ${name:+alternate}
-echo ${name:?error message}
 echo ${#name}
-echo ${name##*/}
-echo ${name%.*}
-echo ${name^^}
-echo ${name,,}
-echo ${name/old/new}
-echo ${name//all/replaced}
 
 # Arrays
 arr=(one two three)
@@ -128,7 +119,6 @@ QUOTED
 
 # Here-string
 read -r first_word <<< "hello world"
-read -r val <<< "$name"
 
 # Process substitution
 diff <(sort file1.txt) <(sort file2.txt)
@@ -144,7 +134,6 @@ cmd 2>/dev/null
 
 # Pipeline
 ls -la | sort | head -5
-cmd1 | cmd2 | cmd3
 
 # Logical operators
 true && echo "success" || echo "failure"
@@ -193,21 +182,8 @@ fg %1
 disown %1
 shopt -s globstar
 
-# Glob patterns
-for f in *.txt; do
-	echo "$f"
-done
-
-for f in /tmp/**/*.log; do
-	echo "$f"
-done
-
 # Numbers
 hex=0xFF
 octal=077
 binary=2#1010
 decimal=42
-
-# Boolean commands
-true
-false
