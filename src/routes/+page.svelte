@@ -47,10 +47,13 @@ import Code from '@fuzdev/fuz_code/Code.svelte';`}
 			<p>Svelte highlights by default:</p>
 			<Code content={`<Code content={'${svelte_example}'} />`} />
 			<Code content={svelte_example} />
-			<p>Set <code>lang</code> for other languages:</p>
+			<p>Set <code>lang</code> for other languages, like TypeScript:</p>
 			<Code content={`<Code lang="ts" content="${ts_example}" />`} />
+			<p>Renders:</p>
 			<Code lang="ts" content={ts_example} />
+			<p>Or CSS:</p>
 			<Code content={`<Code lang="css" content={"${css_example}"} />`} />
+			<p>Renders:</p>
 			<Code lang="css" content={css_example} />
 			<p>
 				See the <a href={resolve('/docs')}>docs</a> for more.
