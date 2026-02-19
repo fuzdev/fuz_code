@@ -69,10 +69,10 @@
 		},
 		"devDependencies": {
 			"@changesets/changelog-git": "^0.2.1",
-			"@fuzdev/fuz_css": "^0.50.0",
-			"@fuzdev/fuz_ui": "^0.183.1",
-			"@fuzdev/fuz_util": "^0.51.0",
-			"@fuzdev/gro": "^0.194.0",
+			"@fuzdev/fuz_css": "^0.53.0",
+			"@fuzdev/fuz_ui": "^0.185.1",
+			"@fuzdev/fuz_util": "^0.52.0",
+			"@fuzdev/gro": "^0.195.0",
 			"@jridgewell/trace-mapping": "^0.3.31",
 			"@ryanatkn/eslint-config": "^0.9.0",
 			"@sveltejs/adapter-static": "^3.0.10",
@@ -506,12 +506,12 @@
 							{
 								"name": "tag_name",
 								"type": "string",
-								"description": "- The name of the tag that contains the inlined language. This name will be treated as\ncase insensitive."
+								"description": "The name of the tag that contains the inlined language. This name will be treated as\ncase insensitive."
 							},
 							{
 								"name": "lang",
 								"type": "string",
-								"description": "- The language key."
+								"description": "The language key."
 							},
 							{
 								"name": "inside_lang",
@@ -535,12 +535,12 @@
 							{
 								"name": "attr_name",
 								"type": "string",
-								"description": "- The name of the tag that contains the inlined language. This name will be treated as\ncase insensitive."
+								"description": "The name of the tag that contains the inlined language. This name will be treated as\ncase insensitive."
 							},
 							{
 								"name": "lang",
 								"type": "string",
-								"description": "- The language key."
+								"description": "The language key."
 							}
 						]
 					}
@@ -924,17 +924,17 @@
 									{
 										"name": "text",
 										"type": "string",
-										"description": "- The source code to syntax highlight."
+										"description": "The source code to syntax highlight."
 									},
 									{
 										"name": "lang",
 										"type": "string",
-										"description": "- Language identifier (e.g., 'ts', 'css', 'html'). Used for:\n- Grammar lookup when `grammar` is undefined\n- Hook context (`lang` field passed to hooks)\n- Language identification in output"
+										"description": "Language identifier (e.g., 'ts', 'css', 'html'). Used for:\n- Grammar lookup when `grammar` is undefined\n- Hook context (`lang` field passed to hooks)\n- Language identification in output"
 									},
 									{
 										"name": "grammar",
 										"type": "SyntaxGrammar | undefined",
-										"description": "- Optional custom grammar object. When undefined, automatically\nlooks up the grammar via `this.get_lang(lang)`. Provide this to use a custom\nor modified grammar instead of the registered one.",
+										"description": "Optional custom grammar object. When undefined, automatically\nlooks up the grammar via `this.get_lang(lang)`. Provide this to use a custom\nor modified grammar instead of the registered one.",
 										"default_value": "this.get_lang(lang)"
 									}
 								]
@@ -950,22 +950,22 @@
 									{
 										"name": "inside",
 										"type": "string",
-										"description": "- The property of `root` (e.g. a language id in `syntax_styler.langs`) that contains the\nobject to be modified."
+										"description": "The property of `root` (e.g. a language id in `syntax_styler.langs`) that contains the\nobject to be modified."
 									},
 									{
 										"name": "before",
 										"type": "string",
-										"description": "- The key to insert before."
+										"description": "The key to insert before."
 									},
 									{
 										"name": "insert",
 										"type": "SyntaxGrammarRaw",
-										"description": "- An object containing the key-value pairs to be inserted."
+										"description": "An object containing the key-value pairs to be inserted."
 									},
 									{
 										"name": "root",
 										"type": "Record<string, any>",
-										"description": "- The object containing `inside`, i.e. the object that contains the\nobject to be modified.\n\nDefaults to `syntax_styler.langs`.",
+										"description": "The object containing `inside`, i.e. the object that contains the\nobject to be modified.\n\nDefaults to `syntax_styler.langs`.",
 										"default_value": "this.langs"
 									}
 								]
@@ -981,12 +981,12 @@
 									{
 										"name": "o",
 										"type": "string | SyntaxTokenStream | SyntaxToken",
-										"description": "- The token or token stream to be converted."
+										"description": "The token or token stream to be converted."
 									},
 									{
 										"name": "lang",
 										"type": "string",
-										"description": "- The name of current language."
+										"description": "The name of current language."
 									}
 								]
 							},
@@ -1001,12 +1001,12 @@
 									{
 										"name": "base_id",
 										"type": "string",
-										"description": "- The id of the language to extend. This has to be a key in `syntax_styler.langs`."
+										"description": "The id of the language to extend. This has to be a key in `syntax_styler.langs`."
 									},
 									{
 										"name": "extension",
 										"type": "SyntaxGrammarRaw",
-										"description": "- The new tokens to append."
+										"description": "The new tokens to append."
 									}
 								]
 							},
@@ -1405,12 +1405,12 @@
 							{
 								"name": "text",
 								"type": "string",
-								"description": "- a string with the code to be styled"
+								"description": "a string with the code to be styled"
 							},
 							{
 								"name": "grammar",
 								"type": "SyntaxGrammar",
-								"description": "- an object containing the tokens to use\n\nUsually a language definition like `syntax_styler.get_lang('markup')`."
+								"description": "an object containing the tokens to use\n\nUsually a language definition like `syntax_styler.get_lang('markup')`."
 							}
 						]
 					}
