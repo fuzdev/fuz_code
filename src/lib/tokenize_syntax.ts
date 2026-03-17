@@ -213,7 +213,7 @@ interface LinkedListNode<T = string | SyntaxToken> {
 }
 
 /**
- * Adds a new node with the given value to the list.
+ * adds a new node with the given value to the list
  */
 const add_after = <T>(
 	list: LinkedList<T>,

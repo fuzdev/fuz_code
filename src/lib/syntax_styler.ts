@@ -92,15 +92,14 @@ export class SyntaxStyler {
 	 * - Custom grammar: `stylize(code, 'ts', customGrammar)` - uses custom grammar but keeps 'ts' label
 	 * - Extended grammar: `stylize(code, 'custom', this.extend_grammar('ts', extension))` - new language variant
 	 *
-	 * @param text - The source code to syntax highlight.
-	 * @param lang - Language identifier (e.g., 'ts', 'css', 'html'). Used for:
-	 *   - Grammar lookup when `grammar` is undefined
-	 *   - Hook context (`lang` field passed to hooks)
-	 *   - Language identification in output
-	 * @param grammar - Optional custom grammar object. When undefined, automatically
-	 *   looks up the grammar via `this.get_lang(lang)`. Provide this to use a custom
-	 *   or modified grammar instead of the registered one.
-	 *
+	 * @param text - the source code to syntax highlight
+	 * @param lang - language identifier (e.g., 'ts', 'css', 'html'), used for:
+	 *   - grammar lookup when `grammar` is undefined
+	 *   - hook context (`lang` field passed to hooks)
+	 *   - language identification in output
+	 * @param grammar - optional custom grammar object; when undefined, automatically
+	 *   looks up the grammar via `this.get_lang(lang)`; provide this to use a custom
+	 *   or modified grammar instead of the registered one
 	 * @returns HTML string with syntax highlighting using CSS classes (`.token_*`)
 	 *
 	 * @example
@@ -205,15 +204,12 @@ export class SyntaxStyler {
 	 * assert(newMarkup === syntax_styler.get_lang('markup'));
 	 * ```
 	 *
-	 * @param inside - The property of `root` (e.g. a language id in `syntax_styler.langs`) that contains the
-	 * object to be modified.
-	 * @param before - The key to insert before.
-	 * @param insert - An object containing the key-value pairs to be inserted.
-	 * @param root - The object containing `inside`, i.e. the object that contains the
-	 * object to be modified.
-	 *
-	 * Defaults to `syntax_styler.langs`.
-	 *
+	 * @param inside - the property of `root` (e.g. a language id in `syntax_styler.langs`) that contains the
+	 * object to be modified
+	 * @param before - the key to insert before
+	 * @param insert - an object containing the key-value pairs to be inserted
+	 * @param root - the object containing `inside`, i.e. the object that contains the
+	 * object to be modified; defaults to `syntax_styler.langs`
 	 * @returns the new grammar object
 	 */
 	grammar_insert_before(
@@ -261,9 +257,9 @@ export class SyntaxStyler {
 	 *
 	 * Runs the `wrap` hook on each `SyntaxToken`.
 	 *
-	 * @param o - The token or token stream to be converted.
-	 * @param lang - The name of current language.
-	 * @returns The HTML representation of the token or token stream.
+	 * @param o - the token or token stream to be converted
+	 * @param lang - the name of current language
+	 * @returns HTML representation of the token or token stream
 	 */
 	stringify_token(o: string | SyntaxToken | SyntaxTokenStream, lang: string): string {
 		if (typeof o === 'string') {
@@ -332,8 +328,8 @@ export class SyntaxStyler {
 	 * Therefore, it is encouraged to order overwriting tokens according to the positions of the overwritten tokens.
 	 * Furthermore, all non-overwriting tokens should be placed after the overwriting ones.
 	 *
-	 * @param base_id - The id of the language to extend. This has to be a key in `syntax_styler.langs`.
-	 * @param extension - The new tokens to append.
+	 * @param base_id - the id of the language to extend, must be a key in `syntax_styler.langs`
+	 * @param extension - the new tokens to append
 	 * @returns the new grammar
 	 */
 	extend_grammar(base_id: string, extension: SyntaxGrammarRaw): SyntaxGrammar {
@@ -395,7 +391,7 @@ export class SyntaxStyler {
 	 * 4. Adds global flag to greedy patterns
 	 *
 	 * This is called once at registration time to avoid runtime overhead.
-	 * @param visited - Set of grammar object IDs already normalized (for circular references)
+	 * @param visited - set of grammar object IDs already normalized (for circular references)
 	 */
 	#normalize_grammar(grammar: SyntaxGrammarRaw, visited: Set<number>): void {
 		// Check if we've already normalized this grammar (circular reference)
@@ -491,26 +487,26 @@ export type SyntaxGrammarRaw = Record<string, SyntaxGrammarValueRaw | undefined>
  */
 export interface SyntaxGrammarTokenRaw {
 	/**
-	 * The regular expression of the token.
+	 * the regular expression of the token
 	 */
 	pattern: RegExp;
 	/**
-	 * If `true`, then the first capturing group of `pattern` will (effectively)
-	 * behave as a lookbehind group meaning that the captured text will not be part of the matched text of the new token.
+	 * if `true`, then the first capturing group of `pattern` will (effectively)
+	 * behave as a lookbehind group meaning that the captured text will not be part of the matched text of the new token
 	 * @default false
 	 */
 	lookbehind?: boolean;
 	/**
-	 * Whether the token is greedy.
+	 * whether the token is greedy
 	 * @default false
 	 */
 	greedy?: boolean;
 	/**
-	 * An optional alias or list of aliases.
+	 * an optional alias or list of aliases
 	 */
 	alias?: string | Array<string>;
 	/**
-	 * The nested grammar of this token.
+	 * the nested grammar of this token
 	 */
 	inside?: SyntaxGrammarRaw | null;
 }

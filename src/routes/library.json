@@ -451,7 +451,7 @@
 						"name": "grammar_markup_add_inlined",
 						"kind": "function",
 						"doc_comment": "Adds an inlined language to markup.\n\nAn example of an inlined language is CSS with `<style>` tags.",
-						"source_line": 105,
+						"source_line": 104,
 						"type_signature": "(syntax_styler: SyntaxStyler, tag_name: string, lang: string, inside_lang?: string): void",
 						"return_type": "void",
 						"parameters": [
@@ -462,12 +462,12 @@
 							{
 								"name": "tag_name",
 								"type": "string",
-								"description": "The name of the tag that contains the inlined language. This name will be treated as\ncase insensitive."
+								"description": "the name of the tag that contains the inlined language, treated as case insensitive"
 							},
 							{
 								"name": "lang",
 								"type": "string",
-								"description": "The language key."
+								"description": "the language key"
 							},
 							{
 								"name": "inside_lang",
@@ -480,7 +480,7 @@
 						"name": "grammar_markup_add_attribute",
 						"kind": "function",
 						"doc_comment": "Adds an pattern to style languages embedded in HTML attributes.\n\nAn example of an inlined language is CSS with `style` attributes.",
-						"source_line": 156,
+						"source_line": 154,
 						"type_signature": "(syntax_styler: SyntaxStyler, attr_name: string, lang: string): void",
 						"return_type": "void",
 						"parameters": [
@@ -491,12 +491,12 @@
 							{
 								"name": "attr_name",
 								"type": "string",
-								"description": "The name of the tag that contains the inlined language. This name will be treated as\ncase insensitive."
+								"description": "the name of the tag that contains the inlined language, treated as case insensitive"
 							},
 							{
 								"name": "lang",
 								"type": "string",
-								"description": "The language key."
+								"description": "the language key"
 							}
 						]
 					}
@@ -585,7 +585,7 @@
 					{
 						"name": "supports_css_highlight_api",
 						"kind": "function",
-						"doc_comment": "Check for CSS Highlights API support.",
+						"doc_comment": "check for CSS Highlights API support",
 						"source_line": 9,
 						"type_signature": "(): boolean",
 						"return_type": "boolean",
@@ -614,7 +614,7 @@
 							{
 								"name": "highlight_from_syntax_tokens",
 								"kind": "function",
-								"doc_comment": "Highlight from syntax styler token stream.",
+								"doc_comment": "highlight from syntax styler token stream",
 								"type_signature": "(element: Element, tokens: SyntaxTokenStream): void",
 								"return_type": "void",
 								"parameters": [
@@ -631,7 +631,7 @@
 							{
 								"name": "clear_element_ranges",
 								"kind": "function",
-								"doc_comment": "Clear only this element's ranges from highlights.",
+								"doc_comment": "clear only this element's ranges from highlights",
 								"type_signature": "(): void",
 								"return_type": "void",
 								"parameters": []
@@ -677,7 +677,7 @@
 					{
 						"name": "PreprocessFuzCodeOptions",
 						"kind": "type",
-						"doc_comment": "Options for `svelte_preprocess_fuz_code`.",
+						"doc_comment": "options for `svelte_preprocess_fuz_code`",
 						"source_line": 22,
 						"type_signature": "PreprocessFuzCodeOptions",
 						"properties": [
@@ -716,7 +716,7 @@
 					{
 						"name": "svelte_preprocess_fuz_code",
 						"kind": "function",
-						"doc_comment": "Svelte preprocessor that compiles static `Code` component content at build time,\nreplacing runtime syntax highlighting with pre-rendered HTML.",
+						"doc_comment": "Svelte preprocessor that compiles static `Code` component content at build time,\nreplacing runtime syntax highlighting with pre-rendered HTML",
 						"examples": [
 							"```ts\n// svelte.config.js\nimport {svelte_preprocess_fuz_code} from '@fuzdev/fuz_code/svelte_preprocess_fuz_code.js';\n\nexport default {\n  preprocess: [svelte_preprocess_fuz_code(), vitePreprocess()],\n};\n```"
 						],
@@ -854,17 +854,17 @@
 									{
 										"name": "text",
 										"type": "string",
-										"description": "The source code to syntax highlight."
+										"description": "the source code to syntax highlight"
 									},
 									{
 										"name": "lang",
 										"type": "string",
-										"description": "Language identifier (e.g., 'ts', 'css', 'html'). Used for:\n- Grammar lookup when `grammar` is undefined\n- Hook context (`lang` field passed to hooks)\n- Language identification in output"
+										"description": "language identifier (e.g., 'ts', 'css', 'html'), used for:\n- grammar lookup when `grammar` is undefined\n- hook context (`lang` field passed to hooks)\n- language identification in output"
 									},
 									{
 										"name": "grammar",
 										"type": "SyntaxGrammar | undefined",
-										"description": "Optional custom grammar object. When undefined, automatically\nlooks up the grammar via `this.get_lang(lang)`. Provide this to use a custom\nor modified grammar instead of the registered one.",
+										"description": "optional custom grammar object; when undefined, automatically\nlooks up the grammar via `this.get_lang(lang)`; provide this to use a custom\nor modified grammar instead of the registered one",
 										"default_value": "this.get_lang(lang)"
 									}
 								]
@@ -880,22 +880,22 @@
 									{
 										"name": "inside",
 										"type": "string",
-										"description": "The property of `root` (e.g. a language id in `syntax_styler.langs`) that contains the\nobject to be modified."
+										"description": "the property of `root` (e.g. a language id in `syntax_styler.langs`) that contains the\nobject to be modified"
 									},
 									{
 										"name": "before",
 										"type": "string",
-										"description": "The key to insert before."
+										"description": "the key to insert before"
 									},
 									{
 										"name": "insert",
 										"type": "SyntaxGrammarRaw",
-										"description": "An object containing the key-value pairs to be inserted."
+										"description": "an object containing the key-value pairs to be inserted"
 									},
 									{
 										"name": "root",
 										"type": "Record<string, any>",
-										"description": "The object containing `inside`, i.e. the object that contains the\nobject to be modified.\n\nDefaults to `syntax_styler.langs`.",
+										"description": "the object containing `inside`, i.e. the object that contains the\nobject to be modified; defaults to `syntax_styler.langs`",
 										"default_value": "this.langs"
 									}
 								]
@@ -906,17 +906,17 @@
 								"doc_comment": "Converts the given token or token stream to an HTML representation.\n\nRuns the `wrap` hook on each `SyntaxToken`.",
 								"type_signature": "(o: string | SyntaxTokenStream | SyntaxToken, lang: string): string",
 								"return_type": "string",
-								"return_description": "The HTML representation of the token or token stream.",
+								"return_description": "HTML representation of the token or token stream",
 								"parameters": [
 									{
 										"name": "o",
 										"type": "string | SyntaxTokenStream | SyntaxToken",
-										"description": "The token or token stream to be converted."
+										"description": "the token or token stream to be converted"
 									},
 									{
 										"name": "lang",
 										"type": "string",
-										"description": "The name of current language."
+										"description": "the name of current language"
 									}
 								]
 							},
@@ -931,12 +931,12 @@
 									{
 										"name": "base_id",
 										"type": "string",
-										"description": "The id of the language to extend. This has to be a key in `syntax_styler.langs`."
+										"description": "the id of the language to extend, must be a key in `syntax_styler.langs`"
 									},
 									{
 										"name": "extension",
 										"type": "SyntaxGrammarRaw",
-										"description": "The new tokens to append."
+										"description": "the new tokens to append"
 									}
 								]
 							},
@@ -1037,51 +1037,51 @@
 					{
 						"name": "SyntaxGrammarValueRaw",
 						"kind": "type",
-						"source_line": 470,
+						"source_line": 466,
 						"type_signature": "SyntaxGrammarValueRaw"
 					},
 					{
 						"name": "SyntaxGrammarRaw",
 						"kind": "type",
-						"source_line": 475,
+						"source_line": 471,
 						"type_signature": "SyntaxGrammarRaw"
 					},
 					{
 						"name": "SyntaxGrammarTokenRaw",
 						"kind": "type",
 						"doc_comment": "The expansion of a simple `RegExp` literal to support additional properties.\n\nThe `inside` grammar will be used to tokenize the text value of each token of this kind.\n\nThis can be used to make nested and even recursive language definitions.\n\nNote: This can cause infinite recursion. Be careful when you embed different languages or even the same language into\neach another.\n\nNote: Grammar authors can use optional properties, but they will be normalized\nto required properties at registration time for optimal performance.",
-						"source_line": 492,
+						"source_line": 488,
 						"type_signature": "SyntaxGrammarTokenRaw",
 						"properties": [
 							{
 								"name": "pattern",
 								"kind": "variable",
 								"type_signature": "RegExp",
-								"doc_comment": "The regular expression of the token."
+								"doc_comment": "the regular expression of the token"
 							},
 							{
 								"name": "lookbehind",
 								"kind": "variable",
 								"type_signature": "boolean",
-								"doc_comment": "If `true`, then the first capturing group of `pattern` will (effectively)\nbehave as a lookbehind group meaning that the captured text will not be part of the matched text of the new token."
+								"doc_comment": "if `true`, then the first capturing group of `pattern` will (effectively)\nbehave as a lookbehind group meaning that the captured text will not be part of the matched text of the new token"
 							},
 							{
 								"name": "greedy",
 								"kind": "variable",
 								"type_signature": "boolean",
-								"doc_comment": "Whether the token is greedy."
+								"doc_comment": "whether the token is greedy"
 							},
 							{
 								"name": "alias",
 								"kind": "variable",
 								"type_signature": "string | Array<string>",
-								"doc_comment": "An optional alias or list of aliases."
+								"doc_comment": "an optional alias or list of aliases"
 							},
 							{
 								"name": "inside",
 								"kind": "variable",
 								"type_signature": "SyntaxGrammarRaw | null",
-								"doc_comment": "The nested grammar of this token."
+								"doc_comment": "the nested grammar of this token"
 							}
 						]
 					},
@@ -1089,7 +1089,7 @@
 						"name": "SyntaxGrammarToken",
 						"kind": "type",
 						"doc_comment": "Grammar token with all properties required.\nThis is the normalized representation used at runtime.",
-						"source_line": 522,
+						"source_line": 518,
 						"type_signature": "SyntaxGrammarToken",
 						"properties": [
 							{
@@ -1123,31 +1123,31 @@
 						"name": "SyntaxGrammar",
 						"kind": "type",
 						"doc_comment": "A grammar after normalization.\nAll values are arrays of normalized tokens with consistent shapes.",
-						"source_line": 534,
+						"source_line": 530,
 						"type_signature": "SyntaxGrammar"
 					},
 					{
 						"name": "HookBeforeTokenizeCallback",
 						"kind": "type",
-						"source_line": 558,
+						"source_line": 554,
 						"type_signature": "HookBeforeTokenizeCallback"
 					},
 					{
 						"name": "HookAfterTokenizeCallback",
 						"kind": "type",
-						"source_line": 559,
+						"source_line": 555,
 						"type_signature": "HookAfterTokenizeCallback"
 					},
 					{
 						"name": "HookWrapCallback",
 						"kind": "type",
-						"source_line": 560,
+						"source_line": 556,
 						"type_signature": "HookWrapCallback"
 					},
 					{
 						"name": "HookBeforeTokenizeCallbackContext",
 						"kind": "type",
-						"source_line": 562,
+						"source_line": 558,
 						"type_signature": "HookBeforeTokenizeCallbackContext",
 						"properties": [
 							{
@@ -1175,7 +1175,7 @@
 					{
 						"name": "HookAfterTokenizeCallbackContext",
 						"kind": "type",
-						"source_line": 568,
+						"source_line": 564,
 						"type_signature": "HookAfterTokenizeCallbackContext",
 						"properties": [
 							{
@@ -1203,7 +1203,7 @@
 					{
 						"name": "HookWrapCallbackContext",
 						"kind": "type",
-						"source_line": 574,
+						"source_line": 570,
 						"type_signature": "HookWrapCallbackContext",
 						"properties": [
 							{

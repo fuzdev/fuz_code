@@ -17,7 +17,7 @@ import {syntax_styler_global} from './syntax_styler_global.js';
 import type {SyntaxStyler} from './syntax_styler.js';
 
 /**
- * Options for `svelte_preprocess_fuz_code`.
+ * options for `svelte_preprocess_fuz_code`
  */
 export interface PreprocessFuzCodeOptions {
 	/** File patterns to exclude. */
@@ -46,9 +46,9 @@ export interface PreprocessFuzCodeOptions {
 
 /**
  * Svelte preprocessor that compiles static `Code` component content at build time,
- * replacing runtime syntax highlighting with pre-rendered HTML.
+ * replacing runtime syntax highlighting with pre-rendered HTML
  *
- * @param options preprocessor configuration
+ * @param options - preprocessor configuration
  * @returns a Svelte preprocessor group
  *
  * @example
@@ -165,8 +165,8 @@ const try_highlight = (
 };
 
 /**
- * Walks the AST to find Code component usages with static `content` props
- * and generates transformations to replace them with `dangerous_raw_html`.
+ * walks the AST to find Code component usages with static `content` props
+ * and generates transformations to replace them with `dangerous_raw_html`
  */
 const find_code_usages = (
 	ast: AST.Root,
