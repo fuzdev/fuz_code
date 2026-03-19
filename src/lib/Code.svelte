@@ -55,7 +55,7 @@
 			 */
 			lang?: string | null;
 			/**
-			 * Optional custom grammar object for syntax tokenization.
+			 * Optional custom `SyntaxGrammar` object for syntax tokenization.
 			 *
 			 * **When to use:**
 			 * - To provide a custom language definition not registered in `syntax_styler.langs`
@@ -100,7 +100,7 @@
 			 */
 			nomargin?: boolean;
 			/**
-			 * Custom SyntaxStyler instance to use for highlighting.
+			 * Custom `SyntaxStyler` instance to use for highlighting.
 			 * Allows using a different styler with custom grammars or configuration.
 			 *
 			 * @default syntax_styler_global

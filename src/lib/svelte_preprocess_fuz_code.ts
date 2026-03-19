@@ -17,21 +17,21 @@ import {syntax_styler_global} from './syntax_styler_global.js';
 import type {SyntaxStyler} from './syntax_styler.js';
 
 /**
- * options for `svelte_preprocess_fuz_code`
+ * Options for `svelte_preprocess_fuz_code`.
  */
 export interface PreprocessFuzCodeOptions {
 	/** File patterns to exclude. */
 	exclude?: Array<string | RegExp>;
 
-	/** Custom syntax styler. @default syntax_styler_global */
+	/** Custom `SyntaxStyler` instance. @default syntax_styler_global */
 	syntax_styler?: SyntaxStyler;
 
 	/** Enable in-memory caching. @default true */
 	cache?: boolean;
 
 	/**
-	 * Import sources that resolve to the Code component.
-	 * Used to verify that `<Code>` in templates actually refers to fuz_code's Code.svelte.
+	 * Import sources that resolve to the `Code` component.
+	 * Used to verify that `<Code>` in templates actually refers to `Code.svelte`.
 	 *
 	 * @default ['@fuzdev/fuz_code/Code.svelte']
 	 */
@@ -46,9 +46,9 @@ export interface PreprocessFuzCodeOptions {
 
 /**
  * Svelte preprocessor that compiles static `Code` component content at build time,
- * replacing runtime syntax highlighting with pre-rendered HTML
+ * replacing runtime syntax highlighting with pre-rendered HTML.
  *
- * @param options - preprocessor configuration
+ * @param options - `PreprocessFuzCodeOptions` configuration
  * @returns a Svelte preprocessor group
  *
  * @example
@@ -141,7 +141,7 @@ interface FindCodeUsagesOptions {
 }
 
 /**
- * Attempt to highlight content, using cache if available.
+ * Attempts to highlight content, using cache if available.
  * Returns the highlighted HTML, or `null` on error.
  */
 const try_highlight = (
@@ -165,8 +165,8 @@ const try_highlight = (
 };
 
 /**
- * walks the AST to find Code component usages with static `content` props
- * and generates transformations to replace them with `dangerous_raw_html`
+ * Walks the AST to find `Code` component usages with static `content` props
+ * and generates transformations to replace them with `dangerous_raw_html`.
  */
 const find_code_usages = (
 	ast: AST.Root,

@@ -98,8 +98,10 @@ export const add_grammar_markup: AddSyntaxGrammar = (syntax_styler) => {
  *
  * An example of an inlined language is CSS with `<style>` tags.
  *
+ * @param syntax_styler - the `SyntaxStyler` instance to modify
  * @param tag_name - the name of the tag that contains the inlined language, treated as case insensitive
  * @param lang - the language key
+ * @param inside_lang - the language to insert into, defaults to `'markup'`
  */
 export const grammar_markup_add_inlined = (
 	syntax_styler: SyntaxStyler,
@@ -144,11 +146,12 @@ export const grammar_markup_add_inlined = (
 };
 
 /**
- * Adds an pattern to style languages embedded in HTML attributes.
+ * Adds a pattern to style languages embedded in HTML attributes.
  *
  * An example of an inlined language is CSS with `style` attributes.
  *
- * @param attr_name - the name of the tag that contains the inlined language, treated as case insensitive
+ * @param syntax_styler - the `SyntaxStyler` instance to modify
+ * @param attr_name - the name of the attribute that contains the inlined language, treated as case insensitive
  * @param lang - the language key
  */
 export const grammar_markup_add_attribute = (

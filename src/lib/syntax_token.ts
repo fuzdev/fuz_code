@@ -2,14 +2,14 @@ export class SyntaxToken {
 	/**
 	 * The type of the token.
 	 *
-	 * This is usually the key of a pattern in a `Grammar`.
+	 * This is usually the key of a pattern in a `SyntaxGrammar`.
 	 */
 	type: string;
 
 	/**
 	 * The strings or tokens contained by this token.
 	 *
-	 * This will be a token stream if the pattern matched also defined an `inside` grammar.
+	 * This will be a `SyntaxTokenStream` if the pattern matched also defined an `inside` grammar.
 	 */
 	content: string | SyntaxTokenStream;
 
@@ -38,8 +38,8 @@ export class SyntaxToken {
 /**
  * A token stream is an array of strings and `SyntaxToken` objects.
  *
- * Syntax token streams have to fulfill a few properties that are assumed by most functions (mostly internal ones) that process
- * them.
+ * `SyntaxTokenStream` values have to fulfill a few properties that are assumed by most functions
+ * (mostly internal ones) that process them.
  *
  * 1. No adjacent strings.
  * 2. No empty strings.

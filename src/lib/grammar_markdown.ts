@@ -16,7 +16,7 @@ interface FenceType {
 }
 
 /**
- * helper to create fenced code block pattern for a language
+ * Helper to create fenced code block pattern for a language.
  */
 const create_fence_pattern = (
 	backticks: string,
@@ -48,7 +48,7 @@ const create_fence_pattern = (
 };
 
 /**
- * helper to create catch-all fence pattern (unknown languages)
+ * Helper to create catch-all fence pattern (unknown languages).
  */
 const create_catchall_fence = (backticks: string): SyntaxGrammarTokenRaw => {
 	const pattern = new RegExp(`^${backticks}[^\\n\\r]*(?:\\r?\\n|\\r)[\\s\\S]*?^${backticks}$`, 'm');
@@ -67,7 +67,7 @@ const create_catchall_fence = (backticks: string): SyntaxGrammarTokenRaw => {
 };
 
 /**
- * helper to create md self-reference placeholder pattern
+ * Helper to create md self-reference placeholder pattern.
  */
 const create_md_placeholder = (backticks: string): SyntaxGrammarTokenRaw => {
 	const pattern = new RegExp(

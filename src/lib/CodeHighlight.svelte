@@ -3,7 +3,7 @@
 	 * Uses the CSS Custom Highlight API when available --
 	 * https://developer.mozilla.org/en-US/docs/Web/API/CSS_Custom_Highlight_API
 	 *
-	 * Requires importing theme_highlight.css instead of theme.css.
+	 * Requires importing `theme_highlight.css` instead of `theme.css`.
 	 */
 
 	import {onDestroy, type Snippet} from 'svelte';
@@ -65,7 +65,7 @@
 		 */
 		mode?: HighlightMode;
 		/**
-		 * Optional custom grammar object for syntax tokenization.
+		 * Optional custom `SyntaxGrammar` object for syntax tokenization.
 		 *
 		 * **When to use:**
 		 * - To provide a custom language definition not registered in `syntax_styler.langs`
@@ -103,7 +103,7 @@
 		 */
 		wrap?: boolean;
 		/**
-		 * Custom SyntaxStyler instance to use for highlighting.
+		 * Custom `SyntaxStyler` instance to use for highlighting.
 		 * Allows using a different styler with custom grammars or configuration.
 		 *
 		 * @default syntax_styler_global

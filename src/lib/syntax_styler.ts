@@ -97,7 +97,7 @@ export class SyntaxStyler {
 	 *   - grammar lookup when `grammar` is undefined
 	 *   - hook context (`lang` field passed to hooks)
 	 *   - language identification in output
-	 * @param grammar - optional custom grammar object; when undefined, automatically
+	 * @param grammar - optional custom `SyntaxGrammar` object; when undefined, automatically
 	 *   looks up the grammar via `this.get_lang(lang)`; provide this to use a custom
 	 *   or modified grammar instead of the registered one
 	 * @returns HTML string with syntax highlighting using CSS classes (`.token_*`)
@@ -157,7 +157,7 @@ export class SyntaxStyler {
 	 * };
 	 * ```
 	 *
-	 * then the `style` token will be added (and processed) at the end. `insert_before` allows you to insert tokens
+	 * then the `style` token will be added (and processed) at the end. `grammar_insert_before` allows you to insert tokens
 	 * before existing tokens. For the CSS example above, you would use it like this:
 	 *
 	 * ```js
@@ -184,12 +184,12 @@ export class SyntaxStyler {
 	 *
 	 * ## Limitations
 	 *
-	 * The main problem `insert_before` has to solve is iteration order. Since ES2015, the iteration order for object
+	 * The main problem `grammar_insert_before` has to solve is iteration order. Since ES2015, the iteration order for object
 	 * properties is guaranteed to be the insertion order (except for integer keys) but some browsers behave
-	 * differently when keys are deleted and re-inserted. So `insert_before` can't be implemented by temporarily
+	 * differently when keys are deleted and re-inserted. So `grammar_insert_before` can't be implemented by temporarily
 	 * deleting properties which is necessary to insert at arbitrary positions.
 	 *
-	 * To solve this problem, `insert_before` doesn't actually insert the given tokens into the target object.
+	 * To solve this problem, `grammar_insert_before` doesn't actually insert the given tokens into the target object.
 	 * Instead, it will create a new object and replace all references to the target object with the new one. This
 	 * can be done without temporarily deleting properties, so the iteration order is well-defined.
 	 *
@@ -210,7 +210,7 @@ export class SyntaxStyler {
 	 * @param insert - an object containing the key-value pairs to be inserted
 	 * @param root - the object containing `inside`, i.e. the object that contains the
 	 * object to be modified; defaults to `syntax_styler.langs`
-	 * @returns the new grammar object
+	 * @returns the new `SyntaxGrammar` object
 	 */
 	grammar_insert_before(
 		inside: string,
@@ -257,7 +257,7 @@ export class SyntaxStyler {
 	 *
 	 * Runs the `wrap` hook on each `SyntaxToken`.
 	 *
-	 * @param o - the token or token stream to be converted
+	 * @param o - the token or `SyntaxTokenStream` to be converted
 	 * @param lang - the name of current language
 	 * @returns HTML representation of the token or token stream
 	 */
@@ -330,7 +330,7 @@ export class SyntaxStyler {
 	 *
 	 * @param base_id - the id of the language to extend, must be a key in `syntax_styler.langs`
 	 * @param extension - the new tokens to append
-	 * @returns the new grammar
+	 * @returns the new `SyntaxGrammar`
 	 */
 	extend_grammar(base_id: string, extension: SyntaxGrammarRaw): SyntaxGrammar {
 		// Merge normalized base with un-normalized extension
@@ -342,7 +342,7 @@ export class SyntaxStyler {
 	}
 
 	/**
-	 * Normalize a single pattern to have consistent shape.
+	 * Normalizes a single pattern to have consistent shape.
 	 * This ensures all patterns have the same object shape for V8 optimization.
 	 */
 	#normalize_pattern(
@@ -383,12 +383,12 @@ export class SyntaxStyler {
 	}
 
 	/**
-	 * Normalize a grammar to have consistent object shapes.
+	 * Normalizes a grammar to have consistent object shapes.
 	 * This performs several optimizations:
-	 * 1. Merges `rest` property into main grammar
-	 * 2. Ensures all pattern values are arrays
-	 * 3. Normalizes all pattern objects to have consistent shapes
-	 * 4. Adds global flag to greedy patterns
+	 * 1. Merges `rest` property into main grammar.
+	 * 2. Ensures all pattern values are arrays.
+	 * 3. Normalizes all pattern objects to have consistent shapes.
+	 * 4. Adds global flag to greedy patterns.
 	 *
 	 * This is called once at registration time to avoid runtime overhead.
 	 * @param visited - set of grammar object IDs already normalized (for circular references)
@@ -487,33 +487,33 @@ export type SyntaxGrammarRaw = Record<string, SyntaxGrammarValueRaw | undefined>
  */
 export interface SyntaxGrammarTokenRaw {
 	/**
-	 * the regular expression of the token
+	 * The regular expression of the token.
 	 */
 	pattern: RegExp;
 	/**
-	 * if `true`, then the first capturing group of `pattern` will (effectively)
-	 * behave as a lookbehind group meaning that the captured text will not be part of the matched text of the new token
+	 * If `true`, then the first capturing group of `pattern` will (effectively)
+	 * behave as a lookbehind group meaning that the captured text will not be part of the matched text of the new token.
 	 * @default false
 	 */
 	lookbehind?: boolean;
 	/**
-	 * whether the token is greedy
+	 * Whether the token is greedy.
 	 * @default false
 	 */
 	greedy?: boolean;
 	/**
-	 * an optional alias or list of aliases
+	 * An optional alias or list of aliases.
 	 */
 	alias?: string | Array<string>;
 	/**
-	 * the nested grammar of this token
+	 * The nested `SyntaxGrammarRaw` of this token.
 	 */
 	inside?: SyntaxGrammarRaw | null;
 }
 
 /**
  * Grammar token with all properties required.
- * This is the normalized representation used at runtime.
+ * This is the normalized representation of `SyntaxGrammarTokenRaw` used at runtime.
  */
 export interface SyntaxGrammarToken {
 	pattern: RegExp;
@@ -525,7 +525,7 @@ export interface SyntaxGrammarToken {
 
 /**
  * A grammar after normalization.
- * All values are arrays of normalized tokens with consistent shapes.
+ * All values are arrays of normalized `SyntaxGrammarToken` with consistent shapes.
  */
 export type SyntaxGrammar = Record<string, Array<SyntaxGrammarToken>>;
 

@@ -198,7 +198,7 @@
 								"name": "grammar",
 								"type": "SyntaxGrammar | undefined",
 								"optional": true,
-								"description": "Optional custom grammar object for syntax tokenization.\n\n**When to use:**\n- To provide a custom language definition not registered in `syntax_styler.langs`\n- To use a modified/extended version of an existing grammar\n- For one-off grammar variations without registering globally\n\n**Behavior:**\n- When provided, this grammar is used for tokenization instead of looking up via `lang`\n- Enables highlighting even if `lang` is not in the registry (useful for custom languages)\n- The `lang` parameter is still used for metadata (data-lang attribute)\n- When undefined, the grammar is automatically looked up via `syntax_styler.get_lang(lang)`"
+								"description": "Optional custom `SyntaxGrammar` object for syntax tokenization.\n\n**When to use:**\n- To provide a custom language definition not registered in `syntax_styler.langs`\n- To use a modified/extended version of an existing grammar\n- For one-off grammar variations without registering globally\n\n**Behavior:**\n- When provided, this grammar is used for tokenization instead of looking up via `lang`\n- Enables highlighting even if `lang` is not in the registry (useful for custom languages)\n- The `lang` parameter is still used for metadata (data-lang attribute)\n- When undefined, the grammar is automatically looked up via `syntax_styler.get_lang(lang)`"
 							},
 							{
 								"name": "inline",
@@ -222,7 +222,7 @@
 								"name": "syntax_styler",
 								"type": "SyntaxStyler",
 								"optional": true,
-								"description": "Custom SyntaxStyler instance to use for highlighting.\nAllows using a different styler with custom grammars or configuration."
+								"description": "Custom `SyntaxStyler` instance to use for highlighting.\nAllows using a different styler with custom grammars or configuration."
 							},
 							{
 								"name": "children",
@@ -264,7 +264,7 @@
 								"name": "grammar",
 								"type": "SyntaxGrammar | undefined",
 								"optional": true,
-								"description": "Optional custom grammar object for syntax tokenization.\n\n**When to use:**\n- To provide a custom language definition not registered in `syntax_styler.langs`\n- To use a modified/extended version of an existing grammar\n- For one-off grammar variations without registering globally\n\n**Behavior:**\n- When provided, this grammar is used for tokenization instead of looking up via `lang`\n- Enables highlighting even if `lang` is not in the registry (useful for custom languages)\n- The `lang` parameter is still used for metadata (data-lang attribute)\n- When undefined, the grammar is automatically looked up via `syntax_styler.get_lang(lang)`"
+								"description": "Optional custom `SyntaxGrammar` object for syntax tokenization.\n\n**When to use:**\n- To provide a custom language definition not registered in `syntax_styler.langs`\n- To use a modified/extended version of an existing grammar\n- For one-off grammar variations without registering globally\n\n**Behavior:**\n- When provided, this grammar is used for tokenization instead of looking up via `lang`\n- Enables highlighting even if `lang` is not in the registry (useful for custom languages)\n- The `lang` parameter is still used for metadata (data-lang attribute)\n- When undefined, the grammar is automatically looked up via `syntax_styler.get_lang(lang)`"
 							},
 							{
 								"name": "inline",
@@ -282,7 +282,7 @@
 								"name": "syntax_styler",
 								"type": "SyntaxStyler",
 								"optional": true,
-								"description": "Custom SyntaxStyler instance to use for highlighting.\nAllows using a different styler with custom grammars or configuration."
+								"description": "Custom `SyntaxStyler` instance to use for highlighting.\nAllows using a different styler with custom grammars or configuration."
 							},
 							{
 								"name": "children",
@@ -451,13 +451,14 @@
 						"name": "grammar_markup_add_inlined",
 						"kind": "function",
 						"doc_comment": "Adds an inlined language to markup.\n\nAn example of an inlined language is CSS with `<style>` tags.",
-						"source_line": 104,
+						"source_line": 106,
 						"type_signature": "(syntax_styler: SyntaxStyler, tag_name: string, lang: string, inside_lang?: string): void",
 						"return_type": "void",
 						"parameters": [
 							{
 								"name": "syntax_styler",
-								"type": "SyntaxStyler"
+								"type": "SyntaxStyler",
+								"description": "the `SyntaxStyler` instance to modify"
 							},
 							{
 								"name": "tag_name",
@@ -472,6 +473,7 @@
 							{
 								"name": "inside_lang",
 								"type": "string",
+								"description": "the language to insert into, defaults to `'markup'`",
 								"default_value": "'markup'"
 							}
 						]
@@ -479,19 +481,20 @@
 					{
 						"name": "grammar_markup_add_attribute",
 						"kind": "function",
-						"doc_comment": "Adds an pattern to style languages embedded in HTML attributes.\n\nAn example of an inlined language is CSS with `style` attributes.",
-						"source_line": 154,
+						"doc_comment": "Adds a pattern to style languages embedded in HTML attributes.\n\nAn example of an inlined language is CSS with `style` attributes.",
+						"source_line": 157,
 						"type_signature": "(syntax_styler: SyntaxStyler, attr_name: string, lang: string): void",
 						"return_type": "void",
 						"parameters": [
 							{
 								"name": "syntax_styler",
-								"type": "SyntaxStyler"
+								"type": "SyntaxStyler",
+								"description": "the `SyntaxStyler` instance to modify"
 							},
 							{
 								"name": "attr_name",
 								"type": "string",
-								"description": "the name of the tag that contains the inlined language, treated as case insensitive"
+								"description": "the name of the attribute that contains the inlined language, treated as case insensitive"
 							},
 							{
 								"name": "lang",
@@ -585,7 +588,7 @@
 					{
 						"name": "supports_css_highlight_api",
 						"kind": "function",
-						"doc_comment": "check for CSS Highlights API support",
+						"doc_comment": "Checks for CSS Highlights API support.",
 						"source_line": 9,
 						"type_signature": "(): boolean",
 						"return_type": "boolean",
@@ -594,7 +597,7 @@
 					{
 						"name": "HighlightManager",
 						"kind": "class",
-						"doc_comment": "Manages CSS Custom Highlight API ranges for a single element.\nTracks ranges per element and only removes its own ranges when clearing.\n\n**Experimental** — limited browser support. Use `Code` for production.",
+						"doc_comment": "Manages CSS Custom Highlight API ranges for a single element.\nTracks ranges per element and only removes its own ranges when clearing.\n\n**Experimental** — limited browser support. Use `Code.svelte` for production.",
 						"examples": [
 							"```ts\nconst manager = new HighlightManager();\nmanager.highlight_from_syntax_tokens(element, tokens);\n```"
 						],
@@ -614,7 +617,7 @@
 							{
 								"name": "highlight_from_syntax_tokens",
 								"kind": "function",
-								"doc_comment": "highlight from syntax styler token stream",
+								"doc_comment": "Highlights from a `SyntaxTokenStream` produced by `tokenize_syntax`.",
 								"type_signature": "(element: Element, tokens: SyntaxTokenStream): void",
 								"return_type": "void",
 								"parameters": [
@@ -631,7 +634,7 @@
 							{
 								"name": "clear_element_ranges",
 								"kind": "function",
-								"doc_comment": "clear only this element's ranges from highlights",
+								"doc_comment": "Clears only this element's ranges from highlights.",
 								"type_signature": "(): void",
 								"return_type": "void",
 								"parameters": []
@@ -677,7 +680,7 @@
 					{
 						"name": "PreprocessFuzCodeOptions",
 						"kind": "type",
-						"doc_comment": "options for `svelte_preprocess_fuz_code`",
+						"doc_comment": "Options for `svelte_preprocess_fuz_code`.",
 						"source_line": 22,
 						"type_signature": "PreprocessFuzCodeOptions",
 						"properties": [
@@ -691,7 +694,7 @@
 								"name": "syntax_styler",
 								"kind": "variable",
 								"type_signature": "SyntaxStyler",
-								"doc_comment": "Custom syntax styler."
+								"doc_comment": "Custom `SyntaxStyler` instance."
 							},
 							{
 								"name": "cache",
@@ -703,7 +706,7 @@
 								"name": "component_imports",
 								"kind": "variable",
 								"type_signature": "Array<string>",
-								"doc_comment": "Import sources that resolve to the Code component.\nUsed to verify that `<Code>` in templates actually refers to fuz_code's Code.svelte."
+								"doc_comment": "Import sources that resolve to the `Code` component.\nUsed to verify that `<Code>` in templates actually refers to `Code.svelte`."
 							},
 							{
 								"name": "on_error",
@@ -716,7 +719,7 @@
 					{
 						"name": "svelte_preprocess_fuz_code",
 						"kind": "function",
-						"doc_comment": "Svelte preprocessor that compiles static `Code` component content at build time,\nreplacing runtime syntax highlighting with pre-rendered HTML",
+						"doc_comment": "Svelte preprocessor that compiles static `Code` component content at build time,\nreplacing runtime syntax highlighting with pre-rendered HTML.",
 						"examples": [
 							"```ts\n// svelte.config.js\nimport {svelte_preprocess_fuz_code} from '@fuzdev/fuz_code/svelte_preprocess_fuz_code.js';\n\nexport default {\n  preprocess: [svelte_preprocess_fuz_code(), vitePreprocess()],\n};\n```"
 						],
@@ -728,7 +731,7 @@
 							{
 								"name": "options",
 								"type": "PreprocessFuzCodeOptions",
-								"description": "preprocessor configuration",
+								"description": "`PreprocessFuzCodeOptions` configuration",
 								"default_value": "{}"
 							}
 						]
@@ -864,7 +867,7 @@
 									{
 										"name": "grammar",
 										"type": "SyntaxGrammar | undefined",
-										"description": "optional custom grammar object; when undefined, automatically\nlooks up the grammar via `this.get_lang(lang)`; provide this to use a custom\nor modified grammar instead of the registered one",
+										"description": "optional custom `SyntaxGrammar` object; when undefined, automatically\nlooks up the grammar via `this.get_lang(lang)`; provide this to use a custom\nor modified grammar instead of the registered one",
 										"default_value": "this.get_lang(lang)"
 									}
 								]
@@ -872,10 +875,10 @@
 							{
 								"name": "grammar_insert_before",
 								"kind": "function",
-								"doc_comment": "Inserts tokens _before_ another token in a language definition or any other grammar.\n\n## Usage\n\nThis helper method makes it easy to modify existing languages. For example, the CSS language definition\nnot only defines CSS styling for CSS documents, but also needs to define styling for CSS embedded\nin HTML through `<style>` elements. To do this, it needs to modify `syntax_styler.get_lang('markup')` and add the\nappropriate tokens. However, `syntax_styler.get_lang('markup')` is a regular JS object literal, so if you do\nthis:\n\n```js\nsyntax_styler.get_lang('markup').style = {\n    // token\n};\n```\n\nthen the `style` token will be added (and processed) at the end. `insert_before` allows you to insert tokens\nbefore existing tokens. For the CSS example above, you would use it like this:\n\n```js\ngrammar_insert_before('markup', 'cdata', {\n    'style': {\n        // token\n    }\n});\n```\n\n## Special cases\n\nIf the grammars of `inside` and `insert` have tokens with the same name, the tokens in `inside`'s grammar\nwill be ignored.\n\nThis behavior can be used to insert tokens after `before`:\n\n```js\ngrammar_insert_before('markup', 'comment', {\n    'comment': syntax_styler.get_lang('markup').comment,\n    // tokens after 'comment'\n});\n```\n\n## Limitations\n\nThe main problem `insert_before` has to solve is iteration order. Since ES2015, the iteration order for object\nproperties is guaranteed to be the insertion order (except for integer keys) but some browsers behave\ndifferently when keys are deleted and re-inserted. So `insert_before` can't be implemented by temporarily\ndeleting properties which is necessary to insert at arbitrary positions.\n\nTo solve this problem, `insert_before` doesn't actually insert the given tokens into the target object.\nInstead, it will create a new object and replace all references to the target object with the new one. This\ncan be done without temporarily deleting properties, so the iteration order is well-defined.\n\nHowever, only references that can be reached from `syntax_styler.langs` or `insert` will be replaced. I.e. if\nyou hold the target object in a variable, then the value of the variable will not change.\n\n```js\nvar oldMarkup = syntax_styler.get_lang('markup');\nvar newMarkup = grammar_insert_before('markup', 'comment', { ... });\n\nassert(oldMarkup !== syntax_styler.get_lang('markup'));\nassert(newMarkup === syntax_styler.get_lang('markup'));\n```",
+								"doc_comment": "Inserts tokens _before_ another token in a language definition or any other grammar.\n\n## Usage\n\nThis helper method makes it easy to modify existing languages. For example, the CSS language definition\nnot only defines CSS styling for CSS documents, but also needs to define styling for CSS embedded\nin HTML through `<style>` elements. To do this, it needs to modify `syntax_styler.get_lang('markup')` and add the\nappropriate tokens. However, `syntax_styler.get_lang('markup')` is a regular JS object literal, so if you do\nthis:\n\n```js\nsyntax_styler.get_lang('markup').style = {\n    // token\n};\n```\n\nthen the `style` token will be added (and processed) at the end. `grammar_insert_before` allows you to insert tokens\nbefore existing tokens. For the CSS example above, you would use it like this:\n\n```js\ngrammar_insert_before('markup', 'cdata', {\n    'style': {\n        // token\n    }\n});\n```\n\n## Special cases\n\nIf the grammars of `inside` and `insert` have tokens with the same name, the tokens in `inside`'s grammar\nwill be ignored.\n\nThis behavior can be used to insert tokens after `before`:\n\n```js\ngrammar_insert_before('markup', 'comment', {\n    'comment': syntax_styler.get_lang('markup').comment,\n    // tokens after 'comment'\n});\n```\n\n## Limitations\n\nThe main problem `grammar_insert_before` has to solve is iteration order. Since ES2015, the iteration order for object\nproperties is guaranteed to be the insertion order (except for integer keys) but some browsers behave\ndifferently when keys are deleted and re-inserted. So `grammar_insert_before` can't be implemented by temporarily\ndeleting properties which is necessary to insert at arbitrary positions.\n\nTo solve this problem, `grammar_insert_before` doesn't actually insert the given tokens into the target object.\nInstead, it will create a new object and replace all references to the target object with the new one. This\ncan be done without temporarily deleting properties, so the iteration order is well-defined.\n\nHowever, only references that can be reached from `syntax_styler.langs` or `insert` will be replaced. I.e. if\nyou hold the target object in a variable, then the value of the variable will not change.\n\n```js\nvar oldMarkup = syntax_styler.get_lang('markup');\nvar newMarkup = grammar_insert_before('markup', 'comment', { ... });\n\nassert(oldMarkup !== syntax_styler.get_lang('markup'));\nassert(newMarkup === syntax_styler.get_lang('markup'));\n```",
 								"type_signature": "(inside: string, before: string, insert: SyntaxGrammarRaw, root?: Record<string, any>): SyntaxGrammar",
 								"return_type": "SyntaxGrammar",
-								"return_description": "the new grammar object",
+								"return_description": "the new `SyntaxGrammar` object",
 								"parameters": [
 									{
 										"name": "inside",
@@ -911,7 +914,7 @@
 									{
 										"name": "o",
 										"type": "string | SyntaxTokenStream | SyntaxToken",
-										"description": "the token or token stream to be converted"
+										"description": "the token or `SyntaxTokenStream` to be converted"
 									},
 									{
 										"name": "lang",
@@ -926,7 +929,7 @@
 								"doc_comment": "Creates a deep copy of the language with the given id and appends the given tokens.\n\nIf a token in `extension` also appears in the copied language, then the existing token in the copied language\nwill be overwritten at its original position.\n\n## Best practices\n\nSince the position of overwriting tokens (token in `extension` that overwrite tokens in the copied language)\ndoesn't matter, they can technically be in any order. However, this can be confusing to others that trying to\nunderstand the language definition because, normally, the order of tokens matters in the grammars.\n\nTherefore, it is encouraged to order overwriting tokens according to the positions of the overwritten tokens.\nFurthermore, all non-overwriting tokens should be placed after the overwriting ones.",
 								"type_signature": "(base_id: string, extension: SyntaxGrammarRaw): SyntaxGrammar",
 								"return_type": "SyntaxGrammar",
-								"return_description": "the new grammar",
+								"return_description": "the new `SyntaxGrammar`",
 								"parameters": [
 									{
 										"name": "base_id",
@@ -1057,38 +1060,38 @@
 								"name": "pattern",
 								"kind": "variable",
 								"type_signature": "RegExp",
-								"doc_comment": "the regular expression of the token"
+								"doc_comment": "The regular expression of the token."
 							},
 							{
 								"name": "lookbehind",
 								"kind": "variable",
 								"type_signature": "boolean",
-								"doc_comment": "if `true`, then the first capturing group of `pattern` will (effectively)\nbehave as a lookbehind group meaning that the captured text will not be part of the matched text of the new token"
+								"doc_comment": "If `true`, then the first capturing group of `pattern` will (effectively)\nbehave as a lookbehind group meaning that the captured text will not be part of the matched text of the new token."
 							},
 							{
 								"name": "greedy",
 								"kind": "variable",
 								"type_signature": "boolean",
-								"doc_comment": "whether the token is greedy"
+								"doc_comment": "Whether the token is greedy."
 							},
 							{
 								"name": "alias",
 								"kind": "variable",
 								"type_signature": "string | Array<string>",
-								"doc_comment": "an optional alias or list of aliases"
+								"doc_comment": "An optional alias or list of aliases."
 							},
 							{
 								"name": "inside",
 								"kind": "variable",
 								"type_signature": "SyntaxGrammarRaw | null",
-								"doc_comment": "the nested grammar of this token"
+								"doc_comment": "The nested `SyntaxGrammarRaw` of this token."
 							}
 						]
 					},
 					{
 						"name": "SyntaxGrammarToken",
 						"kind": "type",
-						"doc_comment": "Grammar token with all properties required.\nThis is the normalized representation used at runtime.",
+						"doc_comment": "Grammar token with all properties required.\nThis is the normalized representation of `SyntaxGrammarTokenRaw` used at runtime.",
 						"source_line": 518,
 						"type_signature": "SyntaxGrammarToken",
 						"properties": [
@@ -1122,7 +1125,7 @@
 					{
 						"name": "SyntaxGrammar",
 						"kind": "type",
-						"doc_comment": "A grammar after normalization.\nAll values are arrays of normalized tokens with consistent shapes.",
+						"doc_comment": "A grammar after normalization.\nAll values are arrays of normalized `SyntaxGrammarToken` with consistent shapes.",
 						"source_line": 530,
 						"type_signature": "SyntaxGrammar"
 					},
@@ -1253,13 +1256,13 @@
 							{
 								"name": "type",
 								"kind": "variable",
-								"doc_comment": "The type of the token.\n\nThis is usually the key of a pattern in a `Grammar`.",
+								"doc_comment": "The type of the token.\n\nThis is usually the key of a pattern in a `SyntaxGrammar`.",
 								"type_signature": "string"
 							},
 							{
 								"name": "content",
 								"kind": "variable",
-								"doc_comment": "The strings or tokens contained by this token.\n\nThis will be a token stream if the pattern matched also defined an `inside` grammar.",
+								"doc_comment": "The strings or tokens contained by this token.\n\nThis will be a `SyntaxTokenStream` if the pattern matched also defined an `inside` grammar.",
 								"type_signature": "string | SyntaxTokenStream"
 							},
 							{
@@ -1302,7 +1305,7 @@
 					{
 						"name": "SyntaxTokenStream",
 						"kind": "type",
-						"doc_comment": "A token stream is an array of strings and `SyntaxToken` objects.\n\nSyntax token streams have to fulfill a few properties that are assumed by most functions (mostly internal ones) that process\nthem.\n\n1. No adjacent strings.\n2. No empty strings.\n\n   The only exception here is the token stream that only contains the empty string and nothing else.",
+						"doc_comment": "A token stream is an array of strings and `SyntaxToken` objects.\n\n`SyntaxTokenStream` values have to fulfill a few properties that are assumed by most functions\n(mostly internal ones) that process them.\n\n1. No adjacent strings.\n2. No empty strings.\n\n   The only exception here is the token stream that only contains the empty string and nothing else.",
 						"source_line": 49,
 						"type_signature": "SyntaxTokenStream"
 					}
@@ -1319,10 +1322,10 @@
 						"examples": [
 							"```ts\nvar code = `var foo = 0;`;\nvar tokens = tokenize_syntax(code, SyntaxStyler.langs.js);\nfor (var token of tokens) {\n    if (token instanceof SyntaxToken && token.type === 'number') {\n        console.log(`Found numeric literal: ${token.content}`);\n    }\n}\n```"
 						],
-						"source_line": 30,
+						"source_line": 28,
 						"type_signature": "(text: string, grammar: SyntaxGrammar): SyntaxTokenStream",
 						"return_type": "SyntaxTokenStream",
-						"return_description": "an array of strings and tokens, a token stream",
+						"return_description": "a `SyntaxTokenStream` array of strings and tokens",
 						"parameters": [
 							{
 								"name": "text",
@@ -1332,7 +1335,7 @@
 							{
 								"name": "grammar",
 								"type": "SyntaxGrammar",
-								"description": "an object containing the tokens to use\n\nUsually a language definition like `syntax_styler.get_lang('markup')`."
+								"description": "a `SyntaxGrammar` object containing the tokens to use.\nUsually a language definition like `syntax_styler.get_lang('markup')`."
 							}
 						]
 					}

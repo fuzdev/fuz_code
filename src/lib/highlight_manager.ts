@@ -4,7 +4,7 @@ import {highlight_priorities} from './highlight_priorities.js';
 export type HighlightMode = 'auto' | 'ranges' | 'html';
 
 /**
- * check for CSS Highlights API support
+ * Checks for CSS Highlights API support.
  */
 export const supports_css_highlight_api = (): boolean =>
 	!!(globalThis.CSS?.highlights && globalThis.Highlight); // eslint-disable-line @typescript-eslint/no-unnecessary-condition
@@ -13,7 +13,7 @@ export const supports_css_highlight_api = (): boolean =>
  * Manages CSS Custom Highlight API ranges for a single element.
  * Tracks ranges per element and only removes its own ranges when clearing.
  *
- * **Experimental** — limited browser support. Use `Code` for production.
+ * **Experimental** — limited browser support. Use `Code.svelte` for production.
  *
  * @example
  * ```ts
@@ -32,7 +32,7 @@ export class HighlightManager {
 	}
 
 	/**
-	 * highlight from syntax styler token stream
+	 * Highlights from a `SyntaxTokenStream` produced by `tokenize_syntax`.
 	 */
 	highlight_from_syntax_tokens(element: Element, tokens: SyntaxTokenStream): void {
 		// Find the text node (it might not be firstChild due to Svelte comment nodes)
@@ -85,7 +85,7 @@ export class HighlightManager {
 	}
 
 	/**
-	 * clear only this element's ranges from highlights
+	 * Clears only this element's ranges from highlights.
 	 */
 	clear_element_ranges(): void {
 		for (const [name, ranges] of this.element_ranges) {
@@ -111,7 +111,7 @@ export class HighlightManager {
 	}
 
 	/**
-	 * create ranges for all tokens in the tree
+	 * Creates ranges for all tokens in the tree.
 	 */
 	#create_all_ranges(
 		tokens: SyntaxTokenStream,

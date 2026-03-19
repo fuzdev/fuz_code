@@ -10,11 +10,9 @@ import {SyntaxToken, type SyntaxTokenStream} from './syntax_token.js';
  * This method could be useful in other contexts as well, as a very crude parser.
  *
  * @param text - a string with the code to be styled
- * @param grammar - an object containing the tokens to use
- *
+ * @param grammar - a `SyntaxGrammar` object containing the tokens to use.
  * Usually a language definition like `syntax_styler.get_lang('markup')`.
- *
- * @returns an array of strings and tokens, a token stream
+ * @returns a `SyntaxTokenStream` array of strings and tokens
  *
  * @example
  * ```ts
@@ -213,7 +211,7 @@ interface LinkedListNode<T = string | SyntaxToken> {
 }
 
 /**
- * adds a new node with the given value to the list
+ * Adds a new node with the given value to the list.
  */
 const add_after = <T>(
 	list: LinkedList<T>,
