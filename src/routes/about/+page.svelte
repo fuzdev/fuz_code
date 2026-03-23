@@ -8,7 +8,7 @@
 	const library = library_context.get();
 </script>
 
-<main class="width_atmost_md">
+<main class="width_atmost_md pb_xl9">
 	<section class="box">
 		<header>
 			<h1 class="mt_xl5">{library.repo_name}</h1>
