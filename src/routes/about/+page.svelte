@@ -22,7 +22,7 @@
 	</section>
 	<EcosystemLinksPanel />
 	<section class="box">
-		<DocsFooter {library}>
+		<DocsFooter {library} root_url="https://www.fuz.dev/">
 			<div class="mb_lg">
 				<Breadcrumb>{library.package_json.glyph}</Breadcrumb>
 			</div>
@@ -41,8 +41,5 @@
 		display: flex;
 		align-items: baseline;
 		text-align: center;
-	}
-	section {
-		margin-bottom: var(--space_xl5);
 	}
 </style>
