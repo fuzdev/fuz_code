@@ -117,7 +117,7 @@
 		children?: Snippet<[markup: string]>;
 	} = $props();
 
-	let code_element: HTMLElement | undefined = $state();
+	let code_element: HTMLElement | undefined = $state.raw();
 
 	const supports_ranges = supports_css_highlight_api();
 

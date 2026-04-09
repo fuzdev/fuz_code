@@ -9,10 +9,10 @@
 
 	const RENDER_TIMEOUT_MS = 10000;
 
-	let current_component: Component<BenchmarkComponentProps> | null = $state(null);
-	let current_props: BenchmarkComponentProps | null = $state(null);
+	let current_component: Component<BenchmarkComponentProps> | null = $state.raw(null);
+	let current_props: BenchmarkComponentProps | null = $state.raw(null);
 	let render_resolver: (() => void) | null = null;
-	let iteration_key = $state(0);
+	let iteration_key = $state.raw(0);
 	const handle_render_complete = () => {
 		if (render_resolver) {
 			render_resolver();

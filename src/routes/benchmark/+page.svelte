@@ -20,11 +20,11 @@
 	});
 
 	// UI state
-	let running = $state(false);
-	let current_test = $state('');
-	let progress = $state(0);
-	let total_tests = $state(0);
-	let should_stop = $state(false);
+	let running = $state.raw(false);
+	let current_test = $state.raw('');
+	let progress = $state.raw(0);
+	let total_tests = $state.raw(0);
+	let should_stop = $state.raw(false);
 
 	// Results state
 	let benchmark_state: BenchmarkState | null = $state.raw(null);

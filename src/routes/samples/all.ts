@@ -315,7 +315,7 @@ export const complex_regex = /^(?:\\/\\*.*?\\*\\/|\\/\\/.*|[^/])+$/;
 
 	const b = 'b';
 
-	let c: boolean = $state(true);
+	let c: boolean = $state.raw(true);
 
 	const f = (p: any): any => p;
 
