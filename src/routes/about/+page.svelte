@@ -8,10 +8,10 @@
 	const library = library_context.get();
 </script>
 
-<main class="width_atmost_md pb_xl9">
+<main class="box mx_auto width_atmost_md pb_xl9">
 	<section class="box">
 		<header>
-			<h1 class="mt_xl5">{library.repo_name}</h1>
+			<h1 class="mt_xl5 text-align:center">{library.repo_name}</h1>
 		</header>
 		<Breadcrumb>{library.package_json.glyph}</Breadcrumb>
 	</section>
@@ -29,17 +29,3 @@
 		</DocsFooter>
 	</section>
 </main>
-
-<style>
-	main {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		margin: 0 auto;
-	}
-	h1 {
-		display: flex;
-		align-items: baseline;
-		text-align: center;
-	}
-</style>

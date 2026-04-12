@@ -70,11 +70,11 @@
 			<section>
 				<h2 class="panel p_md mb_0 box">{sample.lang}</h2>
 				<div class="display:flex justify-content:center flex-wrap:wrap gap_sm py_xl5">
-					<div class="constrain_width">
+					<div class="constrain-width">
 						<h3>{sample.lang} html strings</h3>
 						<CodeHighlight content={sample.content} lang={sample.lang} mode="html" />
 					</div>
-					<div class="constrain_width">
+					<div class="constrain-width">
 						<h3>{sample.lang} highlighted ranges</h3>
 						<CodeHighlight content={sample.content} lang={sample.lang} mode="ranges" />
 					</div>

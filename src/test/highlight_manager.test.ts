@@ -540,14 +540,11 @@ describe('error handling', () => {
 			new SyntaxToken('bad', 'xy', undefined, 'xy'), // Extends beyond text
 		];
 
-		try {
-			manager.highlight_from_syntax_tokens(element, tokens);
-			assert.fail('Should have thrown');
-		} catch (e: any) {
-			// Now throws earlier with bounds check before range creation
-			assert.ok(e.message.includes('bad')); // Includes token type
-			assert.ok(e.message.includes('extends beyond text node'));
-		}
+		// Now throws earlier with bounds check before range creation
+		assert.throws(
+			() => manager.highlight_from_syntax_tokens(element, tokens),
+			/extends beyond text node/,
+		);
 	});
 });
 

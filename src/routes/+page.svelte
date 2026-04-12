@@ -15,7 +15,7 @@
 	const css_example = '.card { color: var(--color_a); }';
 </script>
 
-<main class="box width:100%">
+<main class="box width:100% mb_xl5" style:padding="var(--space_xl3) 0">
 	<div class="width_atmost_md">
 		<section class="box" style:padding-top="var(--docs_primary_nav_height, 60px)">
 			<LibrarySummary {library} />
@@ -72,17 +72,3 @@ import Code from '@fuzdev/fuz_code/Code.svelte';`}
 		</section>
 	</div>
 </main>
-
-<style>
-	main {
-		/* TODO hacky */
-		margin-bottom: var(--space_xl5);
-		padding: var(--space_xl3) 0;
-	}
-	/* section {
-		margin-bottom: var(--space_xl5);
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-	} */
-</style>

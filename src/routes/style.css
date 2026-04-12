@@ -1,5 +1,5 @@
 /* TODO upstream to fuz_css? */
-.constrain_width {
+.constrain-width {
 	min-width: 0;
 	max-width: 100%;
 }

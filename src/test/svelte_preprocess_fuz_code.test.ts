@@ -1,4 +1,5 @@
-import {test, expect, describe} from 'vitest';
+import {test, assert, describe} from 'vitest';
+import {assert_rejects} from '@fuzdev/fuz_util/testing.js';
 import {preprocess, parse} from 'svelte/compiler';
 
 import {svelte_preprocess_fuz_code} from '$lib/svelte_preprocess_fuz_code.js';
@@ -35,12 +36,12 @@ describe('svelte_preprocess_fuz_code', () => {
 			const result = await run(input);
 
 			// Verify content attr is replaced with dangerous_raw_html
-			expect(result).not.toContain('content="const');
-			expect(result).toContain('dangerous_raw_html=');
+			assert.notInclude(result, 'content="const');
+			assert.include(result, 'dangerous_raw_html=');
 
 			// Verify the HTML matches direct stylize() output
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+			assert.strictEqual(raw_html, syntax_styler_global.stylize('const x = 1;', 'ts'));
 		});
 
 		test('transforms single-quoted JS expression', async () => {
@@ -52,7 +53,7 @@ describe('svelte_preprocess_fuz_code', () => {
 			const result = await run(input);
 
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+			assert.strictEqual(raw_html, syntax_styler_global.stylize('const x = 1;', 'ts'));
 		});
 
 		test('transforms template literal (no interpolation)', async () => {
@@ -61,7 +62,7 @@ describe('svelte_preprocess_fuz_code', () => {
 			const result = await run(input);
 
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+			assert.strictEqual(raw_html, syntax_styler_global.stylize('const x = 1;', 'ts'));
 		});
 
 		test('produces specific token classes for TypeScript', async () => {
@@ -73,10 +74,10 @@ describe('svelte_preprocess_fuz_code', () => {
 			const result = await run(input);
 
 			// Verify specific token types are present in the output
-			expect(result).toContain('token_keyword');
-			expect(result).toContain('token_number');
-			expect(result).toContain('token_punctuation');
-			expect(result).toContain('token_operator');
+			assert.include(result, 'token_keyword');
+			assert.include(result, 'token_number');
+			assert.include(result, 'token_punctuation');
+			assert.include(result, 'token_operator');
 		});
 
 		test('defaults to svelte lang when lang not specified', async () => {
@@ -88,7 +89,10 @@ describe('svelte_preprocess_fuz_code', () => {
 			const result = await run(input);
 
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBe(syntax_styler_global.stylize('<button>Click</button>', 'svelte'));
+			assert.strictEqual(
+				raw_html,
+				syntax_styler_global.stylize('<button>Click</button>', 'svelte'),
+			);
 		});
 
 		test('skips empty string content (no highlighting benefit)', async () => {
@@ -99,8 +103,8 @@ describe('svelte_preprocess_fuz_code', () => {
 <Code content="" lang="ts" />`;
 			const result = await run(input);
 
-			expect(result).toContain('content=""');
-			expect(result).not.toContain('dangerous_raw_html');
+			assert.include(result, 'content=""');
+			assert.notInclude(result, 'dangerous_raw_html');
 		});
 
 		test('handles multiline content with escaped newlines', async () => {
@@ -112,12 +116,15 @@ describe('svelte_preprocess_fuz_code', () => {
 const y = 2;" lang="ts" />`;
 			const result = await run(input);
 
-			expect(result).toContain('dangerous_raw_html=');
+			assert.include(result, 'dangerous_raw_html=');
 			// Newlines should be escaped in the JS string
-			expect(result).toContain('\\n');
+			assert.include(result, '\\n');
 			// Verify roundtrip: extracted HTML matches direct stylize
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;\nconst y = 2;', 'ts'));
+			assert.strictEqual(
+				raw_html,
+				syntax_styler_global.stylize('const x = 1;\nconst y = 2;', 'ts'),
+			);
 		});
 
 		test('skips concatenation when output equals input (no tokens)', async () => {
@@ -129,7 +136,7 @@ const y = 2;" lang="ts" />`;
 			const result = await run(input);
 
 			// 'hello world' has no TS tokens, stylize returns same string
-			expect(result).not.toContain('dangerous_raw_html');
+			assert.notInclude(result, 'dangerous_raw_html');
 		});
 
 		test('transforms concatenation when output has tokens', async () => {
@@ -141,7 +148,7 @@ const y = 2;" lang="ts" />`;
 			const result = await run(input);
 
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+			assert.strictEqual(raw_html, syntax_styler_global.stylize('const x = 1;', 'ts'));
 		});
 
 		test('transforms concatenation with template literal', async () => {
@@ -150,7 +157,7 @@ const y = 2;" lang="ts" />`;
 			const result = await run(input);
 
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBe(syntax_styler_global.stylize('<script>', 'svelte'));
+			assert.strictEqual(raw_html, syntax_styler_global.stylize('<script>', 'svelte'));
 		});
 	});
 
@@ -164,11 +171,11 @@ const y = 2;" lang="ts" />`;
 			const result = await run(input);
 
 			// The single-quoted JS string must have escaped quotes
-			expect(result).toContain("\\'hello\\'");
+			assert.include(result, "\\'hello\\'");
 			// But the extracted HTML should have unescaped quotes
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toContain("'hello'");
-			expect(raw_html).toBe(syntax_styler_global.stylize("const x = 'hello';", 'ts'));
+			assert.include(raw_html!, "'hello'");
+			assert.strictEqual(raw_html, syntax_styler_global.stylize("const x = 'hello';", 'ts'));
 		});
 
 		test('escapes backslashes in highlighted source', async () => {
@@ -179,9 +186,9 @@ const y = 2;" lang="ts" />`;
 <Code content="const re = /\\d+/;" lang="ts" />`;
 			const result = await run(input);
 
-			expect(result).toContain('dangerous_raw_html=');
+			assert.include(result, 'dangerous_raw_html=');
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBeTruthy();
+			assert.ok(raw_html);
 		});
 	});
 
@@ -195,9 +202,9 @@ const y = 2;" lang="ts" />`;
 <Code content={show ? 'const x = 1;' : 'let y = 2;'} lang="ts" />`;
 			const result = await run(input);
 
-			expect(result).toContain('dangerous_raw_html=');
-			expect(result).toContain('show ?');
-			expect(result).toContain('token_keyword');
+			assert.include(result, 'dangerous_raw_html=');
+			assert.include(result, 'show ?');
+			assert.include(result, 'token_keyword');
 		});
 
 		test('ternary produces correct HTML for both branches', async () => {
@@ -212,14 +219,14 @@ const y = 2;" lang="ts" />`;
 			// Extract both branches from: dangerous_raw_html={show ? '...' : '...'}
 			const match =
 				/dangerous_raw_html=\{(\w+) \? '((?:[^'\\]|\\.)*)' : '((?:[^'\\]|\\.)*)'\}/.exec(result);
-			expect(match).toBeTruthy();
-			expect(match![1]).toBe('show');
+			assert.ok(match);
+			assert.strictEqual(match[1], 'show');
 
 			const unescape = (s: string) =>
 				s.replace(/\\'/g, "'").replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\\\/g, '\\');
 
-			expect(unescape(match![2]!)).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
-			expect(unescape(match![3]!)).toBe(syntax_styler_global.stylize('let y = 2;', 'ts'));
+			assert.strictEqual(unescape(match[2]!), syntax_styler_global.stylize('const x = 1;', 'ts'));
+			assert.strictEqual(unescape(match[3]!), syntax_styler_global.stylize('let y = 2;', 'ts'));
 		});
 
 		test('ternary with concatenation in branches', async () => {
@@ -231,8 +238,8 @@ const y = 2;" lang="ts" />`;
 <Code content={show ? 'const ' + 'x = 1;' : 'let y = 2;'} lang="ts" />`;
 			const result = await run(input);
 
-			expect(result).toContain('dangerous_raw_html=');
-			expect(result).toContain('show ?');
+			assert.include(result, 'dangerous_raw_html=');
+			assert.include(result, 'show ?');
 		});
 
 		test('skips ternary with dynamic branch', async () => {
@@ -245,7 +252,7 @@ const y = 2;" lang="ts" />`;
 <Code content={show ? code : 'let y = 2;'} lang="ts" />`;
 			const result = await run(input);
 
-			expect(result).not.toContain('dangerous_raw_html');
+			assert.notInclude(result, 'dangerous_raw_html');
 		});
 
 		test('ternary output is parseable by Svelte compiler', async () => {
@@ -258,7 +265,7 @@ const y = 2;" lang="ts" />`;
 			const result = await run(input);
 
 			const ast = parse(result, {filename: 'Test.svelte', modern: true});
-			expect(ast.fragment.nodes.length).toBeGreaterThan(0);
+			assert.isAbove(ast.fragment.nodes.length, 0);
 		});
 
 		test('transforms nested ternary (3 branches)', async () => {
@@ -271,10 +278,10 @@ const y = 2;" lang="ts" />`;
 <Code content={a ? 'const x = 1;' : b ? 'let y = 2;' : 'var z = 3;'} lang="ts" />`;
 			const result = await run(input);
 
-			expect(result).toContain('dangerous_raw_html=');
-			expect(result).toContain('a ?');
-			expect(result).toContain('b ?');
-			expect(result).toContain('token_keyword');
+			assert.include(result, 'dangerous_raw_html=');
+			assert.include(result, 'a ?');
+			assert.include(result, 'b ?');
+			assert.include(result, 'token_keyword');
 		});
 
 		test('nested ternary produces correct HTML for all branches', async () => {
@@ -292,16 +299,16 @@ const y = 2;" lang="ts" />`;
 				/dangerous_raw_html=\{(\w+) \? '((?:[^'\\]|\\.)*)' : (\w+) \? '((?:[^'\\]|\\.)*)' : '((?:[^'\\]|\\.)*)'\}/.exec(
 					result,
 				);
-			expect(match).toBeTruthy();
-			expect(match![1]).toBe('a');
-			expect(match![3]).toBe('b');
+			assert.ok(match);
+			assert.strictEqual(match[1], 'a');
+			assert.strictEqual(match[3], 'b');
 
 			const unescape = (s: string) =>
 				s.replace(/\\'/g, "'").replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\\\/g, '\\');
 
-			expect(unescape(match![2]!)).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
-			expect(unescape(match![4]!)).toBe(syntax_styler_global.stylize('let y = 2;', 'ts'));
-			expect(unescape(match![5]!)).toBe(syntax_styler_global.stylize('var z = 3;', 'ts'));
+			assert.strictEqual(unescape(match[2]!), syntax_styler_global.stylize('const x = 1;', 'ts'));
+			assert.strictEqual(unescape(match[4]!), syntax_styler_global.stylize('let y = 2;', 'ts'));
+			assert.strictEqual(unescape(match[5]!), syntax_styler_global.stylize('var z = 3;', 'ts'));
 		});
 
 		test('skips nested ternary with dynamic branch', async () => {
@@ -315,7 +322,7 @@ const y = 2;" lang="ts" />`;
 <Code content={a ? 'const x = 1;' : b ? code : 'var z = 3;'} lang="ts" />`;
 			const result = await run(input);
 
-			expect(result).not.toContain('dangerous_raw_html');
+			assert.notInclude(result, 'dangerous_raw_html');
 		});
 
 		test('nested ternary output is parseable by Svelte compiler', async () => {
@@ -329,7 +336,7 @@ const y = 2;" lang="ts" />`;
 			const result = await run(input);
 
 			const ast = parse(result, {filename: 'Test.svelte', modern: true});
-			expect(ast.fragment.nodes.length).toBeGreaterThan(0);
+			assert.isAbove(ast.fragment.nodes.length, 0);
 		});
 
 		test('transforms 4-branch nested ternary', async () => {
@@ -343,14 +350,14 @@ const y = 2;" lang="ts" />`;
 <Code content={a ? 'const w = 1;' : b ? 'let x = 2;' : c ? 'var y = 3;' : 'type Z = 4;'} lang="ts" />`;
 			const result = await run(input);
 
-			expect(result).toContain('dangerous_raw_html=');
-			expect(result).toContain('a ?');
-			expect(result).toContain('b ?');
-			expect(result).toContain('c ?');
-			expect(result).toContain('token_keyword');
+			assert.include(result, 'dangerous_raw_html=');
+			assert.include(result, 'a ?');
+			assert.include(result, 'b ?');
+			assert.include(result, 'c ?');
+			assert.include(result, 'token_keyword');
 
 			const ast = parse(result, {filename: 'Test.svelte', modern: true});
-			expect(ast.fragment.nodes.length).toBeGreaterThan(0);
+			assert.isAbove(ast.fragment.nodes.length, 0);
 		});
 	});
 
@@ -364,9 +371,9 @@ const y = 2;" lang="ts" />`;
 <Code content={code} lang="ts" />`;
 			const result = await run(input);
 
-			expect(result).toContain('dangerous_raw_html=');
+			assert.include(result, 'dangerous_raw_html=');
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+			assert.strictEqual(raw_html, syntax_styler_global.stylize('const x = 1;', 'ts'));
 		});
 
 		test('transforms ternary with const branch references', async () => {
@@ -380,8 +387,8 @@ const y = 2;" lang="ts" />`;
 <Code content={show ? a : b} lang="ts" />`;
 			const result = await run(input);
 
-			expect(result).toContain('dangerous_raw_html=');
-			expect(result).toContain('show ?');
+			assert.include(result, 'dangerous_raw_html=');
+			assert.include(result, 'show ?');
 		});
 
 		test('transforms template literal with const interpolation', async () => {
@@ -389,9 +396,9 @@ const y = 2;" lang="ts" />`;
 				'<script lang="ts">\n\timport Code from \'@fuzdev/fuz_code/Code.svelte\';\n\tconst v = \'1\';\n</script>\n\n<Code content={`const x = ${v};`} lang="ts" />';
 			const result = await run(input);
 
-			expect(result).toContain('dangerous_raw_html=');
+			assert.include(result, 'dangerous_raw_html=');
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+			assert.strictEqual(raw_html, syntax_styler_global.stylize('const x = 1;', 'ts'));
 		});
 	});
 
@@ -405,8 +412,8 @@ const y = 2;" lang="ts" />`;
 <Code content={code} lang="ts" />`;
 			const result = await run(input);
 
-			expect(result).toContain('content={code}');
-			expect(result).not.toContain('dangerous_raw_html');
+			assert.include(result, 'content={code}');
+			assert.notInclude(result, 'dangerous_raw_html');
 		});
 
 		test('preserves template literal with numeric const interpolation', async () => {
@@ -415,7 +422,7 @@ const y = 2;" lang="ts" />`;
 				'<script lang="ts">\n\timport Code from \'@fuzdev/fuz_code/Code.svelte\';\n\tconst value = 1;\n</script>\n\n<Code content={`const x = ${value};`} lang="ts" />';
 			const result = await run(input);
 
-			expect(result).not.toContain('dangerous_raw_html');
+			assert.notInclude(result, 'dangerous_raw_html');
 		});
 
 		test('preserves ternary with dynamic branch', async () => {
@@ -428,7 +435,7 @@ const y = 2;" lang="ts" />`;
 <Code content={show ? code : 'b'} lang="ts" />`;
 			const result = await run(input);
 
-			expect(result).not.toContain('dangerous_raw_html');
+			assert.notInclude(result, 'dangerous_raw_html');
 		});
 
 		test('preserves function call expression', async () => {
@@ -440,7 +447,7 @@ const y = 2;" lang="ts" />`;
 <Code content={get_code()} lang="ts" />`;
 			const result = await run(input);
 
-			expect(result).not.toContain('dangerous_raw_html');
+			assert.notInclude(result, 'dangerous_raw_html');
 		});
 
 		test('preserves $state rune const', async () => {
@@ -452,8 +459,8 @@ const y = 2;" lang="ts" />`;
 <Code content={code} lang="ts" />`;
 			const result = await run(input);
 
-			expect(result).toContain('content={code}');
-			expect(result).not.toContain('dangerous_raw_html');
+			assert.include(result, 'content={code}');
+			assert.notInclude(result, 'dangerous_raw_html');
 		});
 
 		test('skips when dynamic lang with static content', async () => {
@@ -465,8 +472,8 @@ const y = 2;" lang="ts" />`;
 <Code content="const x = 1;" lang={lang} />`;
 			const result = await run(input);
 
-			expect(result).not.toContain('dangerous_raw_html');
-			expect(result).toContain('content="const x = 1;"');
+			assert.notInclude(result, 'dangerous_raw_html');
+			assert.include(result, 'content="const x = 1;"');
 		});
 	});
 
@@ -480,7 +487,7 @@ const y = 2;" lang="ts" />`;
 <Code content={show ? 'hello' : 'world'} lang="ts" />`;
 			const result = await run(input);
 
-			expect(result).not.toContain('dangerous_raw_html');
+			assert.notInclude(result, 'dangerous_raw_html');
 		});
 
 		test('transforms content with HTML special characters', async () => {
@@ -492,9 +499,9 @@ const y = 2;" lang="ts" />`;
 			const result = await run(input);
 
 			// stylize HTML-encodes < so output differs from input
-			expect(result).toContain('dangerous_raw_html=');
+			assert.include(result, 'dangerous_raw_html=');
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toContain('&lt;');
+			assert.include(raw_html!, '&lt;');
 		});
 	});
 
@@ -508,8 +515,8 @@ const y = 2;" lang="ts" />`;
 <Code content="x" grammar={g} />`;
 			const result = await run(input);
 
-			expect(result).toContain('content="x"');
-			expect(result).not.toContain('dangerous_raw_html');
+			assert.include(result, 'content="x"');
+			assert.notInclude(result, 'dangerous_raw_html');
 		});
 
 		test('skips custom syntax_styler', async () => {
@@ -521,8 +528,8 @@ const y = 2;" lang="ts" />`;
 <Code content="const x = 1;" lang="ts" syntax_styler={custom_styler} />`;
 			const result = await run(input);
 
-			expect(result).toContain('content="const x = 1;"');
-			expect(result).not.toContain('dangerous_raw_html');
+			assert.include(result, 'content="const x = 1;"');
+			assert.notInclude(result, 'dangerous_raw_html');
 		});
 
 		test('skips unrelated Code component', async () => {
@@ -533,8 +540,8 @@ const y = 2;" lang="ts" />`;
 <Code content="const x = 1;" lang="ts" />`;
 			const result = await run(input);
 
-			expect(result).toContain('content="const x = 1;"');
-			expect(result).not.toContain('dangerous_raw_html');
+			assert.include(result, 'content="const x = 1;"');
+			assert.notInclude(result, 'dangerous_raw_html');
 		});
 
 		test('skips when lang is null', async () => {
@@ -545,8 +552,8 @@ const y = 2;" lang="ts" />`;
 <Code content="plain text" lang={null} />`;
 			const result = await run(input);
 
-			expect(result).toContain('content="plain text"');
-			expect(result).not.toContain('dangerous_raw_html');
+			assert.include(result, 'content="plain text"');
+			assert.notInclude(result, 'dangerous_raw_html');
 		});
 
 		test('skips unknown language', async () => {
@@ -557,8 +564,8 @@ const y = 2;" lang="ts" />`;
 <Code content="code" lang="unknown_lang" />`;
 			const result = await run(input);
 
-			expect(result).toContain('content="code"');
-			expect(result).not.toContain('dangerous_raw_html');
+			assert.include(result, 'content="code"');
+			assert.notInclude(result, 'dangerous_raw_html');
 		});
 
 		test('skips files without Code in content', async () => {
@@ -569,7 +576,7 @@ const y = 2;" lang="ts" />`;
 <p>Hello world</p>`;
 			const result = await run(input);
 
-			expect(result).toBe(input);
+			assert.strictEqual(result, input);
 		});
 
 		test('skips files without matching import', async () => {
@@ -581,7 +588,7 @@ const y = 2;" lang="ts" />`;
 <p>Hello world</p>`;
 			const result = await run(input);
 
-			expect(result).toBe(input);
+			assert.strictEqual(result, input);
 		});
 
 		test('skips Code without content attribute', async () => {
@@ -592,7 +599,7 @@ const y = 2;" lang="ts" />`;
 <Code lang="ts" />`;
 			const result = await run(input);
 
-			expect(result).not.toContain('dangerous_raw_html');
+			assert.notInclude(result, 'dangerous_raw_html');
 		});
 
 		test('skips when dangerous_raw_html already present', async () => {
@@ -603,8 +610,8 @@ const y = 2;" lang="ts" />`;
 <Code dangerous_raw_html={'precomputed'} content="const x = 1;" lang="ts" />`;
 			const result = await run(input);
 
-			expect(result).toContain('content="const x = 1;"');
-			expect(result).toContain("dangerous_raw_html={'precomputed'}");
+			assert.include(result, 'content="const x = 1;"');
+			assert.include(result, "dangerous_raw_html={'precomputed'}");
 		});
 
 		test('skips spread attributes (no content to detect)', async () => {
@@ -616,7 +623,7 @@ const y = 2;" lang="ts" />`;
 <Code {...props} />`;
 			const result = await run(input);
 
-			expect(result).not.toContain('dangerous_raw_html');
+			assert.notInclude(result, 'dangerous_raw_html');
 		});
 	});
 
@@ -630,7 +637,7 @@ const y = 2;" lang="ts" />`;
 			const result = await run(input);
 
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+			assert.strictEqual(raw_html, syntax_styler_global.stylize('const x = 1;', 'ts'));
 		});
 
 		test('handles import in script module block', async () => {
@@ -642,7 +649,7 @@ const y = 2;" lang="ts" />`;
 			const result = await run(input);
 
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+			assert.strictEqual(raw_html, syntax_styler_global.stylize('const x = 1;', 'ts'));
 		});
 
 		test('respects custom component_imports', async () => {
@@ -661,7 +668,7 @@ const y = 2;" lang="ts" />`;
 				{filename: 'Test.svelte'},
 			);
 
-			expect(result.code).toContain('dangerous_raw_html=');
+			assert.include(result.code, 'dangerous_raw_html=');
 		});
 
 		test('custom component_imports with path not containing "Code"', async () => {
@@ -681,7 +688,7 @@ const y = 2;" lang="ts" />`;
 			);
 
 			const raw_html = extract_raw_html(result.code);
-			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+			assert.strictEqual(raw_html, syntax_styler_global.stylize('const x = 1;', 'ts'));
 		});
 	});
 
@@ -694,13 +701,13 @@ const y = 2;" lang="ts" />`;
 <Code content="const x = 1;" lang="ts" inline wrap nomargin />`;
 			const result = await run(input);
 
-			expect(result).toContain('dangerous_raw_html=');
-			expect(result).toContain('lang="ts"');
-			expect(result).toContain('inline');
-			expect(result).toContain('wrap');
-			expect(result).toContain('nomargin');
+			assert.include(result, 'dangerous_raw_html=');
+			assert.include(result, 'lang="ts"');
+			assert.include(result, 'inline');
+			assert.include(result, 'wrap');
+			assert.include(result, 'nomargin');
 			// Script block should be unchanged
-			expect(result).toContain("import Code from '@fuzdev/fuz_code/Code.svelte'");
+			assert.include(result, "import Code from '@fuzdev/fuz_code/Code.svelte'");
 		});
 
 		test('attribute order does not matter', async () => {
@@ -712,9 +719,9 @@ const y = 2;" lang="ts" />`;
 			const result = await run(input);
 
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+			assert.strictEqual(raw_html, syntax_styler_global.stylize('const x = 1;', 'ts'));
 			// lang should still be present
-			expect(result).toContain('lang="ts"');
+			assert.include(result, 'lang="ts"');
 		});
 	});
 
@@ -732,9 +739,9 @@ const y = 2;" lang="ts" />`;
 
 			// First and third should be transformed
 			const matches = result.match(/dangerous_raw_html/g);
-			expect(matches).toHaveLength(2);
+			assert.lengthOf(matches!, 2);
 			// Second should remain dynamic
-			expect(result).toContain('content={dynamic_code}');
+			assert.include(result, 'content={dynamic_code}');
 		});
 
 		test('handles multiple languages with correct output', async () => {
@@ -748,11 +755,11 @@ const y = 2;" lang="ts" />`;
 			const result = await run(input);
 
 			const matches = result.match(/dangerous_raw_html/g);
-			expect(matches).toHaveLength(3);
+			assert.lengthOf(matches!, 3);
 			// Verify CSS-specific tokens
-			expect(result).toContain('token_selector');
+			assert.include(result, 'token_selector');
 			// Verify JSON-specific tokens
-			expect(result).toContain('token_property');
+			assert.include(result, 'token_property');
 		});
 
 		test('caches repeated content (identical output)', async () => {
@@ -766,8 +773,8 @@ const y = 2;" lang="ts" />`;
 
 			// Extract all dangerous_raw_html values
 			const all_matches = [...result.matchAll(/dangerous_raw_html=\{'((?:[^'\\]|\\.)*)'\}/g)];
-			expect(all_matches).toHaveLength(2);
-			expect(all_matches[0]![1]).toBe(all_matches[1]![1]);
+			assert.lengthOf(all_matches, 2);
+			assert.strictEqual(all_matches[0]![1], all_matches[1]![1]);
 		});
 	});
 
@@ -784,7 +791,7 @@ const y = 2;" lang="ts" />`;
 			const result = await run(input);
 
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+			assert.strictEqual(raw_html, syntax_styler_global.stylize('const x = 1;', 'ts'));
 		});
 
 		test('handles Code nested inside HTML elements', async () => {
@@ -798,7 +805,7 @@ const y = 2;" lang="ts" />`;
 			const result = await run(input);
 
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+			assert.strictEqual(raw_html, syntax_styler_global.stylize('const x = 1;', 'ts'));
 		});
 
 		test('handles non-self-closing Code with children snippet', async () => {
@@ -815,9 +822,9 @@ const y = 2;" lang="ts" />`;
 
 			// content should be transformed
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+			assert.strictEqual(raw_html, syntax_styler_global.stylize('const x = 1;', 'ts'));
 			// children snippet should be preserved
-			expect(result).toContain('{#snippet children(html)}');
+			assert.include(result, '{#snippet children(html)}');
 		});
 	});
 
@@ -832,7 +839,7 @@ const y = 2;" lang="ts" />`;
 
 			// Should not throw
 			const ast = parse(result, {filename: 'Test.svelte', modern: true});
-			expect(ast.fragment.nodes.length).toBeGreaterThan(0);
+			assert.isAbove(ast.fragment.nodes.length, 0);
 		});
 
 		test('output contains valid single-quoted JS string expression', async () => {
@@ -844,11 +851,11 @@ const y = 2;" lang="ts" />`;
 			const result = await run(input);
 
 			// The attribute should be wrapped as dangerous_raw_html={'...'}
-			expect(result).toMatch(/dangerous_raw_html=\{'[^]*?'\}/);
+			assert.match(result, /dangerous_raw_html=\{'[^]*?'\}/);
 			// No unescaped single quotes inside the string (except the wrapping ones)
 			const inner = /dangerous_raw_html=\{'((?:[^'\\]|\\.)*)'\}/.exec(result)![1];
 			// Verify no raw single quotes (they should all be escaped)
-			expect(inner).not.toMatch(/(?<!\\)'/);
+			assert.notMatch(inner!, /(?<!\\)'/);
 		});
 
 		test('generates source map', async () => {
@@ -861,9 +868,9 @@ const y = 2;" lang="ts" />`;
 				filename: 'Test.svelte',
 			});
 
-			expect(result.map).toBeDefined();
+			assert.isDefined(result.map);
 			const map = result.map as {sources: Array<string>};
-			expect(map.sources).toContain('Test.svelte');
+			assert.include(map.sources, 'Test.svelte');
 		});
 	});
 
@@ -880,8 +887,8 @@ const y = 2;" lang="ts" />`;
 				{filename: 'Test.svelte'},
 			);
 
-			expect(result.code).toContain('content="const x = 1;"');
-			expect(result.code).not.toContain('dangerous_raw_html');
+			assert.include(result.code, 'content="const x = 1;"');
+			assert.notInclude(result.code, 'dangerous_raw_html');
 		});
 
 		test('respects exclude with string', async () => {
@@ -896,7 +903,7 @@ const y = 2;" lang="ts" />`;
 				{filename: 'src/test/fixtures/Test.svelte'},
 			);
 
-			expect(result.code).not.toContain('dangerous_raw_html');
+			assert.notInclude(result.code, 'dangerous_raw_html');
 		});
 
 		test('cache: false disables caching', async () => {
@@ -910,9 +917,9 @@ const y = 2;" lang="ts" />`;
 			});
 
 			// Should still transform correctly without caching
-			expect(result.code).toContain('dangerous_raw_html=');
+			assert.include(result.code, 'dangerous_raw_html=');
 			const raw_html = extract_raw_html(result.code);
-			expect(raw_html).toBe(syntax_styler_global.stylize('const x = 1;', 'ts'));
+			assert.strictEqual(raw_html, syntax_styler_global.stylize('const x = 1;', 'ts'));
 		});
 
 		test('on_error throw mode throws on stylize failure', async () => {
@@ -929,13 +936,14 @@ const y = 2;" lang="ts" />`;
 
 <Code content="const x = 1;" lang="ts" />`;
 
-			await expect(
+			const error = await assert_rejects(() =>
 				preprocess(
 					input,
 					[svelte_preprocess_fuz_code({syntax_styler: bad_styler, on_error: 'throw'})],
 					{filename: 'Test.svelte'},
 				),
-			).rejects.toThrow('test error');
+			);
+			assert.ok(error.message.includes('test error'));
 		});
 
 		test('on_error log mode skips failed transformation', async () => {
@@ -958,8 +966,8 @@ const y = 2;" lang="ts" />`;
 			);
 
 			// Should remain unchanged when error is logged
-			expect(result.code).toContain('content="const x = 1;"');
-			expect(result.code).not.toContain('dangerous_raw_html');
+			assert.include(result.code, 'content="const x = 1;"');
+			assert.notInclude(result.code, 'dangerous_raw_html');
 		});
 	});
 
@@ -975,7 +983,7 @@ const y = 2;" lang="ts" />`;
 
 			// Svelte decodes &amp; to & in the Text node, so stylize receives "a & b"
 			const raw_html = extract_raw_html(result);
-			expect(raw_html).toBe(syntax_styler_global.stylize('a & b', 'ts'));
+			assert.strictEqual(raw_html, syntax_styler_global.stylize('a & b', 'ts'));
 		});
 	});
 });
