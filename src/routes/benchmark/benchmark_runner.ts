@@ -21,7 +21,6 @@ import {implementations, languages, pre_generate_large_contents} from './benchma
 import {analyze_results, calculate_summary, check_high_variance} from './benchmark_stats.js';
 
 /* eslint-disable no-console */
-/* eslint-disable no-await-in-loop */
 
 // Timing validation constants
 const MIN_VALID_TIMING_MS = 0.01;
