@@ -182,16 +182,19 @@ Generated fixtures in `generated/{lang}/` include `.html` (tokenized output) and
 ## Performance
 
 ```bash
-npm run benchmark            # internal performance benchmark (stdout only)
-npm run benchmark:write      # …and update benchmark/results.md
+npm run benchmark            # internal benchmark: stdout + baseline comparison
+npm run benchmark:save       # …and update benchmark/results.md + benchmark/baseline.json
+npm run benchmark:clean      # delete benchmark/baseline.json (re-seed on next --save)
 npm run benchmark:vs         # compare against Prism and Shiki (stdout only)
 npm run benchmark:vs:write   # …and update benchmark/compare/results.md
 ```
 
 The `:vs` suffix (not `:compare`) marks this as a cross-implementation
-shootout to avoid confusion with the baseline-comparison flow used by
-`@fuzdev/fuz_util`'s `benchmark_baseline_compare` in other repos. fuz_code
-itself does not persist baselines — there's no auto-regression detection.
+shootout against external libs (Prism, Shiki) — distinct from the
+in-tree baseline comparison the internal benchmark performs via
+`@fuzdev/fuz_util`'s `benchmark_baseline_compare`. The internal benchmark
+runs the baseline compare on every invocation (free; just reads
+`benchmark/baseline.json`); only `--save` mutates it.
 
 Internal benchmark tests all sample files at normal and 100x sizes. The vs
 comparison tests against Prism and Shiki (JS and Oniguruma engines).
@@ -201,32 +204,50 @@ comparison tests against Prism and Shiki (JS and Oniguruma engines).
 `benchmark/compare/results.md` is linked from `README.md` as evidence for
 the "vastly faster than Shiki" claim — it's load-bearing for the public
 narrative, not just incidental output. `benchmark/results.md` is referenced
-locally as a perf baseline.
+locally as a perf baseline. `benchmark/baseline.json` is the machine-readable
+counterpart used by `benchmark_baseline_compare` for regression detection.
+It's **gitignored** (per the fuz_util/fuz_ui convention) — perf numbers
+vary across machines, so the baseline is a per-developer local tracker,
+re-seeded on each machine that runs benchmarks. PR review still relies on
+the committed `results.md`.
 
-Re-run with `--write` (or use the `:write` script aliases above) after any
-change that could affect tokenizer/stylizer perf. Workflow:
+Workflow:
 
 ```bash
-npm run benchmark:write       # rewrites the Node section of benchmark/results.md
+npm run benchmark             # check current perf against your local baseline
+npm run benchmark:save        # accept the change: rewrites results.md + baseline.json
+npm run benchmark:clean       # nuke the local baseline (re-seed on next --save)
 npm run benchmark:vs:write    # full overwrite of benchmark/compare/results.md
 ```
 
-How the two writers differ:
+`--save` is a single switch by design — accepting a perf change should
+update both the doc artifact and the local regression baseline atomically,
+so they can't drift apart.
+
+How the writers differ:
 
 - **`benchmark:vs:write`** fully overwrites `benchmark/compare/results.md`
   because the file is single-source — every byte comes from
-  `format_comparison_results`.
-- **`benchmark:write`** only rewrites the region between
-  `<!-- node-bench:start -->` and `<!-- node-bench:end -->` in
-  `benchmark/results.md`. The file's `## Browser Benchmark Results`
-  section is hand-pasted from the browser benchmark UI
-  (`src/routes/benchmark/`) and is preserved untouched. If you ever
-  remove the sentinel markers, `--write` will error with a recovery hint
-  rather than guess where to put the content.
+  `format_comparison_results`. No baseline involved.
+- **`benchmark:save`** rewrites two files:
+  1. The region between `<!-- node-bench:start -->` and
+     `<!-- node-bench:end -->` in `benchmark/results.md`. The file's
+     `## Browser Benchmark Results` section is hand-pasted from the
+     browser benchmark UI (`src/routes/benchmark/`) and is preserved
+     untouched. If you ever remove the sentinel markers, `--save` will
+     error with a recovery hint rather than guess where to put the content.
+  2. `benchmark/baseline.json` — a JSON snapshot of the same run, used by
+     `benchmark_baseline_compare` (10% regression threshold, 30-day
+     staleness warning). The baseline compare runs *before* the save, so
+     the run still reports what changed against the prior baseline.
 
 Update the browser section manually after running the browser benchmark
 in dev — there's no auto-write path for it because the inputs only exist
 client-side.
+
+If the baseline schema version in `@fuzdev/fuz_util` advances, a stale
+`baseline.json` is auto-deleted with a warning on next run — re-seed with
+`npm run benchmark:save`. Same fallback applies if the JSON is corrupt.
 
 ## Experimental features
 
