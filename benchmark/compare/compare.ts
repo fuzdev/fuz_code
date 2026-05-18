@@ -2,7 +2,10 @@
 // This allows CI to pass without running `npm install` for the benchmarks.
 // @ts-nocheck
 
+import {writeFile} from 'node:fs/promises';
 import {Benchmark} from '@fuzdev/fuz_util/benchmark.js';
+import {benchmark_format_markdown_grouped} from '@fuzdev/fuz_util/benchmark_format.js';
+import type {BenchmarkGroup, BenchmarkResult} from '@fuzdev/fuz_util/benchmark_types.js';
 
 // Prism imports
 import Prism from 'prismjs';
@@ -36,51 +39,22 @@ const WARMUP_ITERATIONS = 20;
 const LARGE_CONTENT_MULTIPLIER = 100;
 const MIN_ITERATIONS = 3; // Tiny minimum samples because of Shiki's pathological cases with TS
 
-export interface ComparisonResult {
-	implementation: string;
-	language: string;
-	ops_per_sec: number;
-	mean_time: number;
-	samples: number;
-	content_size: 'small' | 'large';
-	total_time: number;
-	operation: 'tokenize' | 'stylize';
-}
-
 const LANGUAGE_MAP = {
-	ts: {
-		prism: 'typescript',
-		shiki: 'typescript',
-		fuz: 'ts',
-	},
-	js: {
-		prism: 'javascript',
-		shiki: 'javascript',
-		fuz: 'js',
-	},
-	css: {
-		prism: 'css',
-		shiki: 'css',
-		fuz: 'css',
-	},
-	html: {
-		prism: 'markup',
-		shiki: 'html',
-		fuz: 'html',
-	},
-	json: {
-		prism: 'json',
-		shiki: 'json',
-		fuz: 'json',
-	},
-	svelte: {
-		prism: 'svelte',
-		shiki: 'svelte',
-		fuz: 'svelte',
-	},
+	ts: {prism: 'typescript', shiki: 'typescript', fuz: 'ts'},
+	js: {prism: 'javascript', shiki: 'javascript', fuz: 'js'},
+	css: {prism: 'css', shiki: 'css', fuz: 'css'},
+	html: {prism: 'markup', shiki: 'html', fuz: 'html'},
+	json: {prism: 'json', shiki: 'json', fuz: 'json'},
+	svelte: {prism: 'svelte', shiki: 'svelte', fuz: 'svelte'},
 } as const;
 
 type SupportedLanguage = keyof typeof LANGUAGE_MAP;
+
+// Operation + size combinations enumerated explicitly so group iteration order
+// matches the README's expected reading flow (tokenize before stylize, small
+// before large) regardless of how `bench.add()` insertion happened to interleave.
+const OPERATIONS = ['tokenize', 'stylize'] as const;
+const SIZES = ['small', 'large'] as const;
 
 const setupShiki = async () => {
 	const langs = [typescript, javascript, css, html, json, svelte];
@@ -110,7 +84,7 @@ const getSampleContent = (lang: SupportedLanguage, large = false) => {
 
 export const run_comparison_benchmark = async (
 	filter?: string,
-): Promise<Array<ComparisonResult>> => {
+): Promise<Array<BenchmarkResult>> => {
 	const bench = new Benchmark({
 		duration_ms: BENCHMARK_TIME,
 		warmup_iterations: WARMUP_ITERATIONS,
@@ -130,24 +104,20 @@ export const run_comparison_benchmark = async (
 
 	console.log(`Testing languages: ${languages_to_test.join(', ')}`);
 
-	// Add benchmarks for each language and content size
 	for (const lang of languages_to_test) {
 		const prism_lang = LANGUAGE_MAP[lang].prism;
 		const shiki_lang = LANGUAGE_MAP[lang].shiki;
 		const fuz_lang = LANGUAGE_MAP[lang].fuz;
 
-		// Test both small and large content
 		for (const large of [false, true]) {
 			const content = getSampleContent(lang, large);
 			const size_label = large ? 'large' : 'small';
 
 			// Tokenization benchmarks (fuz_code and Prism only)
-			// Fuz Code tokenize benchmark
 			bench.add(`fuz_code_tokenize_${lang}_${size_label}`, () => {
 				tokenize_syntax(content, syntax_styler_global.get_lang(fuz_lang));
 			});
 
-			// Prism tokenize benchmark
 			if (Prism.languages[prism_lang]) {
 				bench.add(`prism_tokenize_${lang}_${size_label}`, () => {
 					Prism.tokenize(content, Prism.languages[prism_lang]);
@@ -155,12 +125,10 @@ export const run_comparison_benchmark = async (
 			}
 
 			// Stylization benchmarks (all implementations)
-			// Fuz Code stylize benchmark
 			bench.add(`fuz_code_stylize_${lang}_${size_label}`, () => {
 				syntax_styler_global.stylize(content, fuz_lang);
 			});
 
-			// Prism stylize benchmark
 			if (Prism.languages[prism_lang]) {
 				bench.add(`prism_stylize_${lang}_${size_label}`, () => {
 					Prism.highlight(content, Prism.languages[prism_lang], prism_lang);
@@ -169,12 +137,10 @@ export const run_comparison_benchmark = async (
 				throw new Error(`Prism language not available: ${prism_lang}`);
 			}
 
-			// Shiki JS engine benchmark
 			bench.add(`shiki_js_stylize_${lang}_${size_label}`, () => {
 				shiki_js.codeToHtml(content, {lang: shiki_lang, theme: 'nord'});
 			});
 
-			// Shiki Oniguruma engine benchmark
 			bench.add(`shiki_oniguruma_stylize_${lang}_${size_label}`, () => {
 				shiki_oniguruma.codeToHtml(content, {lang: shiki_lang, theme: 'nord'});
 			});
@@ -182,72 +148,46 @@ export const run_comparison_benchmark = async (
 	}
 
 	console.log('Running benchmarks...');
-	await bench.run();
-
-	// Process results
-	const results: Array<ComparisonResult> = [];
-	const bench_results = bench.results();
-
-	for (const result of bench_results) {
-		// Parse benchmark name: implementation_operation_language_size
-		// Handle multi-word implementations like 'fuz_code' and 'shiki_js'
-		const parts = result.name.split('_');
-		let implementation: string;
-		let operation: 'tokenize' | 'stylize';
-		let language: string;
-		let content_size: 'small' | 'large';
-
-		if (result.name.startsWith('fuz_code_tokenize_')) {
-			implementation = 'fuz_code';
-			operation = 'tokenize';
-			language = parts[3];
-			content_size = parts[4] as 'small' | 'large';
-		} else if (result.name.startsWith('fuz_code_stylize_')) {
-			implementation = 'fuz_code';
-			operation = 'stylize';
-			language = parts[3];
-			content_size = parts[4] as 'small' | 'large';
-		} else if (result.name.startsWith('prism_tokenize_')) {
-			implementation = 'prism';
-			operation = 'tokenize';
-			language = parts[2];
-			content_size = parts[3] as 'small' | 'large';
-		} else if (result.name.startsWith('prism_stylize_')) {
-			implementation = 'prism';
-			operation = 'stylize';
-			language = parts[2];
-			content_size = parts[3] as 'small' | 'large';
-		} else if (result.name.startsWith('shiki_js_stylize_')) {
-			implementation = 'shiki_js';
-			operation = 'stylize';
-			language = parts[3];
-			content_size = parts[4] as 'small' | 'large';
-		} else if (result.name.startsWith('shiki_oniguruma_stylize_')) {
-			implementation = 'shiki_oniguruma';
-			operation = 'stylize';
-			language = parts[3];
-			content_size = parts[4] as 'small' | 'large';
-		} else {
-			console.warn(`Unknown benchmark name format: ${result.name}`);
-			continue;
-		}
-
-		results.push({
-			implementation,
-			language,
-			ops_per_sec: result.stats.ops_per_second,
-			mean_time: result.stats.mean_ns / 1_000_000, // Convert ns to ms
-			samples: result.stats.sample_size,
-			content_size,
-			total_time: result.total_time_ms,
-			operation,
-		});
-	}
-
-	return results;
+	return bench.run();
 };
 
-export const format_comparison_results = (results: Array<ComparisonResult>): string => {
+/**
+ * Build one group per (language, operation, size) so each section's "vs Best"
+ * column compares apples to apples within a fixed workload. fuz_code is the
+ * implicit baseline because it's the fastest in nearly every group — the ratio
+ * column reads as "how much slower competitors are than fuz_code" without
+ * needing to pin the baseline name explicitly (which would produce ugly long
+ * column headers like `vs fuz_code_stylize_ts_large`).
+ *
+ * Each filter narrows by name suffix (`_${lang}_${size}$`) plus an operation
+ * substring so e.g. the "ts tokenize small" group catches only
+ * `fuz_code_tokenize_ts_small` and `prism_tokenize_ts_small`, not the stylize
+ * variants. The trailing `$` matters — without it, "ts_small" would also match
+ * "ts_small_*" if such a name ever existed.
+ */
+const build_groups = (languages: ReadonlyArray<SupportedLanguage>): Array<BenchmarkGroup> => {
+	const groups: Array<BenchmarkGroup> = [];
+	for (const lang of languages) {
+		for (const op of OPERATIONS) {
+			for (const size of SIZES) {
+				const suffix = `_${op}_${lang}_${size}`;
+				groups.push({
+					name: `${lang} ${op} (${size})`,
+					filter: (r) => r.name.endsWith(suffix),
+				});
+			}
+		}
+	}
+	return groups;
+};
+
+export const format_comparison_results = (results: Array<BenchmarkResult>): string => {
+	const languages_in_results: Array<SupportedLanguage> = (
+		Object.keys(LANGUAGE_MAP) as Array<SupportedLanguage>
+	).filter((lang) => results.some((r) => r.name.includes(`_${lang}_`)));
+
+	const groups = build_groups(languages_in_results);
+
 	const lines: Array<string> = [
 		'# Syntax Highlighting Performance Comparison',
 		'',
@@ -255,48 +195,8 @@ export const format_comparison_results = (results: Array<ComparisonResult>): str
 		'',
 		'## Results',
 		'',
-		'| Language+Operation+Size | Implementation | % | Ops/sec | Mean Time (ms) |',
-		'|-------------------------|----------------|---|---------|----------------|',
+		benchmark_format_markdown_grouped(results, groups),
 	];
-
-	// Group results by language+operation+size to find fastest in each group
-	const grouped: Map<string, Array<ComparisonResult>> = new Map();
-	for (const result of results) {
-		const key = `${result.language}_${result.operation}_${result.content_size}`;
-		const group = grouped.get(key) || [];
-		group.push(result);
-		grouped.set(key, group);
-	}
-
-	// Calculate fastest ops/sec for each group
-	const fastest_by_group: Map<string, number> = new Map();
-	for (const [key, group] of grouped) {
-		const fastest = Math.max(...group.map((r) => r.ops_per_sec));
-		fastest_by_group.set(key, fastest);
-	}
-
-	// Sort by: language -> operation (tokenize first) -> content_size (small first) -> ops/sec (fastest first)
-	const sorted_results = results.sort((a, b) => {
-		if (a.language !== b.language) return a.language.localeCompare(b.language);
-		if (a.operation !== b.operation) return a.operation === 'tokenize' ? -1 : 1;
-		if (a.content_size !== b.content_size) return a.content_size === 'small' ? -1 : 1;
-		return b.ops_per_sec - a.ops_per_sec; // Fastest first
-	});
-
-	for (const result of sorted_results) {
-		const group_key = `${result.language}_${result.operation}_${result.content_size}`;
-		const fastest = fastest_by_group.get(group_key) || 1;
-		const percent = ((result.ops_per_sec / fastest) * 100).toFixed(0);
-
-		const ops = result.ops_per_sec.toFixed(2);
-		const time = result.mean_time.toFixed(4);
-		// Use this to diagnose pathological cases to tweak `MIN_ITERATIONS`
-		// const total_time = result.total_time.toFixed(1);
-
-		lines.push(
-			`| ${result.language} ${result.operation} ${result.content_size} | ${result.implementation} | ${percent}% | ${ops} | ${time} |`,
-		);
-	}
 
 	return lines.join('\n');
 };
@@ -309,6 +209,37 @@ export const run_and_print_comparison = async (filter?: string): Promise<void> =
 		const report = format_comparison_results(results);
 
 		console.log(report);
+		console.log('\n✅ Comparison benchmark complete');
+	} catch (error) {
+		console.error('Comparison benchmark failed:', error);
+		throw error;
+	}
+};
+
+/**
+ * Run the comparison, print to stdout, and overwrite the entire results file.
+ * Unlike the Node-bench writer, this one fully replaces the target file because
+ * `format_comparison_results` produces the complete markdown shape (H1 + tables)
+ * and the file has no other hand-curated sections to preserve.
+ *
+ * The README.md `vastly faster` link points to this file (`./benchmark/compare/results.md`),
+ * so keeping it current is load-bearing for the published narrative.
+ */
+export const run_and_save_comparison = async (
+	filter: string | undefined,
+	results_path: string,
+): Promise<void> => {
+	console.log('Starting comparison benchmark...\n');
+
+	try {
+		const results = await run_comparison_benchmark(filter);
+		const report = format_comparison_results(results);
+
+		console.log(report);
+
+		// Trailing newline matches the existing file convention (Prettier-style).
+		await writeFile(results_path, report + '\n', 'utf-8');
+		console.log(`\n✓ Comparison results written to ${results_path}`);
 		console.log('\n✅ Comparison benchmark complete');
 	} catch (error) {
 		console.error('Comparison benchmark failed:', error);

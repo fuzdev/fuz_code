@@ -8,6 +8,11 @@ and modern module support.
 
 For coding conventions, see Skill(fuz-stack).
 
+## Committing
+
+`git add` and `git commit` are denied by `.claude/settings.local.json` in
+this repo — make the edits and stop, the user commits.
+
 ## Gro commands
 
 ```bash
@@ -177,12 +182,51 @@ Generated fixtures in `generated/{lang}/` include `.html` (tokenized output) and
 ## Performance
 
 ```bash
-npm run benchmark           # internal performance benchmark
-npm run benchmark:compare   # compare with Prism and Shiki
+npm run benchmark            # internal performance benchmark (stdout only)
+npm run benchmark:write      # …and update benchmark/results.md
+npm run benchmark:vs         # compare against Prism and Shiki (stdout only)
+npm run benchmark:vs:write   # …and update benchmark/compare/results.md
 ```
 
-Internal benchmark tests all sample files at normal and 100x sizes. Comparison
-benchmark tests against Prism and Shiki (JS and Oniguruma engines).
+The `:vs` suffix (not `:compare`) marks this as a cross-implementation
+shootout to avoid confusion with the baseline-comparison flow used by
+`@fuzdev/fuz_util`'s `benchmark_baseline_compare` in other repos. fuz_code
+itself does not persist baselines — there's no auto-regression detection.
+
+Internal benchmark tests all sample files at normal and 100x sizes. The vs
+comparison tests against Prism and Shiki (JS and Oniguruma engines).
+
+### Updating committed result snapshots
+
+`benchmark/compare/results.md` is linked from `README.md` as evidence for
+the "vastly faster than Shiki" claim — it's load-bearing for the public
+narrative, not just incidental output. `benchmark/results.md` is referenced
+locally as a perf baseline.
+
+Re-run with `--write` (or use the `:write` script aliases above) after any
+change that could affect tokenizer/stylizer perf. Workflow:
+
+```bash
+npm run benchmark:write       # rewrites the Node section of benchmark/results.md
+npm run benchmark:vs:write    # full overwrite of benchmark/compare/results.md
+```
+
+How the two writers differ:
+
+- **`benchmark:vs:write`** fully overwrites `benchmark/compare/results.md`
+  because the file is single-source — every byte comes from
+  `format_comparison_results`.
+- **`benchmark:write`** only rewrites the region between
+  `<!-- node-bench:start -->` and `<!-- node-bench:end -->` in
+  `benchmark/results.md`. The file's `## Browser Benchmark Results`
+  section is hand-pasted from the browser benchmark UI
+  (`src/routes/benchmark/`) and is preserved untouched. If you ever
+  remove the sentinel markers, `--write` will error with a recovery hint
+  rather than guess where to put the content.
+
+Update the browser section manually after running the browser benchmark
+in dev — there's no auto-write path for it because the inputs only exist
+client-side.
 
 ## Experimental features
 

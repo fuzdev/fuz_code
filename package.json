@@ -24,12 +24,14 @@
     "preview": "vite preview",
     "deploy": "gro deploy",
     "benchmark": "gro run benchmark/run_benchmarks.ts",
-    "benchmark:compare": "gro run benchmark/compare/run_compare.ts",
+    "benchmark:write": "gro run benchmark/run_benchmarks.ts --write",
+    "benchmark:vs": "gro run benchmark/compare/run_compare.ts",
+    "benchmark:vs:write": "gro run benchmark/compare/run_compare.ts --write",
     "fixtures:update": "gro src/test/fixtures/update"
   },
   "type": "module",
   "engines": {
-    "node": ">=22.15"
+    "node": ">=24.14"
   },
   "peerDependencies": {
     "@fuzdev/fuz_css": ">=0.47.0",
@@ -59,8 +61,8 @@
   "devDependencies": {
     "@changesets/changelog-git": "^0.2.1",
     "@fuzdev/fuz_css": "^0.58.0",
-    "@fuzdev/fuz_ui": "^0.191.4",
-    "@fuzdev/fuz_util": "^0.57.0",
+    "@fuzdev/fuz_ui": "^0.192.0",
+    "@fuzdev/fuz_util": "^0.60.0",
     "@fuzdev/gro": "^0.198.0",
     "@jridgewell/trace-mapping": "^0.3.31",
     "@ryanatkn/eslint-config": "^0.11.0",

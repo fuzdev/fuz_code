@@ -1,25 +1,33 @@
 # Benchmark Baseline Results
 
+<!-- node-bench:start -->
+
 ## Benchmark Results
 
-| Sample               | Ops/sec  | Mean Time (ms) | Samples |
-| -------------------- | -------- | -------------- | ------- |
-| json_complex         | 28765.42 | 0.0348         | 95760   |
-| css_complex          | 27819.60 | 0.0359         | 95893   |
-| ts_complex           | 1765.08  | 0.5665         | 16594   |
-| html_complex         | 8213.21  | 0.1218         | 66817   |
-| svelte_complex       | 2078.65  | 0.4811         | 19675   |
-| md_complex           | 2074.80  | 0.4820         | 14174   |
-| large:json_complex   | 254.08   | 3.9358         | 2149    |
-| large:css_complex    | 242.57   | 4.1225         | 1688    |
-| large:ts_complex     | 7.34     | 136.2749       | 74      |
-| large:html_complex   | 56.08    | 17.8315        | 460     |
-| large:svelte_complex | 11.51    | 86.8893        | 116     |
-| large:md_complex     | 7.59     | 131.8069       | 76      |
+### Baseline (1x content)
 
-**Total samples benchmarked:** 12 **Average ops/sec:** 5941.33
+| Task Name               | ops/sec   | p50 (μs) | p75 (μs) | p90 (μs) | p95 (μs) | p99 (μs) | min (μs) | max (μs) | vs Best  |
+| ----------------------- | --------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- |
+| baseline:json_complex   | 14,105.92 |    70.71 |    71.28 |    72.16 |    73.80 |    76.42 |    63.64 |    77.29 |    1.87x |
+| baseline:css_complex    | 26,358.74 |    37.85 |    38.36 |    38.88 |    39.23 |    40.13 |    36.03 |    40.66 | baseline |
+| baseline:ts_complex     |  1,746.48 |   570.48 |   577.28 |   588.55 |   597.00 |   608.33 |   555.44 |   612.44 |   15.09x |
+| baseline:html_complex   |  7,490.86 |   132.90 |   134.80 |   136.96 |   139.19 |   142.09 |   129.04 |   143.08 |    3.52x |
+| baseline:svelte_complex |  1,973.04 |   503.06 |   514.39 |   531.22 |   543.57 |   559.71 |   476.60 |   565.30 |   13.36x |
+| baseline:md_complex     |  1,727.16 |   574.59 |   589.10 |   610.00 |   623.85 |   643.13 |   549.70 |   651.22 |   15.26x |
+| baseline:bash_complex   |  3,517.21 |   283.38 |   287.56 |   295.24 |   300.90 |   309.25 |   271.76 |   312.99 |    7.49x |
+### Large (100x content)
 
-**Total samples benchmarked:** 12 **Average ops/sec:** 5862.43
+| Task Name            | ops/sec | p50 (ms) | p75 (ms) | p90 (ms) | p95 (ms) | p99 (ms) | min (ms) | max (ms) | vs Best  |
+| -------------------- | ------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- |
+| large:json_complex   |  249.31 |     3.94 |     4.12 |     4.33 |     4.44 |     4.65 |     3.74 |     4.73 | baseline |
+| large:css_complex    |  243.43 |     4.04 |     4.22 |     4.40 |     4.52 |     4.72 |     3.86 |     4.75 |    1.02x |
+| large:ts_complex     |    6.92 |   136.83 |   161.31 |   167.38 |   169.69 |   177.01 |   119.37 |   189.13 |   36.00x |
+| large:html_complex   |   51.87 |    19.07 |    19.73 |    20.78 |    21.42 |    22.16 |    17.70 |    22.69 |    4.81x |
+| large:svelte_complex |   10.22 |   103.97 |   114.26 |   120.25 |   122.25 |   124.26 |    62.86 |   125.62 |   24.40x |
+| large:md_complex     |    6.41 |   156.64 |   164.23 |   175.05 |   183.18 |   188.04 |   134.53 |   188.66 |   38.89x |
+| large:bash_complex   |   21.45 |    49.33 |    56.09 |    58.21 |    59.37 |    67.50 |    30.78 |    69.13 |   11.62x |
+
+<!-- node-bench:end -->
 
 ## Browser Benchmark Results
 

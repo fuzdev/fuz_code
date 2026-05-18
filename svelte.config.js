@@ -1,7 +1,7 @@
 import {vitePreprocess} from '@sveltejs/vite-plugin-svelte';
 import adapter from '@sveltejs/adapter-static';
 import {create_csp_directives} from '@fuzdev/fuz_ui/csp.js';
-import {csp_trusted_sources_of_fuzdev} from '@fuzdev/fuz_ui/csp_of_fuzdev.js';
+import {csp_directives_of_fuzdev} from '@fuzdev/fuz_ui/csp_of_fuzdev.js';
 import {svelte_preprocess_mdz} from '@fuzdev/fuz_ui/svelte_preprocess_mdz.js';
 
 // Self-referencing import from dist — unavailable on first build after clean checkout,
@@ -28,7 +28,7 @@ export default {
 		},
 		csp: {
 			directives: create_csp_directives({
-				trusted_sources: csp_trusted_sources_of_fuzdev,
+				extend: [csp_directives_of_fuzdev],
 			}),
 		},
 	},
