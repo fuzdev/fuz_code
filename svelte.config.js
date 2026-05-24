@@ -3,6 +3,7 @@ import adapter from '@sveltejs/adapter-static';
 import {create_csp_directives} from '@fuzdev/fuz_ui/csp.js';
 import {csp_directives_of_fuzdev} from '@fuzdev/fuz_ui/csp_of_fuzdev.js';
 import {svelte_preprocess_mdz} from '@fuzdev/fuz_ui/svelte_preprocess_mdz.js';
+import {execSync} from 'node:child_process';
 
 // Self-referencing import from dist — unavailable on first build after clean checkout,
 // but subsequent builds use the preprocessor for static Code compilation.
@@ -31,5 +32,6 @@ export default {
 				extend: [csp_directives_of_fuzdev],
 			}),
 		},
+		version: {name: execSync('git rev-parse HEAD').toString().trim()},
 	},
 };
