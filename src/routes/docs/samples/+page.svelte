@@ -1,10 +1,10 @@
 <script lang="ts">
 	import TomeContent from '@fuzdev/fuz_ui/TomeContent.svelte';
 	import DeclarationLink from '@fuzdev/fuz_ui/DeclarationLink.svelte';
-	import {get_tome_by_name} from '@fuzdev/fuz_ui/tome.js';
+	import {tome_get_by_slug} from '@fuzdev/fuz_ui/tome.js';
 	import {resolve} from '$app/paths';
 
-	const tome = get_tome_by_name('samples');
+	const tome = tome_get_by_slug('samples');
 </script>
 
 <TomeContent {tome}>

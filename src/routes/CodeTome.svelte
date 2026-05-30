@@ -192,7 +192,7 @@ const html = styler.stylize('<div class="example">hello</div>', 'html');`}
 		The <DeclarationLink name="Code" /> component generates HTML with CSS classes for text highlighting.
 		It also includes experimental support for the CSS Custom Highlight API with
 		<DeclarationLink name="CodeHighlight" />, see the
-		<TomeLink name="samples" />
+		<TomeLink slug="samples" />
 		for more.
 	</p>
 </TomeSection>

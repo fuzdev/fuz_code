@@ -7,7 +7,7 @@ import BenchmarkPage from '$routes/docs/benchmark/+page.svelte';
 
 export const tomes: Array<Tome> = [
 	{
-		name: 'usage',
+		slug: 'usage',
 		category: 'guide',
 		Component: UsagePage,
 		related_tomes: ['api', 'samples'],
@@ -19,7 +19,7 @@ export const tomes: Array<Tome> = [
 		related_declarations: ['Code', 'SyntaxStyler', 'syntax_styler_global'],
 	},
 	{
-		name: 'api',
+		slug: 'api',
 		category: 'reference',
 		Component: ApiPage,
 		related_tomes: ['usage'],
@@ -27,7 +27,7 @@ export const tomes: Array<Tome> = [
 		related_declarations: [],
 	},
 	{
-		name: 'library',
+		slug: 'library',
 		category: 'reference',
 		Component: LibraryPage,
 		related_tomes: [],
@@ -35,7 +35,7 @@ export const tomes: Array<Tome> = [
 		related_declarations: [],
 	},
 	{
-		name: 'samples',
+		slug: 'samples',
 		category: 'explore',
 		Component: SamplesPage,
 		related_tomes: ['usage', 'benchmark'],
@@ -43,7 +43,7 @@ export const tomes: Array<Tome> = [
 		related_declarations: ['Code', 'CodeHighlight'],
 	},
 	{
-		name: 'benchmark',
+		slug: 'benchmark',
 		category: 'explore',
 		Component: BenchmarkPage,
 		related_tomes: ['samples'],

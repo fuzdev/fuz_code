@@ -1,9 +1,9 @@
 <script lang="ts">
 	import TomeContent from '@fuzdev/fuz_ui/TomeContent.svelte';
-	import {get_tome_by_name} from '@fuzdev/fuz_ui/tome.js';
+	import {tome_get_by_slug} from '@fuzdev/fuz_ui/tome.js';
 	import {resolve} from '$app/paths';
 
-	const tome = get_tome_by_name('benchmark');
+	const tome = tome_get_by_slug('benchmark');
 </script>
 
 <TomeContent {tome}>
