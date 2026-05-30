@@ -7,7 +7,7 @@ export type HighlightMode = 'auto' | 'ranges' | 'html';
  * Checks for CSS Highlights API support.
  */
 export const supports_css_highlight_api = (): boolean =>
-	!!(globalThis.CSS?.highlights && globalThis.Highlight); // eslint-disable-line @typescript-eslint/no-unnecessary-condition
+	!!(globalThis.CSS?.highlights && globalThis.Highlight);  
 
 /**
  * Manages CSS Custom Highlight API ranges for a single element.

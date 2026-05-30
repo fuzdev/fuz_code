@@ -7,7 +7,7 @@
 	const {
 		BenchmarkedComponent = null,
 		props = null,
-		on_render_complete = () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
+		on_render_complete = () => {},  
 	}: {
 		BenchmarkedComponent: Component<BenchmarkComponentProps> | null;
 		props: BenchmarkComponentProps | null;
