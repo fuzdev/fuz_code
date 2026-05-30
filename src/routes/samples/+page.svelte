@@ -12,7 +12,7 @@
 
 <main class="width_atmost_lg mx_auto py_xl5">
 	<header class="box">
-		<Breadcrumb>🎨</Breadcrumb>
+		<Breadcrumb />
 	</header>
 
 	<section class="mb_xl5">

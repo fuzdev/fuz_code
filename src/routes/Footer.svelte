@@ -3,5 +3,5 @@
 </script>
 
 <section class="mb_xl5 box">
-	<Breadcrumb>🎨</Breadcrumb>
+	<Breadcrumb />
 </section>

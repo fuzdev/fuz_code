@@ -1,6 +1,8 @@
 <script lang="ts">
 	import LibrarySummary from '@fuzdev/fuz_ui/LibrarySummary.svelte';
 	import DocsFooter from '@fuzdev/fuz_ui/DocsFooter.svelte';
+	import {site_context} from '@fuzdev/fuz_ui/site.svelte.js';
+	import {FUZ_DEV_URL} from '@fuzdev/fuz_ui/constants.js';
 	import Card from '@fuzdev/fuz_ui/Card.svelte';
 	import {library_context} from '@fuzdev/fuz_ui/library.svelte.js';
 	import {resolve} from '$app/paths';
@@ -9,6 +11,7 @@
 	import Code from '$lib/Code.svelte';
 
 	const library = library_context.get();
+	const site = site_context.get();
 
 	const svelte_example = '<h1>hello {name}</h1>';
 	const ts_example = 'const x: number = 42;';
@@ -21,9 +24,7 @@
 			<LibrarySummary {library} />
 		</section>
 		<section class="box">
-			<Card href={resolve('/docs')}
-				>docs{#snippet icon()}{library.package_json.glyph}{/snippet}</Card
-			>
+			<Card href={resolve('/docs')}>docs{#snippet icon()}{site.glyph}{/snippet}</Card>
 		</section>
 		<section>
 			<p>
@@ -68,7 +69,7 @@ import Code from '@fuzdev/fuz_code/Code.svelte';`}
 			</div>
 		</section>
 		<section>
-			<DocsFooter {library} root_url="https://www.fuz.dev/" />
+			<DocsFooter repo_url={site.repo_url} root_url={FUZ_DEV_URL} />
 		</section>
 	</div>
 </main>
