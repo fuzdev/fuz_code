@@ -31,7 +31,10 @@ dev server.
 
 - Svelte 5 - component framework (optional peer dep, for Code.svelte)
 - fuz_css (@fuzdev/fuz_css) - CSS variables for theming (optional peer dep)
-- fuz_util (@fuzdev/fuz_util) - utility library (dev only)
+- esm-env - `DEV` flag (required peer)
+- magic-string, zimmerframe - build-time preprocessor helpers (`dependencies`;
+  `svelte_preprocess_fuz_code` only)
+- fuz_util (@fuzdev/fuz_util) - preprocessor helper (required peer)
 - fuz_ui (@fuzdev/fuz_ui) - docs system (dev only)
 
 ## Scope
