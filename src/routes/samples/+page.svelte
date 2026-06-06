@@ -3,11 +3,17 @@
 
 	import Breadcrumb from '@fuzdev/fuz_ui/Breadcrumb.svelte';
 	import DeclarationLink from '@fuzdev/fuz_ui/DeclarationLink.svelte';
+	import {Library, library_context} from '@fuzdev/fuz_ui/library.svelte.js';
 
 	import Code from '$lib/Code.svelte';
 	import CodeHighlight from '$lib/CodeHighlight.svelte';
 	import {samples} from './all.js';
 	import Footer from '$routes/Footer.svelte';
+	import {library_json} from '$routes/library.js';
+
+	// `/samples` renders `DeclarationLink`s, so it provides its own `library_context`
+	// (this page loads the heavy analyzed `modules`; the landing deliberately doesn't).
+	library_context.set(new Library(library_json));
 </script>
 
 <main class="width_atmost_lg mx_auto py_xl5">

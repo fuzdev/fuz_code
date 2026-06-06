@@ -1,16 +1,14 @@
 <script lang="ts">
-	import LibrarySummary from '@fuzdev/fuz_ui/LibrarySummary.svelte';
 	import DocsFooter from '@fuzdev/fuz_ui/DocsFooter.svelte';
 	import {site_context} from '@fuzdev/fuz_ui/site.svelte.js';
 	import {FUZ_DEV_URL} from '@fuzdev/fuz_ui/constants.js';
 	import Card from '@fuzdev/fuz_ui/Card.svelte';
-	import {library_context} from '@fuzdev/fuz_ui/library.svelte.js';
+	import Svg from '@fuzdev/fuz_ui/Svg.svelte';
+	import {logo_fuz_code} from '@fuzdev/fuz_ui/logos.js';
 	import {resolve} from '$app/paths';
-	import DeclarationLink from '@fuzdev/fuz_ui/DeclarationLink.svelte';
 
 	import Code from '$lib/Code.svelte';
 
-	const library = library_context.get();
 	const site = site_context.get();
 
 	const svelte_example = '<h1>hello {name}</h1>';
@@ -21,7 +19,8 @@
 <main class="box width:100% mb_xl5" style:padding="var(--space_xl3) 0">
 	<div class="width_atmost_md">
 		<section class="box" style:padding-top="var(--docs_primary_nav_height, 60px)">
-			<LibrarySummary {library} />
+			<h1>fuz_code</h1>
+			<Svg data={logo_fuz_code} size="var(--icon_size_xl2)" />
 		</section>
 		<section class="box">
 			<Card href={resolve('/docs')}>docs{#snippet icon()}{site.glyph}{/snippet}</Card>
@@ -38,7 +37,7 @@
 				<a href={resolve('/docs')}>docs</a>.
 			</p>
 			<p>
-				To use fuz_css with Svelte, import the theme CSS file and <DeclarationLink name="Code" /> component:
+				To use fuz_css with Svelte, import the theme CSS file and <code>Code</code> component:
 			</p>
 			<Code
 				lang="ts"
