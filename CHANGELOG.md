@@ -1,5 +1,15 @@
 # @fuzdev/fuz_code
 
+## 0.46.0
+
+### Minor Changes
+
+- fix: reclassify preprocessor deps ([b0d5932](https://github.com/fuzdev/fuz_code/commit/b0d5932))
+  - `magic-string` and `zimmerframe` from optional peers to `dependencies`
+  - `@fuzdev/fuz_util` from an optional to a required
+
+- upgrade peer deps ([b89eabd](https://github.com/fuzdev/fuz_code/commit/b89eabd))
+
 ## 0.45.1
 
 ### Patch Changes
