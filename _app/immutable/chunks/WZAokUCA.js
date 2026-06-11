@@ -1,0 +1,1 @@
+import{i as o,o as v,g as l,E as m,q as y,u as f,l as p,k as i,v as T,m as g}from"./3oaGApvr.js";import{B as A}from"./BJe31AP3.js";function k(d,_,e){var s;o&&(s=g,v());var r=new A(d);l(()=>{var a=_()??null;if(o){var h=y(s),u=h===T,c=a!==null;if(u!==c){var t=f();p(t),r.anchor=t,i(!1),r.ensure(a,a&&(n=>e(n,a))),i(!0);return}}r.ensure(a,a&&(n=>e(n,a)))},m)}export{k as c};
