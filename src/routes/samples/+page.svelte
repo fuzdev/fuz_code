@@ -13,7 +13,8 @@
 
 	// `/samples` renders `DeclarationLink`s, so it provides its own `library_context`
 	// (this page loads the heavy analyzed `modules`; the landing deliberately doesn't).
-	library_context.set(new Library(library_json));
+	const library = new Library(library_json);
+	library_context.set(() => library);
 </script>
 
 <main class="width_atmost_lg mx_auto py_xl5">
