@@ -138,6 +138,14 @@ export class HighlightManager {
 			}
 		}
 
+		// TODO: cross-instance coupling -- all managers share one global `Highlight`
+		// per token type, so re-highlighting one element (e.g. a textarea on every
+		// keystroke) mutates highlights that also hold ranges from every other code
+		// block on the page, forcing the browser to re-evaluate the shared set.
+		// Isolating per-instance needs unique highlight names + runtime-injected
+		// `::highlight()` CSS (≈50 token types × N instances), trading the static
+		// theme file for generated CSS. Only worth it with many concurrently-updating
+		// instances; revisit if profiling shows it.
 		for (const [name, ranges] of ranges_by_name) {
 			this.element_ranges.set(name, ranges);
 

@@ -15,14 +15,11 @@
 	 * render font-weight/font-style. Requires importing `theme_highlight.css`.
 	 */
 
-	import {onDestroy} from 'svelte';
-	import {DEV} from 'esm-env';
 	import type {SvelteHTMLElements} from 'svelte/elements';
 
 	import {syntax_styler_global} from './syntax_styler_global.js';
 	import type {SyntaxStyler, SyntaxGrammar} from './syntax_styler.js';
-	import {tokenize_syntax} from './tokenize_syntax.js';
-	import {HighlightManager, supports_css_highlight_api} from './highlight_manager.js';
+	import {create_range_highlighting} from './range_highlighting.svelte.js';
 
 	let {
 		value = $bindable(''),
@@ -49,33 +46,20 @@
 	let backdrop: HTMLElement | undefined = $state.raw();
 	let textarea: HTMLTextAreaElement | undefined = $state.raw();
 
-	const highlight_manager = supports_css_highlight_api() ? new HighlightManager() : null;
-
-	const language_supported = $derived(lang !== null && !!syntax_styler.langs[lang]);
-	const highlighting_disabled = $derived(lang === null || (!language_supported && !grammar));
-
 	// A trailing newline keeps the backdrop's last line aligned with the textarea:
 	// a textarea shows an empty final line after a trailing "\n", which a <pre>
 	// would otherwise collapse. Rendered as a single expression -> one text node,
 	// and tokenized as-is so range positions match the text node exactly.
 	const display_text = $derived(value + '\n');
 
-	// Tokenize once per (display_text, grammar, lang) change. Memoized in a
-	// `$derived` so unrelated reactivity doesn't re-tokenize the whole document.
-	const range_tokens = $derived.by(() => {
-		if (!highlight_manager || highlighting_disabled) return null;
-		return tokenize_syntax(display_text, grammar || syntax_styler.get_lang(lang!)); // ! safe bc of `highlighting_disabled`
+	create_range_highlighting({
+		element: () => backdrop,
+		text: () => display_text,
+		lang: () => lang,
+		grammar: () => grammar,
+		syntax_styler: () => syntax_styler,
+		dev_label: 'CodeTextarea',
 	});
-
-	if (highlight_manager) {
-		$effect(() => {
-			if (!backdrop || !range_tokens) {
-				highlight_manager.clear_element_ranges();
-				return;
-			}
-			highlight_manager.highlight_from_syntax_tokens(backdrop, range_tokens);
-		});
-	}
 
 	// keep the (overflow-hidden) backdrop aligned with the textarea's scroll position
 	const sync_scroll = () => {
@@ -83,21 +67,6 @@
 		backdrop.scrollTop = textarea.scrollTop;
 		backdrop.scrollLeft = textarea.scrollLeft;
 	};
-
-	if (DEV) {
-		$effect(() => {
-			if (lang && !language_supported && !grammar) {
-				const langs = Object.keys(syntax_styler.langs).join(', ');
-				// eslint-disable-next-line no-console
-				console.error(
-					`[CodeTextarea] Language "${lang}" is not supported and no custom grammar provided. ` +
-						`Highlighting disabled. Supported: ${langs}`,
-				);
-			}
-		});
-	}
-
-	onDestroy(() => highlight_manager?.destroy());
 </script>
 
 <div class="code_textarea" data-lang={lang}>
