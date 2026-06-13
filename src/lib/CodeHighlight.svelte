@@ -152,19 +152,21 @@
 		return syntax_styler.stylize(content, lang!, grammar); // ! is safe bc of the `highlighting_disabled` calculation
 	});
 
+	// Tokenize once per (content, grammar, lang) change in range mode. Memoized in
+	// a `$derived` so unrelated reactivity doesn't trigger a full re-tokenization.
+	const range_tokens = $derived.by(() => {
+		if (!use_ranges || !content || highlighting_disabled) return null;
+		return tokenize_syntax(content, grammar || syntax_styler.get_lang(lang!)); // ! is safe bc of the `highlighting_disabled` calculation
+	});
+
 	// Apply highlights for range mode
 	if (highlight_manager) {
 		$effect(() => {
-			if (!code_element || !content || !use_ranges || highlighting_disabled) {
+			if (!code_element || !range_tokens) {
 				highlight_manager.clear_element_ranges();
 				return;
 			}
-
-			// Get tokens from syntax styler
-			const tokens = tokenize_syntax(content, grammar || syntax_styler.get_lang(lang!)); // ! is safe bc of the `highlighting_disabled` calculation
-
-			// Apply highlights
-			highlight_manager.highlight_from_syntax_tokens(code_element, tokens);
+			highlight_manager.highlight_from_syntax_tokens(code_element, range_tokens);
 		});
 	}
 

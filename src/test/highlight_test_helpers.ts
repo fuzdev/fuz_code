@@ -6,8 +6,28 @@
  */
 
 // Mock implementation of CSS Custom Highlight API
-export class MockHighlight extends Set<Range> {
+export class MockHighlight extends Set<AbstractRange> {
 	priority = 0;
+}
+
+// Mock StaticRange (the manager's preferred, non-live range kind)
+export class MockStaticRange {
+	startContainer: Node;
+	startOffset: number;
+	endContainer: Node;
+	endOffset: number;
+
+	constructor(init: {
+		startContainer: Node;
+		startOffset: number;
+		endContainer: Node;
+		endOffset: number;
+	}) {
+		this.startContainer = init.startContainer;
+		this.startOffset = init.startOffset;
+		this.endContainer = init.endContainer;
+		this.endOffset = init.endOffset;
+	}
 }
 
 // Mock Range class with bounds validation
@@ -55,6 +75,7 @@ export interface SavedGlobals {
 	css: any;
 	highlight: any;
 	range: any;
+	static_range: any;
 	node: any;
 }
 
@@ -66,6 +87,7 @@ export function setup_mock_highlight_api(): SavedGlobals {
 		css: (globalThis as any).CSS,
 		highlight: (globalThis as any).Highlight,
 		range: (globalThis as any).Range,
+		static_range: (globalThis as any).StaticRange,
 		node: (globalThis as any).Node,
 	};
 
@@ -75,6 +97,7 @@ export function setup_mock_highlight_api(): SavedGlobals {
 	};
 	(globalThis as any).Highlight = MockHighlight;
 	(globalThis as any).Range = MockRange;
+	(globalThis as any).StaticRange = MockStaticRange;
 
 	// Mock Node with TEXT_NODE constant
 	(globalThis as any).Node = {
@@ -93,6 +116,7 @@ export function restore_globals(saved: SavedGlobals): void {
 	(globalThis as any).CSS = saved.css;
 	(globalThis as any).Highlight = saved.highlight;
 	(globalThis as any).Range = saved.range;
+	(globalThis as any).StaticRange = saved.static_range;
 	(globalThis as any).Node = saved.node;
 }
 
