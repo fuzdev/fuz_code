@@ -1,5 +1,11 @@
 # @fuzdev/fuz_code
 
+## 0.46.1
+
+### Patch Changes
+
+- feat: add `CodeTextarea` ([#34](https://github.com/fuzdev/fuz_code/pull/34))
+
 ## 0.46.0
 
 ### Minor Changes
