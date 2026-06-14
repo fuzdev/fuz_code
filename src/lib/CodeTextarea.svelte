@@ -26,6 +26,7 @@
 		lang = 'svelte',
 		grammar,
 		syntax_styler = syntax_styler_global,
+		wrapper_attrs,
 		...rest
 	}: SvelteHTMLElements['textarea'] & {
 		/** The editable source code. Bindable. */
@@ -39,6 +40,15 @@
 		grammar?: SyntaxGrammar | undefined;
 		/** Custom `SyntaxStyler` instance (defaults to the global one). */
 		syntax_styler?: SyntaxStyler;
+		/**
+		 * Attributes for the wrapper `<div>` — the layout box that the textarea
+		 * fills and `resize` grows. Use it for sizing/layout classes, `style`,
+		 * `id`, or container-level handlers. Its `class` is merged with the
+		 * internal `code_textarea` class; `data-lang` stays component-controlled.
+		 * (`...rest` spreads onto the `<textarea>`; the backdrop `<pre>` is
+		 * internal and intentionally not exposed.)
+		 */
+		wrapper_attrs?: SvelteHTMLElements['div'];
 	} = $props();
 
 	// the backdrop <pre> holds the text node that gets highlighted *and* is the
@@ -69,7 +79,7 @@
 	};
 </script>
 
-<div class="code_textarea" data-lang={lang}>
+<div {...wrapper_attrs} class={['code_textarea', wrapper_attrs?.class]} data-lang={lang}>
 	<pre class="code_textarea_backdrop" aria-hidden="true" bind:this={backdrop}>{display_text}</pre>
 	<textarea
 		bind:this={textarea}
