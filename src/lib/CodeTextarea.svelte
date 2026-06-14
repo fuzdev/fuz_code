@@ -85,14 +85,8 @@
 
 <style>
 	.code_textarea {
-		display: grid;
 		position: relative;
 		width: 100%;
-	}
-
-	/* stack the backdrop and textarea in the same grid cell so they coincide */
-	.code_textarea > :global(*) {
-		grid-area: 1 / 1;
 	}
 
 	/* metrics shared by both layers so characters align exactly */
@@ -117,14 +111,24 @@
 		scrollbar-gutter: stable;
 	}
 
+	/* the backdrop is taken out of flow so the in-flow textarea (its `rows`/resize)
+	   defines the box; `inset: 0` makes the backdrop fill and clip to that box,
+	   scrolled programmatically to match the textarea */
 	.code_textarea_backdrop {
+		position: absolute;
+		inset: 0;
 		pointer-events: none;
 		user-select: none;
-		overflow: hidden; /* scrolled programmatically to match the textarea */
+		overflow: hidden;
 		color: var(--text_color, currentColor);
 	}
 
 	.code_textarea textarea {
+		/* sits above the backdrop so the caret and selection are visible; the
+		   textarea is the only in-flow layer, so it sizes the container */
+		position: relative;
+		z-index: 1;
+		display: block;
 		background-color: transparent;
 		/* the textarea's own text is invisible; the backdrop shows through */
 		color: transparent;
