@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" href="/favicon.png" />
+		<link rel="icon" href="/logo.svg" sizes="any" type="image/svg+xml" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+		<script>
+			document.documentElement.classList.add(
+				((c) =>
+					c === 'dark' || (c !== 'light' && matchMedia('(prefers-color-scheme:dark)').matches)
+						? 'dark'
+						: 'light')(localStorage.getItem('fuz:color-scheme')),
+			);
+		</script>
+
+		<meta http-equiv="content-security-policy" content="child-src 'none'; default-src 'none'; frame-src 'self' https://*.fuz.dev/ https://*.zzz.software/; worker-src 'self' blob: 'wasm-unsafe-eval'; connect-src 'self' https://*.fuz.dev/ https://*.zzz.software/; font-src 'self' data: https://*.fuz.dev/ https://*.zzz.software/; img-src 'self' data: blob: filesystem: https://*.fuz.dev/ https://*.zzz.software/; manifest-src 'self'; media-src 'self' data: blob: mediastream: filesystem: https://*.fuz.dev/ https://*.zzz.software/; object-src 'none'; script-src 'self' 'wasm-unsafe-eval' 'sha256-QOxqn7EUzb3ydF9SALJoJGWSvywW9R0AfTDSenB83Z8=' 'sha256-plGJ9fp4HdUK1IjtCd5jlb91lLWbHanSYX3+xS5Ywiw='; script-src-elem 'self' 'sha256-QOxqn7EUzb3ydF9SALJoJGWSvywW9R0AfTDSenB83Z8=' 'sha256-plGJ9fp4HdUK1IjtCd5jlb91lLWbHanSYX3+xS5Ywiw='; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; style-src-elem 'self' 'unsafe-inline'; style-src-attr 'unsafe-inline'; base-uri 'none'; form-action 'self'; upgrade-insecure-requests">
+		<link href="/_app/immutable/entry/start.D_IcfcwY.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/BQ_iMmU9.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/DpHXyBDF.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/BeOWsgp8.js" rel="modulepreload">
+		<link href="/_app/immutable/entry/app.g7PwkTa2.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/DsnmJJEf.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/Cu2XeeBn.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/CzBWFMDD.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/3CHK4HtA.js" rel="modulepreload">
+		<link href="/_app/immutable/nodes/0.BryOsfNW.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/DBrB86pb.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/cUVNMsD5.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/D4Se3Zx-.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/BUBUPWZl.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/DrTwKrQ_.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/jiBnQQhQ.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/B8bxutQF.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/Dfg2wghV.js" rel="modulepreload">
+		<link href="/_app/immutable/nodes/14.Cm8h9ceb.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/Cc1vDixq.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/CLWzRhaO.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/BRNXd_v1.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/PzW1W1z6.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/CUmjVilk.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/CHZoxO_y.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/ByLcwlWw.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/JoQcTO7b.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/QdJR5zUW.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/D9dPtGit.js" rel="modulepreload">
+		<!--12qhfyh--><!----><!--4fa0a9--><!--[-1--><!--]--><!----><title>@fuzdev/fuz_code</title>
+		<link href="/_app/immutable/assets/0.CvBxI8nR.css" rel="stylesheet">
+		<link href="/_app/immutable/assets/Svg.C_lYjQf_.css" rel="stylesheet">
+		<link href="/_app/immutable/assets/Breadcrumb.WXbxZC1L.css" rel="stylesheet">
+		<link href="/_app/immutable/assets/Footer.B3gqmqUr.css" rel="stylesheet">
+		<link href="/_app/immutable/assets/14.DY7H7CZJ.css" rel="stylesheet">
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents"><!--[--><!--[0--><!--[--><!--[-1--><!--[--><main class="width_atmost_md mx_auto py_xl5"><header class="box"><div class="breadcrumb  svelte-1k0skcb"><a href="/" class="svelte-1k0skcb"><!--[1--><svg viewBox="0 0 100 100" aria-label="a friendly pink spider facing you" style="width: 1em; height: 1em; flex-shrink: 1;" class="svelte-1b36jzq"><!--[-1--><!--]--><!--[0--><!--[--><path fill="#e55d95" d="M 26.253917,88.532336 29.904106,71.394855 40.667193,53.342811 40.258534,49.99234 38.417407,49.000991 22.876908,50.369035 9.4865496,53.880193 2.3019024,57.978424 0.42708056,57.27994 7.2642726,51.086985 20.811326,45.373351 37.960128,42.356792 39.354818,40.107008 38.229925,38.149883 26.030989,27.105568 14.46539,21.861786 8.0479986,18.615387 l -0.41428,-1.710463 8.2789464,1.499862 13.012873,5.003724 13.447448,10.696856 1.680801,-0.729547 0.222439,-1.343157 -3.983998,-12.128053 -5.730215,-9.573597 -0.823624,-5.1744052 1.16944,-1.165102 2.604334,6.3355162 6.612025,7.08777 4.874534,11.55989 2.800804,0.515574 4.48815,-1.359246 1.521623,-8.687062 5.685014,-8.620764 2.75965,-6.8316782 1.094578,1.128569 -1.293029,5.4222362 -4.084776,11.06803 -0.484994,8.377408 0.194311,1.192896 1.42954,1.700726 11.563936,-10.644623 9.878262,-8.331535 8.732915,-3.390708 -0.387305,1.402757 -5.294686,3.023816 -10.445054,10.705792 -9.561599,13.627899 -0.438945,1.602755 1.001398,1.666754 17.376932,3.986302 9.537375,6.940531 4.325785,4.636405 0.211208,1.557106 -6.15842,-4.279925 -10.413771,-5.155697 -15.838715,-1.696223 -0.83461,1.144484 0.774499,2.593247 9.737644,16.194355 3.925704,17.214082 0.07146,10.277289 -1.706242,1.13628 -2.009721,-9.21637 -5.894265,-16.88027 -12.292087,-17.295813 -4.177778,-0.585888 -7.294671,2.935716 -11.138052,16.645915 -6.462422,17.752509 -1.634756,7.206641 -2.070766,-1.52923 z" class="svelte-1b36jzq"></path><!--]--><!--]--></svg><!--]--></a><!--[--><!--[-1--><span class="separator svelte-1k0skcb"><!--[-1-->/<!--]--></span><!--]--><!--[0--><a href="/textarea" class="svelte-1k0skcb selected">textarea</a><!--]--><!--]--></div><!----></header> <section class="mb_xl3"><h2 class="text-align:center">Editable highlighted textarea (experimental)</h2> <aside class="panel p_md mb_lg"><p><code>CodeTextarea</code> highlights an editable <code>&lt;textarea></code> live using
+				the <a href="https://developer.mozilla.org/en-US/docs/Web/API/CSS_Custom_Highlight_API">CSS Custom Highlight API</a>. Type below to see it re-highlight. Requires <code>theme_highlight.css</code>.</p> <!--[0--><p class="color_e_50">⚠️ This browser does not support the CSS Custom Highlight API — the textarea still works,
+					but text is shown without highlighting.</p><!--]--></aside> <div class="row gap_xs mb_md flex-wrap:wrap"><!--[--><button type="button">json</button><button type="button">css</button><button type="button" class="selected">ts</button><button type="button">html</button><button type="button">svelte</button><button type="button">md</button><button type="button">bash</button><!--]--></div> <div class="code_textarea svelte-mb7dmw" data-lang="ts"><pre class="code_textarea_backdrop svelte-mb7dmw" aria-hidden="true">const a = 1;
+
+const b: string = 'b';
+
+const c = true;
+
+export type SomeType = 1 | 'b' | true;
+
+declare const some_decorator: any;
+
+abstract class Base {
+	abstract abstract_method(): void;
+}
+
+/* eslint-disable no-console */
+
+@some_decorator
+class D extends Base {
+	readonly d1: string = 'd';
+	d2: number;
+	d3 = $state(null);
+
+	@some_decorator
+	decorated = true;
+
+	constructor(d2: number) {
+		super();
+		this.d2 = d2;
+	}
+
+	abstract_method(): void {
+		// implementation
+	}
+
+	@some_decorator('example', {option: true})
+	class_method(): string {
+		return `Hello, ${this.d1}`;
+	}
+
+	instance_method = (): void => {
+		/* ... */
+		let i = 0;
+		do {
+			i++;
+		} while (i &lt; 3);
+
+		for (const c2 of this.d1) {
+			if (c2 === 'd') continue;
+			if (!c2) break;
+			this.#private_method(a, c2);
+		}
+
+		switch (this.d1) {
+			case 'a':
+				console.log('case a');
+				break;
+			case 'b':
+			case 'c':
+				console.log('case b or c');
+				break;
+			default:
+				console.log('default');
+		}
+
+		const obj: {has_d1?: boolean; is_d: boolean} = {
+			has_d1: 'd1' in this,
+			is_d: this instanceof D,
+		};
+		delete obj.has_d1;
+		// foo
+	};
+
+	#private_method(a2: number, c2: any): void {
+		throw new Error(`${this.d1}
+			multiline
+			etc ${a2 + c2}
+		`);
+	}
+
+	*generator(): Generator&lt;number | Array&lt;number>> {
+		yield 1;
+		yield* [2, 3];
+	}
+
+	async *async_generator(): AsyncGenerator&lt;number> {
+		yield await Promise.resolve(4);
+	}
+
+	protected async protected_method(): Promise&lt;void> {
+		try {
+			await new Promise((resolve) => setTimeout(resolve, 100));
+			if (Math.random() > 0.5) {
+				console.log(new Date());
+			} else if (Math.random() > 0.2) {
+				console.log('else if branch');
+			} else {
+				console.log('else branch');
+			}
+		} catch (error: unknown) {
+			console.error(error);
+		} finally {
+			console.log('finally block');
+		}
+	}
+}
+
+// comment
+
+/*
+other comment
+
+const comment = false;
+*/
+
+/**
+ * JSDoc comment
+ */
+
+import {sample_langs, type SampleLang} from '../../../lib/code_sample.js';
+import * as A from '../../../lib/code_sample.js';
+
+export {a, A, b, c, D};
+
+sample_langs as unknown as SampleLang satisfies SampleLang;
+
+export interface SomeE&lt;T = null> {
+	name: string;
+	age: number;
+	t?: T;
+}
+
+const e: {name: string; age: number} = {name: 'A. H.', age: 100};
+const v = [['', e]] as const;
+export const some_e: Map&lt;string, SomeE> = new Map(v);
+
+export function add(x: number, y: number): number {
+	return x + y;
+}
+
+export const plus = (a: any, b: any): any => a + b;
+
+// boundary test cases
+export const str_with_keywords = 'const class function string';
+export const str_with_comment = '// this is not a comment';
+export const template_with_expr = `Value: ${1 + 2}`;
+
+// regex that looks like comment
+export const regex = /\/\/.*/g;
+export const complex_regex = /^(?:\/\*.*?\*\/|\/\/.*|[^/])+$/;
+
+// string in comment should not be highlighted as string
+// const commented = "this string is in a comment";
+
+</pre> <textarea spellcheck="false" rows="20" class="svelte-mb7dmw">const a = 1;
+
+const b: string = 'b';
+
+const c = true;
+
+export type SomeType = 1 | 'b' | true;
+
+declare const some_decorator: any;
+
+abstract class Base {
+	abstract abstract_method(): void;
+}
+
+/* eslint-disable no-console */
+
+@some_decorator
+class D extends Base {
+	readonly d1: string = 'd';
+	d2: number;
+	d3 = $state(null);
+
+	@some_decorator
+	decorated = true;
+
+	constructor(d2: number) {
+		super();
+		this.d2 = d2;
+	}
+
+	abstract_method(): void {
+		// implementation
+	}
+
+	@some_decorator('example', {option: true})
+	class_method(): string {
+		return `Hello, ${this.d1}`;
+	}
+
+	instance_method = (): void => {
+		/* ... */
+		let i = 0;
+		do {
+			i++;
+		} while (i &lt; 3);
+
+		for (const c2 of this.d1) {
+			if (c2 === 'd') continue;
+			if (!c2) break;
+			this.#private_method(a, c2);
+		}
+
+		switch (this.d1) {
+			case 'a':
+				console.log('case a');
+				break;
+			case 'b':
+			case 'c':
+				console.log('case b or c');
+				break;
+			default:
+				console.log('default');
+		}
+
+		const obj: {has_d1?: boolean; is_d: boolean} = {
+			has_d1: 'd1' in this,
+			is_d: this instanceof D,
+		};
+		delete obj.has_d1;
+		// foo
+	};
+
+	#private_method(a2: number, c2: any): void {
+		throw new Error(`${this.d1}
+			multiline
+			etc ${a2 + c2}
+		`);
+	}
+
+	*generator(): Generator&lt;number | Array&lt;number>> {
+		yield 1;
+		yield* [2, 3];
+	}
+
+	async *async_generator(): AsyncGenerator&lt;number> {
+		yield await Promise.resolve(4);
+	}
+
+	protected async protected_method(): Promise&lt;void> {
+		try {
+			await new Promise((resolve) => setTimeout(resolve, 100));
+			if (Math.random() > 0.5) {
+				console.log(new Date());
+			} else if (Math.random() > 0.2) {
+				console.log('else if branch');
+			} else {
+				console.log('else branch');
+			}
+		} catch (error: unknown) {
+			console.error(error);
+		} finally {
+			console.log('finally block');
+		}
+	}
+}
+
+// comment
+
+/*
+other comment
+
+const comment = false;
+*/
+
+/**
+ * JSDoc comment
+ */
+
+import {sample_langs, type SampleLang} from '../../../lib/code_sample.js';
+import * as A from '../../../lib/code_sample.js';
+
+export {a, A, b, c, D};
+
+sample_langs as unknown as SampleLang satisfies SampleLang;
+
+export interface SomeE&lt;T = null> {
+	name: string;
+	age: number;
+	t?: T;
+}
+
+const e: {name: string; age: number} = {name: 'A. H.', age: 100};
+const v = [['', e]] as const;
+export const some_e: Map&lt;string, SomeE> = new Map(v);
+
+export function add(x: number, y: number): number {
+	return x + y;
+}
+
+export const plus = (a: any, b: any): any => a + b;
+
+// boundary test cases
+export const str_with_keywords = 'const class function string';
+export const str_with_comment = '// this is not a comment';
+export const template_with_expr = `Value: ${1 + 2}`;
+
+// regex that looks like comment
+export const regex = /\/\/.*/g;
+export const complex_regex = /^(?:\/\*.*?\*\/|\/\/.*|[^/])+$/;
+
+// string in comment should not be highlighted as string
+// const commented = "this string is in a comment";
+</textarea></div><!----></section> <section class="mb_xl5 box"><div class="breadcrumb  svelte-1k0skcb"><a href="/" class="svelte-1k0skcb"><!--[1--><svg viewBox="0 0 100 100" aria-label="a friendly pink spider facing you" style="width: 1em; height: 1em; flex-shrink: 1;" class="svelte-1b36jzq"><!--[-1--><!--]--><!--[0--><!--[--><path fill="#e55d95" d="M 26.253917,88.532336 29.904106,71.394855 40.667193,53.342811 40.258534,49.99234 38.417407,49.000991 22.876908,50.369035 9.4865496,53.880193 2.3019024,57.978424 0.42708056,57.27994 7.2642726,51.086985 20.811326,45.373351 37.960128,42.356792 39.354818,40.107008 38.229925,38.149883 26.030989,27.105568 14.46539,21.861786 8.0479986,18.615387 l -0.41428,-1.710463 8.2789464,1.499862 13.012873,5.003724 13.447448,10.696856 1.680801,-0.729547 0.222439,-1.343157 -3.983998,-12.128053 -5.730215,-9.573597 -0.823624,-5.1744052 1.16944,-1.165102 2.604334,6.3355162 6.612025,7.08777 4.874534,11.55989 2.800804,0.515574 4.48815,-1.359246 1.521623,-8.687062 5.685014,-8.620764 2.75965,-6.8316782 1.094578,1.128569 -1.293029,5.4222362 -4.084776,11.06803 -0.484994,8.377408 0.194311,1.192896 1.42954,1.700726 11.563936,-10.644623 9.878262,-8.331535 8.732915,-3.390708 -0.387305,1.402757 -5.294686,3.023816 -10.445054,10.705792 -9.561599,13.627899 -0.438945,1.602755 1.001398,1.666754 17.376932,3.986302 9.537375,6.940531 4.325785,4.636405 0.211208,1.557106 -6.15842,-4.279925 -10.413771,-5.155697 -15.838715,-1.696223 -0.83461,1.144484 0.774499,2.593247 9.737644,16.194355 3.925704,17.214082 0.07146,10.277289 -1.706242,1.13628 -2.009721,-9.21637 -5.894265,-16.88027 -12.292087,-17.295813 -4.177778,-0.585888 -7.294671,2.935716 -11.138052,16.645915 -6.462422,17.752509 -1.634756,7.206641 -2.070766,-1.52923 z" class="svelte-1b36jzq"></path><!--]--><!--]--></svg><!--]--></a><!--[--><!--[-1--><span class="separator svelte-1k0skcb"><!--[-1-->/<!--]--></span><!--]--><!--[0--><a href="/textarea" class="svelte-1k0skcb selected">textarea</a><!--]--><!--]--></div><!----></section><!----></main><!--]--><!--]--><!----><!----><!--]--><!--]--> <!--[-1--><!--]--><!--]-->
+			
+			<script>
+				{
+					__sveltekit_155tmc0 = {
+						base: ""
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("/_app/immutable/entry/start.D_IcfcwY.js"),
+						import("/_app/immutable/entry/app.g7PwkTa2.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element, {
+							node_ids: [0, 14],
+							data: [null,null],
+							form: null,
+							error: null
+						});
+					});
+				}
+			</script>
+		</div>
+	</body>
+</html>
