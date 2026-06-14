@@ -1,7 +1,6 @@
 import {onDestroy} from 'svelte';
 import {DEV} from 'esm-env';
 
-import {tokenize_syntax} from './tokenize_syntax.js';
 import type {SyntaxStyler, SyntaxGrammar} from './syntax_styler.js';
 import {HighlightManager, supports_css_highlight_api} from './highlight_manager.js';
 
@@ -61,10 +60,10 @@ export const create_range_highlighting = (options: RangeHighlightingOptions): Ra
 		if (!manager || !is_enabled() || highlighting_disabled) return null;
 		const text = options.text();
 		if (!text) return null;
-		return tokenize_syntax(
-			text,
-			options.grammar() || options.syntax_styler().get_lang(options.lang()!),
-		); // ! safe bc of `highlighting_disabled`
+		// route through the styler so `before_tokenize`/`after_tokenize` hooks run,
+		// matching `stylize`'s HTML path; `grammar` undefined falls back to the
+		// registered lang grammar (`! safe bc of `highlighting_disabled`)
+		return options.syntax_styler().tokenize(text, options.lang()!, options.grammar());
 	});
 
 	if (manager) {

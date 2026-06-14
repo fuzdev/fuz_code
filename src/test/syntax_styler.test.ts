@@ -593,3 +593,66 @@ describe('tokenization consistency', () => {
 		assert.ok(result.includes(long_content), 'Should preserve long string content');
 	});
 });
+
+describe('tokenize (hooked tokenization)', () => {
+	test('matches the bare tokenize_syntax stream when no hooks are registered', () => {
+		const syntax_styler = create_styler_with_grammars();
+		const code = 'const x = 1;';
+		assert.deepEqual(
+			syntax_styler.tokenize(code, 'js'),
+			tokenize_syntax(code, syntax_styler.get_lang('js')),
+		);
+	});
+
+	test('runs before_tokenize and after_tokenize hooks (which bare tokenize_syntax skips)', () => {
+		const syntax_styler = create_styler_with_grammars();
+		let before_lang: string | undefined;
+		let after_token_count: number | undefined;
+		syntax_styler.add_hook_before_tokenize((ctx) => {
+			before_lang = ctx.lang;
+		});
+		syntax_styler.add_hook_after_tokenize((ctx) => {
+			after_token_count = ctx.tokens.length;
+		});
+
+		const tokens = syntax_styler.tokenize('const x = 1;', 'js');
+
+		assert.equal(before_lang, 'js');
+		assert.equal(after_token_count, tokens.length);
+	});
+
+	test('a before_tokenize hook can rewrite the code before tokenization', () => {
+		const syntax_styler = create_styler_with_grammars();
+		syntax_styler.add_hook_before_tokenize((ctx) => {
+			ctx.code = ctx.code.replace('var', 'const');
+		});
+
+		const tokens = syntax_styler.tokenize('var x = 1;', 'js');
+		const keyword = tokens.find((t) => typeof t !== 'string' && t.type === 'keyword');
+		assert.ok(keyword && typeof keyword !== 'string');
+		assert.equal(keyword.content, 'const');
+	});
+
+	test('an after_tokenize hook can replace the token stream', () => {
+		const syntax_styler = create_styler_with_grammars();
+		syntax_styler.add_hook_after_tokenize((ctx) => {
+			ctx.tokens = ['replaced'];
+		});
+		assert.deepEqual(syntax_styler.tokenize('const x = 1;', 'js'), ['replaced']);
+	});
+
+	test('stylize stringifies with the lang a before_tokenize hook rewrote', () => {
+		const syntax_styler = create_styler_with_grammars();
+		let wrap_lang: string | undefined;
+		// the rewritten lang must flow through to each token's wrap hook context
+		syntax_styler.add_hook_before_tokenize((ctx) => {
+			ctx.lang = 'rewritten';
+		});
+		syntax_styler.add_hook_wrap((ctx) => {
+			wrap_lang = ctx.lang;
+		});
+
+		syntax_styler.stylize('const x = 1;', 'js');
+		assert.equal(wrap_lang, 'rewritten');
+	});
+});

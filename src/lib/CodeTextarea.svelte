@@ -71,7 +71,15 @@
 
 <div class="code_textarea" data-lang={lang}>
 	<pre class="code_textarea_backdrop" aria-hidden="true" bind:this={backdrop}>{display_text}</pre>
-	<textarea bind:this={textarea} spellcheck="false" {...rest} bind:value onscroll={sync_scroll}
+	<textarea
+		bind:this={textarea}
+		spellcheck="false"
+		{...rest}
+		bind:value
+		onscroll={(e) => {
+			sync_scroll();
+			rest.onscroll?.(e); // preserve a consumer-supplied handler
+		}}
 	></textarea>
 </div>
 
@@ -104,6 +112,9 @@
 		white-space: pre-wrap;
 		overflow-wrap: break-word;
 		overflow: auto;
+		/* reserve gutter on both layers so the textarea's scrollbar doesn't shrink
+		   its wrap width relative to the backdrop, which would drift highlights */
+		scrollbar-gutter: stable;
 	}
 
 	.code_textarea_backdrop {

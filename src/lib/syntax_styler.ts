@@ -134,7 +134,42 @@ export class SyntaxStyler {
 		lang: string,
 		grammar: SyntaxGrammar | undefined = this.get_lang(lang),
 	): string {
-		var ctx: HookBeforeTokenizeCallbackContext = {
+		// stringify with the post-hook `lang`, which a `before_tokenize` hook may
+		// have rewritten (it flows into each token's `wrap` hook context)
+		const c = this.#tokenize_hooked(text, lang, grammar);
+		return this.stringify_token(c.tokens, c.lang);
+	}
+
+	/**
+	 * Tokenizes `text` into a `SyntaxTokenStream`, running the `before_tokenize`
+	 * and `after_tokenize` hooks. This is the tokenization half of `stylize` — use
+	 * it when you need the token stream itself (e.g. CSS Custom Highlight API range
+	 * highlighting) rather than HTML.
+	 *
+	 * @param text - source to tokenize
+	 * @param lang - language identifier; passed to the tokenize hooks
+	 * @param grammar - grammar to tokenize with; defaults to `this.get_lang(lang)`
+	 * @returns the resulting token stream
+	 */
+	tokenize(
+		text: string,
+		lang: string,
+		grammar: SyntaxGrammar | undefined = this.get_lang(lang),
+	): SyntaxTokenStream {
+		return this.#tokenize_hooked(text, lang, grammar).tokens;
+	}
+
+	/**
+	 * Runs `before_tokenize` → `tokenize_syntax` → `after_tokenize`, returning the
+	 * resolved context. Shared by `stylize` (which also needs the post-hook `lang`)
+	 * and `tokenize` (which only needs `tokens`).
+	 */
+	#tokenize_hooked(
+		text: string,
+		lang: string,
+		grammar: SyntaxGrammar,
+	): HookAfterTokenizeCallbackContext {
+		const ctx: HookBeforeTokenizeCallbackContext = {
 			code: text,
 			grammar,
 			lang,
@@ -144,7 +179,7 @@ export class SyntaxStyler {
 		const c = ctx as any as HookAfterTokenizeCallbackContext;
 		c.tokens = tokenize_syntax(c.code, c.grammar);
 		this.run_hook_after_tokenize(c);
-		return this.stringify_token(c.tokens, c.lang);
+		return c;
 	}
 
 	/**
