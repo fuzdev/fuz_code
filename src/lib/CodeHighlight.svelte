@@ -6,18 +6,13 @@
 	 * Requires importing `theme_highlight.css` instead of `theme.css`.
 	 */
 
-	import {onDestroy, type Snippet} from 'svelte';
-	import {DEV} from 'esm-env';
+	import type {Snippet} from 'svelte';
 	import type {SvelteHTMLElements} from 'svelte/elements';
 
 	import {syntax_styler_global} from './syntax_styler_global.js';
 	import type {SyntaxStyler, SyntaxGrammar} from './syntax_styler.js';
-	import {tokenize_syntax} from './tokenize_syntax.js';
-	import {
-		HighlightManager,
-		supports_css_highlight_api,
-		type HighlightMode,
-	} from './highlight_manager.js';
+	import {supports_css_highlight_api, type HighlightMode} from './highlight_manager.js';
+	import {create_range_highlighting} from './range_highlighting.svelte.js';
 
 	const {
 		content,
@@ -121,58 +116,27 @@
 
 	const supports_ranges = supports_css_highlight_api();
 
-	const highlight_manager = supports_ranges ? new HighlightManager() : null;
-
 	const use_ranges = $derived(supports_ranges && (mode === 'ranges' || mode === 'auto'));
 
-	const language_supported = $derived(lang !== null && !!syntax_styler.langs[lang]);
-
-	const highlighting_disabled = $derived(lang === null || (!language_supported && !grammar));
-
-	// DEV-only validation warnings
-	if (DEV) {
-		$effect(() => {
-			if (lang && !language_supported && !grammar) {
-				const langs = Object.keys(syntax_styler.langs).join(', ');
-				// eslint-disable-next-line no-console
-				console.error(
-					`[CodeHighlight] Language "${lang}" is not supported and no custom grammar provided. ` +
-						`Highlighting disabled. Supported: ${langs}`,
-				);
-			}
-		});
-	}
+	const rh = create_range_highlighting({
+		element: () => code_element,
+		text: () => content,
+		enabled: () => use_ranges,
+		lang: () => lang,
+		grammar: () => grammar,
+		syntax_styler: () => syntax_styler,
+		dev_label: 'CodeHighlight',
+	});
 
 	// Generate HTML markup for syntax highlighting in non-range mode
 	const html_content = $derived.by(() => {
-		if (use_ranges || !content || highlighting_disabled) {
+		if (use_ranges || !content || rh.highlighting_disabled) {
 			return '';
 		}
 
 		return syntax_styler.stylize(content, lang!, grammar); // ! is safe bc of the `highlighting_disabled` calculation
 	});
 
-	// Apply highlights for range mode
-	if (highlight_manager) {
-		$effect(() => {
-			if (!code_element || !content || !use_ranges || highlighting_disabled) {
-				highlight_manager.clear_element_ranges();
-				return;
-			}
-
-			// Get tokens from syntax styler
-			const tokens = tokenize_syntax(content, grammar || syntax_styler.get_lang(lang!)); // ! is safe bc of the `highlighting_disabled` calculation
-
-			// Apply highlights
-			highlight_manager.highlight_from_syntax_tokens(code_element, tokens);
-		});
-	}
-
-	onDestroy(() => {
-		highlight_manager?.destroy();
-	});
-
-	// TODO use intersect attachment from fuz_ui to optimize ranges
 	// TODO do syntax styling at compile-time in the normal case, and don't import these at runtime
 	// TODO @html making me nervous
 </script>
@@ -182,7 +146,7 @@
 <code {...rest} class:inline class:wrap data-lang={lang} bind:this={code_element}
 	>{#if use_ranges && children}{@render children(
 			content,
-		)}{:else if use_ranges || highlighting_disabled}{content}{:else if children}{@render children(
+		)}{:else if use_ranges || rh.highlighting_disabled}{content}{:else if children}{@render children(
 			html_content,
 		)}{:else}{@html html_content}{/if}</code
 >

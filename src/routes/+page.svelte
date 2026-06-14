@@ -63,6 +63,7 @@ import Code from '@fuzdev/fuz_code/Code.svelte';`}
 			<div class="panel box p_lg gap_sm">
 				<!-- TODO large variants of the chip? using `--font_size`? -->
 				<a href={resolve('/samples')} class="chip px_xl py_sm">samples</a>
+				<a href={resolve('/textarea')} class="chip px_xl py_sm">textarea</a>
 				<a href={resolve('/benchmark')} class="chip px_xl py_sm">benchmark</a>
 				<a href={resolve('/about')} class="chip px_xl py_sm">about</a>
 			</div>

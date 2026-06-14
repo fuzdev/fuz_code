@@ -1,3 +1,5 @@
+import {DEV} from 'esm-env';
+
 import type {SyntaxTokenStream} from './syntax_token.js';
 import {highlight_priorities} from './highlight_priorities.js';
 
@@ -10,10 +12,55 @@ export const supports_css_highlight_api = (): boolean =>
 	!!(globalThis.CSS?.highlights && globalThis.Highlight);
 
 /**
- * Manages CSS Custom Highlight API ranges for a single element.
- * Tracks ranges per element and only removes its own ranges when clearing.
+ * How a manager builds ranges for the Highlight API.
  *
- * **Experimental** — limited browser support. Use `Code.svelte` for production.
+ * `StaticRange` is preferred: it's an immutable snapshot the browser does *not*
+ * track across DOM mutations. Since highlights are rebuilt wholesale whenever
+ * content changes, liveness buys nothing and only costs per-mutation boundary
+ * bookkeeping and paint work — the main efficiency (and Safari-stability) lever.
+ * Falls back to a live `Range` where `StaticRange` is unavailable.
+ */
+type RangeKind = 'static' | 'live';
+
+const detect_range_kind = (): RangeKind =>
+	typeof globalThis.StaticRange === 'function' ? 'static' : 'live';
+
+/**
+ * Finds the first text node child of `element`, or `null` if there is none.
+ *
+ * The text node might not be `firstChild` because frameworks (e.g. Svelte) can
+ * insert comment/anchor nodes around it.
+ */
+const find_text_node = (element: Element): Node | null => {
+	for (const node of element.childNodes) {
+		if (node.nodeType === Node.TEXT_NODE) return node;
+	}
+	return null;
+};
+
+const has_tokens = (tokens: SyntaxTokenStream): boolean =>
+	tokens.some((t) => typeof t !== 'string');
+
+const push_range = (
+	ranges_by_name: Map<string, Array<AbstractRange>>,
+	name: string,
+	range: AbstractRange,
+): void => {
+	const existing = ranges_by_name.get(name);
+	if (existing) {
+		existing.push(range);
+	} else {
+		ranges_by_name.set(name, [range]);
+	}
+};
+
+/**
+ * Manages CSS Custom Highlight API ranges for a single element's text node.
+ * Tracks ranges per element and only removes its own ranges when clearing,
+ * cooperating with other managers that share the global `CSS.highlights` registry.
+ *
+ * **Experimental** — limited browser support. Use `Code.svelte` for production
+ * block code; this powers the experimental `CodeHighlight` and `CodeTextarea`.
  *
  * @example
  * ```ts
@@ -22,62 +69,94 @@ export const supports_css_highlight_api = (): boolean =>
  * ```
  */
 export class HighlightManager {
-	element_ranges: Map<string, Array<Range>>;
+	/**
+	 * This manager's ranges, keyed by prefixed highlight name (e.g. `token_keyword`).
+	 * A single range object may be shared across several names (a token type plus
+	 * its aliases), since one range can belong to multiple `Highlight` sets.
+	 */
+	element_ranges: Map<string, Array<AbstractRange>>;
+
+	#range_kind: RangeKind;
 
 	constructor() {
 		if (!supports_css_highlight_api()) {
 			throw Error('CSS Highlights API not supported');
 		}
 		this.element_ranges = new Map();
+		this.#range_kind = detect_range_kind();
 	}
 
 	/**
-	 * Highlights from a `SyntaxTokenStream` produced by `tokenize_syntax`.
+	 * Highlights `element`'s text node from a `SyntaxTokenStream` produced by
+	 * `tokenize_syntax`. Clears this manager's previous ranges first.
+	 *
+	 * In production this never throws on a tokenizer/DOM mismatch: out-of-bounds
+	 * tokens are clamped and a missing text node is a no-op. In DEV the same
+	 * conditions throw loudly to surface grammar bugs.
 	 */
 	highlight_from_syntax_tokens(element: Element, tokens: SyntaxTokenStream): void {
-		// Find the text node (it might not be firstChild due to Svelte comment nodes)
-		let text_node: Node | null = null;
-		for (const node of element.childNodes) {
-			if (node.nodeType === Node.TEXT_NODE) {
-				text_node = node;
-				break;
-			}
-		}
-
-		if (!text_node) {
-			throw new Error('no text node to highlight');
-		}
-
 		this.clear_element_ranges();
 
-		const ranges_by_type: Map<string, Array<Range>> = new Map();
-		const final_pos = this.#create_all_ranges(tokens, text_node, ranges_by_type, 0);
-
-		// Validate that token positions matched text node length
-		const text_length = text_node.textContent?.length ?? 0;
-		if (final_pos !== text_length) {
-			throw new Error(
-				`Token stream length mismatch: tokens covered ${final_pos} chars but text node has ${text_length} chars`,
-			);
+		const text_node = find_text_node(element);
+		if (!text_node) {
+			if (has_tokens(tokens)) {
+				if (DEV) {
+					throw new Error('no text node to highlight');
+				} else {
+					// eslint-disable-next-line no-console
+					console.error('[HighlightManager] tokens present but no text node to highlight');
+				}
+			}
+			return;
 		}
 
-		// Apply highlights
-		for (const [type, ranges] of ranges_by_type) {
-			const prefixed_type = `token_${type}`;
-			// Track ranges for this element
-			this.element_ranges.set(prefixed_type, ranges);
+		try {
+			this.#apply(text_node, tokens);
+		} catch (err) {
+			// some engines may reject `StaticRange` in `Highlight.add` -- fall back to
+			// live `Range` once rather than letting the throw escape into the effect
+			if (this.#range_kind === 'static') {
+				this.#range_kind = 'live';
+				this.clear_element_ranges(); // undo any partial application
+				this.#apply(text_node, tokens);
+			} else {
+				throw err;
+			}
+		}
+	}
 
-			// Get or create the shared highlight
-			let highlight = CSS.highlights.get(prefixed_type);
+	#apply(text_node: Node, tokens: SyntaxTokenStream): void {
+		const ranges_by_name: Map<string, Array<AbstractRange>> = new Map();
+		const final_pos = this.#collect_ranges(tokens, text_node, ranges_by_name, 0);
+
+		if (DEV) {
+			const text_length = text_node.textContent?.length ?? 0;
+			if (final_pos !== text_length) {
+				throw new Error(
+					`Token stream length mismatch: tokens covered ${final_pos} chars but text node has ${text_length} chars`,
+				);
+			}
+		}
+
+		// TODO: cross-instance coupling -- all managers share one global `Highlight`
+		// per token type, so re-highlighting one element (e.g. a textarea on every
+		// keystroke) mutates highlights that also hold ranges from every other code
+		// block on the page, forcing the browser to re-evaluate the shared set.
+		// Isolating per-instance needs unique highlight names + runtime-injected
+		// `::highlight()` CSS (≈50 token types × N instances), trading the static
+		// theme file for generated CSS. Only worth it with many concurrently-updating
+		// instances; revisit if profiling shows it.
+		for (const [name, ranges] of ranges_by_name) {
+			this.element_ranges.set(name, ranges);
+
+			let highlight = CSS.highlights.get(name);
 			if (!highlight) {
 				highlight = new Highlight();
-				// Set priority based on CSS cascade order (higher = later in CSS = wins)
-				highlight.priority =
-					highlight_priorities[prefixed_type as keyof typeof highlight_priorities] ?? 0;
-				CSS.highlights.set(prefixed_type, highlight);
+				// priority follows CSS cascade order (higher = later in CSS = wins)
+				highlight.priority = highlight_priorities[name as keyof typeof highlight_priorities] ?? 0;
+				CSS.highlights.set(name, highlight);
 			}
 
-			// Add all ranges to the highlight
 			for (const range of ranges) {
 				highlight.add(range);
 			}
@@ -85,14 +164,14 @@ export class HighlightManager {
 	}
 
 	/**
-	 * Clears only this element's ranges from highlights.
+	 * Clears only this manager's ranges from the shared highlights. Defensive:
+	 * a highlight may already be gone (e.g. another manager removed the last
+	 * range, or HMR reset the registry), which is a valid state, not an error.
 	 */
 	clear_element_ranges(): void {
 		for (const [name, ranges] of this.element_ranges) {
 			const highlight = CSS.highlights.get(name);
-			if (!highlight) {
-				throw new Error('Expected to find CSS highlight: ' + name);
-			}
+			if (!highlight) continue;
 
 			for (const range of ranges) {
 				highlight.delete(range);
@@ -110,13 +189,29 @@ export class HighlightManager {
 		this.clear_element_ranges();
 	}
 
+	#make_range(text_node: Node, start: number, end: number): AbstractRange {
+		if (this.#range_kind === 'static') {
+			return new StaticRange({
+				startContainer: text_node,
+				startOffset: start,
+				endContainer: text_node,
+				endOffset: end,
+			});
+		}
+		const range = new Range();
+		range.setStart(text_node, start);
+		range.setEnd(text_node, end);
+		return range;
+	}
+
 	/**
-	 * Creates ranges for all tokens in the tree.
+	 * Walks the token tree, collecting one range per non-empty token (shared
+	 * across its type and aliases). Returns the end position covered.
 	 */
-	#create_all_ranges(
+	#collect_ranges(
 		tokens: SyntaxTokenStream,
 		text_node: Node,
-		ranges_by_type: Map<string, Array<Range>>,
+		ranges_by_name: Map<string, Array<AbstractRange>>,
 		offset: number,
 	): number {
 		const text_length = text_node.textContent?.length ?? 0;
@@ -128,61 +223,36 @@ export class HighlightManager {
 				continue;
 			}
 
-			const length = token.length;
-			const end_pos = pos + length;
+			const end_pos = pos + token.length;
 
-			// Validate positions are within text node bounds before creating ranges
-			if (end_pos > text_length) {
+			if (DEV && end_pos > text_length) {
 				throw new Error(
 					`Token ${token.type} extends beyond text node: position ${end_pos} > length ${text_length}`,
 				);
 			}
 
-			try {
-				const range = new Range();
-				range.setStart(text_node, pos);
-				range.setEnd(text_node, end_pos);
-
-				// Add range for the token type
-				const type = token.type;
-				if (!ranges_by_type.has(type)) {
-					ranges_by_type.set(type, []);
-				}
-				ranges_by_type.get(type)!.push(range);
-
-				// Also add range for any aliases (alias is always an array)
+			// production-safe: clamp rather than throw on a tokenizer edge case
+			const safe_end = end_pos > text_length ? text_length : end_pos;
+			if (safe_end > pos) {
+				// one range shared across the token type and all its aliases --
+				// the same range object can belong to multiple `Highlight` sets
+				const range = this.#make_range(text_node, pos, safe_end);
+				push_range(ranges_by_name, `token_${token.type}`, range);
 				for (const alias of token.alias) {
-					if (!ranges_by_type.has(alias)) {
-						ranges_by_type.set(alias, []);
-					}
-					// Create a new range for each alias (ranges can't be reused)
-					const alias_range = new Range();
-					alias_range.setStart(text_node, pos);
-					alias_range.setEnd(text_node, end_pos);
-					ranges_by_type.get(alias)!.push(alias_range);
+					push_range(ranges_by_name, `token_${alias}`, range);
 				}
-			} catch (e) {
-				throw new Error(`Failed to create range for ${token.type}: ${e}`);
 			}
 
-			// Process nested tokens
 			if (Array.isArray(token.content)) {
-				const actual_end_pos = this.#create_all_ranges(
-					token.content,
-					text_node,
-					ranges_by_type,
-					pos,
-				);
-				// Validate that nested tokens match the parent token's claimed length
-				if (actual_end_pos !== end_pos) {
+				const nested_end = this.#collect_ranges(token.content, text_node, ranges_by_name, pos);
+				if (DEV && nested_end !== end_pos) {
 					throw new Error(
-						`Token ${token.type} length mismatch: claimed ${length} chars (${pos}-${end_pos}) but nested content covered ${actual_end_pos - pos} chars (${pos}-${actual_end_pos})`,
+						`Token ${token.type} length mismatch: claimed ${token.length} chars (${pos}-${end_pos}) but nested content covered ${nested_end - pos} chars (${pos}-${nested_end})`,
 					);
 				}
-				pos = actual_end_pos;
-			} else {
-				pos = end_pos;
 			}
+
+			pos = end_pos;
 		}
 
 		return pos;

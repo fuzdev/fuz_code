@@ -4,6 +4,13 @@ import {tokenize_syntax} from './tokenize_syntax.js';
 export type AddSyntaxGrammar = (syntax_styler: SyntaxStyler) => void;
 
 /**
+ * Maps a matched `&`, `<`, or non-breaking space in text content to its
+ * HTML-safe form. Used as the replacer in `stringify_token` for leaf strings
+ * (non-breaking spaces are normalized to a regular space).
+ */
+const escape_text_char = (ch: string): string => (ch === '&' ? '&amp;' : ch === '<' ? '&lt;' : ' ');
+
+/**
  * Based on Prism (https://github.com/PrismJS/prism)
  * by Lea Verou (https://lea.verou.me/)
  *
@@ -127,7 +134,42 @@ export class SyntaxStyler {
 		lang: string,
 		grammar: SyntaxGrammar | undefined = this.get_lang(lang),
 	): string {
-		var ctx: HookBeforeTokenizeCallbackContext = {
+		// stringify with the post-hook `lang`, which a `before_tokenize` hook may
+		// have rewritten (it flows into each token's `wrap` hook context)
+		const c = this.#tokenize_hooked(text, lang, grammar);
+		return this.stringify_token(c.tokens, c.lang);
+	}
+
+	/**
+	 * Tokenizes `text` into a `SyntaxTokenStream`, running the `before_tokenize`
+	 * and `after_tokenize` hooks. This is the tokenization half of `stylize` — use
+	 * it when you need the token stream itself (e.g. CSS Custom Highlight API range
+	 * highlighting) rather than HTML.
+	 *
+	 * @param text - source to tokenize
+	 * @param lang - language identifier; passed to the tokenize hooks
+	 * @param grammar - grammar to tokenize with; defaults to `this.get_lang(lang)`
+	 * @returns the resulting token stream
+	 */
+	tokenize(
+		text: string,
+		lang: string,
+		grammar: SyntaxGrammar | undefined = this.get_lang(lang),
+	): SyntaxTokenStream {
+		return this.#tokenize_hooked(text, lang, grammar).tokens;
+	}
+
+	/**
+	 * Runs `before_tokenize` → `tokenize_syntax` → `after_tokenize`, returning the
+	 * resolved context. Shared by `stylize` (which also needs the post-hook `lang`)
+	 * and `tokenize` (which only needs `tokens`).
+	 */
+	#tokenize_hooked(
+		text: string,
+		lang: string,
+		grammar: SyntaxGrammar,
+	): HookAfterTokenizeCallbackContext {
+		const ctx: HookBeforeTokenizeCallbackContext = {
 			code: text,
 			grammar,
 			lang,
@@ -137,7 +179,7 @@ export class SyntaxStyler {
 		const c = ctx as any as HookAfterTokenizeCallbackContext;
 		c.tokens = tokenize_syntax(c.code, c.grammar);
 		this.run_hook_after_tokenize(c);
-		return this.stringify_token(c.tokens, c.lang);
+		return c;
 	}
 
 	/**
@@ -263,10 +305,9 @@ export class SyntaxStyler {
 	 */
 	stringify_token(o: string | SyntaxToken | SyntaxTokenStream, lang: string): string {
 		if (typeof o === 'string') {
-			return o
-				.replace(/&/g, '&amp;')
-				.replace(/</g, '&lt;')
-				.replace(/\u00a0/g, ' ');
+			// single pass over the leaf text (only `&` and `<` need escaping in text
+			// content; `\u00a0` is normalized to a regular space)
+			return o.replace(/[&<\u00a0]/g, escape_text_char);
 		}
 		if (Array.isArray(o)) {
 			var s = '';
@@ -276,20 +317,28 @@ export class SyntaxStyler {
 			return s;
 		}
 
+		var content = this.stringify_token(o.content, lang);
+
+		// build the class list once; aliases are always an array after normalization
+		var classes = `token_${o.type}`;
+		for (const a of o.alias) {
+			classes += ` token_${a}`;
+		}
+
+		// fast path: with no `wrap` hooks the tag is always a plain <span> with no
+		// attributes, so skip the per-token context object and hook dispatch
+		if (this.hooks_wrap.length === 0) {
+			return '<span class="' + classes + '">' + content + '</span>';
+		}
+
 		var ctx: HookWrapCallbackContext = {
 			type: o.type,
-			content: this.stringify_token(o.content, lang),
+			content,
 			tag: 'span',
-			classes: [`token_${o.type}`],
+			classes: classes.split(' '),
 			attributes: {},
 			lang,
 		};
-
-		var aliases = o.alias;
-		// alias is always an array after normalization
-		for (const a of aliases) {
-			ctx.classes.push(`token_${a}`);
-		}
 
 		this.run_hook_wrap(ctx);
 

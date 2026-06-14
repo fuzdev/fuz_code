@@ -80,12 +80,23 @@ describe('initialization', () => {
 });
 
 describe('DOM element handling', () => {
-	test('throws if element has no text node', () => {
+	test('no-op when no text node and no tokens', () => {
 		const manager = new HighlightManager();
 		const element = {
 			childNodes: [], // No children
 		} as unknown as Element;
 		const tokens: SyntaxTokenStream = [];
+
+		assert.doesNotThrow(() => manager.highlight_from_syntax_tokens(element, tokens));
+		assert.equal(manager.element_ranges.size, 0);
+	});
+
+	test('throws in DEV when tokens present but no text node', () => {
+		const manager = new HighlightManager();
+		const element = {
+			childNodes: [], // No children
+		} as unknown as Element;
+		const tokens: SyntaxTokenStream = [new SyntaxToken('keyword', 'const', undefined, 'const')];
 
 		assert.throws(
 			() => manager.highlight_from_syntax_tokens(element, tokens),
@@ -280,7 +291,7 @@ describe('range creation', () => {
 		assert.equal(part3_ranges[0]!.endOffset, 5);
 	});
 
-	test('creates separate ranges for aliases', () => {
+	test('shares one range across a token type and its aliases', () => {
 		const manager = new HighlightManager();
 		const element = create_code_element('function');
 
@@ -295,10 +306,65 @@ describe('range creation', () => {
 		assert.ok(manager.element_ranges.has('token_reserved'));
 		assert.ok(manager.element_ranges.has('token_special_keyword'));
 
-		// Each should have one range
+		// Each name has one range
 		assert.equal(manager.element_ranges.get('token_keyword')!.length, 1);
 		assert.equal(manager.element_ranges.get('token_reserved')!.length, 1);
 		assert.equal(manager.element_ranges.get('token_special_keyword')!.length, 1);
+
+		// ...and it's the SAME range object reused across all of them (one range
+		// can belong to multiple `Highlight` sets, so we don't allocate per alias)
+		const range = manager.element_ranges.get('token_keyword')![0];
+		assert.equal(manager.element_ranges.get('token_reserved')![0], range);
+		assert.equal(manager.element_ranges.get('token_special_keyword')![0], range);
+	});
+
+	test('falls back to live Range when StaticRange is unavailable', () => {
+		const saved_static = (globalThis as any).StaticRange;
+		delete (globalThis as any).StaticRange;
+		try {
+			const manager = new HighlightManager();
+			const element = create_code_element('const');
+			const tokens: SyntaxTokenStream = [new SyntaxToken('keyword', 'const', undefined, 'const')];
+
+			manager.highlight_from_syntax_tokens(element, tokens);
+
+			const ranges = manager.element_ranges.get('token_keyword')!;
+			assert.equal(ranges.length, 1);
+			assert.equal(ranges[0]!.startOffset, 0);
+			assert.equal(ranges[0]!.endOffset, 5);
+		} finally {
+			(globalThis as any).StaticRange = saved_static;
+		}
+	});
+
+	test('downgrades to live Range if Highlight.add rejects StaticRange', () => {
+		// simulate an engine that accepts live Range but rejects StaticRange
+		class RejectingHighlight extends Set<AbstractRange> {
+			priority = 0;
+			override add(range: AbstractRange): this {
+				if (range instanceof (globalThis as any).StaticRange) {
+					throw new Error('StaticRange not supported');
+				}
+				return super.add(range);
+			}
+		}
+		const saved_highlight = (globalThis as any).Highlight;
+		(globalThis as any).Highlight = RejectingHighlight;
+		try {
+			const manager = new HighlightManager();
+			const element = create_code_element('const');
+			const tokens: SyntaxTokenStream = [new SyntaxToken('keyword', 'const', undefined, 'const')];
+
+			assert.doesNotThrow(() => manager.highlight_from_syntax_tokens(element, tokens));
+
+			// fell back to live Range and still registered the highlight
+			assert.ok(CSS.highlights.has('token_keyword'));
+			assert.equal(CSS.highlights.get('token_keyword')!.size, 1);
+			const range = manager.element_ranges.get('token_keyword')![0]!;
+			assert.equal(range instanceof (globalThis as any).StaticRange, false);
+		} finally {
+			(globalThis as any).Highlight = saved_highlight;
+		}
 	});
 
 	test('handles token stream with only strings', () => {
@@ -585,7 +651,7 @@ describe('lifecycle management', () => {
 		assert.ok(CSS.highlights.has('token_keyword')); // Highlight still exists
 	});
 
-	test('clear_element_ranges throws if highlight unexpectedly missing', () => {
+	test('clear_element_ranges is a safe no-op if highlight already removed', () => {
 		const manager = new HighlightManager();
 		const element = create_code_element('const');
 
@@ -593,13 +659,12 @@ describe('lifecycle management', () => {
 
 		manager.highlight_from_syntax_tokens(element, tokens);
 
-		// Manually delete the highlight to simulate unexpected state
+		// Another manager (or HMR) removed the shared highlight -- a valid state,
+		// not an error, so clearing must not throw
 		CSS.highlights.delete('token_keyword');
 
-		assert.throws(
-			() => manager.clear_element_ranges(),
-			/Expected to find CSS highlight: token_keyword/,
-		);
+		assert.doesNotThrow(() => manager.clear_element_ranges());
+		assert.equal(manager.element_ranges.size, 0);
 	});
 
 	test('clear_element_ranges deletes highlight when last range removed', () => {
