@@ -31,7 +31,6 @@ export interface RangeHighlightingOptions {
 
 /** Reactive outputs from `create_range_highlighting`. */
 export interface RangeHighlighting {
-	readonly language_supported: boolean;
 	readonly highlighting_disabled: boolean;
 }
 
@@ -79,7 +78,8 @@ export const create_range_highlighting = (options: RangeHighlightingOptions): Ra
 
 	if (DEV) {
 		$effect(() => {
-			if (options.lang() && !language_supported && !options.grammar()) {
+			// a lang was requested but we can't highlight it (unknown id, no grammar)
+			if (options.lang() && highlighting_disabled) {
 				const langs = Object.keys(options.syntax_styler().langs).join(', ');
 				// eslint-disable-next-line no-console
 				console.error(
@@ -93,9 +93,6 @@ export const create_range_highlighting = (options: RangeHighlightingOptions): Ra
 	onDestroy(() => manager?.destroy());
 
 	return {
-		get language_supported() {
-			return language_supported;
-		},
 		get highlighting_disabled() {
 			return highlighting_disabled;
 		},
