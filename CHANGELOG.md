@@ -1,5 +1,11 @@
 # @fuzdev/fuz_code
 
+## 0.46.3
+
+### Patch Changes
+
+- fix: simplify `CodeTextarea` styles to use fuz_css base ([e45bccf](https://github.com/fuzdev/fuz_code/commit/e45bccf))
+
 ## 0.46.2
 
 ### Patch Changes
