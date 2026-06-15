@@ -96,61 +96,47 @@
 <style>
 	.code_textarea {
 		position: relative;
-		width: 100%;
 	}
 
-	/* Metrics shared by both layers so characters align exactly. fuz_css styles
-	   `pre` and `textarea` differently, so each declaration here equalizes them;
-	   anything fuz_css already applies identically (box-sizing, the reset margin,
-	   colors) is left to it. */
-	.code_textarea_backdrop,
+	/* The textarea keeps fuz_css's native textarea styling — padding, border (with
+	   its hover/focus) and the page-inherited font size and tab size. Only the
+	   overlay deltas are set: transparent text/background so the backdrop shows
+	   through, a mono font, a visible caret (the text itself is transparent), and
+	   `line-height: inherit` to undo the `line-height: normal` fuz_css forces on
+	   inputs, so it tracks the page and matches the backdrop. */
 	.code_textarea textarea {
-		/* the backdrop `pre` isn't the last child, so fuz_css's flow rule would give
-		   it a bottom margin that shrinks its absolute box and drifts the last line */
-		margin: 0;
-		width: 100%;
-		/* fuz_css pads the textarea but not `pre` — pin both the same */
-		padding: var(--space_xs3) var(--space_xs);
-		/* fuz_css borders the textarea but not `pre`; a transparent border on both
-		   keeps the box metrics identical (the textarea's is colored below) */
-		border: 1px solid transparent;
-		border-radius: var(--radius_xs, 2px);
-		/* the textarea would otherwise inherit the page's proportional font and
-		   `line-height: normal`; the backdrop `pre` is already mono */
-		font-family: var(--font_family_mono);
-		font-size: var(--font_size_sm);
-		line-height: var(--line_height_md);
-		tab-size: 2;
-		/* fuz_css sets `pre` to `white-space: pre`; both must wrap to stay aligned */
-		white-space: pre-wrap;
-		overflow-wrap: break-word;
-		overflow: auto;
-		/* reserve gutter on both layers so the textarea's scrollbar doesn't shrink
-		   its wrap width relative to the backdrop, which would drift highlights */
-		scrollbar-gutter: stable;
-	}
-
-	/* the backdrop is taken out of flow so the in-flow textarea (its `rows`/resize)
-	   defines the box; `inset: 0` makes the backdrop fill and clip to that box,
-	   scrolled programmatically to match the textarea */
-	.code_textarea_backdrop {
-		position: absolute;
-		inset: 0;
-		pointer-events: none;
-		user-select: none;
-		overflow: hidden;
-	}
-
-	.code_textarea textarea {
-		/* sits above the backdrop so the caret and selection are visible; the
-		   textarea is the only in-flow layer, so it sizes the container */
 		position: relative;
 		z-index: 1;
-		/* the textarea's own text is invisible; the backdrop (a styled `pre`) shows
-		   through, so restore a visible caret and border over the transparent ones */
+		font-family: var(--font_family_mono);
+		line-height: inherit;
 		background-color: transparent;
 		color: transparent;
 		caret-color: var(--text_color);
-		border-color: var(--border_color);
+	}
+
+	/* The backdrop `pre` holds the highlighted text under the transparent textarea.
+	   It's pulled out of flow so the textarea sizes the box; `inset: 0` fills and
+	   clips it to that box (scroll-synced in JS). It mirrors the textarea's fuz_css
+	   box — the same padding and border width — and overrides what fuz_css sets
+	   differently on a `pre`: `white-space: pre`, and the flow margin that would
+	   otherwise shrink this absolute box. */
+	.code_textarea_backdrop {
+		position: absolute;
+		inset: 0;
+		margin: 0;
+		padding: var(--space_sm) var(--space_lg); /* fuz_css's textarea padding */
+		border: var(--border_width) var(--border_style) transparent;
+		white-space: pre-wrap;
+		overflow: hidden;
+		pointer-events: none;
+		user-select: none;
+	}
+
+	/* both layers reserve a scrollbar gutter so the textarea's scrollbar can't
+	   shrink its wrap width relative to the non-scrolling backdrop and drift the
+	   highlights */
+	.code_textarea_backdrop,
+	.code_textarea textarea {
+		scrollbar-gutter: stable;
 	}
 </style>

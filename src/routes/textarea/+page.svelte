@@ -55,8 +55,15 @@
 			{/each}
 		</div>
 
-		<CodeTextarea bind:value {lang} rows={20} />
+		<CodeTextarea bind:value {lang} />
 	</section>
 
 	<Footer />
 </main>
+
+<style>
+	/* the editor defaults to fuz_css's 100px textarea height — give the demo room */
+	section :global(.code_textarea textarea) {
+		height: 600px;
+	}
+</style>
