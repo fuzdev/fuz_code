@@ -99,20 +99,29 @@
 		width: 100%;
 	}
 
-	/* metrics shared by both layers so characters align exactly */
+	/* Metrics shared by both layers so characters align exactly. fuz_css styles
+	   `pre` and `textarea` differently, so each declaration here equalizes them;
+	   anything fuz_css already applies identically (box-sizing, the reset margin,
+	   colors) is left to it. */
 	.code_textarea_backdrop,
 	.code_textarea textarea {
+		/* the backdrop `pre` isn't the last child, so fuz_css's flow rule would give
+		   it a bottom margin that shrinks its absolute box and drifts the last line */
 		margin: 0;
-		box-sizing: border-box;
 		width: 100%;
+		/* fuz_css pads the textarea but not `pre` — pin both the same */
 		padding: var(--space_xs3) var(--space_xs);
+		/* fuz_css borders the textarea but not `pre`; a transparent border on both
+		   keeps the box metrics identical (the textarea's is colored below) */
 		border: 1px solid transparent;
 		border-radius: var(--radius_xs, 2px);
-		font-family: var(--font_family_mono, monospace);
-		font-size: var(--font_size_sm, 0.9rem);
-		line-height: var(--line_height_md, 1.5);
-		letter-spacing: inherit;
+		/* the textarea would otherwise inherit the page's proportional font and
+		   `line-height: normal`; the backdrop `pre` is already mono */
+		font-family: var(--font_family_mono);
+		font-size: var(--font_size_sm);
+		line-height: var(--line_height_md);
 		tab-size: 2;
+		/* fuz_css sets `pre` to `white-space: pre`; both must wrap to stay aligned */
 		white-space: pre-wrap;
 		overflow-wrap: break-word;
 		overflow: auto;
@@ -130,7 +139,6 @@
 		pointer-events: none;
 		user-select: none;
 		overflow: hidden;
-		color: var(--text_color, currentColor);
 	}
 
 	.code_textarea textarea {
@@ -138,12 +146,11 @@
 		   textarea is the only in-flow layer, so it sizes the container */
 		position: relative;
 		z-index: 1;
-		display: block;
+		/* the textarea's own text is invisible; the backdrop (a styled `pre`) shows
+		   through, so restore a visible caret and border over the transparent ones */
 		background-color: transparent;
-		/* the textarea's own text is invisible; the backdrop shows through */
 		color: transparent;
-		caret-color: var(--text_color, currentColor);
-		border-color: var(--border_color, currentColor);
-		resize: vertical;
+		caret-color: var(--text_color);
+		border-color: var(--border_color);
 	}
 </style>
