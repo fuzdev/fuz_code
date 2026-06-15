@@ -1,5 +1,11 @@
 # @fuzdev/fuz_code
 
+## 0.46.2
+
+### Patch Changes
+
+- fix: clean up `CodeTextarea` styles ([3d2130e](https://github.com/fuzdev/fuz_code/commit/3d2130e))
+
 ## 0.46.1
 
 ### Patch Changes
