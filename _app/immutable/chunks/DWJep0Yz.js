@@ -1,1 +1,0 @@
-import"./DsnmJJEf.js";import{a as s,c as t,d as e,r as m}from"./BeOWsgp8.js";import{B as c}from"./DrIXLsby.js";var i=t('<section class="mb_xl5 box"><!></section>');function f(r){var o=i(),a=e(o);c(a,{}),m(o),s(r,o)}export{f as F};
