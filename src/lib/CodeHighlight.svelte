@@ -9,10 +9,10 @@
 	import type {Snippet} from 'svelte';
 	import type {SvelteHTMLElements} from 'svelte/elements';
 
-	import {syntax_styler_global} from './syntax_styler_global.js';
-	import type {SyntaxStyler, SyntaxGrammar} from './syntax_styler.js';
-	import {supports_css_highlight_api, type HighlightMode} from './highlight_manager.js';
-	import {create_range_highlighting} from './range_highlighting.svelte.js';
+	import {syntax_styler_global} from './syntax_styler_global.ts';
+	import type {SyntaxStyler, SyntaxGrammar} from './syntax_styler.ts';
+	import {supports_css_highlight_api, type HighlightMode} from './highlight_manager.ts';
+	import {create_range_highlighting} from './range_highlighting.svelte.ts';
 
 	const {
 		content,

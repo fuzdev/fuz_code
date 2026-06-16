@@ -1,8 +1,8 @@
 import {parse, type PreprocessorGroup, type AST} from 'svelte/compiler';
 import MagicString from 'magic-string';
 import {walk} from 'zimmerframe';
-import {should_exclude_path} from '@fuzdev/fuz_util/path.js';
-import {escape_js_string} from '@fuzdev/fuz_util/string.js';
+import {should_exclude_path} from '@fuzdev/fuz_util/path.ts';
+import {escape_js_string} from '@fuzdev/fuz_util/string.ts';
 import {
 	find_attribute,
 	extract_static_string,
@@ -11,10 +11,10 @@ import {
 	resolve_component_names,
 	handle_preprocess_error,
 	type ResolvedComponentImport,
-} from '@fuzdev/fuz_util/svelte_preprocess_helpers.js';
+} from '@fuzdev/fuz_util/svelte_preprocess_helpers.ts';
 
-import {syntax_styler_global} from './syntax_styler_global.js';
-import type {SyntaxStyler} from './syntax_styler.js';
+import {syntax_styler_global} from './syntax_styler_global.ts';
+import type {SyntaxStyler} from './syntax_styler.ts';
 
 /**
  * Options for `svelte_preprocess_fuz_code`.
@@ -54,7 +54,7 @@ export interface PreprocessFuzCodeOptions {
  * @example
  * ```ts
  * // svelte.config.js
- * import {svelte_preprocess_fuz_code} from '@fuzdev/fuz_code/svelte_preprocess_fuz_code.js';
+ * import {svelte_preprocess_fuz_code} from '@fuzdev/fuz_code/svelte_preprocess_fuz_code.ts';
  *
  * export default {
  *   preprocess: [svelte_preprocess_fuz_code(), vitePreprocess()],

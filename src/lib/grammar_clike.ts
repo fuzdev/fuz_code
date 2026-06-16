@@ -1,4 +1,4 @@
-import type {AddSyntaxGrammar, SyntaxGrammarRaw} from './syntax_styler.js';
+import type {AddSyntaxGrammar, SyntaxGrammarRaw} from './syntax_styler.ts';
 
 export const class_keywords = 'class|extends|implements|instanceof|interface|new';
 

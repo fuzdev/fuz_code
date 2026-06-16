@@ -1,10 +1,10 @@
 <script lang="ts">
 	import CopyToClipboard from '@fuzdev/fuz_ui/CopyToClipboard.svelte';
 
-	import {fmt} from './benchmark_stats.js';
-	import {RESULT_COLUMNS, results_to_markdown} from './benchmark_results.js';
-	import type {BenchmarkResult, SummaryStats} from './benchmark_types.js';
-	import type {ImplementationName} from './benchmark_fixtures.js';
+	import {fmt} from './benchmark_stats.ts';
+	import {RESULT_COLUMNS, results_to_markdown} from './benchmark_results.ts';
+	import type {BenchmarkResult, SummaryStats} from './benchmark_types.ts';
+	import type {ImplementationName} from './benchmark_fixtures.ts';
 
 	const {
 		results = [],

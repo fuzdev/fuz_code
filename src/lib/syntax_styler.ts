@@ -1,5 +1,5 @@
-import {SyntaxToken, type SyntaxTokenStream} from './syntax_token.js';
-import {tokenize_syntax} from './tokenize_syntax.js';
+import {SyntaxToken, type SyntaxTokenStream} from './syntax_token.ts';
+import {tokenize_syntax} from './tokenize_syntax.ts';
 
 export type AddSyntaxGrammar = (syntax_styler: SyntaxStyler) => void;
 

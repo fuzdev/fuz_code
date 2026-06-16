@@ -4,7 +4,7 @@ import type {
 	SyntaxGrammarRaw,
 	SyntaxGrammarToken,
 	SyntaxGrammar,
-} from './syntax_styler.js';
+} from './syntax_styler.ts';
 
 /**
  * Based on Prism (https://github.com/PrismJS/prism)

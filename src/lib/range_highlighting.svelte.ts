@@ -1,8 +1,8 @@
 import {onDestroy} from 'svelte';
 import {DEV} from 'esm-env';
 
-import type {SyntaxStyler, SyntaxGrammar} from './syntax_styler.js';
-import {HighlightManager, supports_css_highlight_api} from './highlight_manager.js';
+import type {SyntaxStyler, SyntaxGrammar} from './syntax_styler.ts';
+import {HighlightManager, supports_css_highlight_api} from './highlight_manager.ts';
 
 /**
  * Reactive inputs for `create_range_highlighting`. All values are getters so the

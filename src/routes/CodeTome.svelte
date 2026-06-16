@@ -6,7 +6,7 @@
 	import TomeSectionHeader from '@fuzdev/fuz_ui/TomeSectionHeader.svelte';
 
 	import Code from '$lib/Code.svelte';
-	import {syntax_styler_global} from '$lib/syntax_styler_global.js';
+	import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
 
 	// TODO what convention? `DocsTome`? Maybe just `Tome`? `/tomes`? both? what other options?
 

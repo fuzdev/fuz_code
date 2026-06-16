@@ -1,9 +1,9 @@
 import {test, assert, describe} from 'vitest';
-import {assert_rejects} from '@fuzdev/fuz_util/testing.js';
+import {assert_rejects} from '@fuzdev/fuz_util/testing.ts';
 import {preprocess, parse} from 'svelte/compiler';
 
-import {svelte_preprocess_fuz_code} from '$lib/svelte_preprocess_fuz_code.js';
-import {syntax_styler_global} from '$lib/syntax_styler_global.js';
+import {svelte_preprocess_fuz_code} from '$lib/svelte_preprocess_fuz_code.ts';
+import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
 
 const run = async (input: string): Promise<string> => {
 	const result = await preprocess(input, [svelte_preprocess_fuz_code()], {

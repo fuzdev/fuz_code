@@ -1,9 +1,9 @@
 import {readFileSync} from 'node:fs';
-import {fs_search} from '@fuzdev/fuz_util/fs.js';
+import {fs_search} from '@fuzdev/fuz_util/fs.ts';
 import {basename, join, relative} from 'node:path';
-import {syntax_styler_global} from '$lib/syntax_styler_global.js';
-import {tokenize_syntax} from '$lib/tokenize_syntax.js';
-import {type SyntaxTokenStream, SyntaxToken} from '$lib/syntax_token.js';
+import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
+import {tokenize_syntax} from '$lib/tokenize_syntax.ts';
+import {type SyntaxTokenStream, SyntaxToken} from '$lib/syntax_token.ts';
 
 export interface SampleSpec {
 	lang: string;

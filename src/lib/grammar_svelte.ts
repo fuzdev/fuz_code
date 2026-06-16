@@ -1,5 +1,5 @@
-import type {AddSyntaxGrammar, SyntaxStyler} from './syntax_styler.js';
-import {grammar_markup_add_inlined} from './grammar_markup.js';
+import type {AddSyntaxGrammar, SyntaxStyler} from './syntax_styler.ts';
+import {grammar_markup_add_inlined} from './grammar_markup.ts';
 
 const blocks = '(if|else if|else|await|then|catch|each|html|debug|snippet)';
 

@@ -1,8 +1,8 @@
 <script lang="ts">
 	import {onMount, type Component} from 'svelte';
 
-	import type {BenchmarkComponentProps} from './benchmark_types.js';
-	import {ensure_paint} from './benchmark_dom.js';
+	import type {BenchmarkComponentProps} from './benchmark_types.ts';
+	import {ensure_paint} from './benchmark_dom.ts';
 
 	const {
 		BenchmarkedComponent = null,

@@ -1,6 +1,6 @@
-import type {AddSyntaxGrammar} from './syntax_styler.js';
-import {grammar_markup_add_attribute, grammar_markup_add_inlined} from './grammar_markup.js';
-import {class_keywords} from './grammar_clike.js';
+import type {AddSyntaxGrammar} from './syntax_styler.ts';
+import {grammar_markup_add_attribute, grammar_markup_add_inlined} from './grammar_markup.ts';
+import {class_keywords} from './grammar_clike.ts';
 
 /**
  * Based on Prism (https://github.com/PrismJS/prism)

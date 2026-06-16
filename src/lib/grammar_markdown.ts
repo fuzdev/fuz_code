@@ -3,7 +3,7 @@ import type {
 	SyntaxGrammarTokenRaw,
 	SyntaxGrammarValueRaw,
 	SyntaxStyler,
-} from './syntax_styler.js';
+} from './syntax_styler.ts';
 
 interface LangDefinition {
 	aliases: Array<string>;

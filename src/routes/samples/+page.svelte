@@ -3,13 +3,13 @@
 
 	import Breadcrumb from '@fuzdev/fuz_ui/Breadcrumb.svelte';
 	import DeclarationLink from '@fuzdev/fuz_ui/DeclarationLink.svelte';
-	import {Library, library_context} from '@fuzdev/fuz_ui/library.svelte.js';
+	import {Library, library_context} from '@fuzdev/fuz_ui/library.svelte.ts';
 
 	import Code from '$lib/Code.svelte';
 	import CodeHighlight from '$lib/CodeHighlight.svelte';
-	import {samples} from './all.js';
+	import {samples} from './all.ts';
 	import Footer from '$routes/Footer.svelte';
-	import {library_json} from '$routes/library.js';
+	import {library_json} from '$routes/library.ts';
 
 	// `/samples` renders `DeclarationLink`s, so it provides its own `library_context`
 	// (this page loads the heavy analyzed `modules`; the landing deliberately doesn't).

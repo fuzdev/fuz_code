@@ -3,8 +3,8 @@
 	import {DEV} from 'esm-env';
 	import type {SvelteHTMLElements} from 'svelte/elements';
 
-	import {syntax_styler_global} from './syntax_styler_global.js';
-	import type {SyntaxStyler, SyntaxGrammar} from './syntax_styler.js';
+	import {syntax_styler_global} from './syntax_styler_global.ts';
+	import type {SyntaxStyler, SyntaxGrammar} from './syntax_styler.ts';
 
 	const {
 		content,

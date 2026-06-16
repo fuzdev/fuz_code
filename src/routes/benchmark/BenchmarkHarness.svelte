@@ -1,9 +1,9 @@
 <script lang="ts">
 	import {tick, type Component} from 'svelte';
 
-	import type {BenchmarkComponentProps} from './benchmark_types.js';
+	import type {BenchmarkComponentProps} from './benchmark_types.ts';
 	import BenchmarkInstance from './BenchmarkInstance.svelte';
-	import {ensure_paint} from './benchmark_dom.js';
+	import {ensure_paint} from './benchmark_dom.ts';
 
 	/* eslint-disable no-console */
 

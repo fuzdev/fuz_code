@@ -3,15 +3,15 @@
  * Uses fuz_util's BenchmarkStats for core statistics, adding browser-specific stability tracking.
  */
 
-import {BenchmarkStats} from '@fuzdev/fuz_util/benchmark_stats.js';
-import {TIME_NS_PER_MS} from '@fuzdev/fuz_util/time.js';
+import {BenchmarkStats} from '@fuzdev/fuz_util/benchmark_stats.ts';
+import {TIME_NS_PER_MS} from '@fuzdev/fuz_util/time.ts';
 
 import type {
 	BenchmarkResult,
 	BrowserBenchmarkStats,
 	MeasurementData,
 	SummaryStats,
-} from './benchmark_types.js';
+} from './benchmark_types.ts';
 
 /**
  * Analyze measurement data and return browser benchmark stats.

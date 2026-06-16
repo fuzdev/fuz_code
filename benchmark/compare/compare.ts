@@ -3,9 +3,9 @@
 // @ts-nocheck
 
 import {writeFile} from 'node:fs/promises';
-import {Benchmark} from '@fuzdev/fuz_util/benchmark.js';
-import {benchmark_format_markdown_grouped} from '@fuzdev/fuz_util/benchmark_format.js';
-import type {BenchmarkGroup, BenchmarkResult} from '@fuzdev/fuz_util/benchmark_types.js';
+import {Benchmark} from '@fuzdev/fuz_util/benchmark.ts';
+import {benchmark_format_markdown_grouped} from '@fuzdev/fuz_util/benchmark_format.ts';
+import type {BenchmarkGroup, BenchmarkResult} from '@fuzdev/fuz_util/benchmark_types.ts';
 
 // Prism imports
 import Prism from 'prismjs';

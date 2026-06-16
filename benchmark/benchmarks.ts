@@ -1,13 +1,13 @@
 import {readFile, writeFile} from 'node:fs/promises';
-import {Benchmark} from '@fuzdev/fuz_util/benchmark.js';
-import {benchmark_format_markdown_grouped} from '@fuzdev/fuz_util/benchmark_format.js';
+import {Benchmark} from '@fuzdev/fuz_util/benchmark.ts';
+import {benchmark_format_markdown_grouped} from '@fuzdev/fuz_util/benchmark_format.ts';
 import {
 	benchmark_baseline_save,
 	benchmark_baseline_compare,
 	benchmark_baseline_format,
-} from '@fuzdev/fuz_util/benchmark_baseline.js';
-import type {BenchmarkGroup, BenchmarkResult} from '@fuzdev/fuz_util/benchmark_types.js';
-import {format_file} from '@fuzdev/gro/format_file.js';
+} from '@fuzdev/fuz_util/benchmark_baseline.ts';
+import type {BenchmarkGroup, BenchmarkResult} from '@fuzdev/fuz_util/benchmark_types.ts';
+import {format_file} from '@fuzdev/gro/format_file.ts';
 
 import {samples as all_samples} from '../src/routes/samples/all.ts';
 import {syntax_styler_global} from '../src/lib/syntax_styler_global.ts';

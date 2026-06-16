@@ -3,10 +3,10 @@
  * Uses fuz_util's time formatting for consistent display.
  */
 
-import {TIME_NS_PER_MS} from '@fuzdev/fuz_util/time.js';
+import {TIME_NS_PER_MS} from '@fuzdev/fuz_util/time.ts';
 
-import {fmt} from './benchmark_stats.js';
-import type {BenchmarkResult} from './benchmark_types.js';
+import {fmt} from './benchmark_stats.ts';
+import type {BenchmarkResult} from './benchmark_types.ts';
 
 /**
  * Helper to convert nanoseconds to milliseconds for display.

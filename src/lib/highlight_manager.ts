@@ -1,7 +1,7 @@
 import {DEV} from 'esm-env';
 
-import type {SyntaxTokenStream} from './syntax_token.js';
-import {highlight_priorities} from './highlight_priorities.js';
+import type {SyntaxTokenStream} from './syntax_token.ts';
+import {highlight_priorities} from './highlight_priorities.ts';
 
 export type HighlightMode = 'auto' | 'ranges' | 'html';
 

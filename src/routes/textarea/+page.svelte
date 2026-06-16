@@ -3,10 +3,10 @@
 	import '$lib/theme_highlight.css';
 
 	import Breadcrumb from '@fuzdev/fuz_ui/Breadcrumb.svelte';
-	import {supports_css_highlight_api} from '$lib/highlight_manager.js';
+	import {supports_css_highlight_api} from '$lib/highlight_manager.ts';
 	import CodeTextarea from '$lib/CodeTextarea.svelte';
-	import {sample_langs, type SampleLang} from '$lib/code_sample.js';
-	import {samples} from '../samples/all.js';
+	import {sample_langs, type SampleLang} from '$lib/code_sample.ts';
+	import {samples} from '$routes/samples/all.ts';
 	import Footer from '$routes/Footer.svelte';
 
 	const supported = supports_css_highlight_api();

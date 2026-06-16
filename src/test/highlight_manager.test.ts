@@ -1,13 +1,13 @@
 import {test, assert, describe, beforeEach, afterEach} from 'vitest';
-import {HighlightManager, supports_css_highlight_api} from '$lib/highlight_manager.js';
-import {SyntaxToken, type SyntaxTokenStream} from '$lib/syntax_token.js';
+import {HighlightManager, supports_css_highlight_api} from '$lib/highlight_manager.ts';
+import {SyntaxToken, type SyntaxTokenStream} from '$lib/syntax_token.ts';
 import {
 	setup_mock_highlight_api,
 	restore_globals,
 	create_code_element,
 	create_code_element_with_comment,
 	type SavedGlobals,
-} from './highlight_test_helpers.js';
+} from './highlight_test_helpers.ts';
 
 /**
  * Test suite for HighlightManager

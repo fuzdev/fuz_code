@@ -1,10 +1,10 @@
 <script lang="ts">
-	import {samples as all_samples} from '../samples/all.js';
+	import {samples as all_samples} from '$routes/samples/all.ts';
 	import BenchmarkResults from './BenchmarkResults.svelte';
 	import BenchmarkHarness from './BenchmarkHarness.svelte';
-	import {run_all_benchmarks} from './benchmark_runner.js';
-	import {implementations, languages} from './benchmark_fixtures.js';
-	import type {BenchmarkConfig, BenchmarkState} from './benchmark_types.js';
+	import {run_all_benchmarks} from './benchmark_runner.ts';
+	import {implementations, languages} from './benchmark_fixtures.ts';
+	import type {BenchmarkConfig, BenchmarkState} from './benchmark_types.ts';
 
 	/* eslint-disable no-console */
 

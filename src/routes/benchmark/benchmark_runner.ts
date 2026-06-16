@@ -1,4 +1,4 @@
-import {TIME_NS_PER_MS} from '@fuzdev/fuz_util/time.js';
+import {TIME_NS_PER_MS} from '@fuzdev/fuz_util/time.ts';
 
 import type {
 	BenchmarkedImplementation,
@@ -9,16 +9,16 @@ import type {
 	BenchmarkState,
 	BenchmarkHarnessController,
 	BenchmarkComponentProps,
-} from './benchmark_types.js';
-import type {CodeSample} from '$lib/code_sample.js';
-import {inter_test_cooldown} from './benchmark_dom.js';
+} from './benchmark_types.ts';
+import type {CodeSample} from '$lib/code_sample.ts';
+import {inter_test_cooldown} from './benchmark_dom.ts';
 import {
 	check_system_stability,
 	get_instability_reason,
 	extended_cooldown,
-} from './benchmark_stability.js';
-import {implementations, languages, pre_generate_large_contents} from './benchmark_fixtures.js';
-import {analyze_results, calculate_summary, check_high_variance} from './benchmark_stats.js';
+} from './benchmark_stability.ts';
+import {implementations, languages, pre_generate_large_contents} from './benchmark_fixtures.ts';
+import {analyze_results, calculate_summary, check_high_variance} from './benchmark_stats.ts';
 
 /* eslint-disable no-console */
 

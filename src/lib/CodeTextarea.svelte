@@ -17,9 +17,9 @@
 
 	import type {SvelteHTMLElements} from 'svelte/elements';
 
-	import {syntax_styler_global} from './syntax_styler_global.js';
-	import type {SyntaxStyler, SyntaxGrammar} from './syntax_styler.js';
-	import {create_range_highlighting} from './range_highlighting.svelte.js';
+	import {syntax_styler_global} from './syntax_styler_global.ts';
+	import type {SyntaxStyler, SyntaxGrammar} from './syntax_styler.ts';
+	import {create_range_highlighting} from './range_highlighting.svelte.ts';
 
 	let {
 		value = $bindable(''),

@@ -1,8 +1,8 @@
 import {test, assert, describe} from 'vitest';
 
-import {SyntaxStyler} from '$lib/syntax_styler.js';
-import {syntax_styler_global} from '$lib/syntax_styler_global.js';
-import {SyntaxToken} from '$lib/syntax_token.js';
+import {SyntaxStyler} from '$lib/syntax_styler.ts';
+import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
+import {SyntaxToken} from '$lib/syntax_token.ts';
 
 /**
  * Tests for `SyntaxStyler.stringify_token` — HTML escaping of leaf text, span

@@ -1,9 +1,9 @@
-import type {Tome} from '@fuzdev/fuz_ui/tome.js';
-import UsagePage from '$routes/docs/usage/+page.svelte';
-import ApiPage from '$routes/docs/api/+page.svelte';
-import LibraryPage from '$routes/docs/library/+page.svelte';
-import SamplesPage from '$routes/docs/samples/+page.svelte';
-import BenchmarkPage from '$routes/docs/benchmark/+page.svelte';
+import type {Tome} from '@fuzdev/fuz_ui/tome.ts';
+import UsagePage from './usage/+page.svelte';
+import ApiPage from './api/+page.svelte';
+import LibraryPage from './library/+page.svelte';
+import SamplesPage from './samples/+page.svelte';
+import BenchmarkPage from './benchmark/+page.svelte';
 
 export const tomes: Array<Tome> = [
 	{

@@ -59,13 +59,13 @@ npm i -D @fuzdev/fuz_code
 ```
 
 ```ts
-import {syntax_styler_global} from '@fuzdev/fuz_code/syntax_styler_global.js';
+import {syntax_styler_global} from '@fuzdev/fuz_code/syntax_styler_global.ts';
 
 // Generate HTML with syntax highlighting
 const html = syntax_styler_global.stylize(code, 'ts');
 
 // Get raw tokens for custom processing
-import {tokenize_syntax} from '@fuzdev/fuz_code/tokenize_syntax.js';
+import {tokenize_syntax} from '@fuzdev/fuz_code/tokenize_syntax.ts';
 const tokens = tokenize_syntax(code, syntax_styler_global.get_lang('ts'));
 ```
 

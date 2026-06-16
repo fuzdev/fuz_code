@@ -1,4 +1,4 @@
-import type {StabilityCheck} from './benchmark_types.js';
+import type {StabilityCheck} from './benchmark_types.ts';
 const MIN_SAMPLES_FOR_JITTER = 5;
 const RECENT_SAMPLE_COUNT = 10;
 const MAX_ACCEPTABLE_LAG_MS = 5;

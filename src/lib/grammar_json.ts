@@ -1,4 +1,4 @@
-import type {AddSyntaxGrammar, SyntaxGrammarRaw} from './syntax_styler.js';
+import type {AddSyntaxGrammar, SyntaxGrammarRaw} from './syntax_styler.ts';
 
 /**
  * Based on Prism (https://github.com/PrismJS/prism)

@@ -1,5 +1,5 @@
-import type {SyntaxGrammar} from './syntax_styler.js';
-import {SyntaxToken, type SyntaxTokenStream} from './syntax_token.js';
+import type {SyntaxGrammar} from './syntax_styler.ts';
+import {SyntaxToken, type SyntaxTokenStream} from './syntax_token.ts';
 
 /**
  * Accepts a string of text as input and the language definitions to use,

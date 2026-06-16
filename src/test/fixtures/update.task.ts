@@ -6,7 +6,7 @@ import {
 	process_sample,
 	generate_debug_text,
 	get_fixture_path,
-} from './helpers.js';
+} from './helpers.ts';
 
 export const task: Task = {
 	summary: 'update all test fixtures from sample files',
