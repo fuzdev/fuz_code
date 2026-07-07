@@ -10,7 +10,7 @@
 	<section>
 		<p>Performance benchmarking for testing syntax highlighting across all supported languages:</p>
 		<p>
-			<a href={resolve('/benchmark')} class="chip color_d font_size_lg">run benchmark</a>
+			<a href={resolve('/benchmark')} class="chip palette_d font_size_lg">run benchmark</a>
 		</p>
 	</section>
 </TomeContent>

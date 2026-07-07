@@ -17,7 +17,7 @@
 			API):
 		</p>
 		<p>
-			<a href={resolve('/samples')} class="chip color_g font_size_lg">view samples</a>
+			<a href={resolve('/samples')} class="chip palette_g font_size_lg">view samples</a>
 		</p>
 	</section>
 </TomeContent>
