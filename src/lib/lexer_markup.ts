@@ -62,6 +62,57 @@ const T_LANG_JS = token_type('lang_js');
 const T_LANG_CSS = token_type('lang_css');
 const T_VALUE_JS = token_type('value', ['js', 'lang_js']);
 const T_VALUE_CSS = token_type('value', ['css', 'lang_css']);
+const T_PUNCTUATION = token_type('punctuation');
+
+/**
+ * Dialect configuration for the shared markup scanner — how html, xml, and
+ * svelte differ. Instances are module-level constants (one per dialect) so
+ * the scanner stays monomorphic.
+ */
+export interface MarkupLexMode {
+	/**
+	 * Language embedded in `<script>` rawtext regions (resolved through the
+	 * lexer registry at lex time), or null to disable rawtext regions
+	 * entirely (xml).
+	 */
+	script_embed: string | null;
+	/**
+	 * Container type id wrapping script content — `lang_js` for html,
+	 * `lang_ts` for svelte. Unused when `script_embed` is null.
+	 */
+	script_container: number;
+	/**
+	 * RCDATA `textarea`/`title` regions (html only — svelte keeps
+	 * expressions live inside them).
+	 */
+	rcdata: boolean;
+	/**
+	 * `style=`/`on*=` attribute embedding (html only).
+	 */
+	special_attrs: boolean;
+	/**
+	 * Lexes a `{…}` expression at `from`, returning the position after it —
+	 * the svelte hook, null for html/xml. `full` enables block/each forms
+	 * (top level); tag and attribute contexts get the simple form.
+	 */
+	lex_expression: ((l: Lexer, from: number, end: number, full: boolean) => number) | null;
+}
+
+const MODE_HTML: MarkupLexMode = {
+	script_embed: 'js',
+	script_container: T_LANG_JS,
+	rcdata: true,
+	special_attrs: true,
+	lex_expression: null,
+};
+
+const MODE_XML: MarkupLexMode = {
+	script_embed: null,
+	script_container: 0,
+	rcdata: false,
+	special_attrs: false,
+	lex_expression: null,
+};
 
 // a tag-name char — anything except whitespace, `>`, `/`, `=`, `$`, `<`, `%`
 // (the old pattern's negated class; `$` and `%` keep template syntax inert)
@@ -140,12 +191,38 @@ const special_attr_lang = (text: string, from: number, to: number): string | nul
 };
 
 /**
+ * Lexes plain attribute-value content — entities, plus `{…}` expressions in
+ * svelte mode.
+ */
+const lex_markup_value_content = (
+	l: Lexer,
+	from: number,
+	to: number,
+	mode: MarkupLexMode,
+): void => {
+	const {lex_expression} = mode;
+	if (lex_expression === null) {
+		lex_markup_entities(l, from, to);
+		return;
+	}
+	const {text} = l;
+	let i = from;
+	while (i < to) {
+		let brace = text.indexOf('{', i);
+		if (brace === -1 || brace >= to) brace = to;
+		if (brace > i) lex_markup_entities(l, i, brace);
+		if (brace >= to) break;
+		i = lex_expression(l, brace, to, false);
+	}
+};
+
+/**
  * Emits an attribute value container `[eq, value_end)` — `attr_equals`, the
- * quotes, and the content: entities for plain values, or (for `style=`/
- * `on*=` special attrs) a `value` container embedding `embed_lang`. Matching
- * the old pattern, the `value` container appears only when the content is
- * non-empty and starts immediately after the opening quote with a non-space
- * char.
+ * quotes, and the content: entities (plus svelte expressions) for plain
+ * values, or (for `style=`/`on*=` special attrs) a `value` container
+ * embedding `embed_lang`. Matching the old pattern, the `value` container
+ * appears only when the content is non-empty and starts immediately after
+ * the opening quote with a non-space char.
  */
 const lex_markup_attr_value = (
 	l: Lexer,
@@ -156,12 +233,13 @@ const lex_markup_attr_value = (
 	quoted: boolean,
 	closed: boolean,
 	embed_lang: string | null,
+	mode: MarkupLexMode,
 ): void => {
 	l.open(T_ATTR_VALUE, eq);
 	l.leaf(T_ATTR_EQUALS, eq, eq + 1);
 	if (quoted) l.leaf(T_ATTR_QUOTE, content_start - 1, content_start);
 	if (embed_lang === null) {
-		lex_markup_entities(l, content_start, content_end);
+		lex_markup_value_content(l, content_start, content_end, mode);
 	} else if (content_end > content_start && !is_space(l.text.charCodeAt(content_start))) {
 		l.open(embed_lang === 'css' ? T_VALUE_CSS : T_VALUE_JS, content_start);
 		l.embed(embed_lang, content_start, content_end);
@@ -172,18 +250,34 @@ const lex_markup_attr_value = (
 };
 
 /**
- * Emits an `attr_name` — a container with a `namespace` prefix leaf when the
- * name has one, else a plain leaf.
+ * Emits an `attr_name` — a plain leaf, or a container when the name has a
+ * `ns:` prefix (`namespace` leaf) or, in svelte mode, `|modifier` pipes
+ * (`punctuation` leaves, e.g. `transition:fade|global`).
  */
-const lex_markup_attr_name = (l: Lexer, from: number, to: number): void => {
-	const ns_end = scan_namespace_end(l.text, from, to);
-	if (ns_end === -1) {
-		l.leaf(T_ATTR_NAME, from, to);
-	} else {
-		l.open(T_ATTR_NAME, from);
-		l.leaf(T_NAMESPACE, from, ns_end);
-		l.close(to);
+const lex_markup_attr_name = (l: Lexer, from: number, to: number, mode: MarkupLexMode): void => {
+	const {text} = l;
+	const ns_end = scan_namespace_end(text, from, to);
+	let pipe = -1;
+	if (mode.lex_expression !== null) {
+		for (let k = from; k < to; k++) {
+			if (text.charCodeAt(k) === 124) {
+				pipe = k;
+				break;
+			}
+		}
 	}
+	if (ns_end === -1 && pipe === -1) {
+		l.leaf(T_ATTR_NAME, from, to);
+		return;
+	}
+	l.open(T_ATTR_NAME, from);
+	if (ns_end !== -1) l.leaf(T_NAMESPACE, from, ns_end);
+	if (pipe !== -1) {
+		for (let k = pipe; k < to; k++) {
+			if (text.charCodeAt(k) === 124) l.leaf(T_PUNCTUATION, k, k + 1);
+		}
+	}
+	l.close(to);
 };
 
 /**
@@ -202,7 +296,7 @@ const scan_namespace_end = (text: string, from: number, to: number): number => {
  * `>` (or the window end when unterminated). Returns `i + 1` — leaving the
  * `<` as plain text — when no tag name follows.
  */
-const lex_markup_tag = (l: Lexer, i: number, end: number, html_mode: boolean): number => {
+const lex_markup_tag = (l: Lexer, i: number, end: number, mode: MarkupLexMode): number => {
 	const {text} = l;
 	const closing = text.charCodeAt(i + 1) === 47;
 	const name_start = i + (closing ? 2 : 1);
@@ -244,6 +338,11 @@ const lex_markup_tag = (l: Lexer, i: number, end: number, html_mode: boolean): n
 			j++;
 			continue;
 		}
+		if (c === 123 && mode.lex_expression !== null) {
+			// `{expr}` in attribute position — shorthand, spread, `{@attach …}`
+			j = mode.lex_expression(l, j, end, false);
+			continue;
+		}
 
 		// attribute name
 		const an_start = j;
@@ -254,13 +353,23 @@ const lex_markup_tag = (l: Lexer, i: number, end: number, html_mode: boolean): n
 		const eq = skip_space(text, an_end, end);
 		if (eq >= end || text.charCodeAt(eq) !== 61) {
 			// bare attribute
-			lex_markup_attr_name(l, an_start, an_end);
+			lex_markup_attr_name(l, an_start, an_end, mode);
 			j = an_end;
 			continue;
 		}
 
 		const v = skip_space(text, eq + 1, end);
 		const vc = v < end ? text.charCodeAt(v) : 0;
+		if (vc === 123 && mode.lex_expression !== null) {
+			// `={expr}` — the value is an expression
+			lex_markup_attr_name(l, an_start, an_end, mode);
+			l.open(T_ATTR_VALUE, eq);
+			l.leaf(T_ATTR_EQUALS, eq, eq + 1);
+			const expr_end = mode.lex_expression(l, v, end, false);
+			l.close(expr_end);
+			j = expr_end;
+			continue;
+		}
 		let content_start;
 		let content_end;
 		let value_end;
@@ -287,7 +396,7 @@ const lex_markup_tag = (l: Lexer, i: number, end: number, html_mode: boolean): n
 		}
 
 		// a special attr needs a quoted or non-empty value, per the old pattern
-		const special_lang = html_mode ? special_attr_lang(text, an_start, an_end) : null;
+		const special_lang = mode.special_attrs ? special_attr_lang(text, an_start, an_end) : null;
 		if (special_lang !== null && (quoted || content_end > content_start)) {
 			l.open(T_SPECIAL_ATTR, an_start);
 			l.leaf(T_ATTR_NAME, an_start, an_end);
@@ -300,11 +409,22 @@ const lex_markup_tag = (l: Lexer, i: number, end: number, html_mode: boolean): n
 				quoted,
 				closed,
 				special_lang,
+				mode,
 			);
 			l.close(value_end);
 		} else {
-			lex_markup_attr_name(l, an_start, an_end);
-			lex_markup_attr_value(l, eq, content_start, content_end, value_end, quoted, closed, null);
+			lex_markup_attr_name(l, an_start, an_end, mode);
+			lex_markup_attr_value(
+				l,
+				eq,
+				content_start,
+				content_end,
+				value_end,
+				quoted,
+				closed,
+				null,
+				mode,
+			);
 		}
 		j = value_end;
 	}
@@ -325,9 +445,14 @@ const at_name_boundary = (text: string, i: number, end: number): boolean =>
 
 /**
  * Returns the rawtext element name when the tag name at `name_start` is one
- * of html's rawtext/RCDATA elements, else null.
+ * of html's rawtext (or, with `rcdata`, RCDATA) elements, else null.
  */
-const rawtext_name_at = (text: string, name_start: number, end: number): string | null => {
+const rawtext_name_at = (
+	text: string,
+	name_start: number,
+	end: number,
+	rcdata: boolean,
+): string | null => {
 	const c = text.charCodeAt(name_start) | 0x20;
 	if (c === 115) {
 		// s
@@ -337,7 +462,7 @@ const rawtext_name_at = (text: string, name_start: number, end: number): string 
 		if (matches_ci(text, name_start, 'style') && at_name_boundary(text, name_start + 5, end)) {
 			return 'style';
 		}
-	} else if (c === 116) {
+	} else if (c === 116 && rcdata) {
 		// t
 		if (matches_ci(text, name_start, 'textarea') && at_name_boundary(text, name_start + 8, end)) {
 			return 'textarea';
@@ -357,7 +482,13 @@ const rawtext_name_at = (text: string, name_start: number, end: number): string 
  * `script`+`lang_js` / `style`+`lang_css` containers; RCDATA (`textarea`/
  * `title`) content emits entities only.
  */
-const lex_markup_rawtext = (l: Lexer, name: string, from: number, end: number): number => {
+const lex_markup_rawtext = (
+	l: Lexer,
+	name: string,
+	from: number,
+	end: number,
+	mode: MarkupLexMode,
+): number => {
 	const {text} = l;
 	let content_end = end;
 	let search = from;
@@ -376,8 +507,8 @@ const lex_markup_rawtext = (l: Lexer, name: string, from: number, end: number): 
 	if (content_end > from) {
 		if (name === 'script') {
 			l.open(T_SCRIPT, from);
-			l.open(T_LANG_JS, from);
-			l.embed('js', from, content_end);
+			l.open(mode.script_container, from);
+			l.embed(mode.script_embed!, from, content_end);
 			l.close(content_end);
 			l.close(content_end);
 		} else if (name === 'style') {
@@ -396,7 +527,7 @@ const lex_markup_rawtext = (l: Lexer, name: string, from: number, end: number): 
 /**
  * Lexes one `<…` construct at `i`, returning the next scan position.
  */
-const lex_markup_construct = (l: Lexer, i: number, end: number, html_mode: boolean): number => {
+const lex_markup_construct = (l: Lexer, i: number, end: number, mode: MarkupLexMode): number => {
 	const {text} = l;
 	const c1 = i + 1 < end ? text.charCodeAt(i + 1) : 0;
 	if (c1 === 33) {
@@ -442,37 +573,49 @@ const lex_markup_construct = (l: Lexer, i: number, end: number, html_mode: boole
 		l.leaf(T_PROCESSING_INSTRUCTION, i, pi_end);
 		return pi_end;
 	}
-	const after_tag = lex_markup_tag(l, i, end, html_mode);
-	// rawtext elements — html mode, opening tags only; a self-closing slash is
-	// ignored (per HTML parsing, `<script/>` still opens script data)
-	if (html_mode && after_tag > i + 1 && text.charCodeAt(i + 1) !== 47) {
-		const raw_name = rawtext_name_at(text, i + 1, end);
+	const after_tag = lex_markup_tag(l, i, end, mode);
+	// rawtext elements — opening tags only; a self-closing slash is ignored
+	// (per HTML parsing, `<script/>` still opens script data)
+	if (mode.script_embed !== null && after_tag > i + 1 && text.charCodeAt(i + 1) !== 47) {
+		const raw_name = rawtext_name_at(text, i + 1, end, mode.rcdata);
 		if (raw_name !== null) {
-			return lex_markup_rawtext(l, raw_name, after_tag, end);
+			return lex_markup_rawtext(l, raw_name, after_tag, end, mode);
 		}
 	}
 	return after_tag;
 };
 
-const lex_markup_window = (l: Lexer, html_mode: boolean): void => {
+/**
+ * The shared markup window lexer — lexes `[l.pos, l.end)` per `mode`.
+ * The entry point for the html/xml registrations here and for `lexer_svelte`.
+ */
+export const lex_markup_window = (l: Lexer, mode: MarkupLexMode): void => {
 	const {text, end} = l;
+	const {lex_expression} = mode;
 	let i = l.pos;
 	while (i < end) {
-		let lt = text.indexOf('<', i);
-		if (lt === -1 || lt >= end) lt = end;
-		if (lt > i) lex_markup_entities(l, i, lt);
-		if (lt >= end) break;
-		i = lex_markup_construct(l, lt, end, html_mode);
+		let next = text.indexOf('<', i);
+		if (next === -1 || next >= end) next = end;
+		if (lex_expression !== null) {
+			const brace = text.indexOf('{', i);
+			if (brace !== -1 && brace < next) next = brace;
+		}
+		if (next > i) lex_markup_entities(l, i, next);
+		if (next >= end) break;
+		i =
+			text.charCodeAt(next) === 123
+				? lex_expression!(l, next, end, true)
+				: lex_markup_construct(l, next, end, mode);
 	}
 	l.pos = end;
 };
 
 const lex_markup_html = (l: Lexer): void => {
-	lex_markup_window(l, true);
+	lex_markup_window(l, MODE_HTML);
 };
 
 const lex_markup_xml = (l: Lexer): void => {
-	lex_markup_window(l, false);
+	lex_markup_window(l, MODE_XML);
 };
 
 /**

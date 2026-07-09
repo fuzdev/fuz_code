@@ -113,6 +113,18 @@ export const PATHOLOGICAL_CASES: Array<PathologicalCase> = [
 		generate: (size) => repeat_to_size('&amp;x', size),
 	},
 	{
+		// expression-dense template text — balancer + ts embed per `{…}`
+		name: 'svelte_expression_dense',
+		lang: 'svelte',
+		generate: (size) => repeat_to_size('{x}', size),
+	},
+	{
+		// expression-valued attributes — tag scanner + expression interplay
+		name: 'svelte_attr_expr_dense',
+		lang: 'svelte',
+		generate: (size) => repeat_to_size('<a b={c} {d} />', size),
+	},
+	{
 		// nested rules NESTING_DEPTH deep — the native-nesting state stack
 		name: 'css_deep_nesting',
 		lang: 'css',

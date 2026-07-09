@@ -1,18 +1,18 @@
 === STATS ===
 Sample length: 2348 characters
-Total tokens: 663
+Total tokens: 647
 
-Token types (33 unique):
-  punctuation: 314
+Token types (34 unique):
+  punctuation: 297
   tag: 78
-  operator: 38
+  operator: 37
+  lang_ts: 25
   svelte_expression: 25
-  lang_ts: 24
   function: 24
-  attr_name: 20
+  attr_name: 19
+  attr_value: 16
   special_keyword: 15
-  keyword: 14
-  attr_value: 11
+  keyword: 13
   string: 11
   builtin: 10
   capitalized_identifier: 8
@@ -27,12 +27,13 @@ Token types (33 unique):
   namespace: 3
   constant: 2
   boolean: 2
-  type_annotation: 2
-  :: 2
-  type: 2
   function_variable: 2
   style: 2
   lang_css: 2
+  import_type_keyword: 1
+  type_annotation: 1
+  :: 1
+  type: 1
   each: 1
   atrule: 1
   rule: 1
@@ -78,7 +79,7 @@ Token types (33 unique):
  127-143   string                    './Thing.svelte'
  143-144   punctuation               ;
  146-152   special_keyword           import
- 153-157   keyword                   type
+ 153-157   import_type_keyword       type
  158-159   punctuation               {
  159-166   capitalized_identifier    Snippet
  166-167   punctuation               }
@@ -92,8 +93,7 @@ Token types (33 unique):
  212-221   function                  $bindable
  221-222   punctuation               (
  222-226   boolean                   true
- 226-227   punctuation               )
- 227-228   punctuation               ,
+ 226-228   punctuation               ),
  239-240   punctuation               ,
  250-251   punctuation               ,
  253-254   punctuation               }
@@ -107,26 +107,21 @@ Token types (33 unique):
  282-285   builtin                   any
  285-286   operator                  >
  286-287   punctuation               ;
- 295-296   operator                  ?
- 296-297   operator                  :
+ 295-297   operator                  ?:
  298-305   builtin                   boolean
  305-306   punctuation               ;
  317-318   operator                  :
  319-326   capitalized_identifier    Snippet
  326-327   punctuation               ;
- 337-338   operator                  ?
- 338-339   operator                  :
- 340-341   punctuation               (
- 341-342   punctuation               )
+ 337-339   operator                  ?:
+ 340-342   punctuation               ()
  343-345   operator                  =>
  346-350   keyword                   void
  350-351   punctuation               ;
  353-354   punctuation               }
  355-356   operator                  =
  357-363   function                  $props
- 363-364   punctuation               (
- 364-365   punctuation               )
- 365-366   punctuation               ;
+ 363-366   punctuation               ();
  369-374   keyword                   const
  386-387   operator                  =
  388-396   function                  $derived
@@ -135,9 +130,7 @@ Token types (33 unique):
  403-404   punctuation               .
  404-411   function                  entries
  411-412   punctuation               (
- 417-418   punctuation               )
- 418-419   punctuation               )
- 419-420   punctuation               ;
+ 417-420   punctuation               ));
  423-428   keyword                   const
  431-432   operator                  =
  433-434   number                    1
@@ -149,17 +142,16 @@ Token types (33 unique):
  458-461   string                    'b'
  461-462   punctuation               ;
  465-468   keyword                   let
- 470-480   type_annotation           : boolean 
+ 470-479   type_annotation           : boolean
  470-471   :                         :
- 471-480   type                       boolean 
+ 472-479   type                      boolean
  472-479   builtin                   boolean
  480-481   operator                  =
  488-489   punctuation               .
  489-492   function                  raw
  492-493   punctuation               (
  493-497   boolean                   true
- 497-498   punctuation               )
- 498-499   punctuation               ;
+ 497-499   punctuation               );
  502-507   keyword                   const
  508-509   function_variable         f
  510-511   operator                  =
@@ -167,9 +159,7 @@ Token types (33 unique):
  514-515   operator                  :
  516-519   builtin                   any
  519-520   punctuation               )
- 520-526   type_annotation           : any 
- 520-521   :                         :
- 521-526   type                       any 
+ 520-521   operator                  :
  522-525   builtin                   any
  526-528   operator                  =>
  530-531   punctuation               ;
@@ -194,19 +184,15 @@ Token types (33 unique):
  615-616   punctuation               {
  632-635   operator                  !==
  638-639   punctuation               ;
- 642-643   punctuation               }
- 643-644   punctuation               ;
- 646-647   punctuation               }
- 647-648   punctuation               ;
+ 642-644   punctuation               };
+ 646-648   punctuation               };
  651-654   keyword                   let
  661-662   operator                  =
  663-671   function                  $derived
  671-672   punctuation               (
  677-678   punctuation               [
  678-680   string                    ''
- 680-681   punctuation               ]
- 681-682   punctuation               )
- 682-683   punctuation               ;
+ 680-683   punctuation               ]);
  685-688   keyword                   let
  700-701   operator                  :
  702-713   capitalized_identifier    HTMLElement
@@ -218,8 +204,10 @@ Token types (33 unique):
  726-754   tag                       <h1 bind:this={element_ref}>
  726-729   tag                       <h1
  726-727   punctuation               <
- 730-740   attr_name                 bind:this=
+ 730-739   attr_name                 bind:this
  730-735   namespace                 bind:
+ 739-753   attr_value                ={element_ref}
+ 739-740   punctuation               =
  740-753   svelte_expression         {element_ref}
  740-741   punctuation               {
  741-752   lang_ts                   element_ref
@@ -238,25 +226,24 @@ Token types (33 unique):
  775-817   each                      {#each thing_keys as [k, { t, u }] (f(k))}
  775-776   punctuation               {
  776-781   special_keyword           #each
+ 782-792   lang_ts                   thing_keys
  793-795   keyword                   as
- 796-817   lang_ts                   [k, { t, u }] (f(k))}
+ 796-816   lang_ts                   [k, { t, u }] (f(k))
  796-797   punctuation               [
  798-799   punctuation               ,
  800-801   punctuation               {
  803-804   punctuation               ,
- 807-808   punctuation               }
- 808-809   punctuation               ]
+ 807-809   punctuation               }]
  810-811   punctuation               (
  811-812   function                  f
  812-813   punctuation               (
- 814-815   punctuation               )
- 815-816   punctuation               )
+ 814-816   punctuation               ))
  816-817   punctuation               }
  819-855   svelte_expression         {@const v = Math.round(t[k + f(u)])}
  819-855   at_directive              {@const v = Math.round(t[k + f(u)])}
  819-820   punctuation               {
  820-826   at_keyword                @const
- 827-855   lang_ts                   v = Math.round(t[k + f(u)])}
+ 827-854   lang_ts                   v = Math.round(t[k + f(u)])
  829-830   operator                  =
  831-835   capitalized_identifier    Math
  835-836   punctuation               .
@@ -266,9 +253,7 @@ Token types (33 unique):
  846-847   operator                  +
  848-849   function                  f
  849-850   punctuation               (
- 851-852   punctuation               )
- 852-853   punctuation               ]
- 853-854   punctuation               )
+ 851-854   punctuation               )])
  854-855   punctuation               }
  857-863   svelte_expression         {f(v)}
  857-858   punctuation               {
@@ -286,7 +271,7 @@ Token types (33 unique):
  873-883   block                     {#if f(c)}
  873-874   punctuation               {
  874-877   special_keyword           #if
- 877-882   lang_ts                    f(c)
+ 878-882   lang_ts                   f(c)
  878-879   function                  f
  879-880   punctuation               (
  881-882   punctuation               )
@@ -294,7 +279,10 @@ Token types (33 unique):
  885-940   tag                       <Thing string_prop="a {f('s')} b" number_prop={f(1)} />
  885-891   tag                       <Thing
  885-886   punctuation               <
- 892-906   attr_name                 string_prop="a
+ 892-903   attr_name                 string_prop
+ 903-918   attr_value                ="a {f('s')} b"
+ 903-904   punctuation               =
+ 904-905   punctuation               "
  907-915   svelte_expression         {f('s')}
  907-908   punctuation               {
  908-914   lang_ts                   f('s')
@@ -303,8 +291,10 @@ Token types (33 unique):
  910-913   string                    's'
  913-914   punctuation               )
  914-915   punctuation               }
- 916-918   attr_name                 b"
- 919-931   attr_name                 number_prop=
+ 917-918   punctuation               "
+ 919-930   attr_name                 number_prop
+ 930-937   attr_value                ={f(1)}
+ 930-931   punctuation               =
  931-937   svelte_expression         {f(1)}
  931-932   punctuation               {
  932-936   lang_ts                   f(1)
@@ -318,7 +308,7 @@ Token types (33 unique):
  941-960   block                     {:else if f(a > 0)}
  941-942   punctuation               {
  942-950   special_keyword           :else if
- 950-959   lang_ts                    f(a > 0)
+ 951-959   lang_ts                   f(a > 0)
  951-952   function                  f
  952-953   punctuation               (
  955-956   operator                  >
@@ -338,30 +328,29 @@ Token types (33 unique):
  996-997   punctuation               =
  997-998   punctuation               "
  999-1000  punctuation               "
-1001-1009  attr_name                 onthing=
+1001-1008  attr_name                 onthing
+1008-1028  attr_value                ={() => (c = f(!c))}
+1008-1009  punctuation               =
 1009-1028  svelte_expression         {() => (c = f(!c))}
 1009-1010  punctuation               {
 1010-1027  lang_ts                   () => (c = f(!c))
-1010-1011  punctuation               (
-1011-1012  punctuation               )
+1010-1012  punctuation               ()
 1013-1015  operator                  =>
 1016-1017  punctuation               (
 1019-1020  operator                  =
 1021-1022  function                  f
 1022-1023  punctuation               (
 1023-1024  operator                  !
-1025-1026  punctuation               )
-1026-1027  punctuation               )
+1025-1027  punctuation               ))
 1027-1028  punctuation               }
 1028-1029  punctuation               >
 1032-1052  svelte_expression         {@render children()}
 1032-1052  at_directive              {@render children()}
 1032-1033  punctuation               {
 1033-1040  at_keyword                @render
-1041-1052  lang_ts                   children()}
+1041-1051  lang_ts                   children()
 1041-1049  function                  children
-1049-1050  punctuation               (
-1050-1051  punctuation               )
+1049-1051  punctuation               ()
 1051-1052  punctuation               }
 1054-1062  tag                       </Thing>
 1054-1061  tag                       </Thing
@@ -377,7 +366,7 @@ Token types (33 unique):
 1127-1162  at_directive              {@html '<strong>raw html</strong>'}
 1127-1128  punctuation               {
 1128-1133  at_keyword                @html
-1134-1162  lang_ts                   '<strong>raw html</strong>'}
+1134-1161  lang_ts                   '<strong>raw html</strong>'
 1134-1161  string                    '<strong>raw html</strong>'
 1161-1162  punctuation               }
 1164-1213  tag                       <input bind:value type="text" class:active={c} />
@@ -390,8 +379,10 @@ Token types (33 unique):
 1186-1187  punctuation               =
 1187-1188  punctuation               "
 1192-1193  punctuation               "
-1194-1207  attr_name                 class:active=
+1194-1206  attr_name                 class:active
 1194-1200  namespace                 class:
+1206-1210  attr_value                ={c}
+1206-1207  punctuation               =
 1207-1210  svelte_expression         {c}
 1207-1208  punctuation               {
 1208-1209  lang_ts                   c
@@ -404,7 +395,7 @@ Token types (33 unique):
 1221-1257  at_directive              {@attach attachment('param', f(42))}
 1221-1222  punctuation               {
 1222-1229  at_keyword                @attach
-1230-1257  lang_ts                   attachment('param', f(42))}
+1230-1256  lang_ts                   attachment('param', f(42))
 1230-1240  function                  attachment
 1240-1241  punctuation               (
 1241-1248  string                    'param'
@@ -412,8 +403,7 @@ Token types (33 unique):
 1250-1251  function                  f
 1251-1252  punctuation               (
 1252-1254  number                    42
-1254-1255  punctuation               )
-1255-1256  punctuation               )
+1254-1256  punctuation               ))
 1256-1257  punctuation               }
 1257-1258  punctuation               >
 1261-1268  tag                       </span>
@@ -427,16 +417,13 @@ Token types (33 unique):
 1275-1325  at_directive              {@attach f(() => {\n\t// function attachment arg\n})}
 1275-1276  punctuation               {
 1276-1283  at_keyword                @attach
-1284-1325  lang_ts                   f(() => {\n\t// function attachment arg\n})}
+1284-1324  lang_ts                   f(() => {\n\t// function attachment arg\n})
 1284-1285  function                  f
-1285-1286  punctuation               (
-1286-1287  punctuation               (
-1287-1288  punctuation               )
+1285-1288  punctuation               (()
 1289-1291  operator                  =>
 1292-1293  punctuation               {
 1295-1321  comment                   // function attachment arg
-1322-1323  punctuation               }
-1323-1324  punctuation               )
+1322-1324  punctuation               })
 1324-1325  punctuation               }
 1325-1326  punctuation               >
 1336-1342  tag                       </div>
@@ -447,7 +434,7 @@ Token types (33 unique):
 1344-1369  at_directive              {@render my_snippet('p')}
 1344-1345  punctuation               {
 1345-1352  at_keyword                @render
-1353-1369  lang_ts                   my_snippet('p')}
+1353-1368  lang_ts                   my_snippet('p')
 1353-1363  function                  my_snippet
 1363-1364  punctuation               (
 1364-1367  string                    'p'
@@ -457,7 +444,7 @@ Token types (33 unique):
 1371-1403  block                     {#snippet my_snippet(p: string)}
 1371-1372  punctuation               {
 1372-1380  special_keyword           #snippet
-1380-1402  lang_ts                    my_snippet(p: string)
+1381-1402  lang_ts                   my_snippet(p: string)
 1381-1391  function                  my_snippet
 1391-1392  punctuation               (
 1393-1394  operator                  :
@@ -661,8 +648,7 @@ Token types (33 unique):
 2061-2062  punctuation               ,
 2064-2065  punctuation               ,
 2067-2068  punctuation               ,
-2072-2073  punctuation               )
-2073-2074  punctuation               ;
+2072-2074  punctuation               );
 2076-2077  punctuation               }
 2080-2093  comment                   /* comment */
 2096-2128  comment                   /*\n\tmulti\n\tline\n\n\t<comment>\n\n\t*/
@@ -686,8 +672,7 @@ Token types (33 unique):
 2242-2252  function                  light-dark
 2252-2253  punctuation               (
 2262-2263  punctuation               ,
-2272-2273  punctuation               )
-2273-2274  punctuation               ;
+2272-2274  punctuation               );
 2277-2278  punctuation               }
 2280-2281  punctuation               }
 2284-2313  selector                  :global(.escapehatch)::before

@@ -3,8 +3,10 @@ import {
 	is_ident,
 	is_ident_start,
 	is_space,
+	scan_balanced_braces,
 	scan_ident,
 	scan_to_line_end,
+	skip_quoted,
 	skip_space,
 	token_type,
 	type Lexer,
@@ -242,57 +244,6 @@ const scan_ts_number = (text: string, i: number, end: number): number => {
 	}
 	if (is_integer && text.charCodeAt(j) === 110) j++; // bigint
 	return j;
-};
-
-/**
- * Skips a quoted span (used inside balanced scans), returning the index after
- * the closing quote, or after the span's line for unterminated strings.
- */
-const skip_quoted = (text: string, from: number, end: number, quote: number): number => {
-	let i = from + 1;
-	while (i < end) {
-		const c = text.charCodeAt(i);
-		if (c === 92) i += 2;
-		else if (c === quote) return i + 1;
-		else if ((c === 10 || c === 13) && quote !== 96) return i;
-		else i++;
-	}
-	return end;
-};
-
-/**
- * Finds the matching `}` for the `{` at `i`, skipping strings, templates, and
- * comments. Returns -1 when unbalanced within the window.
- */
-const scan_balanced_braces = (text: string, i: number, end: number): number => {
-	let depth = 0;
-	let j = i;
-	while (j < end) {
-		const c = text.charCodeAt(j);
-		if (c === 123) {
-			depth++;
-			j++;
-		} else if (c === 125) {
-			depth--;
-			if (depth === 0) return j;
-			j++;
-		} else if (c === 34 || c === 39 || c === 96) {
-			j = skip_quoted(text, j, end, c);
-		} else if (c === 47) {
-			const c2 = text.charCodeAt(j + 1);
-			if (c2 === 47) {
-				j = scan_to_line_end(text, j, end);
-			} else if (c2 === 42) {
-				const close = text.indexOf('*/', j + 2);
-				j = close === -1 || close + 2 > end ? end : close + 2;
-			} else {
-				j++;
-			}
-		} else {
-			j++;
-		}
-	}
-	return -1;
 };
 
 /**
