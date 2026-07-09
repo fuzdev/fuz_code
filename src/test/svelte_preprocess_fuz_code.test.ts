@@ -924,7 +924,7 @@ const y = 2;" lang="ts" />`;
 
 		test('on_error throw mode throws on stylize failure', async () => {
 			const bad_styler = {
-				langs: {ts: {}},
+				has_lang: () => true,
 				stylize() {
 					throw new Error('test error');
 				},
@@ -948,7 +948,7 @@ const y = 2;" lang="ts" />`;
 
 		test('on_error log mode skips failed transformation', async () => {
 			const bad_styler = {
-				langs: {ts: {}},
+				has_lang: () => true,
 				stylize() {
 					throw new Error('test error');
 				},

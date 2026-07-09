@@ -1,7 +1,6 @@
 /**
  * Flat-event lexer substrate — the engine beneath the hand-written per-language
- * lexers (`lexer_json.ts`, `lexer_ts.ts`, …), replacing the regex-grammar engine
- * in `tokenize_syntax.ts`.
+ * lexers (`lexer_json.ts`, `lexer_ts.ts`, …).
  *
  * Tokens are emitted as variable-length records into one `Int32Array`:
  *

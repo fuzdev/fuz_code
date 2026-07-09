@@ -1,10 +1,12 @@
 # fuz_code
 
-> Syntax highlighting - a modernized PrismJS fork
+> Syntax highlighting - hand-written single-pass lexers
 
 fuz_code (`@fuzdev/fuz_code`) is a runtime syntax highlighting library optimized
-for HTML generation with CSS classes. It's a PrismJS fork with TypeScript types
-and modern module support.
+for HTML generation with CSS classes. It originated as a PrismJS fork and keeps
+its `.token_*` class vocabulary, but the tokenizer is a full rewrite — one
+hand-written single-pass lexer per language emitting a flat token event stream,
+with zero regular expressions.
 
 For coding conventions, see Skill(fuz-stack).
 
@@ -42,9 +44,9 @@ dev server.
 fuz_code is a **syntax highlighting library**:
 
 - Runtime HTML generation with CSS classes
-- PrismJS-compatible grammar definitions
+- Hand-written single-pass lexers (zero regex), one per language
 - 8 built-in languages (TS, JS, CSS, HTML, JSON, Svelte, Markdown, Bash)
-- Extensible grammar system with hooks
+- Extensible by writing a lexer (`SyntaxLang`)
 - Optional Svelte component (`Code.svelte`)
 
 ### What fuz_code does NOT include
@@ -65,13 +67,10 @@ benchmark/                          # performance testing
 └── compare/                    # Prism/Shiki comparison
 src/
 ├── lib/                        # exportable library code
-│   ├── syntax_styler.ts        # SyntaxStyler class, hook system
+│   ├── syntax_styler.ts        # SyntaxStyler class: registry + lex/stylize facade
 │   ├── syntax_styler_global.ts # pre-configured global instance
-│   ├── lexer.ts                # lexer-engine substrate: Lexer, TokenTypeRegistry, flat events, HTML render
+│   ├── lexer.ts                # lexer substrate: Lexer, TokenTypeRegistry, flat events, HTML render
 │   ├── lexer_*.ts              # hand-written lexers (json, ts, css, bash, markup, svelte, md)
-│   ├── tokenize_syntax.ts      # tokenize_syntax() function (regex engine)
-│   ├── syntax_token.ts         # SyntaxToken class, type definitions
-│   ├── grammar_*.ts            # regex language definitions (8 files)
 │   ├── Code.svelte             # main Svelte component
 │   ├── CodeHighlight.svelte    # experimental CSS Highlight API
 │   ├── highlight_manager.ts    # CSS Highlight API manager
@@ -80,7 +79,6 @@ src/
 │   ├── theme_variables.css     # CSS variable fallbacks
 │   └── theme_highlight.css     # CSS Highlight API theme
 ├── test/                       # test files and fixtures
-│   ├── syntax_styler.test.ts
 │   ├── highlight_manager.test.ts
 │   ├── lexer*.test.ts          # lexer-engine suites (substrate + per language)
 │   ├── lexer.pathological.test.ts # linearity + validity on adversarial inputs
@@ -98,43 +96,30 @@ src/
 
 ### Core system
 
-Two engines currently coexist (the lexer engine is replacing the regex
-engine, language by language, on the `lexer-architecture` branch):
-
 **Lexer engine** (`lexer.ts` + `lexer_*.ts`) - hand-written single-pass
 lexers emitting flat token events (`Int32Array`) rendered to HTML in one
-forward pass. All 8 built-in languages are ported — `stylize` routes every
-registered language through it. Token types intern into a
-`TokenTypeRegistry` (`token_types_global` by default, injectable via
-`SyntaxStylerOptions`).
+forward pass. Token types intern into a `TokenTypeRegistry`
+(`token_types_global` by default, injectable via `SyntaxStylerOptions`).
 
-**Regex engine** (`tokenize_syntax.ts` + `grammar_*.ts`) - PrismJS-inherited
-multi-pass tokenization; now serves only the legacy `tokenize()` API and
-explicit-grammar `stylize` calls, until its deletion completes the rewrite.
-
-**SyntaxStyler** - The main class for tokenization and HTML generation,
-fronting both engines.
+**SyntaxStyler** - The main class: a language registry and a `lex`/`stylize`
+facade over the lexer engine. `lex(text, lang)` returns the flat event stream
+(`LexedSyntax`); `stylize(text, lang)` renders it to HTML.
 
 **syntax_styler_global** - Pre-configured instance with all built-in
 languages registered. Import this for typical usage.
 
 ### Token structure
 
-Lexer engine: a flat event stream (`LexedSyntax`) — leaf/open/close records
+The lexer emits a flat event stream (`LexedSyntax`) — leaf/open/close records
 in one `Int32Array` with interned type ids; plain text is implicit between
-events. The regex engine builds a hierarchical `SyntaxToken` tree instead:
-
-- `type` - token type (e.g., 'keyword', 'string')
-- `content` - text or nested `SyntaxTokenStream`
-- `alias` - CSS class aliases
-- `length` - token text length
-
-Both engines generate HTML using classes like `.token_keyword`,
-`.token_string`, styled by `theme.css`.
+events (recovered from offsets). `render_syntax_html` streams HTML from it in
+one forward pass, wrapping spans with classes like `.token_keyword`,
+`.token_string` (styled by `theme.css`); `syntax_events_to_tokens` flattens it
+to `{type, start, end}` for tests and fixtures.
 
 ### Language definitions
 
-Lexer engine (preferred by `stylize` when registered):
+One `SyntaxLang` lexer per language, registered via `add_lang`:
 
 - `lexer_json.ts` - JSON (with comments)
 - `lexer_ts.ts` - TypeScript; also registers the `js`/`javascript` aliases
@@ -153,28 +138,9 @@ Lexer engine (preferred by `stylize` when registered):
   with a per-block inline scan (emphasis, inline code, links, entities, raw
   markup via the markup scanner); fences embed their languages
 
-Regex grammars (unported languages + `tokenize()` until cutover):
-
-- `grammar_clike.ts` - base for C-like languages
-- `grammar_js.ts` - JavaScript
-- `grammar_ts.ts` - TypeScript (extends JS)
-- `grammar_css.ts` - CSS stylesheets
-- `grammar_markup.ts` - HTML/XML
-- `grammar_json.ts` - JSON
-- `grammar_svelte.ts` - Svelte components (extends markup)
-- `grammar_bash.ts` - Bash/shell
-- `grammar_markdown.ts` - Markdown
-
-### Hook system
-
-SyntaxStyler provides hooks for customizing tokenization and rendering:
-
-- **before_tokenize** - modify code/grammar before tokenization
-- **after_tokenize** - modify token stream after tokenization
-- **wrap** - customize HTML output per token (add attributes, custom wrapping)
-
-Register with `add_hook_before_tokenize()`, `add_hook_after_tokenize()`,
-`add_hook_wrap()`.
+Embedded languages resolve lazily by name through the registry (markdown
+fences → any language, markup `<script>`/`<style>`/`style=`/`on*=`, svelte
+`{…}` → ts) via `Lexer.embed`.
 
 ### Generated files
 
@@ -186,20 +152,14 @@ Register with `add_hook_before_tokenize()`, `add_hook_after_tokenize()`,
 **SyntaxStyler class:**
 
 - `stylize(text, lang)` - generate HTML with syntax highlighting
-- `get_lang(id)` - get language grammar
-- `add_lang(id, grammar, aliases?)` - register new language
-- `add_extended_lang(base_id, ext_id, extension, aliases?)` - register extended
-  language
-- `extend_grammar(base_id, extension)` - create extended grammar without
-  registration
-- `grammar_insert_before(inside, before, insert, root?)` - insert tokens before
-  existing
+- `lex(text, lang)` - lex to the flat token event stream (`LexedSyntax`)
+- `add_lang(lang)` - register a `SyntaxLang` lexer (and its aliases)
+- `has_lang(id)` - whether a language is registered under `id`
 
 **Code.svelte props:**
 
 - `content` (required) - source code to highlight
 - `lang` - language identifier (default: 'svelte')
-- `grammar` - optional custom grammar
 - `inline` - boolean for inline vs block
 - `wrap` - boolean for text wrapping
 - `nomargin` - boolean for margin control
@@ -324,19 +284,21 @@ Theme uses CSS variables from fuz_css:
 
 ## Development guidelines
 
-1. **Maintain PrismJS compatibility** - grammars should work with upstream
-2. **Test with fixtures** - all changes must pass fixture tests
-3. **Focus on HTML mode** - primary development focus
-4. **Follow patterns** - use existing grammars as templates
+1. **Zero regex in lexers** - char-code scanning, native `indexOf`, keyword
+   `Map` lookups; no `RegExp` anywhere (speed + Rust-twin discipline)
+2. **Never throw, always cover** - any input (mid-keystroke, malformed) yields a
+   valid event stream; unterminated constructs extend to their natural boundary
+3. **Progress discipline** - every scan loop advances position or emits+advances
+4. **Test with fixtures** - all changes must pass fixture tests
+5. **Follow patterns** - use existing `lexer_*.ts` modules as templates
 
 ### Adding a new language
 
-New languages are written as lexers (the regex-grammar path is being
-retired):
+New languages are written as lexers:
 
 1. Create `src/lib/lexer_{lang}.ts` exporting a `SyntaxLang` (see existing
    lexers; zero regex, flat token events)
-2. Register via `add_lexer_lang` in `syntax_styler_global.ts`
+2. Register via `add_lang` in `syntax_styler_global.ts`
 3. Add samples in `src/test/fixtures/samples/sample_{variant}.{lang}`
 4. Add a `src/test/lexer_{lang}.test.ts` suite (targeted cases +
    prefix-resilience + determinism, mirroring the existing suites)
@@ -344,13 +306,10 @@ retired):
 
 ## Known limitations
 
-- **Regex-based** - not TextMate grammar compatible, some edge cases may differ
-  from IDE highlighting
+- **Not TextMate-compatible** - some edge cases may differ from IDE highlighting
 - **CSS Custom Highlight API** - experimental, limited browser support
 - **No line numbers** - not built-in, handle separately
 - **Web-focused languages** - TypeScript/JS ecosystem only
-- **Position tracking** - range mode position calculation can have issues with
-  nested tokens
 
 ## Demo pages
 
@@ -364,7 +323,7 @@ retired):
 - Prettier with tabs, 100 char width
 - Node >= 22.15
 - Tests in `src/test/` (not co-located)
-- Fixture-based testing for language grammars
+- Fixture-based testing for language lexers
 
 ## Related projects
 

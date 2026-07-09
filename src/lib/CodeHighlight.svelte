@@ -10,7 +10,7 @@
 	import type {SvelteHTMLElements} from 'svelte/elements';
 
 	import {syntax_styler_global} from './syntax_styler_global.ts';
-	import type {SyntaxStyler, SyntaxGrammar} from './syntax_styler.ts';
+	import type {SyntaxStyler} from './syntax_styler.ts';
 	import {supports_css_highlight_api, type HighlightMode} from './highlight_manager.ts';
 	import {create_range_highlighting} from './range_highlighting.svelte.ts';
 
@@ -18,7 +18,6 @@
 		content,
 		lang = 'svelte',
 		mode = 'auto',
-		grammar,
 		inline = false,
 		wrap = false,
 		syntax_styler = syntax_styler_global,
@@ -31,16 +30,12 @@
 		 * Language identifier (e.g., 'ts', 'css', 'html', 'json', 'svelte', 'md').
 		 *
 		 * **Purpose:**
-		 * - When `grammar` is not provided, used to look up the grammar via `syntax_styler.get_lang(lang)`
-		 * - Used for metadata: sets the `data-lang` attribute and determines `language_supported`
+		 * - Selects the registered lexer used to highlight `content`
+		 * - Sets the `data-lang` attribute and determines `language_supported`
 		 *
 		 * **Special values:**
 		 * - `null` - Explicitly disables syntax highlighting (content rendered as plain text)
 		 * - `undefined` - Falls back to default ('svelte')
-		 *
-		 * **Relationship with `grammar`:**
-		 * - If both `lang` and `grammar` are provided, `grammar` takes precedence for tokenization
-		 * - However, `lang` is still used for the `data-lang` attribute and language detection
 		 *
 		 * @default 'svelte'
 		 */
@@ -59,23 +54,6 @@
 		 * @default 'auto'
 		 */
 		mode?: HighlightMode;
-		/**
-		 * Optional custom `SyntaxGrammar` object for syntax tokenization.
-		 *
-		 * **When to use:**
-		 * - To provide a custom language definition not registered in `syntax_styler.langs`
-		 * - To use a modified/extended version of an existing grammar
-		 * - For one-off grammar variations without registering globally
-		 *
-		 * **Behavior:**
-		 * - When provided, this grammar is used for tokenization instead of looking up via `lang`
-		 * - Enables highlighting even if `lang` is not in the registry (useful for custom languages)
-		 * - The `lang` parameter is still used for metadata (data-lang attribute)
-		 * - When undefined, the grammar is automatically looked up via `syntax_styler.get_lang(lang)`
-		 *
-		 * @default undefined (uses grammar from `syntax_styler.langs[lang]`)
-		 */
-		grammar?: SyntaxGrammar | undefined;
 		/**
 		 * Whether to render as inline code or block code.
 		 * Controls display via CSS classes.
@@ -123,7 +101,6 @@
 		text: () => content,
 		enabled: () => use_ranges,
 		lang: () => lang,
-		grammar: () => grammar,
 		syntax_styler: () => syntax_styler,
 		dev_label: 'CodeHighlight',
 	});
@@ -134,7 +111,7 @@
 			return '';
 		}
 
-		return syntax_styler.stylize(content, lang!, grammar); // ! is safe bc of the `highlighting_disabled` calculation
+		return syntax_styler.stylize(content, lang!); // ! is safe bc of the `highlighting_disabled` calculation
 	});
 
 	// TODO do syntax styling at compile-time in the normal case, and don't import these at runtime

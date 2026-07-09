@@ -1,6 +1,6 @@
 import {DEV} from 'esm-env';
 
-import type {SyntaxTokenStream} from './syntax_token.ts';
+import type {LexedSyntax} from './lexer.ts';
 import {highlight_priorities} from './highlight_priorities.ts';
 
 export type HighlightMode = 'auto' | 'ranges' | 'html';
@@ -38,9 +38,6 @@ const find_text_node = (element: Element): Node | null => {
 	return null;
 };
 
-const has_tokens = (tokens: SyntaxTokenStream): boolean =>
-	tokens.some((t) => typeof t !== 'string');
-
 const push_range = (
 	ranges_by_name: Map<string, Array<AbstractRange>>,
 	name: string,
@@ -65,7 +62,7 @@ const push_range = (
  * @example
  * ```ts
  * const manager = new HighlightManager();
- * manager.highlight_from_syntax_tokens(element, tokens);
+ * manager.highlight_from_lexed(element, syntax_styler_global.lex(text, 'ts'));
  * ```
  */
 export class HighlightManager {
@@ -87,19 +84,19 @@ export class HighlightManager {
 	}
 
 	/**
-	 * Highlights `element`'s text node from a `SyntaxTokenStream` produced by
-	 * `tokenize_syntax`. Clears this manager's previous ranges first.
+	 * Highlights `element`'s text node from a lexed event stream. Ranges come
+	 * straight from event offsets — no position reconstruction. Clears this
+	 * manager's previous ranges first.
 	 *
-	 * In production this never throws on a tokenizer/DOM mismatch: out-of-bounds
-	 * tokens are clamped and a missing text node is a no-op. In DEV the same
-	 * conditions throw loudly to surface grammar bugs.
+	 * A missing text node is a no-op. Offsets past the text node's length are
+	 * clamped (a DOM/source mismatch is the caller's concern, not a throw here).
 	 */
-	highlight_from_syntax_tokens(element: Element, tokens: SyntaxTokenStream): void {
+	highlight_from_lexed(element: Element, lexed: LexedSyntax): void {
 		this.clear_element_ranges();
 
 		const text_node = find_text_node(element);
 		if (!text_node) {
-			if (has_tokens(tokens)) {
+			if (lexed.events_len > 0) {
 				if (DEV) {
 					throw new Error('no text node to highlight');
 				} else {
@@ -111,32 +108,23 @@ export class HighlightManager {
 		}
 
 		try {
-			this.#apply(text_node, tokens);
+			this.#apply(text_node, lexed);
 		} catch (err) {
 			// some engines may reject `StaticRange` in `Highlight.add` -- fall back to
 			// live `Range` once rather than letting the throw escape into the effect
 			if (this.#range_kind === 'static') {
 				this.#range_kind = 'live';
 				this.clear_element_ranges(); // undo any partial application
-				this.#apply(text_node, tokens);
+				this.#apply(text_node, lexed);
 			} else {
 				throw err;
 			}
 		}
 	}
 
-	#apply(text_node: Node, tokens: SyntaxTokenStream): void {
+	#apply(text_node: Node, lexed: LexedSyntax): void {
 		const ranges_by_name: Map<string, Array<AbstractRange>> = new Map();
-		const final_pos = this.#collect_ranges(tokens, text_node, ranges_by_name, 0);
-
-		if (DEV) {
-			const text_length = text_node.textContent?.length ?? 0;
-			if (final_pos !== text_length) {
-				throw new Error(
-					`Token stream length mismatch: tokens covered ${final_pos} chars but text node has ${text_length} chars`,
-				);
-			}
-		}
+		this.#collect_ranges(lexed, text_node, ranges_by_name);
 
 		// TODO: cross-instance coupling -- all managers share one global `Highlight`
 		// per token type, so re-highlighting one element (e.g. a textarea on every
@@ -205,56 +193,73 @@ export class HighlightManager {
 	}
 
 	/**
-	 * Walks the token tree, collecting one range per non-empty token (shared
-	 * across its type and aliases). Returns the end position covered.
+	 * Walks the flat event stream, collecting one range per token (leaf or
+	 * container, shared across its type and aliases) directly from event offsets.
+	 * Offsets past the text node's length are clamped.
 	 */
 	#collect_ranges(
-		tokens: SyntaxTokenStream,
+		lexed: LexedSyntax,
 		text_node: Node,
 		ranges_by_name: Map<string, Array<AbstractRange>>,
-		offset: number,
-	): number {
+	): void {
+		const {events, events_len} = lexed;
+		const {infos} = lexed.types;
 		const text_length = text_node.textContent?.length ?? 0;
-		let pos = offset;
-
-		for (const token of tokens) {
-			if (typeof token === 'string') {
-				pos += token.length;
-				continue;
-			}
-
-			const end_pos = pos + token.length;
-
-			if (DEV && end_pos > text_length) {
-				throw new Error(
-					`Token ${token.type} extends beyond text node: position ${end_pos} > length ${text_length}`,
+		// open containers awaiting their close, so a container's range spans
+		// `[open_start, close_end)`
+		const open_stack: Array<{id: number; start: number}> = [];
+		let i = 0;
+		while (i < events_len) {
+			const tag = events[i]!;
+			if (tag > 0) {
+				this.#push_token(
+					infos[tag]!,
+					events[i + 1]!,
+					events[i + 2]!,
+					text_node,
+					ranges_by_name,
+					text_length,
 				);
-			}
-
-			// production-safe: clamp rather than throw on a tokenizer edge case
-			const safe_end = end_pos > text_length ? text_length : end_pos;
-			if (safe_end > pos) {
-				// one range shared across the token type and all its aliases --
-				// the same range object can belong to multiple `Highlight` sets
-				const range = this.#make_range(text_node, pos, safe_end);
-				push_range(ranges_by_name, `token_${token.type}`, range);
-				for (const alias of token.alias) {
-					push_range(ranges_by_name, `token_${alias}`, range);
-				}
-			}
-
-			if (Array.isArray(token.content)) {
-				const nested_end = this.#collect_ranges(token.content, text_node, ranges_by_name, pos);
-				if (DEV && nested_end !== end_pos) {
-					throw new Error(
-						`Token ${token.type} length mismatch: claimed ${token.length} chars (${pos}-${end_pos}) but nested content covered ${nested_end - pos} chars (${pos}-${nested_end})`,
+				i += 3;
+			} else if (tag < 0) {
+				open_stack.push({id: -tag, start: events[i + 1]!});
+				i += 2;
+			} else {
+				const open = open_stack.pop();
+				if (open) {
+					this.#push_token(
+						infos[open.id]!,
+						open.start,
+						events[i + 1]!,
+						text_node,
+						ranges_by_name,
+						text_length,
 					);
 				}
+				i += 2;
 			}
-
-			pos = end_pos;
 		}
+	}
 
-		return pos;
+	/**
+	 * Pushes one range for `[start, end)` (clamped to `text_length`), shared
+	 * across the token type's own class and each of its aliases — the same range
+	 * object can belong to multiple `Highlight` sets.
+	 */
+	#push_token(
+		info: {name: string; aliases: Array<string>},
+		start: number,
+		end: number,
+		text_node: Node,
+		ranges_by_name: Map<string, Array<AbstractRange>>,
+		text_length: number,
+	): void {
+		const safe_end = end > text_length ? text_length : end;
+		if (safe_end <= start) return;
+		const range = this.#make_range(text_node, start, safe_end);
+		push_range(ranges_by_name, `token_${info.name}`, range);
+		for (const alias of info.aliases) {
+			push_range(ranges_by_name, `token_${alias}`, range);
+		}
 	}
 }

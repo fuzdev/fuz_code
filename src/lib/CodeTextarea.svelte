@@ -18,13 +18,12 @@
 	import type {SvelteHTMLElements} from 'svelte/elements';
 
 	import {syntax_styler_global} from './syntax_styler_global.ts';
-	import type {SyntaxStyler, SyntaxGrammar} from './syntax_styler.ts';
+	import type {SyntaxStyler} from './syntax_styler.ts';
 	import {create_range_highlighting} from './range_highlighting.svelte.ts';
 
 	let {
 		value = $bindable(''),
 		lang = 'svelte',
-		grammar,
 		syntax_styler = syntax_styler_global,
 		wrapper_attrs,
 		...rest
@@ -36,8 +35,6 @@
 		 * highlighting; `undefined` falls back to the default ('svelte').
 		 */
 		lang?: string | null;
-		/** Optional custom grammar; takes precedence over `lang` for tokenization. */
-		grammar?: SyntaxGrammar | undefined;
 		/** Custom `SyntaxStyler` instance (defaults to the global one). */
 		syntax_styler?: SyntaxStyler;
 		/**
@@ -66,7 +63,6 @@
 		element: () => backdrop,
 		text: () => display_text,
 		lang: () => lang,
-		grammar: () => grammar,
 		syntax_styler: () => syntax_styler,
 		dev_label: 'CodeTextarea',
 	});

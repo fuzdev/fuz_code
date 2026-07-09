@@ -2,8 +2,6 @@ import {readFileSync} from 'node:fs';
 import {fs_search} from '@fuzdev/fuz_util/fs.ts';
 import {basename, join, relative} from 'node:path';
 import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
-import {tokenize_syntax} from '$lib/tokenize_syntax.ts';
-import {type SyntaxTokenStream, SyntaxToken} from '$lib/syntax_token.ts';
 import {syntax_events_to_tokens} from '$lib/lexer.ts';
 
 export interface SampleSpec {
@@ -68,78 +66,10 @@ export const generate_syntax_output = (sample: SampleSpec): string => {
 };
 
 /**
- * Extract all tokens with positions for fixture generation
+ * Generate token data from the syntax styler's flat event stream.
  */
-const extract_all_tokens = (
-	tokens: SyntaxTokenStream,
-	offset: number = 0,
-): Array<{type: string; start: number; end: number}> => {
-	const result: Array<{type: string; start: number; end: number}> = [];
-	let pos = offset;
-
-	for (const token of tokens) {
-		if (typeof token === 'string') {
-			// Plain text, advance position
-			pos += token.length;
-		} else if (token instanceof SyntaxToken) {
-			const start = pos;
-			const length = get_token_length(token);
-			const end = start + length;
-
-			// Add this token
-			result.push({
-				type: token.type,
-				start,
-				end,
-			});
-
-			// Process nested tokens
-			if (Array.isArray(token.content)) {
-				const nested = extract_all_tokens(token.content, start);
-				result.push(...nested);
-			}
-
-			pos = end;
-		}
-	}
-
-	return result;
-};
-
-/**
- * Calculate the total text length of a token
- */
-const get_token_length = (token: SyntaxToken): number => {
-	if (typeof token.content === 'string') {
-		return token.content.length;
-	}
-
-	let length = 0;
-	for (const item of token.content) {
-		if (typeof item === 'string') {
-			length += item.length;
-		} else {
-			length += get_token_length(item);
-		}
-	}
-	return length;
-};
-
-/**
- * Generate token data from syntax styler
- */
-export const generate_token_data = (sample: SampleSpec): Array<any> => {
-	// Languages ported to the lexer engine produce tokens from the flat event stream
-	if (syntax_styler_global.has_lexer_lang(sample.lang)) {
-		return syntax_events_to_tokens(syntax_styler_global.lex(sample.content, sample.lang));
-	}
-	// Get tokens from syntax styler and extract all with positions
-	const grammar = syntax_styler_global.get_lang(sample.lang);
-	const tokens = tokenize_syntax(sample.content, grammar);
-	const flat_tokens = extract_all_tokens(tokens);
-
-	return flat_tokens;
-};
+export const generate_token_data = (sample: SampleSpec): Array<any> =>
+	syntax_events_to_tokens(syntax_styler_global.lex(sample.content, sample.lang));
 
 /**
  * Process a sample to generate all outputs
