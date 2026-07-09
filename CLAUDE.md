@@ -291,6 +291,8 @@ Theme uses CSS variables from fuz_css:
    `Map` lookups; no `RegExp` anywhere (speed + Rust-twin discipline)
 2. **Never throw, always cover** - any input (mid-keystroke, malformed) yields a
    valid event stream; unterminated constructs extend to their natural boundary
+   (damage propagates editor-style rather than being contained — a malformed
+   interior may consume its construct's closing delimiter)
 3. **Progress discipline** - every scan loop advances position or emits+advances
 4. **Nesting discipline** - no JS-call-stack recursion that scales with input
    nesting. Flat single-pass loops wherever the grammar allows (css, markup,
@@ -298,8 +300,12 @@ Theme uses CSS variables from fuz_css:
    machine only where a construct's interior re-enters the same grammar
    (`lexer_ts.ts` templates/generics/annotations, `lexer_bash.ts`
    substitutions — use these as the template, including their inline fast
-   paths for bodies without nesting). Cross-language interiors go through
-   `Lexer.embed`, which is depth-capped rather than framed.
+   paths for bodies without nesting). An interior frame discovers its own
+   closing delimiter during the real scan (a terminator char + depth counter
+   on the frame) — never prescan for it: a prescan is a second, dumber
+   tokenizer that can disagree with the real one, and it makes full-depth
+   nesting quadratic. Cross-language interiors go through `Lexer.embed`,
+   which is depth-capped rather than framed.
 5. **Test with fixtures** - all changes must pass fixture tests
 6. **Follow patterns** - use existing `lexer_*.ts` modules as templates
 

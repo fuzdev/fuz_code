@@ -104,6 +104,34 @@ describe('lexer_ts strings and templates', () => {
 		assert.strictEqual(tokens[0]!.type, 'template_string');
 		assert.strictEqual(tokens[0]!.end, 4);
 	});
+
+	test('nested braces inside an interpolation are depth-tracked', () => {
+		assert.deepEqual(picked('`${ {a: 1} }`', ['interpolation']), [
+			['interpolation', '${ {a: 1} }'],
+		]);
+	});
+
+	test('interpolation spans a regex literal containing `}`', () => {
+		// the interpolation's end is discovered during real tokenization, so the
+		// `}` inside the regex body cannot close it early
+		const text = '`${/}/.test(x)}`';
+		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'ts')), []);
+		assert.deepEqual(picked(text, ['interpolation', 'regex']), [
+			['interpolation', '${/}/.test(x)}'],
+			['regex', '/}/'],
+		]);
+	});
+
+	test('a malformed interpolation interior propagates to the template end', () => {
+		// an unterminated block comment consumes the closing `}` and backtick,
+		// so the damage extends editor-style instead of being contained
+		const text = '`${/* oops}` and more';
+		const lexed = syntax_styler_global.lex(text, 'ts');
+		assert.deepEqual(validate_syntax_events(lexed), []);
+		const comment = syntax_events_to_tokens(lexed).find((t) => t.type === 'comment');
+		assert.ok(comment);
+		assert.strictEqual(comment.end, text.length);
+	});
 });
 
 describe('lexer_ts regex vs division', () => {
@@ -169,6 +197,24 @@ describe('lexer_ts identifiers', () => {
 		assert.deepEqual(picked('a < b; c > d;', ['operator']), [
 			['operator', '<'],
 			['operator', '>'],
+		]);
+	});
+
+	test('comparisons across statement or interpolation boundaries are not generics', () => {
+		// an unbalanced `)`/`}`/`]` between `<` and `>` rejects the generic scan
+		assert.deepEqual(picked('if (a < b) { } x > (c);', ['generic_function']), []);
+		const text = '`${a < b} ${c > (d)}`';
+		assert.deepEqual(picked(text, ['generic_function']), []);
+		assert.deepEqual(picked(text, ['interpolation']), [
+			['interpolation', '${a < b}'],
+			['interpolation', '${c > (d)}'],
+		]);
+	});
+
+	test('balanced object and tuple types stay inside generics', () => {
+		assert.deepEqual(picked('foo<{a: B}>(x); bar<[C, D]>(y);', ['generic_function']), [
+			['generic_function', 'foo<{a: B}>'],
+			['generic_function', 'bar<[C, D]>'],
 		]);
 	});
 
@@ -283,7 +329,7 @@ describe('lexer_ts sample', () => {
 
 describe('lexer_ts deep nesting', () => {
 	test('deeply nested template interpolations tokenize fully without overflowing the stack', () => {
-		const depth = 5000;
+		const depth = 20000;
 		const input = '`${'.repeat(depth) + '1' + '}`'.repeat(depth);
 		const lexed = syntax_styler_global.lex(input, 'ts');
 		assert.deepEqual(validate_syntax_events(lexed), []);

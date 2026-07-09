@@ -25,3 +25,12 @@ Also:
   cascades no longer overflow the call stack (cross-language embedding is
   depth-capped, degrading to plain text past the cap)
 - bash `${…}` parameter expansion spans balanced braces (`${a:-${b}}`)
+- a ts `${…}` interpolation is no longer closed early by a `}` inside a
+  regex literal, string, or comment (`` `${/}/.test(x)}` ``)
+- a bash `$(…)` substitution is no longer closed early by a `)` inside a
+  `#` comment or heredoc body; substitution and interpolation interiors
+  discover their own closing delimiter during tokenization, so malformed
+  interiors extend editor-style instead of being cut short
+- a comparison chain is no longer misread as a generic call when the match
+  would cross a statement or interpolation boundary (`if (a < b) { } x > (c)`)
+  — the generic/parameter lookahead scans reject unbalanced `)`/`}`/`]`

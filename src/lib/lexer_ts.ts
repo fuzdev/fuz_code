@@ -3,7 +3,6 @@ import {
 	is_ident,
 	is_ident_start,
 	is_space,
-	scan_balanced_braces,
 	scan_ident,
 	scan_to_line_end,
 	skip_quoted,
@@ -27,6 +26,12 @@ import {
  *
  * Resilience: unterminated strings extend to end of line; unterminated
  * templates, block comments, and interpolations extend to end of window.
+ * Interpolation bodies discover their own closing `}` during real tokenization
+ * (nothing is prescanned), so constructs that contain a `}` — regex literals,
+ * strings, comments — never end an interpolation early. The tradeoff is that
+ * damage propagates rather than being contained: a malformed interior that
+ * consumes the closing `}` (say an unterminated block comment) extends the
+ * interpolation past it, editor-style.
  */
 
 const T_COMMENT = token_type('comment');
@@ -256,7 +261,12 @@ const scan_ts_number = (text: string, i: number, end: number): number => {
 
 /**
  * Finds the matching `>` for the `<` at `i` (generic argument lists), skipping
- * strings. Bounded by `MAX_SCAN`; returns -1 when unbalanced.
+ * strings. Bounded by `MAX_SCAN`; returns -1 when unbalanced. Rejects at `;`
+ * and at any unbalanced `)`/`}`/`]` — a generic argument list can contain
+ * balanced groups (object types, tuples, parenthesized function types) but
+ * never a stray closer, and without this reject the scan would run across
+ * statement or interpolation boundaries and misread a later `>` as the match
+ * (e.g. two comparisons in `a < b} ${c > (d)`).
  */
 const scan_balanced_angle = (text: string, i: number, end: number, cache: TsScanCache): number => {
 	const limit = i + MAX_SCAN < end ? i + MAX_SCAN : end;
@@ -264,6 +274,7 @@ const scan_balanced_angle = (text: string, i: number, end: number, cache: TsScan
 	cache.next_gt = advance_probe(text, cache.next_gt, i + 1, '>');
 	if (cache.next_gt >= limit) return -1;
 	let depth = 0;
+	let group = 0; // combined `(`/`{`/`[` nesting — valid input nests properly
 	let j = i;
 	while (j < limit) {
 		const c = text.charCodeAt(j);
@@ -276,6 +287,13 @@ const scan_balanced_angle = (text: string, i: number, end: number, cache: TsScan
 			j++;
 		} else if (c === 34 || c === 39 || c === 96) {
 			j = skip_quoted(text, j, end, c);
+		} else if (c === 40 || c === 123 || c === 91) {
+			group++;
+			j++;
+		} else if (c === 41 || c === 125 || c === 93) {
+			if (group === 0) return -1;
+			group--;
+			j++;
 		} else if (c === 59) {
 			return -1; // `;` never appears in a generic argument list
 		} else {
@@ -287,7 +305,10 @@ const scan_balanced_angle = (text: string, i: number, end: number, cache: TsScan
 
 /**
  * Finds the matching `)` for the `(` at `i`, skipping strings and nested
- * parens. Bounded by `MAX_SCAN`; returns -1 when unbalanced.
+ * parens. Bounded by `MAX_SCAN`; returns -1 when unbalanced. Rejects at any
+ * unbalanced `}`/`]` — a parameter list can contain balanced destructuring
+ * groups but never a stray closer, so one marks a boundary the scan must not
+ * cross.
  */
 const scan_balanced_parens = (text: string, i: number, end: number, cache: TsScanCache): number => {
 	const limit = i + MAX_SCAN < end ? i + MAX_SCAN : end;
@@ -295,6 +316,7 @@ const scan_balanced_parens = (text: string, i: number, end: number, cache: TsSca
 	cache.next_rparen = advance_probe(text, cache.next_rparen, i + 1, ')');
 	if (cache.next_rparen >= limit) return -1;
 	let depth = 0;
+	let group = 0; // combined `{`/`[` nesting — valid input nests properly
 	let j = i;
 	while (j < limit) {
 		const c = text.charCodeAt(j);
@@ -307,6 +329,13 @@ const scan_balanced_parens = (text: string, i: number, end: number, cache: TsSca
 			j++;
 		} else if (c === 34 || c === 39 || c === 96) {
 			j = skip_quoted(text, j, end, c);
+		} else if (c === 123 || c === 91) {
+			group++;
+			j++;
+		} else if (c === 125 || c === 93) {
+			if (group === 0) return -1;
+			group--;
+			j++;
 		} else {
 			j++;
 		}
@@ -516,6 +545,21 @@ interface TsFrame {
 	import_ctx: boolean;
 	/** Template only: start of the pending literal chunk. */
 	chunk_start: number;
+	/**
+	 * Self-discovery terminator for the window: the char code that ends it
+	 * (`}` for `${…}` interpolation bodies), or 0 when the window's end was
+	 * known at push time. The frame finds its own end during real tokenization
+	 * — strings, comments, and regexes consume their delimiter chars inside
+	 * their token scans, so only a real closing delimiter terminates.
+	 */
+	term: number;
+	/**
+	 * Open-delimiter depth for `term` windows. Nested constructs push their own
+	 * frames, so this only counts the frame's own unclosed `{`s; the `term`
+	 * char that would bring it to 0 terminates the window (recorded in
+	 * `ret_a`).
+	 */
+	depth: number;
 	ret: number;
 	ret_a: number;
 	ret_b: number;
@@ -540,6 +584,8 @@ const create_ts_frame = (): TsFrame => ({
 	as_ctx: false,
 	import_ctx: false,
 	chunk_start: 0,
+	term: 0,
+	depth: 0,
 	ret: R_ROOT,
 	ret_a: 0,
 	ret_b: 0,
@@ -547,7 +593,9 @@ const create_ts_frame = (): TsFrame => ({
 
 /**
  * Pushes a window frame scanning `[from, to)`, reusing the pooled slot at the
- * stack top. `ret`/`ret_a`/`ret_b` are applied when it completes.
+ * stack top. `ret`/`ret_a`/`ret_b` are applied when it completes. A nonzero
+ * `term` makes the window self-discovering: it terminates at the `term` char
+ * that brings `depth` to 0, writing the discovered position to `ret_a`.
  *
  * @mutates `mac`
  */
@@ -559,6 +607,8 @@ const mac_push_window = (
 	ret: number,
 	ret_a: number,
 	ret_b: number,
+	term: number,
+	depth: number,
 ): void => {
 	const {stack, sp} = mac;
 	let f = stack[sp];
@@ -575,6 +625,8 @@ const mac_push_window = (
 	f.class_ctx = false;
 	f.as_ctx = false;
 	f.import_ctx = false;
+	f.term = term;
+	f.depth = depth;
 	f.ret = ret;
 	f.ret_a = ret_a;
 	f.ret_b = ret_b;
@@ -658,13 +710,12 @@ const run_ts_template = (mac: TsMachine, frame: TsFrame): boolean => {
 			return true;
 		} else if (c === 36 && j + 1 < to && text.charCodeAt(j + 1) === 123) {
 			l.leaf(T_STRING, chunk_start, j);
-			const close = scan_balanced_braces(text, j + 1, to);
-			const inner_end = close === -1 ? to : close;
 			l.open(T_INTERPOLATION, j);
 			l.leaf(T_INTERPOLATION_PUNCTUATION, j, j + 2);
-			// the interpolation body lexes in value mode; the driver's R_INTERP
-			// finalize closes the interpolation and resumes this frame past it
-			mac_push_window(mac, j + 2, inner_end, false, R_INTERP, close, to);
+			// the interpolation body lexes in value mode and discovers its own
+			// closing `}` (terminator mode); the driver's R_INTERP finalize
+			// closes the interpolation and resumes this frame past it
+			mac_push_window(mac, j + 2, to, false, R_INTERP, -1, 0, 125, 1);
 			return false;
 		} else {
 			j++;
@@ -680,9 +731,11 @@ const run_ts_template = (mac: TsMachine, frame: TsFrame): boolean => {
 /**
  * Runs (or resumes) a window frame — the core per-token scan. `frame.type_mode`
  * switches capitalized identifiers to `type_name` (generics, type annotations).
- * Returns `true` when the window is fully consumed, or `false` after pushing a
- * nested frame (interpolation, generics, or type annotation), which the driver
- * runs before resuming this frame.
+ * Returns `true` when the window completes — fully consumed, or terminated at
+ * its self-discovered `frame.term` delimiter (position recorded in
+ * `frame.ret_a`) — or `false` after pushing a nested frame (interpolation,
+ * generics, or type annotation), which the driver runs before resuming this
+ * frame.
  *
  * @mutates `mac`
  */
@@ -692,6 +745,7 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 	const {text} = l;
 	const to = frame.to;
 	const type_mode = frame.type_mode;
+	const term = frame.term;
 	let i = frame.i;
 	let prev = frame.prev;
 	let prev_code = frame.prev_code; // last significant punctuation char, for string-property detection
@@ -748,6 +802,8 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 							true,
 							R_CLASS_GENERIC,
 							angle_end + 1,
+							0,
+							0,
 							0,
 						);
 						return false;
@@ -887,6 +943,8 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 							true,
 							R_GENERIC_CALL,
 							angle_end + 1,
+							0,
+							0,
 							0,
 						);
 						return false;
@@ -1068,7 +1126,17 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 						frame.class_ctx = false;
 						frame.as_ctx = false;
 						frame.import_ctx = false;
-						mac_push_window(mac, type_start, content_end, true, R_TYPE_ANNO, type_end, content_end);
+						mac_push_window(
+							mac,
+							type_start,
+							content_end,
+							true,
+							R_TYPE_ANNO,
+							type_end,
+							content_end,
+							0,
+							0,
+						);
 						return false;
 					}
 				}
@@ -1091,6 +1159,14 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 			c === 59 ||
 			c === 44
 		) {
+			// self-discovery: a `}` at depth 0 ends the window (the driver's
+			// finalize emits it); nested braces keep the depth counter honest —
+			// braces inside strings/comments/regexes/child frames never reach here
+			if (c === term && --frame.depth === 0) {
+				frame.ret_a = i;
+				return true;
+			}
+			if (c === 123 && term !== 0) frame.depth++;
 			l.leaf(T_PUNCTUATION, i, i + 1);
 			prev = c === 41 || c === 93 ? P_VALUE : P_NONE;
 			prev_code = c;
@@ -1188,10 +1264,11 @@ const run_ts = (mac: TsMachine): void => {
 		const parent = mac.stack[mac.sp - 1]!;
 		switch (ret) {
 			case R_INTERP: {
-				// the `}`-match result (or -1) and the template's window end
+				// the discovered `}` position, or -1 when the interpolation ran
+				// unterminated to the window end (which is the template's end)
 				const close = frame.ret_a;
-				const template_end = frame.ret_b;
 				if (close === -1) {
+					const template_end = frame.to;
 					l.close(template_end);
 					parent.i = template_end;
 					parent.chunk_start = template_end;
@@ -1239,7 +1316,7 @@ const lex_ts = (l: Lexer): void => {
 		i = line_end;
 	}
 	const mac: TsMachine = {l, cache: create_ts_scan_cache(), stack: [], sp: 0};
-	mac_push_window(mac, i, l.end, false, R_ROOT, 0, 0);
+	mac_push_window(mac, i, l.end, false, R_ROOT, 0, 0, 0, 0);
 	run_ts(mac);
 	l.pos = l.end;
 };

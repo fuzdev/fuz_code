@@ -46,7 +46,12 @@ import {
  *
  * Resilience: unterminated single-line constructs stop at the line boundary;
  * unterminated strings, command substitutions, and heredocs extend to the
- * window end.
+ * window end. `$(…)`/`$((…))` interiors discover their own closing delimiter
+ * during real tokenization (nothing is prescanned), so a `)` inside a comment,
+ * string, or heredoc body never ends a substitution early. The tradeoff is
+ * that damage propagates rather than being contained: a malformed interior
+ * that consumes the closing `)` (say an unterminated string) extends the
+ * substitution past it, editor-style.
  */
 
 const T_SHEBANG = token_type('shebang', 'comment');
@@ -133,9 +138,9 @@ const scan_bash_number = (text: string, i: number, end: number): number => {
 };
 
 /**
- * Skips a `'` or `"` quoted span (for balance scans), returning the index after
- * the closing quote or the window end. Single quotes are literal; double quotes
- * honor `\` escapes.
+ * Skips a `'` or `"` quoted span (for the `${…}` balance scan), returning the
+ * index after the closing quote or the window end. Single quotes are literal;
+ * double quotes honor `\` escapes.
  */
 const skip_bash_quote = (text: string, from: number, end: number, quote: number): number => {
 	let i = from + 1;
@@ -161,32 +166,6 @@ const scan_ansi_c = (text: string, i: number, end: number): number => {
 		else j++;
 	}
 	return end;
-};
-
-/**
- * Finds the `)` closing a `$(` command substitution whose `(` sits before
- * `from`, skipping strings and nested parens. Returns its index, or -1 when
- * unbalanced within the window.
- */
-const scan_cmdsub_end = (text: string, from: number, end: number): number => {
-	let depth = 0;
-	let j = from;
-	while (j < end) {
-		const c = text.charCodeAt(j);
-		if (c === 34 || c === 39) {
-			j = skip_bash_quote(text, j, end, c);
-		} else if (c === 40) {
-			depth++;
-			j++;
-		} else if (c === 41) {
-			if (depth === 0) return j;
-			depth--;
-			j++;
-		} else {
-			j++;
-		}
-	}
-	return -1;
 };
 
 /**
@@ -290,8 +269,23 @@ interface BashFrame {
 	pending_idx: number;
 	/** Whether a drain of `pending` is in progress at a line boundary. */
 	draining: boolean;
+	/**
+	 * Self-discovery terminator for the window: the char code that ends it
+	 * (`)` for `$(…)`/`$((…))` interiors), or 0 when the window's end was known
+	 * at push time. The frame finds its own end during real tokenization —
+	 * strings, comments, and heredoc bodies consume their delimiter chars
+	 * inside their token scans, so only a real closing delimiter terminates.
+	 */
+	term: number;
+	/**
+	 * Open-delimiter depth for `term` windows. Nested substitutions push their
+	 * own frames, so this only counts the frame's own unclosed `(`s (plus the
+	 * enclosing parens for `$((…))`, which starts at 2); the `term` char that
+	 * would bring it to 0 terminates the window (recorded in `ret_a`).
+	 */
+	depth: number;
 	ret: number;
-	/** The enclosing construct's close-scan result (-1 when unterminated). */
+	/** The discovered closing-delimiter position (-1 while undiscovered/unterminated). */
 	ret_a: number;
 }
 
@@ -314,13 +308,17 @@ const create_bash_frame = (): BashFrame => ({
 	pending: [],
 	pending_idx: 0,
 	draining: false,
+	term: 0,
+	depth: 0,
 	ret: R_ROOT,
 	ret_a: 0,
 });
 
 /**
  * Pushes a window frame scanning `[from, to)`, reusing the pooled slot at the
- * stack top. `ret`/`ret_a` are applied when it completes.
+ * stack top. `ret`/`ret_a` are applied when it completes. A nonzero `term`
+ * makes the window self-discovering: it terminates at the `term` char that
+ * brings `depth` to 0, writing the discovered position to `ret_a`.
  *
  * @mutates `mac`
  */
@@ -330,6 +328,8 @@ const mac_push_window = (
 	to: number,
 	ret: number,
 	ret_a: number,
+	term: number,
+	depth: number,
 ): void => {
 	const {stack, sp} = mac;
 	let f = stack[sp];
@@ -344,6 +344,8 @@ const mac_push_window = (
 	if (f.pending.length > 0) f.pending.length = 0;
 	f.pending_idx = 0;
 	f.draining = false;
+	f.term = term;
+	f.depth = depth;
 	f.ret = ret;
 	f.ret_a = ret_a;
 	mac.sp = sp + 1;
@@ -351,10 +353,11 @@ const mac_push_window = (
 
 /**
  * Starts a `$(…)` command substitution or `$((…))` arithmetic expansion at
- * `i`: emits the opening events and pushes the interior window frame. The
- * caller must suspend (write back its state and return `false`); the driver's
- * finalize emits the trailing punctuation and advances the caller past it.
- * The `i + 2 < to` guard keeps the arithmetic lookahead inside the window.
+ * `i`: emits the opening events and pushes the interior window frame, which
+ * discovers its own closing delimiter. The caller must suspend (write back its
+ * state and return `false`); the driver's finalize emits the trailing
+ * punctuation and advances the caller past it. The `i + 2 < to` guard keeps
+ * the arithmetic lookahead inside the window.
  *
  * @mutates `mac`
  */
@@ -362,35 +365,18 @@ const mac_push_dollar_paren = (mac: BashMachine, i: number, to: number): void =>
 	const l = mac.l;
 	const {text} = l;
 	if (i + 2 < to && text.charCodeAt(i + 2) === 40) {
-		// arithmetic expansion — find the `)` closing the outer `(`; `$((`/`))`
-		// are punctuation and the interior lexes as ordinary bash
-		let depth = 2; // the `((`
-		let j = i + 3;
-		while (j < to) {
-			const c = text.charCodeAt(j);
-			if (c === 34 || c === 39) {
-				j = skip_bash_quote(text, j, to, c);
-			} else if (c === 40) {
-				depth++;
-				j++;
-			} else if (c === 41) {
-				depth--;
-				if (depth === 0) break;
-				j++;
-			} else {
-				j++;
-			}
-		}
+		// arithmetic expansion — `$((`/`))` are punctuation and the interior
+		// lexes as ordinary bash; the window starts inside both parens
+		// (depth 2), so the first closer of a well-formed `))` is emitted by
+		// the interior and the second by the finalize (coalesced into one leaf)
 		l.leaf(T_PUNCTUATION, i, i + 3); // `$((`
-		const closed = depth === 0;
-		mac_push_window(mac, i + 3, closed ? j - 1 : to, R_ARITH, closed ? j : -1);
+		mac_push_window(mac, i + 3, to, R_ARITH, -1, 41, 2);
 		return;
 	}
 	// command substitution — a container with an ordinary-bash interior
 	l.open(T_COMMAND_SUBSTITUTION, i);
 	l.leaf(T_PUNCTUATION, i, i + 2); // `$(`
-	const close = scan_cmdsub_end(text, i + 2, to);
-	mac_push_window(mac, i + 2, close === -1 ? to : close, R_CMDSUB, close);
+	mac_push_window(mac, i + 2, to, R_CMDSUB, -1, 41, 1);
 };
 
 /**
@@ -417,7 +403,7 @@ const mac_push_backtick = (mac: BashMachine, i: number, to: number): void => {
 	const closed = j < to && text.charCodeAt(j) === 96;
 	l.open(T_COMMAND_SUBSTITUTION, i);
 	l.leaf(T_PUNCTUATION, i, i + 1); // opening backtick
-	mac_push_window(mac, i + 1, closed ? j : to, R_BACKTICK, closed ? j : -1);
+	mac_push_window(mac, i + 1, closed ? j : to, R_BACKTICK, closed ? j : -1, 0, 0);
 };
 
 /**
@@ -638,9 +624,11 @@ const run_bash_sub = (mac: BashMachine, frame: BashFrame): boolean => {
  * per-window queue of pending heredocs (redirected on the current line, bodies
  * consumed at the next newline). String and heredoc bodies scan inline; one
  * interrupted by a substitution records its submode, suspends, and is finished
- * by the `run_bash_sub` resume. Returns `true` when the window is fully
- * consumed, or `false` after pushing a substitution-interior frame, which the
- * driver runs before resuming this frame.
+ * by the `run_bash_sub` resume. Returns `true` when the window completes —
+ * fully consumed, or terminated at its self-discovered `frame.term` delimiter
+ * (position recorded in `frame.ret_a`) — or `false` after pushing a
+ * substitution-interior frame, which the driver runs before resuming this
+ * frame.
  *
  * @mutates `mac`
  */
@@ -648,6 +636,7 @@ const run_bash_window = (mac: BashMachine, frame: BashFrame): boolean => {
 	const l = mac.l;
 	const {text} = l;
 	const to = frame.to;
+	const term = frame.term;
 
 	// resume an interrupted string/heredoc body scan before the main scan
 	if (frame.sub !== S_NONE && !run_bash_sub(mac, frame)) return false;
@@ -873,6 +862,15 @@ const run_bash_window = (mac: BashMachine, frame: BashFrame): boolean => {
 
 		// punctuation
 		if (c === 123 || c === 125 || c === 91 || c === 93 || c === 40 || c === 41 || c === 44) {
+			// self-discovery: a `)` at depth 0 ends the window (the driver's
+			// finalize emits it); nested parens keep the depth counter honest —
+			// parens inside strings/comments/heredoc bodies/child frames never
+			// reach here
+			if (c === term && --frame.depth === 0) {
+				frame.ret_a = i;
+				return true;
+			}
+			if (c === 40 && term !== 0) frame.depth++;
 			l.leaf(T_PUNCTUATION, i, i + 1);
 			i++;
 			continue;
@@ -991,7 +989,9 @@ const run_bash = (mac: BashMachine): void => {
 			if (close === -1) {
 				parent.i = frame.to; // unterminated
 			} else {
-				l.leaf(T_PUNCTUATION, close - 1, close + 1); // `))`
+				// the second `)` of a well-formed `))` — the interior emitted the
+				// first as punctuation, so emit-time coalescing reforms one leaf
+				l.leaf(T_PUNCTUATION, close, close + 1);
 				parent.i = close + 1;
 			}
 		} else if (close === -1) {
@@ -1008,7 +1008,7 @@ const run_bash = (mac: BashMachine): void => {
 
 const lex_bash = (l: Lexer): void => {
 	const mac: BashMachine = {l, stack: [], sp: 0};
-	mac_push_window(mac, l.pos, l.end, R_ROOT, 0);
+	mac_push_window(mac, l.pos, l.end, R_ROOT, 0, 0, 0);
 	run_bash(mac);
 	l.pos = l.end;
 };

@@ -83,6 +83,27 @@ describe('lexer_bash variables and expansions', () => {
 		assert.strictEqual(types.filter((t) => t === 'string').length, 2);
 	});
 
+	test('a comment inside $(…) does not close the substitution', () => {
+		// the substitution's end is discovered during real tokenization, so the
+		// `)` inside the comment cannot close it early — it runs to line end and
+		// the substitution extends to the real `)` on the next line
+		const text = '$(echo hi # not done)\necho more)';
+		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'bash')), []);
+		assert.deepEqual(picked(text, ['command_substitution', 'comment']), [
+			['command_substitution', text],
+			['comment', '# not done)'],
+		]);
+	});
+
+	test('a malformed substitution interior propagates to the window end', () => {
+		// an unterminated single-quoted string consumes the closing `)`, so the
+		// damage extends editor-style instead of being contained
+		const text = "$(echo 'oops) more";
+		const lexed = syntax_styler_global.lex(text, 'bash');
+		assert.deepEqual(validate_syntax_events(lexed), []);
+		assert.deepEqual(picked(text, ['command_substitution']), [['command_substitution', text]]);
+	});
+
 	test('double-quoted strings expand, single-quoted do not', () => {
 		assert.deepEqual(picked('"$a" \'$a\'', ['string', 'variable']), [
 			['string', '"$a"'],
@@ -124,6 +145,16 @@ describe('lexer_bash arithmetic', () => {
 	test('$(…) command substitution still parses', () => {
 		assert.deepEqual(picked('$(date)', ['command_substitution']), [
 			['command_substitution', '$(date)'],
+		]);
+	});
+
+	test('stray text between arithmetic closers keeps the parens separate', () => {
+		const text = '$((x) y)';
+		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'bash')), []);
+		assert.deepEqual(picked(text, ['punctuation']), [
+			['punctuation', '$(('],
+			['punctuation', ')'],
+			['punctuation', ')'],
 		]);
 	});
 });
@@ -210,6 +241,13 @@ describe('lexer_bash heredocs', () => {
 		);
 	});
 
+	test('a heredoc body containing `)` does not close an enclosing substitution', () => {
+		const text = '$(cat <<EOF\na ) b\nEOF\n)';
+		const lexed = syntax_styler_global.lex(text, 'bash');
+		assert.deepEqual(validate_syntax_events(lexed), []);
+		assert.deepEqual(picked(text, ['command_substitution']), [['command_substitution', text]]);
+	});
+
 	test('CRLF line endings still close the heredoc', () => {
 		const text = 'cat <<EOF\r\nbody ${x}\r\nEOF\r\n';
 		const lexed = syntax_styler_global.lex(text, 'bash');
@@ -277,7 +315,7 @@ describe('lexer_bash sample', () => {
 
 describe('lexer_bash deep nesting', () => {
 	test('deeply nested command substitutions tokenize fully without overflowing the stack', () => {
-		const depth = 5000;
+		const depth = 20000;
 		const input = '$('.repeat(depth) + 'x' + ')'.repeat(depth);
 		const lexed = syntax_styler_global.lex(input, 'bash');
 		assert.deepEqual(validate_syntax_events(lexed), []);
@@ -286,7 +324,7 @@ describe('lexer_bash deep nesting', () => {
 	});
 
 	test('deeply nested arithmetic expansions tokenize fully without overflowing the stack', () => {
-		const depth = 5000;
+		const depth = 20000;
 		const input = '$(('.repeat(depth) + '1' + '))'.repeat(depth);
 		const lexed = syntax_styler_global.lex(input, 'bash');
 		assert.deepEqual(validate_syntax_events(lexed), []);
@@ -298,7 +336,7 @@ describe('lexer_bash deep nesting', () => {
 	});
 
 	test('deep command substitutions alternating through double-quoted strings stay valid', () => {
-		const depth = 2000;
+		const depth = 5000;
 		const input = '$("'.repeat(depth) + 'x' + '")'.repeat(depth);
 		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(input, 'bash')), []);
 	});

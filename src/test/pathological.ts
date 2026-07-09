@@ -25,11 +25,13 @@ export interface PathologicalCase {
 const repeat_to_size = (unit: string, size: number): string =>
 	unit.repeat(Math.max(1, Math.round(size / unit.length)));
 
-// fixed nesting depth for the deep-nesting cases — depth scaling with size
-// would measure per-level rescan cost (quadratic close-scans on adversarial
-// nesting) instead of input length, so blocks of constant depth are repeated
-// to reach the target size; unbounded-depth stack safety is covered by the
-// per-lexer `deep nesting` test suites instead
+// fixed nesting depth for the repeated-block deep-nesting cases — constant
+// depth repeated to reach the target size, measuring input-length scaling at
+// realistic nesting. The *_full_depth cases scale nesting depth with size
+// instead: linear because substitution/interpolation interiors discover their
+// own closing delimiters during real tokenization (a per-level close-prescan
+// would make them O(depth²)). Unbounded-depth stack safety is covered by the
+// per-lexer `deep nesting` test suites.
 const NESTING_DEPTH = 32;
 
 export const PATHOLOGICAL_CASES: Array<PathologicalCase> = [
@@ -167,6 +169,25 @@ export const PATHOLOGICAL_CASES: Array<PathologicalCase> = [
 				'echo $('.repeat(NESTING_DEPTH) + 'ls' + ')'.repeat(NESTING_DEPTH) + '\n',
 				size,
 			),
+	},
+	{
+		// one interpolation nest as deep as the input allows — every char is a
+		// delimiter of the same construct, so any per-level rescan is quadratic
+		name: 'ts_template_full_depth',
+		lang: 'ts',
+		generate: (size: number): string => {
+			const depth = Math.max(1, Math.floor(size / 5));
+			return '`${'.repeat(depth) + '1' + '}`'.repeat(depth);
+		},
+	},
+	{
+		// one command-substitution nest as deep as the input allows
+		name: 'bash_cmdsub_full_depth',
+		lang: 'bash',
+		generate: (size: number): string => {
+			const depth = Math.max(1, Math.floor(size / 3));
+			return '$('.repeat(depth) + 'x' + ')'.repeat(depth);
+		},
 	},
 	{
 		// a cascade of unterminated ```md fences — each embeds the rest of the
