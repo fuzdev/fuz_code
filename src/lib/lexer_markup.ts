@@ -98,7 +98,11 @@ export interface MarkupLexMode {
 	lex_expression: ((l: Lexer, from: number, end: number, full: boolean) => number) | null;
 }
 
-const MODE_HTML: MarkupLexMode = {
+/**
+ * The html dialect mode — also used by `lexer_md` for raw markup embedded in
+ * markdown text.
+ */
+export const MARKUP_MODE_HTML: MarkupLexMode = {
 	script_embed: 'js',
 	script_container: T_LANG_JS,
 	rcdata: true,
@@ -137,7 +141,7 @@ const is_entity_hex = (c: number): boolean =>
  * -1. Mirrors the old patterns: named `&[\da-z]{1,8};` (case-insensitive) and
  * numeric `&#x?[\da-f]{1,8};` (hex digits allowed in both numeric forms).
  */
-const scan_entity_end = (text: string, i: number, end: number): number => {
+export const scan_entity_end = (text: string, i: number, end: number): number => {
 	let j = i + 1;
 	const numeric = j < end && text.charCodeAt(j) === 35; // #
 	if (numeric) {
@@ -526,8 +530,14 @@ const lex_markup_rawtext = (
 
 /**
  * Lexes one `<…` construct at `i`, returning the next scan position.
+ * Exported for `lexer_md`, which dispatches raw markup out of markdown text.
  */
-const lex_markup_construct = (l: Lexer, i: number, end: number, mode: MarkupLexMode): number => {
+export const lex_markup_construct = (
+	l: Lexer,
+	i: number,
+	end: number,
+	mode: MarkupLexMode,
+): number => {
 	const {text} = l;
 	const c1 = i + 1 < end ? text.charCodeAt(i + 1) : 0;
 	if (c1 === 33) {
@@ -611,7 +621,7 @@ export const lex_markup_window = (l: Lexer, mode: MarkupLexMode): void => {
 };
 
 const lex_markup_html = (l: Lexer): void => {
-	lex_markup_window(l, MODE_HTML);
+	lex_markup_window(l, MARKUP_MODE_HTML);
 };
 
 const lex_markup_xml = (l: Lexer): void => {

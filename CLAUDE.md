@@ -68,7 +68,7 @@ src/
 │   ├── syntax_styler.ts        # SyntaxStyler class, hook system
 │   ├── syntax_styler_global.ts # pre-configured global instance
 │   ├── lexer.ts                # lexer-engine substrate: Lexer, TokenTypeRegistry, flat events, HTML render
-│   ├── lexer_*.ts              # hand-written lexers (json, ts, css, bash, markup, svelte)
+│   ├── lexer_*.ts              # hand-written lexers (json, ts, css, bash, markup, svelte, md)
 │   ├── tokenize_syntax.ts      # tokenize_syntax() function (regex engine)
 │   ├── syntax_token.ts         # SyntaxToken class, type definitions
 │   ├── grammar_*.ts            # regex language definitions (8 files)
@@ -103,14 +103,14 @@ engine, language by language, on the `lexer-architecture` branch):
 
 **Lexer engine** (`lexer.ts` + `lexer_*.ts`) - hand-written single-pass
 lexers emitting flat token events (`Int32Array`) rendered to HTML in one
-forward pass. `stylize` routes through it for ported languages (json, ts/js,
-css, bash, html/markup + xml, svelte). Token types intern into a
+forward pass. All 8 built-in languages are ported — `stylize` routes every
+registered language through it. Token types intern into a
 `TokenTypeRegistry` (`token_types_global` by default, injectable via
 `SyntaxStylerOptions`).
 
 **Regex engine** (`tokenize_syntax.ts` + `grammar_*.ts`) - PrismJS-inherited
-multi-pass tokenization; still serves `tokenize()`, the one unported language
-(md), and embedded regions inside unported grammars.
+multi-pass tokenization; now serves only the legacy `tokenize()` API and
+explicit-grammar `stylize` calls, until its deletion completes the rewrite.
 
 **SyntaxStyler** - The main class for tokenization and HTML generation,
 fronting both engines.
@@ -148,6 +148,10 @@ Lexer engine (preferred by `stylize` when registered):
 - `lexer_svelte.ts` - Svelte: the markup scanner in svelte mode (script→ts,
   no special attrs) plus the `{…}` expression lexer (blocks, each/await
   splits, at-directives, directive modifiers)
+- `lexer_md.ts` - Markdown: line-oriented block scan (fences with exact-word
+  info matching and any-length closers, headings, blockquotes, lists, hr)
+  with a per-block inline scan (emphasis, inline code, links, entities, raw
+  markup via the markup scanner); fences embed their languages
 
 Regex grammars (unported languages + `tokenize()` until cutover):
 

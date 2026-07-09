@@ -119,6 +119,18 @@ export const PATHOLOGICAL_CASES: Array<PathologicalCase> = [
 		generate: (size) => repeat_to_size('{x}', size),
 	},
 	{
+		// emphasis-delimiter-dense text — every `*`/`_` probes for a closer
+		name: 'md_emphasis_dense',
+		lang: 'md',
+		generate: (size) => repeat_to_size('*a _b ', size),
+	},
+	{
+		// fence-dense markdown — block scanner + close-fence line scans
+		name: 'md_fence_dense',
+		lang: 'md',
+		generate: (size) => repeat_to_size('```ts\nlet x = 1;\n```\n', size),
+	},
+	{
 		// expression-valued attributes — tag scanner + expression interplay
 		name: 'svelte_attr_expr_dense',
 		lang: 'svelte',
