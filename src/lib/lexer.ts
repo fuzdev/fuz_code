@@ -1,0 +1,439 @@
+/**
+ * Flat-event lexer substrate — the engine beneath the hand-written per-language
+ * lexers (`lexer_json.ts`, `lexer_ts.ts`, …), replacing the regex-grammar engine
+ * in `tokenize_syntax.ts`.
+ *
+ * Tokens are emitted as variable-length records into one `Int32Array`:
+ *
+ * - leaf:  `[type_id, start, end]` where `type_id > 0`
+ * - open:  `[-type_id, start]` — opens a container token
+ * - close: `[0, end]` — closes the innermost open container
+ *
+ * Untyped text is implicit — it's the gap between events, recovered from
+ * offsets. Adjacent same-type leaves are coalesced at emit time so runs like
+ * `});` become one span.
+ *
+ * @module
+ */
+
+/**
+ * Interned metadata for a token type, shared by all lexers and stylers.
+ */
+export interface SyntaxTypeInfo {
+	id: number;
+	name: string;
+	aliases: Array<string>;
+	/**
+	 * Space-separated CSS classes, e.g. `'token_null token_keyword'`.
+	 */
+	classes: string;
+	/**
+	 * Precomputed HTML open tag, e.g. `'<span class="token_null token_keyword">'`.
+	 */
+	open_tag: string;
+}
+
+const type_infos: Array<SyntaxTypeInfo> = [
+	// id 0 is reserved — it's the close-event tag
+	{id: 0, name: '', aliases: [], classes: '', open_tag: ''},
+];
+const type_ids: Map<string, number> = new Map();
+
+/**
+ * Interns a token type by name (+ optional aliases) into the global id space
+ * and returns its id. Repeated calls with the same name and aliases return the
+ * same id. The CSS class list and HTML open tag are precomputed here so
+ * emitters never build class strings at runtime.
+ */
+export const token_type = (name: string, alias?: string | Array<string>): number => {
+	const aliases = alias === undefined ? [] : Array.isArray(alias) ? alias : [alias];
+	const key = name + '\x1F' + aliases.join('\x1F');
+	const existing = type_ids.get(key);
+	if (existing !== undefined) return existing;
+	let classes = 'token_' + name;
+	for (const a of aliases) classes += ' token_' + a;
+	const id = type_infos.length;
+	type_infos.push({id, name, aliases, classes, open_tag: '<span class="' + classes + '">'});
+	type_ids.set(key, id);
+	return id;
+};
+
+/**
+ * Looks up the interned info for a token type id.
+ */
+export const token_type_info = (id: number): SyntaxTypeInfo => type_infos[id]!;
+
+/**
+ * A lexer-based language registration — the replacement for regex grammars.
+ */
+export interface SyntaxLang {
+	/**
+	 * Primary language id, e.g. `'ts'`.
+	 */
+	id: string;
+	/**
+	 * Alternate ids resolving to this language, e.g. `['typescript']`.
+	 */
+	aliases?: Array<string>;
+	/**
+	 * Lexes the `lexer`'s current `[pos, end)` window, emitting token events.
+	 * Must never throw and must always terminate with `lexer.pos === lexer.end`.
+	 */
+	lex: (lexer: Lexer) => void;
+}
+
+/**
+ * The result of lexing: the source text plus its flat token event stream.
+ */
+export interface LexedSyntax {
+	text: string;
+	events: Int32Array;
+	events_len: number;
+}
+
+/**
+ * Shared lexing context passed to language lex functions. Holds the text
+ * window, the event buffer, and the language registry for embedding.
+ */
+export class Lexer {
+	text = '';
+	pos = 0;
+	end = 0;
+	/**
+	 * Language registry for `embed` — set by `lex_syntax`.
+	 */
+	langs: Map<string, SyntaxLang> | null = null;
+
+	events: Int32Array;
+	events_len = 0;
+
+	// index of the previous event iff it was a leaf, for adjacency coalescing
+	#last_leaf = -1;
+
+	constructor(capacity = 256) {
+		this.events = new Int32Array(capacity < 256 ? 256 : capacity);
+	}
+
+	#ensure(extra: number): void {
+		if (this.events_len + extra > this.events.length) {
+			const next = new Int32Array(this.events.length * 2);
+			next.set(this.events);
+			this.events = next;
+		}
+	}
+
+	/**
+	 * Emits a leaf token. Empty spans are dropped; a leaf adjacent to a
+	 * preceding leaf of the same type extends it instead (span coalescing).
+	 *
+	 * @mutates `this`
+	 */
+	leaf(type_id: number, start: number, end: number): void {
+		if (start >= end) return;
+		const i = this.#last_leaf;
+		const {events} = this;
+		if (i !== -1 && events[i] === type_id && events[i + 2] === start) {
+			events[i + 2] = end;
+			return;
+		}
+		this.#ensure(3);
+		const at = this.events_len;
+		this.events[at] = type_id;
+		this.events[at + 1] = start;
+		this.events[at + 2] = end;
+		this.events_len = at + 3;
+		this.#last_leaf = at;
+	}
+
+	/**
+	 * Opens a container token at `start`. Must be balanced by a later `close`.
+	 *
+	 * @mutates `this`
+	 */
+	open(type_id: number, start: number): void {
+		this.#ensure(2);
+		const at = this.events_len;
+		this.events[at] = -type_id;
+		this.events[at + 1] = start;
+		this.events_len = at + 2;
+		this.#last_leaf = -1;
+	}
+
+	/**
+	 * Closes the innermost open container at `end`.
+	 *
+	 * @mutates `this`
+	 */
+	close(end: number): void {
+		this.#ensure(2);
+		const at = this.events_len;
+		this.events[at] = 0;
+		this.events[at + 1] = end;
+		this.events_len = at + 2;
+		this.#last_leaf = -1;
+	}
+
+	/**
+	 * Lexes `[start, end)` with the language registered as `lang_id`,
+	 * restoring this lexer's window afterward. Returns `false` (leaving the
+	 * region as plain text) when the language isn't registered.
+	 *
+	 * @mutates `this`
+	 */
+	embed(lang_id: string, start: number, end: number): boolean {
+		if (start >= end) return false;
+		const lang = this.langs?.get(lang_id);
+		if (!lang) return false;
+		const prev_pos = this.pos;
+		const prev_end = this.end;
+		this.pos = start;
+		this.end = end;
+		lang.lex(this);
+		this.pos = prev_pos;
+		this.end = prev_end;
+		this.#last_leaf = -1;
+		return true;
+	}
+}
+
+/**
+ * Lexes `text` with `lang`, returning the flat token event stream.
+ *
+ * @param text - the source text
+ * @param lang - the language to lex with
+ * @param langs - registry used to resolve embedded languages by id
+ */
+export const lex_syntax = (
+	text: string,
+	lang: SyntaxLang,
+	langs?: Map<string, SyntaxLang>,
+): LexedSyntax => {
+	// capacity heuristic: dense token streams run ~1 int per source char
+	const lexer = new Lexer(text.length);
+	lexer.text = text;
+	lexer.pos = 0;
+	lexer.end = text.length;
+	lexer.langs = langs ?? null;
+	lang.lex(lexer);
+	return {text, events: lexer.events, events_len: lexer.events_len};
+};
+
+/**
+ * Escapes `text[from..to)` for HTML text content in a single pass.
+ * Only `&`, `<`, and non-breaking spaces need handling (nbsp normalizes to a
+ * regular space, matching the old engine's policy).
+ */
+const escape_html_slice = (text: string, from: number, to: number): string => {
+	let out = '';
+	let seg = from;
+	for (let i = from; i < to; i++) {
+		const c = text.charCodeAt(i);
+		if (c === 38) {
+			out += text.slice(seg, i) + '&amp;';
+			seg = i + 1;
+		} else if (c === 60) {
+			out += text.slice(seg, i) + '&lt;';
+			seg = i + 1;
+		} else if (c === 160) {
+			out += text.slice(seg, i) + ' ';
+			seg = i + 1;
+		}
+	}
+	return seg === from ? text.slice(from, to) : out + text.slice(seg, to);
+};
+
+/**
+ * Renders a lexed token event stream to HTML in one forward pass.
+ * Gap text is copy-escaped; token spans use the precomputed open tags.
+ */
+export const render_syntax_html = (lexed: LexedSyntax): string => {
+	const {text, events, events_len} = lexed;
+	let out = '';
+	let pos = 0;
+	let i = 0;
+	while (i < events_len) {
+		const tag = events[i]!;
+		if (tag > 0) {
+			const start = events[i + 1]!;
+			const end = events[i + 2]!;
+			if (start > pos) out += escape_html_slice(text, pos, start);
+			out += type_infos[tag]!.open_tag + escape_html_slice(text, start, end) + '</span>';
+			pos = end;
+			i += 3;
+		} else if (tag < 0) {
+			const start = events[i + 1]!;
+			if (start > pos) out += escape_html_slice(text, pos, start);
+			out += type_infos[-tag]!.open_tag;
+			pos = start;
+			i += 2;
+		} else {
+			const end = events[i + 1]!;
+			if (end > pos) out += escape_html_slice(text, pos, end);
+			out += '</span>';
+			pos = end;
+			i += 2;
+		}
+	}
+	if (pos < text.length) out += escape_html_slice(text, pos, text.length);
+	return out;
+};
+
+/**
+ * A flattened token span, in document order with containers before their
+ * children. Used by fixtures, tests, and range building.
+ */
+export interface SyntaxEventToken {
+	type: string;
+	start: number;
+	end: number;
+}
+
+/**
+ * Flattens a lexed event stream to `SyntaxEventToken`s in document order
+ * (containers precede their children).
+ */
+export const syntax_events_to_tokens = (lexed: LexedSyntax): Array<SyntaxEventToken> => {
+	const {events, events_len} = lexed;
+	const tokens: Array<SyntaxEventToken> = [];
+	const stack: Array<SyntaxEventToken> = [];
+	let i = 0;
+	while (i < events_len) {
+		const tag = events[i]!;
+		if (tag > 0) {
+			tokens.push({type: type_infos[tag]!.name, start: events[i + 1]!, end: events[i + 2]!});
+			i += 3;
+		} else if (tag < 0) {
+			const t: SyntaxEventToken = {type: type_infos[-tag]!.name, start: events[i + 1]!, end: -1};
+			tokens.push(t);
+			stack.push(t);
+			i += 2;
+		} else {
+			const t = stack.pop();
+			if (t) t.end = events[i + 1]!;
+			i += 2;
+		}
+	}
+	return tokens;
+};
+
+/**
+ * Validates a lexed event stream's structural invariants, returning a list of
+ * human-readable issues (empty when valid): records well-formed, offsets
+ * monotonic and in-bounds, containers balanced.
+ */
+export const validate_syntax_events = (lexed: LexedSyntax): Array<string> => {
+	const {text, events, events_len} = lexed;
+	const issues: Array<string> = [];
+	const stack: Array<number> = [];
+	let cursor = 0;
+	let i = 0;
+	while (i < events_len) {
+		const tag = events[i]!;
+		if (tag > 0) {
+			if (i + 3 > events_len) {
+				issues.push(`truncated leaf record at ${i}`);
+				break;
+			}
+			const start = events[i + 1]!;
+			const end = events[i + 2]!;
+			if (tag >= type_infos.length) issues.push(`unknown type id ${tag} at ${i}`);
+			if (start < cursor) issues.push(`leaf start ${start} overlaps cursor ${cursor} at ${i}`);
+			if (end <= start) issues.push(`empty or inverted leaf [${start}, ${end}) at ${i}`);
+			if (end > text.length) issues.push(`leaf end ${end} out of bounds at ${i}`);
+			cursor = end;
+			i += 3;
+		} else if (tag < 0) {
+			if (i + 2 > events_len) {
+				issues.push(`truncated open record at ${i}`);
+				break;
+			}
+			const start = events[i + 1]!;
+			if (-tag >= type_infos.length) issues.push(`unknown type id ${-tag} at ${i}`);
+			if (start < cursor) issues.push(`open start ${start} overlaps cursor ${cursor} at ${i}`);
+			if (start > text.length) issues.push(`open start ${start} out of bounds at ${i}`);
+			stack.push(start);
+			cursor = start;
+			i += 2;
+		} else {
+			if (i + 2 > events_len) {
+				issues.push(`truncated close record at ${i}`);
+				break;
+			}
+			const end = events[i + 1]!;
+			const open_start = stack.pop();
+			if (open_start === undefined) {
+				issues.push(`close without open at ${i}`);
+			} else if (end < open_start) {
+				issues.push(`container inverted: open ${open_start}, close ${end} at ${i}`);
+			}
+			if (end < cursor) issues.push(`close end ${end} before cursor ${cursor} at ${i}`);
+			if (end > text.length) issues.push(`close end ${end} out of bounds at ${i}`);
+			cursor = end;
+			i += 2;
+		}
+	}
+	if (stack.length > 0) issues.push(`${stack.length} unclosed container(s)`);
+	return issues;
+};
+
+// Shared ASCII char-class flags. Code units >= 0xa0 are identifier chars by
+// policy (matches the inherited U+00A0-U+FFFF identifier ranges; surrogate
+// halves are >= 0xa0 so astral chars behave consistently).
+export const CF_SPACE = 1;
+export const CF_DIGIT = 2;
+export const CF_IDENT_START = 4;
+export const CF_IDENT = 8;
+
+export const CHAR_FLAGS: Uint8Array = new Uint8Array(128);
+for (let c = 48; c <= 57; c++) CHAR_FLAGS[c] = CF_DIGIT | CF_IDENT; // 0-9
+for (let c = 65; c <= 90; c++) CHAR_FLAGS[c] = CF_IDENT_START | CF_IDENT; // A-Z
+for (let c = 97; c <= 122; c++) CHAR_FLAGS[c] = CF_IDENT_START | CF_IDENT; // a-z
+CHAR_FLAGS[36] = CF_IDENT_START | CF_IDENT; // $
+CHAR_FLAGS[95] = CF_IDENT_START | CF_IDENT; // _
+CHAR_FLAGS[9] = CF_SPACE; // \t
+CHAR_FLAGS[10] = CF_SPACE; // \n
+CHAR_FLAGS[11] = CF_SPACE; // \v
+CHAR_FLAGS[12] = CF_SPACE; // \f
+CHAR_FLAGS[13] = CF_SPACE; // \r
+CHAR_FLAGS[32] = CF_SPACE; // space
+
+export const is_space = (c: number): boolean => c < 128 && (CHAR_FLAGS[c]! & CF_SPACE) !== 0;
+
+export const is_digit = (c: number): boolean => c >= 48 && c <= 57;
+
+export const is_ident_start = (c: number): boolean =>
+	c < 128 ? (CHAR_FLAGS[c]! & CF_IDENT_START) !== 0 : c >= 0xa0;
+
+export const is_ident = (c: number): boolean =>
+	c < 128 ? (CHAR_FLAGS[c]! & CF_IDENT) !== 0 : c >= 0xa0;
+
+/**
+ * Scans an identifier starting at `from` (assumed to be an identifier start),
+ * returning the exclusive end index.
+ */
+export const scan_ident = (text: string, from: number, end: number): number => {
+	let i = from + 1;
+	while (i < end && is_ident(text.charCodeAt(i))) i++;
+	return i;
+};
+
+/**
+ * Skips whitespace (including newlines) from `from`, returning the next
+ * non-space index.
+ */
+export const skip_space = (text: string, from: number, end: number): number => {
+	let i = from;
+	while (i < end && is_space(text.charCodeAt(i))) i++;
+	return i;
+};
+
+/**
+ * Returns the index of the next `\n` at or after `i` (exclusive end of the
+ * line's content, excluding a preceding `\r`), or `end` when there is none.
+ * Uses native `indexOf` — the fast path for line-oriented scans.
+ */
+export const scan_to_line_end = (text: string, i: number, end: number): number => {
+	const nl = text.indexOf('\n', i);
+	if (nl === -1 || nl >= end) return end;
+	return nl > i && text.charCodeAt(nl - 1) === 13 ? nl - 1 : nl;
+};

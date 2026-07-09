@@ -4,6 +4,7 @@ import {basename, join, relative} from 'node:path';
 import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
 import {tokenize_syntax} from '$lib/tokenize_syntax.ts';
 import {type SyntaxTokenStream, SyntaxToken} from '$lib/syntax_token.ts';
+import {syntax_events_to_tokens} from '$lib/lexer.ts';
 
 export interface SampleSpec {
 	lang: string;
@@ -128,6 +129,10 @@ const get_token_length = (token: SyntaxToken): number => {
  * Generate token data from syntax styler
  */
 export const generate_token_data = (sample: SampleSpec): Array<any> => {
+	// Languages ported to the lexer engine produce tokens from the flat event stream
+	if (syntax_styler_global.has_lexer_lang(sample.lang)) {
+		return syntax_events_to_tokens(syntax_styler_global.lex(sample.content, sample.lang));
+	}
 	// Get tokens from syntax styler and extract all with positions
 	const grammar = syntax_styler_global.get_lang(sample.lang);
 	const tokens = tokenize_syntax(sample.content, grammar);

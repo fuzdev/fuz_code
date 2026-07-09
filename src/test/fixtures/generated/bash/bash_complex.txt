@@ -1,9 +1,9 @@
 === STATS ===
 Sample length: 2726 characters
-Total tokens: 354
+Total tokens: 338
 
 Token types (15 unique):
-  punctuation: 77
+  punctuation: 62
   builtin: 57
   keyword: 45
   string: 40
@@ -11,8 +11,8 @@ Token types (15 unique):
   variable: 30
   comment: 26
   number: 23
-  command_substitution: 6
   heredoc_delimiter: 6
+  command_substitution: 5
   boolean: 3
   heredoc: 3
   file_descriptor: 3
@@ -69,20 +69,16 @@ Token types (15 unique):
  436-437   punctuation               [
  441-448   string                    "$name"
  442-447   variable                  $name
- 449-450   punctuation               ]
- 450-451   punctuation               ;
+ 449-451   punctuation               ];
  452-456   keyword                   then
  458-462   builtin                   echo
  463-476   string                    "file exists"
  477-481   keyword                   elif
- 482-483   punctuation               [
- 483-484   punctuation               [
+ 482-484   punctuation               [[
  485-490   variable                  $name
  491-493   operator                  ==
  494-501   string                    "world"
- 502-503   punctuation               ]
- 503-504   punctuation               ]
- 504-505   punctuation               ;
+ 502-505   punctuation               ]];
  506-510   keyword                   then
  512-516   builtin                   echo
  517-530   string                    "hello world"
@@ -92,15 +88,12 @@ Token types (15 unique):
  559-561   keyword                   fi
  563-582   comment                   # Regex match in [[
  583-585   keyword                   if
- 586-587   punctuation               [
- 587-588   punctuation               [
+ 586-588   punctuation               [[
  589-594   variable                  $name
  595-597   operator                  =~
  599-600   punctuation               [
  603-604   punctuation               ]
- 607-608   punctuation               ]
- 608-609   punctuation               ]
- 609-610   punctuation               ;
+ 607-610   punctuation               ]];
  611-615   keyword                   then
  617-621   builtin                   echo
  622-633   string                    "lowercase"
@@ -117,16 +110,13 @@ Token types (15 unique):
  671-673   variable                  $i
  674-678   keyword                   done
  680-683   keyword                   for
- 684-685   punctuation               (
- 685-686   punctuation               (
+ 684-686   punctuation               ((
  690-691   number                    0
  691-692   punctuation               ;
  695-696   operator                  <
  697-699   number                    10
  699-700   punctuation               ;
- 704-705   punctuation               )
- 705-706   punctuation               )
- 706-707   punctuation               ;
+ 704-707   punctuation               ));
  708-710   keyword                   do
  712-716   builtin                   echo
  717-719   variable                  $i
@@ -188,8 +178,7 @@ Token types (15 unique):
 1062-1066  keyword                   esac
 1068-1079  comment                   # Functions
 1080-1085  function                  greet
-1085-1086  punctuation               (
-1086-1087  punctuation               )
+1085-1087  punctuation               ()
 1088-1089  punctuation               {
 1091-1096  keyword                   local
 1106-1113  string                    "Hello"
@@ -216,22 +205,17 @@ Token types (15 unique):
 1261-1269  string                    "\.txt$"
 1269-1270  punctuation               )
 1272-1294  comment                   # Arithmetic expansion
-1302-1318  command_substitution      $(( 2 + 3 * 4 ))
-1302-1304  punctuation               $(
+1302-1305  punctuation               $((
 1306-1307  number                    2
 1310-1311  number                    3
 1314-1315  number                    4
-1317-1318  punctuation               )
-1319-1320  punctuation               (
-1320-1321  punctuation               (
-1330-1331  punctuation               )
-1331-1332  punctuation               )
-1333-1334  punctuation               (
-1334-1335  punctuation               (
+1316-1318  punctuation               ))
+1319-1321  punctuation               ((
+1330-1332  punctuation               ))
+1333-1335  punctuation               ((
 1342-1343  operator                  >
 1344-1345  number                    0
-1355-1356  punctuation               )
-1356-1357  punctuation               )
+1355-1357  punctuation               ))
 1359-1374  comment                   # Here-document
 1379-1440  heredoc                   <<EOF\nHello, ${name}!\nToday is $(date).\nsingle\nword\nlines\nEOF
 1379-1384  heredoc_delimiter         <<EOF

@@ -28,16 +28,16 @@ map<span class="token_punctuation">[</span>key<span class="token_punctuation">]<
 <span class="token_builtin">echo</span> <span class="token_variable">${!map[@]}</span>
 
 <span class="token_comment"># Control flow</span>
-<span class="token_keyword">if</span> <span class="token_punctuation">[</span> -f <span class="token_string">"<span class="token_variable">$name</span>"</span> <span class="token_punctuation">]</span><span class="token_punctuation">;</span> <span class="token_keyword">then</span>
+<span class="token_keyword">if</span> <span class="token_punctuation">[</span> -f <span class="token_string">"<span class="token_variable">$name</span>"</span> <span class="token_punctuation">];</span> <span class="token_keyword">then</span>
 	<span class="token_builtin">echo</span> <span class="token_string">"file exists"</span>
-<span class="token_keyword">elif</span> <span class="token_punctuation">[</span><span class="token_punctuation">[</span> <span class="token_variable">$name</span> <span class="token_operator">==</span> <span class="token_string">"world"</span> <span class="token_punctuation">]</span><span class="token_punctuation">]</span><span class="token_punctuation">;</span> <span class="token_keyword">then</span>
+<span class="token_keyword">elif</span> <span class="token_punctuation">[[</span> <span class="token_variable">$name</span> <span class="token_operator">==</span> <span class="token_string">"world"</span> <span class="token_punctuation">]];</span> <span class="token_keyword">then</span>
 	<span class="token_builtin">echo</span> <span class="token_string">"hello world"</span>
 <span class="token_keyword">else</span>
 	<span class="token_builtin">echo</span> <span class="token_string">"something else"</span>
 <span class="token_keyword">fi</span>
 
 <span class="token_comment"># Regex match in [[</span>
-<span class="token_keyword">if</span> <span class="token_punctuation">[</span><span class="token_punctuation">[</span> <span class="token_variable">$name</span> <span class="token_operator">=~</span> ^<span class="token_punctuation">[</span>a-z<span class="token_punctuation">]</span>+$ <span class="token_punctuation">]</span><span class="token_punctuation">]</span><span class="token_punctuation">;</span> <span class="token_keyword">then</span>
+<span class="token_keyword">if</span> <span class="token_punctuation">[[</span> <span class="token_variable">$name</span> <span class="token_operator">=~</span> ^<span class="token_punctuation">[</span>a-z<span class="token_punctuation">]</span>+$ <span class="token_punctuation">]];</span> <span class="token_keyword">then</span>
 	<span class="token_builtin">echo</span> <span class="token_string">"lowercase"</span>
 <span class="token_keyword">fi</span>
 
@@ -46,7 +46,7 @@ map<span class="token_punctuation">[</span>key<span class="token_punctuation">]<
 	<span class="token_builtin">echo</span> <span class="token_variable">$i</span>
 <span class="token_keyword">done</span>
 
-<span class="token_keyword">for</span> <span class="token_punctuation">(</span><span class="token_punctuation">(</span>i = <span class="token_number">0</span><span class="token_punctuation">;</span> i <span class="token_operator">&lt;</span> <span class="token_number">10</span><span class="token_punctuation">;</span> i++<span class="token_punctuation">)</span><span class="token_punctuation">)</span><span class="token_punctuation">;</span> <span class="token_keyword">do</span>
+<span class="token_keyword">for</span> <span class="token_punctuation">((</span>i = <span class="token_number">0</span><span class="token_punctuation">;</span> i <span class="token_operator">&lt;</span> <span class="token_number">10</span><span class="token_punctuation">;</span> i++<span class="token_punctuation">));</span> <span class="token_keyword">do</span>
 	<span class="token_builtin">echo</span> <span class="token_variable">$i</span>
 <span class="token_keyword">done</span>
 
@@ -80,7 +80,7 @@ map<span class="token_punctuation">[</span>key<span class="token_punctuation">]<
 <span class="token_keyword">esac</span>
 
 <span class="token_comment"># Functions</span>
-<span class="token_function">greet</span><span class="token_punctuation">(</span><span class="token_punctuation">)</span> <span class="token_punctuation">{</span>
+<span class="token_function">greet</span><span class="token_punctuation">()</span> <span class="token_punctuation">{</span>
 	<span class="token_keyword">local</span> greeting=<span class="token_string">"Hello"</span>
 	<span class="token_builtin">echo</span> <span class="token_string">"<span class="token_variable">$greeting</span>, <span class="token_variable">$1</span>!"</span>
 	<span class="token_keyword">return</span> <span class="token_number">0</span>
@@ -95,9 +95,9 @@ today=<span class="token_command_substitution"><span class="token_punctuation">$
 files=<span class="token_command_substitution"><span class="token_punctuation">$(</span>ls -la <span class="token_operator">|</span> grep <span class="token_string">"\.txt$"</span><span class="token_punctuation">)</span></span>
 
 <span class="token_comment"># Arithmetic expansion</span>
-result=<span class="token_command_substitution"><span class="token_punctuation">$(</span>( <span class="token_number">2</span> + <span class="token_number">3</span> * <span class="token_number">4</span> )<span class="token_punctuation">)</span></span>
-<span class="token_punctuation">(</span><span class="token_punctuation">(</span> count++ <span class="token_punctuation">)</span><span class="token_punctuation">)</span>
-<span class="token_punctuation">(</span><span class="token_punctuation">(</span> x = y <span class="token_operator">></span> <span class="token_number">0</span> ? y : -y <span class="token_punctuation">)</span><span class="token_punctuation">)</span>
+result=<span class="token_punctuation">$((</span> <span class="token_number">2</span> + <span class="token_number">3</span> * <span class="token_number">4</span> <span class="token_punctuation">))</span>
+<span class="token_punctuation">((</span> count++ <span class="token_punctuation">))</span>
+<span class="token_punctuation">((</span> x = y <span class="token_operator">></span> <span class="token_number">0</span> ? y : -y <span class="token_punctuation">))</span>
 
 <span class="token_comment"># Here-document</span>
 cat <span class="token_heredoc token_string"><span class="token_heredoc_delimiter token_punctuation">&lt;&lt;EOF</span>

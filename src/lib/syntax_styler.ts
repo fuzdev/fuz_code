@@ -1,5 +1,6 @@
 import {SyntaxToken, type SyntaxTokenStream} from './syntax_token.ts';
 import {tokenize_syntax} from './tokenize_syntax.ts';
+import {lex_syntax, render_syntax_html, type LexedSyntax, type SyntaxLang} from './lexer.ts';
 
 export type AddSyntaxGrammar = (syntax_styler: SyntaxStyler) => void;
 
@@ -38,6 +39,44 @@ export class SyntaxStyler {
 	// 	}
 	// }
 	// }
+
+	/**
+	 * Languages ported to the hand-written lexer engine (`lexer.ts`).
+	 * When a language is registered here, `stylize` routes through the lexer
+	 * engine instead of the regex-grammar engine; the grammar registration in
+	 * `langs` remains only for the unported paths (`tokenize`, embedded
+	 * regions in unported grammars) until the old engine is deleted.
+	 */
+	lexer_langs: Map<string, SyntaxLang> = new Map();
+
+	/**
+	 * Registers a lexer-engine language (and its aliases).
+	 */
+	add_lexer_lang(lang: SyntaxLang): void {
+		this.lexer_langs.set(lang.id, lang);
+		if (lang.aliases) {
+			for (const alias of lang.aliases) {
+				this.lexer_langs.set(alias, lang);
+			}
+		}
+	}
+
+	has_lexer_lang(id: string): boolean {
+		return this.lexer_langs.has(id);
+	}
+
+	/**
+	 * Lexes `text` with the lexer-engine language registered as `lang`,
+	 * returning the flat token event stream. Throws when `lang` has no
+	 * registered lexer — see `has_lexer_lang`.
+	 */
+	lex(text: string, lang: string): LexedSyntax {
+		const lexer_lang = this.lexer_langs.get(lang);
+		if (lexer_lang === undefined) {
+			throw Error(`The language "${lang}" has no lexer.`);
+		}
+		return lex_syntax(text, lexer_lang, this.lexer_langs);
+	}
 
 	add_lang(id: string, grammar: SyntaxGrammarRaw, aliases?: Array<string>): void {
 		// Normalize grammar once at registration for optimal runtime performance
@@ -129,14 +168,19 @@ export class SyntaxStyler {
 	 * stylize('var foo = 42;', 'ts-extended', extended);
 	 * ```
 	 */
-	stylize(
-		text: string,
-		lang: string,
-		grammar: SyntaxGrammar | undefined = this.get_lang(lang),
-	): string {
+	stylize(text: string, lang: string, grammar?: SyntaxGrammar): string {
+		let resolved_grammar = grammar;
+		if (resolved_grammar === undefined) {
+			// lexer-engine languages take priority over their grammar registrations
+			const lexer_lang = this.lexer_langs.get(lang);
+			if (lexer_lang !== undefined) {
+				return render_syntax_html(lex_syntax(text, lexer_lang, this.lexer_langs));
+			}
+			resolved_grammar = this.get_lang(lang);
+		}
 		// stringify with the post-hook `lang`, which a `before_tokenize` hook may
 		// have rewritten (it flows into each token's `wrap` hook context)
-		const c = this.#tokenize_hooked(text, lang, grammar);
+		const c = this.#tokenize_hooked(text, lang, resolved_grammar);
 		return this.stringify_token(c.tokens, c.lang);
 	}
 

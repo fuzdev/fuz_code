@@ -1,9 +1,9 @@
 === STATS ===
 Sample length: 502 characters
-Total tokens: 75
+Total tokens: 73
 
 Token types (9 unique):
-  punctuation: 47
+  punctuation: 45
   property: 9
   selector: 8
   function: 3
@@ -35,8 +35,7 @@ Token types (9 unique):
   98-99    punctuation               ,
  101-102   punctuation               ,
  104-105   punctuation               ,
- 109-110   punctuation               )
- 110-111   punctuation               ;
+ 109-111   punctuation               );
  112-113   punctuation               }
  115-128   comment                   /* comment */
  130-176   comment                   /*\nmulti\n.line {\n\ti: 100px\n\n</style>\n\n@media*/
@@ -66,8 +65,7 @@ Token types (9 unique):
  296-306   function                  light-dark
  306-307   punctuation               (
  316-317   punctuation               ,
- 326-327   punctuation               )
- 327-328   punctuation               ;
+ 326-328   punctuation               );
  330-331   punctuation               }
  332-333   punctuation               }
  335-351   selector                  .content::before
