@@ -493,7 +493,7 @@ const lex_ts_template = (l: Lexer, i: number, to: number, cache: TsScanCache): n
 			j++;
 			closed = true;
 			break;
-		} else if (c === 36 && text.charCodeAt(j + 1) === 123) {
+		} else if (c === 36 && j + 1 < to && text.charCodeAt(j + 1) === 123) {
 			l.leaf(T_STRING, chunk_start, j);
 			const close = scan_balanced_braces(text, j + 1, to);
 			const inner_end = close === -1 ? to : close;
@@ -548,7 +548,7 @@ const lex_ts_window = (
 		}
 
 		// identifiers (including `#private`)
-		if (is_ident_start(c) || (c === 35 && is_ident_start(text.charCodeAt(i + 1)))) {
+		if (is_ident_start(c) || (c === 35 && i + 1 < to && is_ident_start(text.charCodeAt(i + 1)))) {
 			const start = i;
 			const ident_end = scan_ident(text, c === 35 ? i + 1 : i, to);
 			const was_class_ctx = class_ctx;
@@ -827,7 +827,7 @@ const lex_ts_window = (
 		}
 
 		// `@decorator`
-		if (c === 64 && is_ident_start(text.charCodeAt(i + 1))) {
+		if (c === 64 && i + 1 < to && is_ident_start(text.charCodeAt(i + 1))) {
 			const name_end = scan_ident(text, i + 1, to);
 			l.open(T_DECORATOR, i);
 			l.leaf(T_AT, i, i + 1);

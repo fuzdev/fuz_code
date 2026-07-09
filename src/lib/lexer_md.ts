@@ -166,20 +166,45 @@ const lex_md_emphasis = (
 };
 
 /**
+ * Monotonic next-occurrence caches for `lex_md_link`'s `]` and `)` searches.
+ * Because a `[` searches for a *different* char, a `[`-dense (or `[x](`-dense)
+ * line would otherwise pay a full forward `indexOf` per `[` while advancing
+ * only one char — O(n²). The caches advance forward through the inline scan
+ * (which visits `[` positions in increasing order), so total probe work is
+ * O(n). `Infinity` means the char has no further occurrence.
+ */
+interface MdLinkCache {
+	rbracket: number;
+	rparen: number;
+}
+
+/**
+ * Returns the cached next occurrence of `ch` at or after `from`, re-probing
+ * with `indexOf` only when the cached position has fallen behind `from`.
+ */
+const md_probe = (text: string, cached: number, from: number, ch: string): number => {
+	if (cached >= from) return cached;
+	const found = text.indexOf(ch, from);
+	return found === -1 ? Infinity : found;
+};
+
+/**
  * Lexes a `[text](url)` link at the `[` at `i`, returning the next scan
  * position (`i + 1` when it isn't a link). Old constraints: text interior
  * free of `[`/`]`, url interior free of `)`, both line-bounded and non-empty,
  * `(` immediately after `]`.
  */
-const lex_md_link = (l: Lexer, i: number, line_end: number): number => {
+const lex_md_link = (l: Lexer, i: number, line_end: number, cache: MdLinkCache): number => {
 	const {text} = l;
-	const rb = text.indexOf(']', i + 1);
-	if (rb === -1 || rb >= line_end || rb === i + 1) return i + 1;
+	cache.rbracket = md_probe(text, cache.rbracket, i + 1, ']');
+	const rb = cache.rbracket;
+	if (rb >= line_end || rb === i + 1) return i + 1;
 	const lb2 = text.indexOf('[', i + 1);
 	if (lb2 !== -1 && lb2 < rb) return i + 1;
 	if (text.charCodeAt(rb + 1) !== 40) return i + 1;
-	const cp = text.indexOf(')', rb + 2);
-	if (cp === -1 || cp >= line_end || cp === rb + 2) return i + 1;
+	cache.rparen = md_probe(text, cache.rparen, rb + 2, ')');
+	const cp = cache.rparen;
+	if (cp >= line_end || cp === rb + 2) return i + 1;
 	l.open(T_LINK, i);
 	l.open(T_LINK_TEXT_WRAPPER, i);
 	l.leaf(T_LINK_PUNCTUATION, i, i + 1);
@@ -205,6 +230,8 @@ const lex_md_link = (l: Lexer, i: number, line_end: number): number => {
  */
 const lex_md_inline = (l: Lexer, from: number, to: number, construct_end: number): number => {
 	const {text} = l;
+	// per-call caches so a `[`-dense line stays linear (see `md_probe`)
+	const link_cache: MdLinkCache = {rbracket: -1, rparen: -1};
 	let i = from;
 	let line_end = to;
 	while (i < line_end) {
@@ -258,7 +285,7 @@ const lex_md_inline = (l: Lexer, from: number, to: number, construct_end: number
 		}
 		if (c === 91) {
 			// [
-			i = lex_md_link(l, i, line_end);
+			i = lex_md_link(l, i, line_end, link_cache);
 			continue;
 		}
 		i++;

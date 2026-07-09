@@ -261,9 +261,14 @@ const lex_markup_attr_value = (
 const lex_markup_attr_name = (l: Lexer, from: number, to: number, mode: MarkupLexMode): void => {
 	const {text} = l;
 	const ns_end = scan_namespace_end(text, from, to);
+	// directive-modifier pipes come *after* any `ns:` prefix — a `|` inside the
+	// namespace span (malformed input like `a|b:c`) is part of the namespace,
+	// not a modifier separator, so start the pipe scan at `ns_end` to keep the
+	// emitted leaves monotonic (a pipe leaf before `ns_end` would overlap the
+	// namespace leaf and produce an invalid event stream)
 	let pipe = -1;
 	if (mode.lex_expression !== null) {
-		for (let k = from; k < to; k++) {
+		for (let k = ns_end === -1 ? from : ns_end; k < to; k++) {
 			if (text.charCodeAt(k) === 124) {
 				pipe = k;
 				break;

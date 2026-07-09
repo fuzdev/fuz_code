@@ -131,6 +131,20 @@ export const PATHOLOGICAL_CASES: Array<PathologicalCase> = [
 		generate: (size) => repeat_to_size('```ts\nlet x = 1;\n```\n', size),
 	},
 	{
+		// `[`-dense text with no closing `]` — each `[` probes for a link closer
+		// that never comes; a naive per-`[` forward scan would be quadratic
+		name: 'md_bracket_dense',
+		lang: 'md',
+		generate: (size) => repeat_to_size('[', size),
+	},
+	{
+		// `[x](`-dense text — exercises both the `]` and `)` link-closer probes
+		// with no closing `)` in reach
+		name: 'md_link_paren_dense',
+		lang: 'md',
+		generate: (size) => repeat_to_size('[x](', size),
+	},
+	{
 		// expression-valued attributes — tag scanner + expression interplay
 		name: 'svelte_attr_expr_dense',
 		lang: 'svelte',

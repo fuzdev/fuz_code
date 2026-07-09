@@ -248,6 +248,26 @@ describe('lexer_svelte regions', () => {
 	});
 });
 
+describe('lexer_svelte malformed-input resilience', () => {
+	// a `|` before the `:` in an attribute name is malformed, but must still
+	// produce a valid (non-overlapping) event stream — the pipe belongs to the
+	// namespace span, not a separate modifier punctuation leaf
+	test('a pipe before the namespace colon stays valid', () => {
+		assert.deepEqual(
+			validate_syntax_events(syntax_styler_global.lex('<div a|b:c></div>', 'svelte')),
+			[],
+		);
+	});
+
+	// `@`/`#`/`$` at an embedded ts window's edge (the each/await `as`/`then`
+	// split boundary) must not read or emit past the window
+	test('an at-sign at an embed boundary stays valid', () => {
+		for (const text of ['{#each a@as b}', '{#await x@then y}', '{#each a#as b}']) {
+			assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'svelte')), [], text);
+		}
+	});
+});
+
 describe('lexer_svelte sample', () => {
 	const content = readFileSync('src/test/fixtures/samples/sample_complex.svelte', 'utf8');
 
