@@ -188,6 +188,9 @@ export class Lexer {
 		const prev_end = this.end;
 		this.pos = start;
 		this.end = end;
+		// reset coalescing state so the guest's first leaf can't merge with a
+		// leaf the host emitted just before the embedded region
+		this.#last_leaf = -1;
 		lang.lex(this);
 		this.pos = prev_pos;
 		this.end = prev_end;
@@ -380,12 +383,11 @@ export const validate_syntax_events = (lexed: LexedSyntax): Array<string> => {
 // policy (matches the inherited U+00A0-U+FFFF identifier ranges; surrogate
 // halves are >= 0xa0 so astral chars behave consistently).
 export const CF_SPACE = 1;
-export const CF_DIGIT = 2;
-export const CF_IDENT_START = 4;
-export const CF_IDENT = 8;
+export const CF_IDENT_START = 2;
+export const CF_IDENT = 4;
 
 export const CHAR_FLAGS: Uint8Array = new Uint8Array(128);
-for (let c = 48; c <= 57; c++) CHAR_FLAGS[c] = CF_DIGIT | CF_IDENT; // 0-9
+for (let c = 48; c <= 57; c++) CHAR_FLAGS[c] = CF_IDENT; // 0-9
 for (let c = 65; c <= 90; c++) CHAR_FLAGS[c] = CF_IDENT_START | CF_IDENT; // A-Z
 for (let c = 97; c <= 122; c++) CHAR_FLAGS[c] = CF_IDENT_START | CF_IDENT; // a-z
 CHAR_FLAGS[36] = CF_IDENT_START | CF_IDENT; // $

@@ -482,7 +482,7 @@ const scan_operator = (text: string, i: number, end: number): number => {
  * Lexes a template literal starting at the backtick at `i`, returning the new
  * position. Interpolations recurse through the full lexer.
  */
-const lex_ts_template = (l: Lexer, i: number, to: number, js: boolean): number => {
+const lex_ts_template = (l: Lexer, i: number, to: number): number => {
 	const {text} = l;
 	l.open(T_TEMPLATE_STRING, i);
 	l.leaf(T_TEMPLATE_PUNCTUATION, i, i + 1);
@@ -505,7 +505,7 @@ const lex_ts_template = (l: Lexer, i: number, to: number, js: boolean): number =
 			const inner_end = close === -1 ? to : close;
 			l.open(T_INTERPOLATION, j);
 			l.leaf(T_INTERPOLATION_PUNCTUATION, j, j + 2);
-			lex_ts_window(l, j + 2, inner_end, false, js);
+			lex_ts_window(l, j + 2, inner_end, false);
 			if (close === -1) {
 				l.close(to);
 				j = to;
@@ -531,13 +531,7 @@ const lex_ts_template = (l: Lexer, i: number, to: number, js: boolean): number =
  * The core window lexer. `type_mode` switches capitalized identifiers to
  * `type_name` (used for generics and type annotations).
  */
-const lex_ts_window = (
-	l: Lexer,
-	from: number,
-	to: number,
-	type_mode: boolean,
-	js: boolean,
-): void => {
+const lex_ts_window = (l: Lexer, from: number, to: number, type_mode: boolean): void => {
 	const {text} = l;
 	let i = from;
 	let prev = P_NONE;
@@ -572,26 +566,24 @@ const lex_ts_window = (
 			if (was_class_ctx && kind === undefined && c !== 35) {
 				// class-name chain: `Foo`, `a.b.Foo`, optionally with generics
 				l.leaf(T_CLASS_NAME, start, ident_end);
-				while (text.charCodeAt(i) === 46 && is_ident_start(text.charCodeAt(i + 1)) && i + 1 < to) {
+				while (i + 1 < to && text.charCodeAt(i) === 46 && is_ident_start(text.charCodeAt(i + 1))) {
 					l.leaf(T_PUNCTUATION, i, i + 1);
 					const seg_end = scan_ident(text, i + 1, to);
 					l.leaf(T_CLASS_NAME, i + 1, seg_end);
 					i = seg_end;
 				}
-				if (!js) {
-					const angle_start = skip_space(text, i, to);
-					if (text.charCodeAt(angle_start) === 60) {
-						const angle_end = scan_balanced_angle(text, angle_start, to);
-						if (angle_end !== -1) {
-							lex_ts_window(l, angle_start, angle_end + 1, true, js);
-							i = angle_end + 1;
-						}
+				const angle_start = skip_space(text, i, to);
+				if (text.charCodeAt(angle_start) === 60) {
+					const angle_end = scan_balanced_angle(text, angle_start, to);
+					if (angle_end !== -1) {
+						lex_ts_window(l, angle_start, angle_end + 1, true);
+						i = angle_end + 1;
 					}
 				}
 				continue;
 			}
 
-			if (was_as_ctx && kind === undefined && c !== 35 && !js && !BUILTIN_WORDS.has(word)) {
+			if (was_as_ctx && kind === undefined && c !== 35 && !BUILTIN_WORDS.has(word)) {
 				// `x as Foo` — but `as unknown`/`as string` keep their builtin type
 				l.leaf(T_TYPE_ASSERTION, start, ident_end);
 				continue;
@@ -608,7 +600,7 @@ const lex_ts_window = (
 						keyword_id = T_SPECIAL_KEYWORD;
 						break;
 					case K_TS:
-						if (!js) keyword_id = T_KEYWORD;
+						keyword_id = T_KEYWORD;
 						break;
 					case K_ASYNC: {
 						const n = text.charCodeAt(skip_space(text, ident_end, to));
@@ -631,7 +623,6 @@ const lex_ts_window = (
 						break;
 					}
 					case K_TYPE_WORD: {
-						if (js) break;
 						const n = text.charCodeAt(skip_space(text, ident_end, to));
 						// `import type {…}` / `export type * from …` — a type-only
 						// import/export modifier, not a type-alias declaration
@@ -645,7 +636,6 @@ const lex_ts_window = (
 						break;
 					}
 					case K_TS_COND: {
-						if (js) break;
 						const n = text.charCodeAt(skip_space(text, ident_end, to));
 						if (n === 123 || is_ident_start(n) || Number.isNaN(n)) {
 							keyword_id = T_KEYWORD;
@@ -661,8 +651,8 @@ const lex_ts_window = (
 				}
 				if (keyword_id !== 0) {
 					l.leaf(keyword_id, start, ident_end);
-					if (CLASS_CTX_WORDS.has(word) && (word !== 'type' || !js)) class_ctx = true;
-					if (AS_WORDS.has(word) && !js) as_ctx = true;
+					if (CLASS_CTX_WORDS.has(word)) class_ctx = true;
+					if (AS_WORDS.has(word)) as_ctx = true;
 					if (IMPORT_WORDS.has(word)) import_ctx = true;
 					if (!VALUE_WORDS.has(word)) prev = P_NONE;
 					continue;
@@ -703,7 +693,7 @@ const lex_ts_window = (
 			}
 
 			// generic call: `foo<T>(…)`
-			if (!js) {
+			{
 				const angle_start = skip_space(text, ident_end, to);
 				if (text.charCodeAt(angle_start) === 60) {
 					const angle_end = scan_balanced_angle(text, angle_start, to);
@@ -711,7 +701,7 @@ const lex_ts_window = (
 						l.open(T_GENERIC_FUNCTION, start);
 						l.leaf(T_FUNCTION, start, ident_end);
 						l.open(T_GENERIC, angle_start);
-						lex_ts_window(l, angle_start, angle_end + 1, true, js);
+						lex_ts_window(l, angle_start, angle_end + 1, true);
 						l.close(angle_end + 1);
 						l.close(angle_end + 1);
 						i = angle_end + 1;
@@ -801,7 +791,7 @@ const lex_ts_window = (
 
 		// template literals
 		if (c === 96) {
-			i = lex_ts_template(l, i, to, js);
+			i = lex_ts_template(l, i, to);
 			prev = P_VALUE;
 			prev_code = 0;
 			class_ctx = as_ctx = import_ctx = false;
@@ -853,7 +843,7 @@ const lex_ts_window = (
 		// `:` — type annotation (with initializer) or plain operator
 		if (c === 58) {
 			class_ctx = as_ctx = import_ctx = false;
-			if (!type_mode && !js) {
+			if (!type_mode) {
 				const type_end = scan_type_annotation(text, i, to);
 				if (type_end !== -1) {
 					const type_start = skip_space(text, i + 1, to);
@@ -865,7 +855,7 @@ const lex_ts_window = (
 						l.open(T_TYPE_ANNOTATION, i);
 						l.leaf(T_COLON, i, i + 1);
 						l.open(T_TYPE, type_start);
-						lex_ts_window(l, type_start, content_end, true, js);
+						lex_ts_window(l, type_start, content_end, true);
 						l.close(content_end);
 						l.close(content_end);
 						i = type_end;
@@ -968,21 +958,29 @@ const scan_regex_body = (text: string, i: number, to: number): number => {
 	return -1;
 };
 
-const create_lex_ts =
-	(js: boolean) =>
-	(l: Lexer): void => {
-		let i = l.pos;
-		// hashbang at the very start of the document
-		if (i === 0 && l.text.charCodeAt(0) === 35 && l.text.charCodeAt(1) === 33) {
-			const line_end = scan_to_line_end(l.text, 0, l.end);
-			l.leaf(T_HASHBANG, 0, line_end);
-			i = line_end;
-		}
-		lex_ts_window(l, i, l.end, false, js);
-		l.pos = l.end;
-	};
+const lex_ts = (l: Lexer): void => {
+	let i = l.pos;
+	// hashbang at the very start of the document
+	if (i === 0 && l.text.charCodeAt(0) === 35 && l.text.charCodeAt(1) === 33) {
+		const line_end = scan_to_line_end(l.text, 0, l.end);
+		l.leaf(T_HASHBANG, 0, line_end);
+		i = line_end;
+	}
+	lex_ts_window(l, i, l.end, false);
+	l.pos = l.end;
+};
 
 /**
  * The TypeScript language registration for the lexer engine.
+ *
+ * JavaScript reuses this lexer via the `js`/`javascript` aliases: TypeScript is
+ * a syntactic superset, and the TS-only constructs the lexer recognizes (type
+ * annotations, `as`, generics before a call) can't appear in valid JS, so
+ * running the full TS lexer on JS is a no-op for those paths. There is no
+ * separate JS lexer.
  */
-export const lexer_ts: SyntaxLang = {id: 'ts', aliases: ['typescript'], lex: create_lex_ts(false)};
+export const lexer_ts: SyntaxLang = {
+	id: 'ts',
+	aliases: ['typescript', 'js', 'javascript'],
+	lex: lex_ts,
+};
