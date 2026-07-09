@@ -32,6 +32,16 @@ import {
  * Word classification (keyword/builtin/boolean) is a context-free `Map`
  * lookup.
  *
+ * Nesting (`$(…)`/`$((…))`/backtick interiors, double-quoted string bodies,
+ * unquoted heredoc bodies) runs on an explicit pooled frame stack, so
+ * arbitrarily deep input tokenizes fully without touching the JS call stack.
+ *
+ * Scope: the bash family — `sh`/`shell` alias this lexer. POSIX sh is a
+ * syntactic subset of bash for highlighting purposes (everything sh scripts
+ * use — `$(…)`, `$((…))`, backticks, heredocs, `${…}` — is shared syntax),
+ * and bash-only forms simply don't occur in sh input. Shells with their own
+ * syntax (fish, PowerShell) are out of scope.
+ *
  * Resilience: unterminated single-line constructs stop at the line boundary;
  * unterminated strings, command substitutions, and heredocs extend to the
  * window end.
@@ -207,108 +217,176 @@ const scan_dollar_var = (l: Lexer, i: number, to: number): number => {
 	return i + 1; // bare `$`
 };
 
-// bounds recursive `$(…)`/`$((…))` nesting so deeply nested substitutions
-// degrade to plain interiors instead of overflowing the JS call stack — far
-// beyond any nesting real shell reaches. Safe as module state: lexing is
-// synchronous and `lex_bash` resets it per top-level document.
-const MAX_SUBST_DEPTH = 64;
-let subst_depth = 0;
+// Explicit-stack driver for the nesting that used to recurse on the JS call
+// stack (`$(…)`/`$((…))`/backtick substitution interiors, double-quoted string
+// bodies, and unquoted heredoc bodies). Every frame is a window scan — a
+// substitution pushes a frame instead of recursing, so arbitrarily deep input
+// tokenizes fully without overflowing; the deep-nesting tests exercise this to
+// thousands of levels. String and heredoc bodies are cheaper than a frame:
+// they scan inline, and when one is interrupted by a substitution the window
+// frame records a *submode* so the resume finishes the body before returning
+// to the main scan. Frames are pooled across a single `lex_bash` run (`stack`
+// only grows, never shrinks) to keep deep nesting allocation-free after warmup.
+
+// a window frame's suspended mid-construct scan
+const S_NONE = 0;
+const S_DQUOTE = 1; // mid-`"…"` body, suspended at a substitution
+const S_HEREDOC = 2; // mid-heredoc body, suspended at a substitution
+
+// how a completed frame finalizes into the frame beneath it
+const R_ROOT = 0; // top-level window — nothing beneath it
+const R_CMDSUB = 1; // `$(…)` interior → emit `)`, close the container, advance
+const R_ARITH = 2; // `$((…))` interior → emit `))`, advance
+const R_BACKTICK = 3; // backtick interior → emit the closing backtick, close, advance
 
 /**
- * Lexes a `$(…)` command substitution at `i` as a container, returning the new
- * position. Interior lexes as ordinary bash (bounded by `MAX_SUBST_DEPTH`);
- * unterminated extends to `to`.
- *
- * @mutates `l`
+ * One suspended window scan on the explicit stack, carrying the per-window
+ * state the recursive lexer held in locals (cursor, `function` keyword
+ * tracking, the pending-heredoc queue) plus the submode of an interrupted
+ * string/heredoc body. `ret`/`ret_a` describe how the frame finalizes into the
+ * one beneath it when it completes.
  */
-const lex_bash_cmdsub = (l: Lexer, i: number, to: number): number => {
+interface BashFrame {
+	/** Scan cursor. */
+	i: number;
+	/** Exclusive window end. */
+	to: number;
+	/** Mid-construct submode — an interrupted body scan resumed before the main scan. */
+	sub: number;
+	/** `S_HEREDOC`: exclusive body end. */
+	sub_to: number;
+	/** `S_HEREDOC`: closing delimiter start, or -1 when unterminated. */
+	hd_delim_start: number;
+	/** `S_HEREDOC`: closing delimiter end. */
+	hd_delim_end: number;
+	/** `S_HEREDOC`: where the main scan resumes after the body. */
+	hd_resume: number;
+	/** A `function` keyword awaits its name. */
+	prev_function_kw: boolean;
+	/** Heredocs redirected on the current line, bodies pending. Pooled with the frame. */
+	pending: Array<PendingHeredoc>;
+	/** Drain progress into `pending`. */
+	pending_idx: number;
+	/** Whether a drain of `pending` is in progress at a line boundary. */
+	draining: boolean;
+	ret: number;
+	/** The enclosing construct's close-scan result (-1 when unterminated). */
+	ret_a: number;
+}
+
+interface BashMachine {
+	l: Lexer;
+	/** Frame pool doubling as the stack; frames above `sp` are dormant. */
+	stack: Array<BashFrame>;
+	sp: number;
+}
+
+const create_bash_frame = (): BashFrame => ({
+	i: 0,
+	to: 0,
+	sub: S_NONE,
+	sub_to: 0,
+	hd_delim_start: -1,
+	hd_delim_end: 0,
+	hd_resume: 0,
+	prev_function_kw: false,
+	pending: [],
+	pending_idx: 0,
+	draining: false,
+	ret: R_ROOT,
+	ret_a: 0,
+});
+
+/**
+ * Pushes a window frame scanning `[from, to)`, reusing the pooled slot at the
+ * stack top. `ret`/`ret_a` are applied when it completes.
+ *
+ * @mutates `mac`
+ */
+const mac_push_window = (
+	mac: BashMachine,
+	from: number,
+	to: number,
+	ret: number,
+	ret_a: number,
+): void => {
+	const {stack, sp} = mac;
+	let f = stack[sp];
+	if (f === undefined) {
+		f = create_bash_frame();
+		stack[sp] = f;
+	}
+	f.i = from;
+	f.to = to;
+	f.sub = S_NONE;
+	f.prev_function_kw = false;
+	if (f.pending.length > 0) f.pending.length = 0;
+	f.pending_idx = 0;
+	f.draining = false;
+	f.ret = ret;
+	f.ret_a = ret_a;
+	mac.sp = sp + 1;
+};
+
+/**
+ * Starts a `$(…)` command substitution or `$((…))` arithmetic expansion at
+ * `i`: emits the opening events and pushes the interior window frame. The
+ * caller must suspend (write back its state and return `false`); the driver's
+ * finalize emits the trailing punctuation and advances the caller past it.
+ * The `i + 2 < to` guard keeps the arithmetic lookahead inside the window.
+ *
+ * @mutates `mac`
+ */
+const mac_push_dollar_paren = (mac: BashMachine, i: number, to: number): void => {
+	const l = mac.l;
 	const {text} = l;
+	if (i + 2 < to && text.charCodeAt(i + 2) === 40) {
+		// arithmetic expansion — find the `)` closing the outer `(`; `$((`/`))`
+		// are punctuation and the interior lexes as ordinary bash
+		let depth = 2; // the `((`
+		let j = i + 3;
+		while (j < to) {
+			const c = text.charCodeAt(j);
+			if (c === 34 || c === 39) {
+				j = skip_bash_quote(text, j, to, c);
+			} else if (c === 40) {
+				depth++;
+				j++;
+			} else if (c === 41) {
+				depth--;
+				if (depth === 0) break;
+				j++;
+			} else {
+				j++;
+			}
+		}
+		l.leaf(T_PUNCTUATION, i, i + 3); // `$((`
+		const closed = depth === 0;
+		mac_push_window(mac, i + 3, closed ? j - 1 : to, R_ARITH, closed ? j : -1);
+		return;
+	}
+	// command substitution — a container with an ordinary-bash interior
 	l.open(T_COMMAND_SUBSTITUTION, i);
 	l.leaf(T_PUNCTUATION, i, i + 2); // `$(`
 	const close = scan_cmdsub_end(text, i + 2, to);
-	const inner_end = close === -1 ? to : close;
-	if (subst_depth < MAX_SUBST_DEPTH) {
-		subst_depth++;
-		lex_bash_window(l, i + 2, inner_end);
-		subst_depth--;
-	}
-	if (close === -1) {
-		l.close(to);
-		return to;
-	}
-	l.leaf(T_PUNCTUATION, close, close + 1); // `)`
-	l.close(close + 1);
-	return close + 1;
+	mac_push_window(mac, i + 2, close === -1 ? to : close, R_CMDSUB, close);
 };
 
 /**
- * Lexes a `$((…))` arithmetic expansion at `i`, returning the new position.
- * Distinct from command substitution: `$((`/`))` are punctuation and the
- * interior lexes as ordinary bash. Unterminated extends to `to`.
+ * Starts a legacy backtick command substitution at `i`: emits the container
+ * open and opening backtick, and pushes the interior window frame. A backslash
+ * escapes the next char (e.g. an inner backtick); unterminated extends to `to`.
  *
- * @mutates `l`
+ * @mutates `mac`
  */
-const lex_bash_arith = (l: Lexer, i: number, to: number): number => {
-	const {text} = l;
-	let depth = 2; // the `((`
-	let j = i + 3;
-	while (j < to) {
-		const c = text.charCodeAt(j);
-		if (c === 34 || c === 39) {
-			j = skip_bash_quote(text, j, to, c);
-		} else if (c === 40) {
-			depth++;
-			j++;
-		} else if (c === 41) {
-			depth--;
-			if (depth === 0) break;
-			j++;
-		} else {
-			j++;
-		}
-	}
-	l.leaf(T_PUNCTUATION, i, i + 3); // `$((`
-	const closed = depth === 0;
-	const inner_end = closed ? j - 1 : to;
-	if (subst_depth < MAX_SUBST_DEPTH) {
-		subst_depth++;
-		lex_bash_window(l, i + 3, inner_end);
-		subst_depth--;
-	}
-	if (closed) {
-		l.leaf(T_PUNCTUATION, j - 1, j + 1); // `))`
-		return j + 1;
-	}
-	return to; // unterminated
-};
-
-/**
- * Dispatches a `$(`-led expansion at `i`: arithmetic `$((…))` when a second
- * `(` follows in-window, else command substitution `$(…)`. Returns the new
- * position. The `i + 2 < to` guard keeps the lookahead inside the window.
- *
- * @mutates `l`
- */
-const lex_bash_dollar_paren = (l: Lexer, i: number, to: number): number =>
-	i + 2 < to && l.text.charCodeAt(i + 2) === 40
-		? lex_bash_arith(l, i, to)
-		: lex_bash_cmdsub(l, i, to);
-
-/**
- * Lexes a legacy backtick command substitution at `i` as a container,
- * returning the new position. The interior lexes as ordinary bash (bounded by
- * `MAX_SUBST_DEPTH`); a backslash escapes the next char; unterminated extends
- * to `to`.
- *
- * @mutates `l`
- */
-const lex_bash_backtick = (l: Lexer, i: number, to: number): number => {
+const mac_push_backtick = (mac: BashMachine, i: number, to: number): void => {
+	const l = mac.l;
 	const {text} = l;
 	let j = i + 1;
 	while (j < to) {
 		const c = text.charCodeAt(j);
 		if (c === 92) {
-			j += 2; // backslash escapes the next char (e.g. an inner backtick)
+			j += 2;
 		} else if (c === 96) {
 			break;
 		} else {
@@ -316,57 +394,39 @@ const lex_bash_backtick = (l: Lexer, i: number, to: number): number => {
 		}
 	}
 	const closed = j < to && text.charCodeAt(j) === 96;
-	const inner_end = closed ? j : to;
 	l.open(T_COMMAND_SUBSTITUTION, i);
 	l.leaf(T_PUNCTUATION, i, i + 1); // opening backtick
-	if (subst_depth < MAX_SUBST_DEPTH) {
-		subst_depth++;
-		lex_bash_window(l, i + 1, inner_end);
-		subst_depth--;
-	}
-	if (closed) {
-		l.leaf(T_PUNCTUATION, j, j + 1); // closing backtick
-		l.close(j + 1);
-		return j + 1;
-	}
-	l.close(to);
-	return to;
+	mac_push_window(mac, i + 1, closed ? j : to, R_BACKTICK, closed ? j : -1);
 };
 
 /**
- * Lexes a `"…"` double-quoted string at `i` as a container, returning the new
- * position. `$`-expansions and backtick substitutions nest; unterminated
- * extends to `to`.
+ * Scans a `"…"` body from `j` (past the opening quote), emitting `$`-variable
+ * leaves as it goes. Returns the exclusive end (past the closing quote, or the
+ * window end when unterminated), or the bitwise complement of the position of
+ * a `$(`/backtick nesting construct — the fast path lets bodies without
+ * substitutions complete without a frame.
  *
  * @mutates `l`
  */
-const lex_bash_dquote = (l: Lexer, i: number, to: number): number => {
+const scan_dquote_body = (l: Lexer, j: number, to: number): number => {
 	const {text} = l;
-	l.open(T_STRING, i);
-	let j = i + 1;
-	while (j < to) {
-		const c = text.charCodeAt(j);
+	let i = j;
+	while (i < to) {
+		const c = text.charCodeAt(i);
 		if (c === 92) {
-			j += 2;
+			i += 2;
 		} else if (c === 34) {
-			j++;
-			break;
+			return i + 1;
 		} else if (c === 36) {
-			const c1 = text.charCodeAt(j + 1);
-			if (c1 === 40) {
-				j = lex_bash_dollar_paren(l, j, to);
-			} else {
-				j = scan_dollar_var(l, j, to);
-			}
+			if (text.charCodeAt(i + 1) === 40) return ~i;
+			i = scan_dollar_var(l, i, to);
 		} else if (c === 96) {
-			j = lex_bash_backtick(l, j, to);
+			return ~i;
 		} else {
-			j++;
+			i++;
 		}
 	}
-	if (j > to) j = to;
-	l.close(j);
-	return j;
+	return i > to ? to : i;
 };
 
 interface HeredocClose {
@@ -408,80 +468,86 @@ const find_heredoc_close = (
 	return null;
 };
 
-/**
- * Emits `$`-expansions (`variable`/`command_substitution`) in an unquoted
- * heredoc body `[from, to)`; other text stays plain.
- *
- * @mutates `l`
- */
-const expand_heredoc_body = (l: Lexer, from: number, to: number): void => {
-	const {text} = l;
-	let j = from;
-	while (j < to) {
-		if (text.charCodeAt(j) === 36) {
-			const c1 = text.charCodeAt(j + 1);
-			if (c1 === 40) {
-				j = lex_bash_dollar_paren(l, j, to);
-			} else {
-				j = scan_dollar_var(l, j, to);
-			}
-		} else {
-			j++;
-		}
-	}
-};
-
 interface PendingHeredoc {
 	delim: string;
 	quoted: boolean;
 }
 
 /**
- * Emits one heredoc body as a container (the opening delimiter was already
- * emitted inline for the queued case), returning the position after it.
+ * Scans an unquoted heredoc body `[j, to)`, emitting `$`-variable leaves;
+ * other text stays plain. Returns `to` when complete, or the bitwise
+ * complement of the position of a `$(` substitution — the fast path lets
+ * bodies without substitutions complete without a frame. Hops between `$`s
+ * with native `indexOf`.
  *
  * @mutates `l`
  */
-const emit_heredoc_body = (
-	l: Lexer,
-	body_start: number,
-	to: number,
-	hd: PendingHeredoc,
-): number => {
+const scan_heredoc_body = (l: Lexer, j: number, to: number): number => {
 	const {text} = l;
-	const close = find_heredoc_close(text, body_start, to, hd.delim);
-	l.open(T_HEREDOC, body_start);
-	const body_end = close ? close.line_start : to;
-	if (!hd.quoted) expand_heredoc_body(l, body_start, body_end);
-	if (close) {
-		l.leaf(T_HEREDOC_DELIMITER, close.delim_start, close.delim_end);
-		l.close(close.delim_end);
-		const nl = line_end_of(text, close.delim_end, to);
-		return nl >= to ? to : nl + 1;
+	let i = j;
+	while (i < to) {
+		const d = text.indexOf('$', i);
+		if (d === -1 || d >= to) return to;
+		if (text.charCodeAt(d + 1) === 40) return ~d;
+		i = scan_dollar_var(l, d, to);
 	}
-	l.close(to);
 	return to;
 };
 
 /**
- * Drains queued heredocs whose bodies begin at `start` (just past a newline),
- * consuming each body in order. Returns the position after the last one.
+ * Drains queued heredoc bodies from `frame.i` (just past a newline), consuming
+ * each in order. A body interrupted by a substitution suspends the window
+ * mid-body (`S_HEREDOC`) — this returns `false`, and the submode resume
+ * finishes the body and re-enters here for the rest of the queue. Returns
+ * `true` once the queue is empty.
  *
- * @mutates `l`
+ * @mutates `mac`
  */
-const drain_heredocs = (
-	l: Lexer,
-	start: number,
-	to: number,
-	pending: Array<PendingHeredoc>,
-): number => {
-	let j = start;
-	for (const hd of pending) {
-		if (j >= to) break;
-		j = emit_heredoc_body(l, j, to, hd);
+const drain_pending = (mac: BashMachine, frame: BashFrame): boolean => {
+	const l = mac.l;
+	const {text} = l;
+	const to = frame.to;
+	const {pending} = frame;
+	while (frame.pending_idx < pending.length) {
+		if (frame.i >= to) break;
+		const hd = pending[frame.pending_idx]!;
+		frame.pending_idx++;
+		const body_start = frame.i;
+		const close = find_heredoc_close(text, body_start, to, hd.delim);
+		l.open(T_HEREDOC, body_start);
+		const body_end = close ? close.line_start : to;
+		// the parent resumes past the closing delimiter's line, at the next body
+		let resume = to;
+		if (close) {
+			const nl = line_end_of(text, close.delim_end, to);
+			resume = nl >= to ? to : nl + 1;
+		}
+		if (!hd.quoted) {
+			const r = scan_heredoc_body(l, body_start, body_end);
+			if (r < 0) {
+				// the body contains a substitution — suspend mid-body; the
+				// submode resume finishes it (and this drain) afterward
+				frame.sub = S_HEREDOC;
+				frame.sub_to = body_end;
+				frame.hd_delim_start = close ? close.delim_start : -1;
+				frame.hd_delim_end = close ? close.delim_end : 0;
+				frame.hd_resume = resume;
+				mac_push_dollar_paren(mac, ~r, body_end);
+				return false;
+			}
+		}
+		if (close) {
+			l.leaf(T_HEREDOC_DELIMITER, close.delim_start, close.delim_end);
+			l.close(close.delim_end);
+		} else {
+			l.close(to);
+		}
+		frame.i = resume;
 	}
 	pending.length = 0;
-	return j;
+	frame.pending_idx = 0;
+	frame.draining = false;
+	return true;
 };
 
 /**
@@ -506,20 +572,83 @@ const bash_operator_len = (text: string, i: number, to: number, c: number): numb
 };
 
 /**
- * The core window lexer. Maintains a per-window queue of pending heredocs
- * (redirected on the current line, bodies consumed at the next newline).
+ * Resumes a window frame's interrupted string/heredoc body scan (`frame.sub`).
+ * Returns `false` when the body hit another substitution and the frame
+ * suspended again; on completion clears the submode and returns `true`, with
+ * `frame.i` at the main scan's resume position.
+ *
+ * @mutates `mac`
  */
-const lex_bash_window = (l: Lexer, from: number, to: number): void => {
+const run_bash_sub = (mac: BashMachine, frame: BashFrame): boolean => {
+	const l = mac.l;
+	if (frame.sub === S_HEREDOC) {
+		const r = scan_heredoc_body(l, frame.i, frame.sub_to);
+		if (r < 0) {
+			frame.i = ~r;
+			mac_push_dollar_paren(mac, ~r, frame.sub_to);
+			return false;
+		}
+		if (frame.hd_delim_start === -1) {
+			l.close(frame.sub_to);
+		} else {
+			l.leaf(T_HEREDOC_DELIMITER, frame.hd_delim_start, frame.hd_delim_end);
+			l.close(frame.hd_delim_end);
+		}
+		frame.i = frame.hd_resume;
+	} else {
+		// S_DQUOTE
+		const r = scan_dquote_body(l, frame.i, frame.to);
+		if (r < 0) {
+			const j = ~r;
+			frame.i = j;
+			if (l.text.charCodeAt(j) === 96) mac_push_backtick(mac, j, frame.to);
+			else mac_push_dollar_paren(mac, j, frame.to);
+			return false;
+		}
+		l.close(r);
+		frame.i = r;
+	}
+	frame.sub = S_NONE;
+	return true;
+};
+
+/**
+ * Runs (or resumes) a window frame — the core per-token scan. Maintains the
+ * per-window queue of pending heredocs (redirected on the current line, bodies
+ * consumed at the next newline). String and heredoc bodies scan inline; one
+ * interrupted by a substitution records its submode, suspends, and is finished
+ * by the `run_bash_sub` resume. Returns `true` when the window is fully
+ * consumed, or `false` after pushing a substitution-interior frame, which the
+ * driver runs before resuming this frame.
+ *
+ * @mutates `mac`
+ */
+const run_bash_window = (mac: BashMachine, frame: BashFrame): boolean => {
+	const l = mac.l;
 	const {text} = l;
-	const pending: Array<PendingHeredoc> = [];
-	let i = from;
-	let prev_function_kw = false;
+	const to = frame.to;
+
+	// resume an interrupted string/heredoc body scan before the main scan
+	if (frame.sub !== S_NONE && !run_bash_sub(mac, frame)) return false;
+
+	// resume mid-drain: finish the pending heredoc bodies before scanning
+	if (frame.draining && !drain_pending(mac, frame)) return false;
+
+	let i = frame.i;
+	let prev_function_kw = frame.prev_function_kw;
 
 	while (i < to) {
 		const c = text.charCodeAt(i);
 
 		if (c === 10) {
-			i = pending.length > 0 ? drain_heredocs(l, i + 1, to, pending) : i + 1;
+			i++;
+			if (frame.pending.length > 0) {
+				frame.i = i;
+				frame.prev_function_kw = prev_function_kw;
+				frame.draining = true;
+				if (!drain_pending(mac, frame)) return false;
+				i = frame.i;
+			}
 			continue;
 		}
 		if (is_space(c)) {
@@ -552,8 +681,10 @@ const lex_bash_window = (l: Lexer, from: number, to: number): void => {
 		if (c === 36) {
 			const c1 = text.charCodeAt(i + 1);
 			if (c1 === 40) {
-				i = lex_bash_dollar_paren(l, i, to);
-				continue;
+				frame.i = i;
+				frame.prev_function_kw = prev_function_kw;
+				mac_push_dollar_paren(mac, i, to);
+				return false;
 			}
 			if (c1 === 39) {
 				const e = scan_ansi_c(text, i, to);
@@ -567,8 +698,22 @@ const lex_bash_window = (l: Lexer, from: number, to: number): void => {
 
 		// strings
 		if (c === 34) {
-			i = lex_bash_dquote(l, i, to);
-			continue;
+			l.open(T_STRING, i);
+			const r = scan_dquote_body(l, i + 1, to);
+			if (r >= 0) {
+				// no substitutions — the whole string completed inline
+				l.close(r);
+				i = r;
+				continue;
+			}
+			// suspend mid-string: the submode resume finishes the body
+			const j = ~r;
+			frame.i = j;
+			frame.sub = S_DQUOTE;
+			frame.prev_function_kw = prev_function_kw;
+			if (text.charCodeAt(j) === 96) mac_push_backtick(mac, j, to);
+			else mac_push_dollar_paren(mac, j, to);
+			return false;
 		}
 		if (c === 39) {
 			const close = text.indexOf("'", i + 1);
@@ -580,8 +725,10 @@ const lex_bash_window = (l: Lexer, from: number, to: number): void => {
 
 		// legacy backtick command substitution
 		if (c === 96) {
-			i = lex_bash_backtick(l, i, to);
-			continue;
+			frame.i = i;
+			frame.prev_function_kw = prev_function_kw;
+			mac_push_backtick(mac, i, to);
+			return false;
 		}
 
 		// numbers and file descriptors
@@ -639,7 +786,13 @@ const lex_bash_window = (l: Lexer, from: number, to: number): void => {
 					i += 3;
 					continue;
 				}
-				const consumed = lex_bash_heredoc_start(l, i, to, pending);
+				const consumed = lex_bash_heredoc_start(mac, frame, i, to);
+				if (consumed === -2) {
+					// suspended mid-body at a substitution — the submode resume
+					// finishes the heredoc
+					frame.prev_function_kw = prev_function_kw;
+					return false;
+				}
 				if (consumed !== -1) {
 					i = consumed;
 					continue;
@@ -707,26 +860,28 @@ const lex_bash_window = (l: Lexer, from: number, to: number): void => {
 		i++; // anything else is plain text
 	}
 
-	// unterminated trailing heredocs (opener consumed, body ran to window end)
-	if (pending.length > 0) drain_heredocs(l, i, to, pending);
-	l.pos = to;
+	frame.i = i;
+	frame.prev_function_kw = prev_function_kw;
+	return true;
 };
 
 /**
  * Handles a `<<`/`<<-` heredoc redirect at `i`. Emits the opening delimiter and
- * either consumes the whole heredoc inline (when it is the sole redirect at the
- * end of the line) or queues it for draining at the next newline. Returns the
- * new position, or -1 when no delimiter follows (the caller emits `<<` as an
- * operator).
+ * either consumes the heredoc inline (when it is the sole redirect at the end
+ * of the line) or queues it on `frame.pending` for draining at the next
+ * newline. Returns the new position, -1 when no delimiter follows (the caller
+ * emits `<<` as an operator), or -2 when the inline body hit a substitution
+ * and the window suspended mid-body (the caller returns `false`).
  *
- * @mutates `l`
+ * @mutates `mac`
  */
 const lex_bash_heredoc_start = (
-	l: Lexer,
+	mac: BashMachine,
+	frame: BashFrame,
 	i: number,
 	to: number,
-	pending: Array<PendingHeredoc>,
 ): number => {
+	const l = mac.l;
 	const {text} = l;
 	let k = i + 2;
 	if (text.charCodeAt(k) === 45) k++; // `<<-`
@@ -749,9 +904,9 @@ const lex_bash_heredoc_start = (
 
 	// non-contiguous, or another heredoc already queued: defer the body so the
 	// queued order (first redirect → first body) is preserved
-	if (!contiguous || pending.length > 0) {
+	if (!contiguous || frame.pending.length > 0) {
 		l.leaf(T_HEREDOC_DELIMITER, i, delim_token_end);
-		pending.push({delim, quoted});
+		frame.pending.push({delim, quoted});
 		return delim_token_end;
 	}
 
@@ -765,22 +920,84 @@ const lex_bash_heredoc_start = (
 	l.open(T_HEREDOC, i);
 	l.leaf(T_HEREDOC_DELIMITER, i, delim_token_end);
 	const body_end = close ? close.line_start : to;
-	if (!quoted) expand_heredoc_body(l, body_start, body_end);
+	// the window resumes at the closing delimiter's end; the rest of its line
+	// (the newline) scans normally
+	const resume = close ? close.delim_end : to;
+	if (!quoted) {
+		const r = scan_heredoc_body(l, body_start, body_end);
+		if (r < 0) {
+			// the body contains a substitution — suspend mid-body; the submode
+			// resume finishes it
+			frame.sub = S_HEREDOC;
+			frame.sub_to = body_end;
+			frame.hd_delim_start = close ? close.delim_start : -1;
+			frame.hd_delim_end = close ? close.delim_end : 0;
+			frame.hd_resume = resume;
+			mac_push_dollar_paren(mac, ~r, body_end);
+			return -2;
+		}
+	}
 	if (close) {
 		l.leaf(T_HEREDOC_DELIMITER, close.delim_start, close.delim_end);
 		l.close(close.delim_end);
-		return close.delim_end;
+	} else {
+		l.close(to);
 	}
-	l.close(to);
-	return to;
+	return resume;
+};
+
+/**
+ * Drives the explicit frame stack to completion: runs the top frame, and when
+ * it finishes, pops it and finalizes it into the frame beneath — emitting the
+ * construct's trailing events and advancing that frame past the consumed
+ * region. A frame that pushes a child returns `false`, so the child runs next
+ * and this frame resumes only once the child (and its own descendants) have
+ * completed.
+ *
+ * @mutates `mac`
+ */
+const run_bash = (mac: BashMachine): void => {
+	const l = mac.l;
+	while (mac.sp > 0) {
+		const frame = mac.stack[mac.sp - 1]!;
+		if (!run_bash_window(mac, frame)) continue; // a child was pushed — run it first
+		mac.sp -= 1;
+		const ret = frame.ret;
+		if (ret === R_ROOT) continue;
+		const parent = mac.stack[mac.sp - 1]!;
+		const close = frame.ret_a;
+		if (ret === R_ARITH) {
+			if (close === -1) {
+				parent.i = frame.to; // unterminated
+			} else {
+				l.leaf(T_PUNCTUATION, close - 1, close + 1); // `))`
+				parent.i = close + 1;
+			}
+		} else if (close === -1) {
+			// unterminated `$(…)`/backtick — the container extends to the window end
+			l.close(frame.to);
+			parent.i = frame.to;
+		} else {
+			l.leaf(T_PUNCTUATION, close, close + 1); // `)` or the closing backtick
+			l.close(close + 1);
+			parent.i = close + 1;
+		}
+	}
 };
 
 const lex_bash = (l: Lexer): void => {
-	subst_depth = 0;
-	lex_bash_window(l, l.pos, l.end);
+	const mac: BashMachine = {l, stack: [], sp: 0};
+	mac_push_window(mac, l.pos, l.end, R_ROOT, 0);
+	run_bash(mac);
+	l.pos = l.end;
 };
 
 /**
  * The Bash language registration for the lexer engine.
+ *
+ * `sh` and `shell` alias this lexer: POSIX sh is a syntactic subset of bash
+ * for highlighting purposes, and the bash-only constructs this lexer
+ * additionally recognizes don't occur in sh input, so running it on sh
+ * scripts is exact. There is no separate sh lexer.
  */
 export const lexer_bash: SyntaxLang = {id: 'bash', aliases: ['sh', 'shell'], lex: lex_bash};

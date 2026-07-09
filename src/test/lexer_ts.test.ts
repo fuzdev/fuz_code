@@ -282,14 +282,17 @@ describe('lexer_ts sample', () => {
 });
 
 describe('lexer_ts deep nesting', () => {
-	test('deeply nested template interpolations stay valid without overflowing the stack', () => {
+	test('deeply nested template interpolations tokenize fully without overflowing the stack', () => {
 		const depth = 5000;
 		const input = '`${'.repeat(depth) + '1' + '}`'.repeat(depth);
 		const lexed = syntax_styler_global.lex(input, 'ts');
 		assert.deepEqual(validate_syntax_events(lexed), []);
+		const types = syntax_events_to_tokens(lexed).map((t) => t.type);
+		assert.equal(types.filter((t) => t === 'template_string').length, depth);
+		assert.equal(types.filter((t) => t === 'interpolation').length, depth);
 	});
 
-	test('nested templates within the depth cap still tokenize', () => {
+	test('shallow nested templates tokenize their interiors', () => {
 		const types = tokens_of('`a${`b${c}d`}e`').map(([type]) => type);
 		assert.equal(types.filter((t) => t === 'template_string').length, 2);
 		assert.equal(types.filter((t) => t === 'interpolation').length, 2);

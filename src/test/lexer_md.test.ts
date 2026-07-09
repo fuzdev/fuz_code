@@ -119,6 +119,13 @@ describe('lexer_md fences', () => {
 			['keyword', 'let'],
 		]);
 	});
+
+	test('deep self-embed cascades stay valid without overflowing the stack', () => {
+		// each unterminated ```md fence embeds the rest of the document as
+		// markdown — the embed depth cap bounds the cascade
+		const input = '```md\n'.repeat(4000);
+		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(input, 'md')), []);
+	});
 });
 
 describe('lexer_md inline', () => {

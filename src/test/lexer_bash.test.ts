@@ -182,6 +182,21 @@ describe('lexer_bash heredocs', () => {
 		assert.deepEqual(validate_syntax_events(lexed), []);
 	});
 
+	test('multiple heredocs on one line drain in redirect order with mixed quoting', () => {
+		const text = "cat <<'Q' <<U\nno $(x)\nQ\nyes $(y)\nU\nafter\n";
+		const lexed = syntax_styler_global.lex(text, 'bash');
+		assert.deepEqual(validate_syntax_events(lexed), []);
+		const tokens = syntax_events_to_tokens(lexed);
+		// two bodies, consumed in redirect order
+		assert.equal(tokens.filter((t) => t.type === 'heredoc').length, 2);
+		// the quoted body does not expand; the unquoted one does
+		const subs = tokens.filter((t) => t.type === 'command_substitution');
+		assert.deepEqual(
+			subs.map((t) => text.slice(t.start, t.end)),
+			['$(y)'],
+		);
+	});
+
 	test('CRLF line endings still close the heredoc', () => {
 		const text = 'cat <<EOF\r\nbody ${x}\r\nEOF\r\n';
 		const lexed = syntax_styler_global.lex(text, 'bash');
@@ -248,19 +263,40 @@ describe('lexer_bash sample', () => {
 });
 
 describe('lexer_bash deep nesting', () => {
-	test('deeply nested command substitutions stay valid without overflowing the stack', () => {
+	test('deeply nested command substitutions tokenize fully without overflowing the stack', () => {
 		const depth = 5000;
 		const input = '$('.repeat(depth) + 'x' + ')'.repeat(depth);
-		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(input, 'bash')), []);
+		const lexed = syntax_styler_global.lex(input, 'bash');
+		assert.deepEqual(validate_syntax_events(lexed), []);
+		const types = syntax_events_to_tokens(lexed).map((t) => t.type);
+		assert.equal(types.filter((t) => t === 'command_substitution').length, depth);
 	});
 
-	test('deeply nested arithmetic expansions stay valid without overflowing the stack', () => {
+	test('deeply nested arithmetic expansions tokenize fully without overflowing the stack', () => {
 		const depth = 5000;
 		const input = '$(('.repeat(depth) + '1' + '))'.repeat(depth);
+		const lexed = syntax_styler_global.lex(input, 'bash');
+		assert.deepEqual(validate_syntax_events(lexed), []);
+		// the innermost literal is reached and tokenized — the depth cap this
+		// replaced left interiors past its bound as plain text (the `$((`/`))`
+		// punctuation runs coalesce into single leaves, so count the payload)
+		const tokens = syntax_events_to_tokens(lexed);
+		assert.equal(tokens.filter((t) => t.type === 'number').length, 1);
+	});
+
+	test('deep command substitutions alternating through double-quoted strings stay valid', () => {
+		const depth = 2000;
+		const input = '$("'.repeat(depth) + 'x' + '")'.repeat(depth);
 		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(input, 'bash')), []);
 	});
 
-	test('nested command substitutions within the depth cap still tokenize', () => {
+	test('deep command substitutions alternating through heredoc bodies stay valid', () => {
+		const depth = 2000;
+		const input = '$(cat <<EOF\n'.repeat(depth) + 'x' + '\nEOF\n)'.repeat(depth);
+		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(input, 'bash')), []);
+	});
+
+	test('shallow nested command substitutions tokenize their interiors', () => {
 		const types = tokens_of('echo $(echo $(date))').map(([type]) => type);
 		assert.equal(types.filter((t) => t === 'command_substitution').length, 2);
 	});

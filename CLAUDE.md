@@ -125,7 +125,8 @@ One `SyntaxLang` lexer per language, registered via `add_lang`:
 - `lexer_ts.ts` - TypeScript; also registers the `js`/`javascript` aliases
   (TS is a syntactic superset — there is no separate JS lexer)
 - `lexer_css.ts` - CSS (including native nesting)
-- `lexer_bash.ts` - Bash/shell
+- `lexer_bash.ts` - Bash; also registers the `sh`/`shell` aliases (POSIX sh
+  is a syntactic subset for highlighting — bash-family only, no fish etc.)
 - `lexer_markup.ts` - HTML (`markup`/`html`/`mathml`/`svg`: rawtext
   script/style/textarea/title, `style=`/`on*=` attribute embedding) and XML
   (`xml`/`ssml`/`atom`/`rss`: plain tag scanning), one shared scanner
@@ -140,7 +141,9 @@ One `SyntaxLang` lexer per language, registered via `add_lang`:
 
 Embedded languages resolve lazily by name through the registry (markdown
 fences → any language, markup `<script>`/`<style>`/`style=`/`on*=`, svelte
-`{…}` → ts) via `Lexer.embed`.
+`{…}` → ts) via `Lexer.embed`, which bounds nesting (`MAX_EMBED_DEPTH`) so
+the one cycle in the embed graph — markdown fences embedding markdown —
+can't overflow the call stack; past the cap a region stays plain text.
 
 ### Generated files
 

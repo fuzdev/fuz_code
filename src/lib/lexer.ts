@@ -128,6 +128,16 @@ export interface LexedSyntax {
 }
 
 /**
+ * Bounds cross-language `embed` nesting. Embedding runs on the JS call stack
+ * (each level re-enters a lexer's `lex`), and the registry graph has a cycle —
+ * markdown fences can embed markdown — so without a bound an adversarial
+ * cascade of a few thousand unterminated `` ```md `` fences overflows the
+ * stack. Past the cap the embedded region stays plain text, the same fallback
+ * as an unregistered language; real content nests 2–3 levels deep.
+ */
+const MAX_EMBED_DEPTH = 64;
+
+/**
  * Shared lexing context passed to language lex functions. Holds the text
  * window, the event buffer, and the language registry for embedding.
  */
@@ -145,6 +155,9 @@ export class Lexer {
 
 	// index of the previous event iff it was a leaf, for adjacency coalescing
 	#last_leaf = -1;
+
+	// current embed nesting, guarded by MAX_EMBED_DEPTH
+	#embed_depth = 0;
 
 	constructor(capacity = 256) {
 		this.events = new Int32Array(capacity < 256 ? 256 : capacity);
@@ -212,12 +225,14 @@ export class Lexer {
 	/**
 	 * Lexes `[start, end)` with the language registered as `lang_id`,
 	 * restoring this lexer's window afterward. Returns `false` (leaving the
-	 * region as plain text) when the language isn't registered.
+	 * region as plain text) when the language isn't registered or embedding
+	 * is nested past `MAX_EMBED_DEPTH`.
 	 *
 	 * @mutates `this`
 	 */
 	embed(lang_id: string, start: number, end: number): boolean {
 		if (start >= end) return false;
+		if (this.#embed_depth >= MAX_EMBED_DEPTH) return false;
 		const lang = this.langs?.get(lang_id);
 		if (!lang) return false;
 		const prev_pos = this.pos;
@@ -227,7 +242,9 @@ export class Lexer {
 		// reset coalescing state so the guest's first leaf can't merge with a
 		// leaf the host emitted just before the embedded region
 		this.#last_leaf = -1;
+		this.#embed_depth++;
 		lang.lex(this);
+		this.#embed_depth--;
 		this.pos = prev_pos;
 		this.end = prev_end;
 		this.#last_leaf = -1;

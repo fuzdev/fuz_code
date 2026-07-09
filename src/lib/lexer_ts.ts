@@ -136,11 +136,6 @@ const P_DOT = 2; // after `.` member access — next word is a property, not a k
 // bounded lookahead for heuristic scans (generics, annotations, arrow params)
 const MAX_SCAN = 600;
 
-// bound on recursive nesting (template interpolations, generics, type
-// annotations), so deeply nested input degrades to plain interiors instead of
-// overflowing the JS call stack — far beyond any nesting real code reaches
-const MAX_NEST_DEPTH = 64;
-
 /**
  * Monotonic next-occurrence caches for the heuristic-scan prechecks. Each
  * bounded scan can only succeed if its success char (`=` for type
@@ -154,15 +149,12 @@ interface TsScanCache {
 	next_eq: number;
 	next_gt: number;
 	next_rparen: number;
-	/** Current recursive nesting depth; recursion stops at `MAX_NEST_DEPTH`. */
-	depth: number;
 }
 
 const create_ts_scan_cache = (): TsScanCache => ({
 	next_eq: -1,
 	next_gt: -1,
 	next_rparen: -1,
-	depth: 0,
 });
 
 /**
@@ -482,39 +474,183 @@ const scan_operator = (text: string, i: number, end: number): number => {
 	}
 };
 
+// Explicit-stack driver for the nesting that used to recurse on the JS call
+// stack (template interpolations, generic argument lists, and `: type`
+// annotations). Each construct pushes a frame instead of recursing, so
+// arbitrarily deep input tokenizes fully without overflowing — the deep-nesting
+// tests exercise this to thousands of levels. Frames are pooled across a single
+// `lex_ts` run (`stack` only grows, never shrinks) to keep deep nesting
+// allocation-free after warmup.
+
+const F_WINDOW = 0; // a window scan in progress
+const F_TEMPLATE = 1; // a template-literal body scan in progress
+
+// how a completed frame finalizes into the frame beneath it
+const R_ROOT = 0; // top-level window — nothing beneath it
+const R_INTERP = 1; // `${…}` body → close the interpolation, resume its template
+const R_CLASS_GENERIC = 2; // `Foo<…>` in a class-name chain → advance the window
+const R_GENERIC_CALL = 3; // `foo<…>(…)` args → close the generic, advance
+const R_TYPE_ANNO = 4; // `: type =` body → close the type, advance past it
+const R_TEMPLATE = 5; // a template literal in a window → advance past it
+
 /**
- * Recurses into `lex_ts_window` for `[from, to)` while under the nesting cap.
- * Past `MAX_NEST_DEPTH` the region is left as plain text rather than recursing,
- * so pathologically deep nesting can't overflow the stack; the caller advances
- * its own position past the region regardless.
- *
- * @mutates `l`
+ * One suspended scan on the explicit stack. A window frame carries the full
+ * per-window state the recursive lexer held in locals; a template frame carries
+ * its body-scan cursor. `ret`/`ret_a`/`ret_b` describe how the frame finalizes
+ * into the one beneath it when it completes.
  */
-const lex_ts_nested = (
-	l: Lexer,
+interface TsFrame {
+	kind: number;
+	to: number;
+	type_mode: boolean;
+	/** Scan cursor: the window position, or the template body position. */
+	i: number;
+	prev: number;
+	prev_code: number;
+	class_ctx: boolean;
+	as_ctx: boolean;
+	import_ctx: boolean;
+	/** Template only: start of the pending literal chunk. */
+	chunk_start: number;
+	/** Template only: whether the opening backtick has been emitted. */
+	started: boolean;
+	ret: number;
+	ret_a: number;
+	ret_b: number;
+}
+
+interface TsMachine {
+	l: Lexer;
+	cache: TsScanCache;
+	/** Frame pool doubling as the stack; frames above `sp` are dormant. */
+	stack: Array<TsFrame>;
+	sp: number;
+}
+
+const create_ts_frame = (): TsFrame => ({
+	kind: F_WINDOW,
+	to: 0,
+	type_mode: false,
+	i: 0,
+	prev: P_NONE,
+	prev_code: 0,
+	class_ctx: false,
+	as_ctx: false,
+	import_ctx: false,
+	chunk_start: 0,
+	started: false,
+	ret: R_ROOT,
+	ret_a: 0,
+	ret_b: 0,
+});
+
+/**
+ * Pushes a window frame scanning `[from, to)`, reusing the pooled slot at the
+ * stack top. `ret`/`ret_a`/`ret_b` are applied when it completes.
+ *
+ * @mutates `mac`
+ */
+const mac_push_window = (
+	mac: TsMachine,
 	from: number,
 	to: number,
 	type_mode: boolean,
-	cache: TsScanCache,
+	ret: number,
+	ret_a: number,
+	ret_b: number,
 ): void => {
-	if (cache.depth >= MAX_NEST_DEPTH) return;
-	cache.depth++;
-	lex_ts_window(l, from, to, type_mode, cache);
-	cache.depth--;
+	const {stack, sp} = mac;
+	let f = stack[sp];
+	if (f === undefined) {
+		f = create_ts_frame();
+		stack[sp] = f;
+	}
+	f.kind = F_WINDOW;
+	f.to = to;
+	f.type_mode = type_mode;
+	f.i = from;
+	f.prev = P_NONE;
+	f.prev_code = 0;
+	f.class_ctx = false;
+	f.as_ctx = false;
+	f.import_ctx = false;
+	f.started = false;
+	f.ret = ret;
+	f.ret_a = ret_a;
+	f.ret_b = ret_b;
+	mac.sp = sp + 1;
 };
 
 /**
- * Lexes a template literal starting at the backtick at `i`, returning the new
- * position. Interpolations recurse through the full lexer, bounded by
- * `MAX_NEST_DEPTH`.
+ * Pushes a template-literal frame whose body starts at the backtick `from`. It
+ * always finalizes by advancing the window beneath it past the literal.
+ *
+ * @mutates `mac`
  */
-const lex_ts_template = (l: Lexer, i: number, to: number, cache: TsScanCache): number => {
+const mac_push_template = (mac: TsMachine, from: number, to: number): void => {
+	const {stack, sp} = mac;
+	let f = stack[sp];
+	if (f === undefined) {
+		f = create_ts_frame();
+		stack[sp] = f;
+	}
+	f.kind = F_TEMPLATE;
+	f.to = to;
+	f.i = from;
+	f.chunk_start = from;
+	f.started = false;
+	f.ret = R_TEMPLATE;
+	f.ret_a = 0;
+	f.ret_b = 0;
+	mac.sp = sp + 1;
+};
+
+/**
+ * Scans a template-literal body from `from` (past the opening backtick).
+ * Returns the closing backtick's index, `to` when unterminated, or the bitwise
+ * complement of the position of a `${…}` interpolation — the fast path lets
+ * interpolation-free literals complete without a frame.
+ */
+const scan_ts_template_body = (text: string, from: number, to: number): number => {
+	let j = from;
+	while (j < to) {
+		const c = text.charCodeAt(j);
+		if (c === 92) {
+			j += 2;
+		} else if (c === 96) {
+			return j;
+		} else if (c === 36 && j + 1 < to && text.charCodeAt(j + 1) === 123) {
+			return ~j;
+		} else {
+			j++;
+		}
+	}
+	return to;
+};
+
+/**
+ * Runs (or resumes) a template-literal frame. On first entry it emits the
+ * opening backtick; it then scans literal chunks until the closing backtick or
+ * a `${…}` interpolation. An interpolation pushes a value-mode window frame and
+ * returns `false`; the driver's `R_INTERP` finalize closes the interpolation
+ * and resumes this frame past it. Returns `true` once the literal is complete
+ * (closed, or extended to the window end when unterminated).
+ *
+ * @mutates `mac`
+ */
+const run_ts_template = (mac: TsMachine, frame: TsFrame): boolean => {
+	const l = mac.l;
 	const {text} = l;
-	l.open(T_TEMPLATE_STRING, i);
-	l.leaf(T_TEMPLATE_PUNCTUATION, i, i + 1);
-	let j = i + 1;
-	let chunk_start = j;
-	let closed = false;
+	const to = frame.to;
+	if (!frame.started) {
+		frame.started = true;
+		l.open(T_TEMPLATE_STRING, frame.i);
+		l.leaf(T_TEMPLATE_PUNCTUATION, frame.i, frame.i + 1);
+		frame.i += 1;
+		frame.chunk_start = frame.i;
+	}
+	let j = frame.i;
+	const chunk_start = frame.chunk_start;
 	while (j < to) {
 		const c = text.charCodeAt(j);
 		if (c === 92) {
@@ -523,54 +659,51 @@ const lex_ts_template = (l: Lexer, i: number, to: number, cache: TsScanCache): n
 			l.leaf(T_STRING, chunk_start, j);
 			l.leaf(T_TEMPLATE_PUNCTUATION, j, j + 1);
 			j++;
-			closed = true;
-			break;
+			l.close(j); // close the template container
+			frame.i = j;
+			return true;
 		} else if (c === 36 && j + 1 < to && text.charCodeAt(j + 1) === 123) {
 			l.leaf(T_STRING, chunk_start, j);
 			const close = scan_balanced_braces(text, j + 1, to);
 			const inner_end = close === -1 ? to : close;
 			l.open(T_INTERPOLATION, j);
 			l.leaf(T_INTERPOLATION_PUNCTUATION, j, j + 2);
-			lex_ts_nested(l, j + 2, inner_end, false, cache);
-			if (close === -1) {
-				l.close(to);
-				j = to;
-			} else {
-				l.leaf(T_INTERPOLATION_PUNCTUATION, close, close + 1);
-				l.close(close + 1);
-				j = close + 1;
-			}
-			chunk_start = j;
+			// the interpolation body lexes in value mode; the driver's R_INTERP
+			// finalize closes the interpolation and resumes this frame past it
+			mac_push_window(mac, j + 2, inner_end, false, R_INTERP, close, to);
+			return false;
 		} else {
 			j++;
 		}
 	}
-	if (!closed) {
-		if (j > to) j = to;
-		l.leaf(T_STRING, chunk_start, j);
-	}
+	if (j > to) j = to;
+	l.leaf(T_STRING, chunk_start, j);
 	l.close(j);
-	return j;
+	frame.i = j;
+	return true;
 };
 
 /**
- * The core window lexer. `type_mode` switches capitalized identifiers to
- * `type_name` (used for generics and type annotations).
+ * Runs (or resumes) a window frame — the core per-token scan. `frame.type_mode`
+ * switches capitalized identifiers to `type_name` (generics, type annotations).
+ * Returns `true` when the window is fully consumed, or `false` after pushing a
+ * nested frame (interpolation, generics, or type annotation), which the driver
+ * runs before resuming this frame.
+ *
+ * @mutates `mac`
  */
-const lex_ts_window = (
-	l: Lexer,
-	from: number,
-	to: number,
-	type_mode: boolean,
-	cache: TsScanCache,
-): void => {
+const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
+	const l = mac.l;
+	const cache = mac.cache;
 	const {text} = l;
-	let i = from;
-	let prev = P_NONE;
-	let prev_code = 0; // last significant punctuation char, for string-property detection
-	let class_ctx = false;
-	let as_ctx = false;
-	let import_ctx = false;
+	const to = frame.to;
+	const type_mode = frame.type_mode;
+	let i = frame.i;
+	let prev = frame.prev;
+	let prev_code = frame.prev_code; // last significant punctuation char, for string-property detection
+	let class_ctx = frame.class_ctx;
+	let as_ctx = frame.as_ctx;
+	let import_ctx = frame.import_ctx;
 
 	while (i < to) {
 		const c = text.charCodeAt(i);
@@ -608,8 +741,22 @@ const lex_ts_window = (
 				if (text.charCodeAt(angle_start) === 60) {
 					const angle_end = scan_balanced_angle(text, angle_start, to, cache);
 					if (angle_end !== -1) {
-						lex_ts_nested(l, angle_start, angle_end + 1, true, cache);
-						i = angle_end + 1;
+						frame.i = i;
+						frame.prev = prev;
+						frame.prev_code = prev_code;
+						frame.class_ctx = class_ctx;
+						frame.as_ctx = as_ctx;
+						frame.import_ctx = import_ctx;
+						mac_push_window(
+							mac,
+							angle_start,
+							angle_end + 1,
+							true,
+							R_CLASS_GENERIC,
+							angle_end + 1,
+							0,
+						);
+						return false;
 					}
 				}
 				continue;
@@ -733,11 +880,22 @@ const lex_ts_window = (
 						l.open(T_GENERIC_FUNCTION, start);
 						l.leaf(T_FUNCTION, start, ident_end);
 						l.open(T_GENERIC, angle_start);
-						lex_ts_nested(l, angle_start, angle_end + 1, true, cache);
-						l.close(angle_end + 1);
-						l.close(angle_end + 1);
-						i = angle_end + 1;
-						continue;
+						frame.i = i;
+						frame.prev = prev;
+						frame.prev_code = prev_code;
+						frame.class_ctx = class_ctx;
+						frame.as_ctx = as_ctx;
+						frame.import_ctx = import_ctx;
+						mac_push_window(
+							mac,
+							angle_start,
+							angle_end + 1,
+							true,
+							R_GENERIC_CALL,
+							angle_end + 1,
+							0,
+						);
+						return false;
 					}
 				}
 			}
@@ -821,9 +979,30 @@ const lex_ts_window = (
 			continue;
 		}
 
-		// template literals
+		// template literals — interpolation-free literals (the common case)
+		// complete inline; only one containing `${…}` pushes a template frame,
+		// whose resume state is fully supplied by the R_TEMPLATE finalize (it
+		// advances past the whole literal), so nothing here needs writing back
 		if (c === 96) {
-			i = lex_ts_template(l, i, to, cache);
+			const r = scan_ts_template_body(text, i + 1, to);
+			if (r < 0) {
+				mac_push_template(mac, i, to);
+				return false;
+			}
+			l.open(T_TEMPLATE_STRING, i);
+			l.leaf(T_TEMPLATE_PUNCTUATION, i, i + 1);
+			if (r < to) {
+				// closed at the backtick `r`
+				l.leaf(T_STRING, i + 1, r);
+				l.leaf(T_TEMPLATE_PUNCTUATION, r, r + 1);
+				l.close(r + 1);
+				i = r + 1;
+			} else {
+				// unterminated — extends to the window end
+				l.leaf(T_STRING, i + 1, to);
+				l.close(to);
+				i = to;
+			}
 			prev = P_VALUE;
 			prev_code = 0;
 			class_ctx = as_ctx = import_ctx = false;
@@ -887,13 +1066,14 @@ const lex_ts_window = (
 						l.open(T_TYPE_ANNOTATION, i);
 						l.leaf(T_COLON, i, i + 1);
 						l.open(T_TYPE, type_start);
-						lex_ts_nested(l, type_start, content_end, true, cache);
-						l.close(content_end);
-						l.close(content_end);
-						i = type_end;
-						prev = P_NONE;
-						prev_code = 0;
-						continue;
+						frame.i = i;
+						frame.prev = prev;
+						frame.prev_code = prev_code;
+						frame.class_ctx = false;
+						frame.as_ctx = false;
+						frame.import_ctx = false;
+						mac_push_window(mac, type_start, content_end, true, R_TYPE_ANNO, type_end, content_end);
+						return false;
 					}
 				}
 			}
@@ -955,6 +1135,7 @@ const lex_ts_window = (
 		prev_code = 0;
 		class_ctx = as_ctx = import_ctx = false;
 	}
+	return true;
 };
 
 /**
@@ -990,6 +1171,69 @@ const scan_regex_body = (text: string, i: number, to: number): number => {
 	return -1;
 };
 
+/**
+ * Drives the explicit frame stack to completion: runs the top frame, and when
+ * it finishes, pops it and finalizes it into the frame beneath — emitting the
+ * container's closing events and advancing that frame past the consumed region.
+ * A frame that pushes a child returns `false`, so the child runs next and this
+ * frame resumes only once the child (and its own descendants) have completed.
+ *
+ * @mutates `mac`
+ */
+const run_ts = (mac: TsMachine): void => {
+	const l = mac.l;
+	while (mac.sp > 0) {
+		const frame = mac.stack[mac.sp - 1]!;
+		const done = frame.kind === F_WINDOW ? run_ts_window(mac, frame) : run_ts_template(mac, frame);
+		if (!done) continue; // a child frame was pushed — run it before resuming
+		mac.sp -= 1;
+		const ret = frame.ret;
+		if (ret === R_ROOT) continue;
+		const parent = mac.stack[mac.sp - 1]!;
+		switch (ret) {
+			case R_INTERP: {
+				// the `}`-match result (or -1) and the template's window end
+				const close = frame.ret_a;
+				const template_end = frame.ret_b;
+				if (close === -1) {
+					l.close(template_end);
+					parent.i = template_end;
+					parent.chunk_start = template_end;
+				} else {
+					l.leaf(T_INTERPOLATION_PUNCTUATION, close, close + 1);
+					l.close(close + 1);
+					parent.i = close + 1;
+					parent.chunk_start = close + 1;
+				}
+				break;
+			}
+			case R_CLASS_GENERIC:
+				parent.i = frame.ret_a;
+				break;
+			case R_GENERIC_CALL:
+				l.close(frame.ret_a); // close T_GENERIC
+				l.close(frame.ret_a); // close T_GENERIC_FUNCTION
+				parent.i = frame.ret_a;
+				break;
+			case R_TYPE_ANNO:
+				l.close(frame.ret_b); // close T_TYPE
+				l.close(frame.ret_b); // close T_TYPE_ANNOTATION
+				parent.i = frame.ret_a;
+				parent.prev = P_NONE;
+				parent.prev_code = 0;
+				break;
+			case R_TEMPLATE:
+				parent.i = frame.i;
+				parent.prev = P_VALUE;
+				parent.prev_code = 0;
+				parent.class_ctx = false;
+				parent.as_ctx = false;
+				parent.import_ctx = false;
+				break;
+		}
+	}
+};
+
 const lex_ts = (l: Lexer): void => {
 	let i = l.pos;
 	// hashbang at the very start of the document
@@ -998,7 +1242,9 @@ const lex_ts = (l: Lexer): void => {
 		l.leaf(T_HASHBANG, 0, line_end);
 		i = line_end;
 	}
-	lex_ts_window(l, i, l.end, false, create_ts_scan_cache());
+	const mac: TsMachine = {l, cache: create_ts_scan_cache(), stack: [], sp: 0};
+	mac_push_window(mac, i, l.end, false, R_ROOT, 0, 0);
+	run_ts(mac);
 	l.pos = l.end;
 };
 

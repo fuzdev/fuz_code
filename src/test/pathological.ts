@@ -26,9 +26,10 @@ const repeat_to_size = (unit: string, size: number): string =>
 	unit.repeat(Math.max(1, Math.round(size / unit.length)));
 
 // fixed nesting depth for the deep-nesting cases — depth scaling with size
-// would measure recursion/rescan depth instead of input length, and the ts
-// template scan recurses on the JS call stack (design: depth bounded by input
-// nesting), so blocks of constant depth are repeated to reach the target size
+// would measure per-level rescan cost (quadratic close-scans on adversarial
+// nesting) instead of input length, so blocks of constant depth are repeated
+// to reach the target size; unbounded-depth stack safety is covered by the
+// per-lexer `deep nesting` test suites instead
 const NESTING_DEPTH = 32;
 
 export const PATHOLOGICAL_CASES: Array<PathologicalCase> = [
@@ -166,5 +167,12 @@ export const PATHOLOGICAL_CASES: Array<PathologicalCase> = [
 				'echo $('.repeat(NESTING_DEPTH) + 'ls' + ')'.repeat(NESTING_DEPTH) + '\n',
 				size,
 			),
+	},
+	{
+		// a cascade of unterminated ```md fences — each embeds the rest of the
+		// document as markdown, bounded by the embed depth cap
+		name: 'md_deep_self_embed',
+		lang: 'md',
+		generate: (size) => repeat_to_size('```md\n', size),
 	},
 ];
