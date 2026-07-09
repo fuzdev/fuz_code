@@ -23,11 +23,13 @@
 	<p>
 		The
 		<DeclarationLink name="Code" />
-		Svelte component supports syntax styling, originally based on
+		Svelte component supports syntax styling with hand-written per-language lexers. fuz_code originated
+		as a fork of
 		<a href="https://github.com/PrismJS/prism">Prism</a> (<a href="https://prismjs.com/"
 			>prismjs.com</a
 		>) by
-		<a href="https://lea.verou.me/">Lea Verou</a>.
+		<a href="https://lea.verou.me/">Lea Verou</a>
+		and keeps its <code>.token_*</code> class vocabulary.
 	</p>
 	<p>To use it, import the default theme or your own:</p>
 	<Code
