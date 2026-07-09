@@ -217,16 +217,16 @@ const scan_dollar_var = (l: Lexer, i: number, to: number): number => {
 	return i + 1; // bare `$`
 };
 
-// Explicit-stack driver for the nesting that used to recurse on the JS call
-// stack (`$(…)`/`$((…))`/backtick substitution interiors, double-quoted string
-// bodies, and unquoted heredoc bodies). Every frame is a window scan — a
-// substitution pushes a frame instead of recursing, so arbitrarily deep input
-// tokenizes fully without overflowing; the deep-nesting tests exercise this to
-// thousands of levels. String and heredoc bodies are cheaper than a frame:
-// they scan inline, and when one is interrupted by a substitution the window
-// frame records a *submode* so the resume finishes the body before returning
-// to the main scan. Frames are pooled across a single `lex_bash` run (`stack`
-// only grows, never shrinks) to keep deep nesting allocation-free after warmup.
+// Explicit-stack driver for nested constructs (`$(…)`/`$((…))`/backtick
+// substitution interiors, double-quoted string bodies, and unquoted heredoc
+// bodies). Every frame is a window scan — a substitution pushes a frame rather
+// than recursing on the JS call stack, so arbitrarily deep input tokenizes
+// fully without overflowing; the deep-nesting tests exercise this to thousands
+// of levels. String and heredoc bodies are cheaper than a frame: they scan
+// inline, and when one is interrupted by a substitution the window frame
+// records a *submode* so the resume finishes the body before returning to the
+// main scan. Frames are pooled across a single `lex_bash` run (`stack` only
+// grows, never shrinks) to keep deep nesting allocation-free after warmup.
 
 // a window frame's suspended mid-construct scan
 const S_NONE = 0;
@@ -241,10 +241,9 @@ const R_BACKTICK = 3; // backtick interior → emit the closing backtick, close,
 
 /**
  * One suspended window scan on the explicit stack, carrying the per-window
- * state the recursive lexer held in locals (cursor, `function` keyword
- * tracking, the pending-heredoc queue) plus the submode of an interrupted
- * string/heredoc body. `ret`/`ret_a` describe how the frame finalizes into the
- * one beneath it when it completes.
+ * scan state (cursor, `function` keyword tracking, the pending-heredoc queue)
+ * plus the submode of an interrupted string/heredoc body. `ret`/`ret_a`
+ * describe how the frame finalizes into the one beneath it when it completes.
  */
 interface BashFrame {
 	/** Scan cursor. */

@@ -292,15 +292,24 @@ Theme uses CSS variables from fuz_css:
 2. **Never throw, always cover** - any input (mid-keystroke, malformed) yields a
    valid event stream; unterminated constructs extend to their natural boundary
 3. **Progress discipline** - every scan loop advances position or emits+advances
-4. **Test with fixtures** - all changes must pass fixture tests
-5. **Follow patterns** - use existing `lexer_*.ts` modules as templates
+4. **Nesting discipline** - no JS-call-stack recursion that scales with input
+   nesting. Flat single-pass loops wherever the grammar allows (css, markup,
+   svelte, json, and md need no stacks at all); an explicit pooled frame
+   machine only where a construct's interior re-enters the same grammar
+   (`lexer_ts.ts` templates/generics/annotations, `lexer_bash.ts`
+   substitutions — use these as the template, including their inline fast
+   paths for bodies without nesting). Cross-language interiors go through
+   `Lexer.embed`, which is depth-capped rather than framed.
+5. **Test with fixtures** - all changes must pass fixture tests
+6. **Follow patterns** - use existing `lexer_*.ts` modules as templates
 
 ### Adding a new language
 
 New languages are written as lexers:
 
 1. Create `src/lib/lexer_{lang}.ts` exporting a `SyntaxLang` (see existing
-   lexers; zero regex, flat token events)
+   lexers; zero regex, flat token events; flat scan loop unless the grammar
+   re-enters itself — then the ts/bash frame-machine pattern)
 2. Register via `add_lang` in `syntax_styler_global.ts`
 3. Add samples in `src/test/fixtures/samples/sample_{variant}.{lang}`
 4. Add a `src/test/lexer_{lang}.test.ts` suite (targeted cases +

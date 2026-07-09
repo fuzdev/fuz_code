@@ -21,6 +21,10 @@ import {
  * interpolations, and matching is position-major (a string wins over a comment
  * that opens inside it).
  *
+ * Nesting (template interpolations, generic argument lists, `: type`
+ * annotations) runs on an explicit pooled frame stack, so arbitrarily deep
+ * input tokenizes fully without touching the JS call stack.
+ *
  * Resilience: unterminated strings extend to end of line; unterminated
  * templates, block comments, and interpolations extend to end of window.
  */
@@ -474,13 +478,13 @@ const scan_operator = (text: string, i: number, end: number): number => {
 	}
 };
 
-// Explicit-stack driver for the nesting that used to recurse on the JS call
-// stack (template interpolations, generic argument lists, and `: type`
-// annotations). Each construct pushes a frame instead of recursing, so
-// arbitrarily deep input tokenizes fully without overflowing — the deep-nesting
-// tests exercise this to thousands of levels. Frames are pooled across a single
-// `lex_ts` run (`stack` only grows, never shrinks) to keep deep nesting
-// allocation-free after warmup.
+// Explicit-stack driver for nested constructs (template interpolations,
+// generic argument lists, and `: type` annotations). Each construct pushes a
+// frame rather than recursing on the JS call stack, so arbitrarily deep input
+// tokenizes fully without overflowing — the deep-nesting tests exercise this
+// to thousands of levels. Frames are pooled across a single `lex_ts` run
+// (`stack` only grows, never shrinks) to keep deep nesting allocation-free
+// after warmup.
 
 const F_WINDOW = 0; // a window scan in progress
 const F_TEMPLATE = 1; // a template-literal body scan in progress
@@ -495,9 +499,9 @@ const R_TEMPLATE = 5; // a template literal in a window → advance past it
 
 /**
  * One suspended scan on the explicit stack. A window frame carries the full
- * per-window state the recursive lexer held in locals; a template frame carries
- * its body-scan cursor. `ret`/`ret_a`/`ret_b` describe how the frame finalizes
- * into the one beneath it when it completes.
+ * per-window scan state (cursor, previous-token category, contexts); a
+ * template frame carries its body-scan cursor. `ret`/`ret_a`/`ret_b` describe
+ * how the frame finalizes into the one beneath it when it completes.
  */
 interface TsFrame {
 	kind: number;
@@ -512,8 +516,6 @@ interface TsFrame {
 	import_ctx: boolean;
 	/** Template only: start of the pending literal chunk. */
 	chunk_start: number;
-	/** Template only: whether the opening backtick has been emitted. */
-	started: boolean;
 	ret: number;
 	ret_a: number;
 	ret_b: number;
@@ -538,7 +540,6 @@ const create_ts_frame = (): TsFrame => ({
 	as_ctx: false,
 	import_ctx: false,
 	chunk_start: 0,
-	started: false,
 	ret: R_ROOT,
 	ret_a: 0,
 	ret_b: 0,
@@ -574,7 +575,6 @@ const mac_push_window = (
 	f.class_ctx = false;
 	f.as_ctx = false;
 	f.import_ctx = false;
-	f.started = false;
 	f.ret = ret;
 	f.ret_a = ret_a;
 	f.ret_b = ret_b;
@@ -582,12 +582,14 @@ const mac_push_window = (
 };
 
 /**
- * Pushes a template-literal frame whose body starts at the backtick `from`. It
- * always finalizes by advancing the window beneath it past the literal.
+ * Pushes a template-literal frame resuming at the `${…}` found at `from`. The
+ * caller emitted the literal's opening events and scanned the leading chunk
+ * (which starts at `chunk_start`, past the opening backtick); the frame always
+ * finalizes by advancing the window beneath it past the literal.
  *
  * @mutates `mac`
  */
-const mac_push_template = (mac: TsMachine, from: number, to: number): void => {
+const mac_push_template = (mac: TsMachine, from: number, chunk_start: number, to: number): void => {
 	const {stack, sp} = mac;
 	let f = stack[sp];
 	if (f === undefined) {
@@ -597,8 +599,7 @@ const mac_push_template = (mac: TsMachine, from: number, to: number): void => {
 	f.kind = F_TEMPLATE;
 	f.to = to;
 	f.i = from;
-	f.chunk_start = from;
-	f.started = false;
+	f.chunk_start = chunk_start;
 	f.ret = R_TEMPLATE;
 	f.ret_a = 0;
 	f.ret_b = 0;
@@ -629,9 +630,9 @@ const scan_ts_template_body = (text: string, from: number, to: number): number =
 };
 
 /**
- * Runs (or resumes) a template-literal frame. On first entry it emits the
- * opening backtick; it then scans literal chunks until the closing backtick or
- * a `${…}` interpolation. An interpolation pushes a value-mode window frame and
+ * Runs (or resumes) a template-literal frame: scans literal chunks until the
+ * closing backtick or a `${…}` interpolation (the opening events were emitted
+ * before the push). An interpolation pushes a value-mode window frame and
  * returns `false`; the driver's `R_INTERP` finalize closes the interpolation
  * and resumes this frame past it. Returns `true` once the literal is complete
  * (closed, or extended to the window end when unterminated).
@@ -642,13 +643,6 @@ const run_ts_template = (mac: TsMachine, frame: TsFrame): boolean => {
 	const l = mac.l;
 	const {text} = l;
 	const to = frame.to;
-	if (!frame.started) {
-		frame.started = true;
-		l.open(T_TEMPLATE_STRING, frame.i);
-		l.leaf(T_TEMPLATE_PUNCTUATION, frame.i, frame.i + 1);
-		frame.i += 1;
-		frame.chunk_start = frame.i;
-	}
 	let j = frame.i;
 	const chunk_start = frame.chunk_start;
 	while (j < to) {
@@ -986,7 +980,9 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 		if (c === 96) {
 			const r = scan_ts_template_body(text, i + 1, to);
 			if (r < 0) {
-				mac_push_template(mac, i, to);
+				l.open(T_TEMPLATE_STRING, i);
+				l.leaf(T_TEMPLATE_PUNCTUATION, i, i + 1);
+				mac_push_template(mac, ~r, i + 1, to);
 				return false;
 			}
 			l.open(T_TEMPLATE_STRING, i);

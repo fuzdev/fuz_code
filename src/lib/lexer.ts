@@ -133,7 +133,9 @@ export interface LexedSyntax {
  * markdown fences can embed markdown — so without a bound an adversarial
  * cascade of a few thousand unterminated `` ```md `` fences overflows the
  * stack. Past the cap the embedded region stays plain text, the same fallback
- * as an unregistered language; real content nests 2–3 levels deep.
+ * as an unregistered language; real content nests 2–3 levels deep. The cap is
+ * also a linearity guarantee: each fence level rescans its window for a
+ * closing fence, so uncapped cascades would be quadratic in document size.
  */
 const MAX_EMBED_DEPTH = 64;
 
