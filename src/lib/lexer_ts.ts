@@ -16,10 +16,10 @@ import {
 /**
  * Hand-written TypeScript/JavaScript lexer.
  *
- * Token vocabulary matches the retired regex grammars (`grammar_js.ts` +
- * `grammar_ts.ts`) with the agreed fidelity fixes: previous-token tracking for
- * regex-literal vs division, unlimited template/interpolation nesting, and
- * position-major matching (strings win over comments that start inside them).
+ * Disambiguation rests on three rules: previous-token tracking separates a
+ * regex literal from division, template literals nest their `${…}`
+ * interpolations, and matching is position-major (a string wins over a comment
+ * that opens inside it).
  *
  * Resilience: unterminated strings extend to end of line; unterminated
  * templates, block comments, and interpolations extend to end of window.
@@ -113,7 +113,7 @@ const IMPORT_WORDS: Set<string> = new Set(['import', 'export']);
 const VALUE_WORDS: Set<string> = new Set(['this', 'super', 'null', 'undefined']);
 
 // lowercase-only builtins are reachable — capitalized ones are claimed by
-// `capitalized_identifier` first, matching the old grammar's priority order
+// `capitalized_identifier` first in the classification order
 const BUILTIN_WORDS: Set<string> = new Set([
 	'Array',
 	'Function',
@@ -136,6 +136,11 @@ const P_DOT = 2; // after `.` member access — next word is a property, not a k
 // bounded lookahead for heuristic scans (generics, annotations, arrow params)
 const MAX_SCAN = 600;
 
+// bound on recursive nesting (template interpolations, generics, type
+// annotations), so deeply nested input degrades to plain interiors instead of
+// overflowing the JS call stack — far beyond any nesting real code reaches
+const MAX_NEST_DEPTH = 64;
+
 /**
  * Monotonic next-occurrence caches for the heuristic-scan prechecks. Each
  * bounded scan can only succeed if its success char (`=` for type
@@ -149,9 +154,16 @@ interface TsScanCache {
 	next_eq: number;
 	next_gt: number;
 	next_rparen: number;
+	/** Current recursive nesting depth; recursion stops at `MAX_NEST_DEPTH`. */
+	depth: number;
 }
 
-const create_ts_scan_cache = (): TsScanCache => ({next_eq: -1, next_gt: -1, next_rparen: -1});
+const create_ts_scan_cache = (): TsScanCache => ({
+	next_eq: -1,
+	next_gt: -1,
+	next_rparen: -1,
+	depth: 0,
+});
 
 /**
  * Returns the cached next occurrence of `ch` at or after `from`, re-probing
@@ -362,10 +374,9 @@ const is_function_variable = (
 };
 
 /**
- * Heuristic for `: type =` annotations (mirrors the old `type_annotation`
- * pattern): from the `:` at `i`, scans over a type expression with balanced
- * `<>`/`[]`/`{}`/`()`, succeeding at a top-level `=` (not `==`/`=>`).
- * Returns the exclusive end of the type text, or -1.
+ * Heuristic for `: type =` annotations: from the `:` at `i`, scans over a type
+ * expression with balanced `<>`/`[]`/`{}`/`()`, succeeding at a top-level `=`
+ * (not `==`/`=>`). Returns the exclusive end of the type text, or -1.
  */
 const scan_type_annotation = (text: string, i: number, end: number, cache: TsScanCache): number => {
 	const limit = i + MAX_SCAN < end ? i + MAX_SCAN : end;
@@ -408,9 +419,8 @@ const scan_type_annotation = (text: string, i: number, end: number, cache: TsSca
 			(c === 59 || c === 44 || c === 123 || c === 125 || c === 40 || c === 41)
 		) {
 			// top-level statement/grouping chars end the candidate type text —
-			// object/function types are not annotation targets here (parity
-			// with the old pattern, which also rejected them; prevents the
-			// scan from running away across statement boundaries)
+			// object/function types are not annotation targets here, which keeps
+			// the scan from running away across statement boundaries
 			return -1;
 		} else if (c === 34 || c === 39) {
 			j = skip_quoted(text, j, end, c);
@@ -473,8 +483,30 @@ const scan_operator = (text: string, i: number, end: number): number => {
 };
 
 /**
+ * Recurses into `lex_ts_window` for `[from, to)` while under the nesting cap.
+ * Past `MAX_NEST_DEPTH` the region is left as plain text rather than recursing,
+ * so pathologically deep nesting can't overflow the stack; the caller advances
+ * its own position past the region regardless.
+ *
+ * @mutates `l`
+ */
+const lex_ts_nested = (
+	l: Lexer,
+	from: number,
+	to: number,
+	type_mode: boolean,
+	cache: TsScanCache,
+): void => {
+	if (cache.depth >= MAX_NEST_DEPTH) return;
+	cache.depth++;
+	lex_ts_window(l, from, to, type_mode, cache);
+	cache.depth--;
+};
+
+/**
  * Lexes a template literal starting at the backtick at `i`, returning the new
- * position. Interpolations recurse through the full lexer.
+ * position. Interpolations recurse through the full lexer, bounded by
+ * `MAX_NEST_DEPTH`.
  */
 const lex_ts_template = (l: Lexer, i: number, to: number, cache: TsScanCache): number => {
 	const {text} = l;
@@ -499,7 +531,7 @@ const lex_ts_template = (l: Lexer, i: number, to: number, cache: TsScanCache): n
 			const inner_end = close === -1 ? to : close;
 			l.open(T_INTERPOLATION, j);
 			l.leaf(T_INTERPOLATION_PUNCTUATION, j, j + 2);
-			lex_ts_window(l, j + 2, inner_end, false, cache);
+			lex_ts_nested(l, j + 2, inner_end, false, cache);
 			if (close === -1) {
 				l.close(to);
 				j = to;
@@ -576,7 +608,7 @@ const lex_ts_window = (
 				if (text.charCodeAt(angle_start) === 60) {
 					const angle_end = scan_balanced_angle(text, angle_start, to, cache);
 					if (angle_end !== -1) {
-						lex_ts_window(l, angle_start, angle_end + 1, true, cache);
+						lex_ts_nested(l, angle_start, angle_end + 1, true, cache);
 						i = angle_end + 1;
 					}
 				}
@@ -666,12 +698,12 @@ const lex_ts_window = (
 			}
 
 			// SCREAMING_CASE constants, then capitalized identifiers — both
-			// before the call lookahead, matching the old grammar's priority
+			// classified before the call lookahead
 			if (is_upper(c)) {
 				let all_caps = true;
 				for (let k = start + 1; k < ident_end; k++) {
 					const cc = text.charCodeAt(k);
-					// `x` only after a digit (hex-ish constants like `A0x`), per the old pattern
+					// `x` only after a digit (hex-ish constants like `A0x`)
 					if (
 						!is_upper(cc) &&
 						cc !== 95 &&
@@ -701,7 +733,7 @@ const lex_ts_window = (
 						l.open(T_GENERIC_FUNCTION, start);
 						l.leaf(T_FUNCTION, start, ident_end);
 						l.open(T_GENERIC, angle_start);
-						lex_ts_window(l, angle_start, angle_end + 1, true, cache);
+						lex_ts_nested(l, angle_start, angle_end + 1, true, cache);
 						l.close(angle_end + 1);
 						l.close(angle_end + 1);
 						i = angle_end + 1;
@@ -855,7 +887,7 @@ const lex_ts_window = (
 						l.open(T_TYPE_ANNOTATION, i);
 						l.leaf(T_COLON, i, i + 1);
 						l.open(T_TYPE, type_start);
-						lex_ts_window(l, type_start, content_end, true, cache);
+						lex_ts_nested(l, type_start, content_end, true, cache);
 						l.close(content_end);
 						l.close(content_end);
 						i = type_end;

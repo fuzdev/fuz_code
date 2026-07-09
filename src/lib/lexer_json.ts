@@ -12,9 +12,9 @@ import {
 /**
  * Hand-written JSON lexer (accepts JSONC — line and block comments).
  *
- * Token vocabulary matches the retired regex grammar: `property` (a string
- * key), `string`, `comment`, `number`, `punctuation`, `operator` (`:`),
- * `boolean`, and `null` (aliased to `keyword`).
+ * Emits: `property` (a string key), `string`, `comment`, `number`,
+ * `punctuation`, `operator` (`:`), `boolean`, and `null` (aliased to
+ * `keyword`).
  *
  * Resilience: unterminated strings extend to end of line; unterminated block
  * comments extend to end of window.

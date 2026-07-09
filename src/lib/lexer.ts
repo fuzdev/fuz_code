@@ -94,7 +94,7 @@ export const token_type = (name: string, alias?: string | Array<string>): number
 	token_types_global.intern(name, alias);
 
 /**
- * A lexer-based language registration — the replacement for regex grammars.
+ * A lexer-based language registration.
  */
 export interface SyntaxLang {
 	/**
@@ -263,7 +263,7 @@ export const lex_syntax = (
 /**
  * Escapes `text[from..to)` for HTML text content in a single pass.
  * Only `&`, `<`, and non-breaking spaces need handling (nbsp normalizes to a
- * regular space, matching the old engine's policy).
+ * regular space).
  */
 const escape_html_slice = (text: string, from: number, to: number): string => {
 	let out = '';

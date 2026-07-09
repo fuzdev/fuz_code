@@ -11,14 +11,16 @@ import {
 /**
  * Hand-written Bash/shell lexer.
  *
- * Token vocabulary matches the retired regex grammar: `shebang`, `comment`,
- * `string` (double-quoted strings are containers whose `$`-expansions nest as
- * `variable`/`command_substitution`), `keyword`, `builtin`, `boolean`,
- * `number`, `variable`, `command_substitution` (a container), `function`,
- * `file_descriptor`, `operator`, `punctuation`, plus heredocs (`heredoc`
- * container + `heredoc_delimiter`).
+ * Emits: `shebang`, `comment`, `string` (double-quoted strings are containers
+ * whose `$`-expansions nest as `variable`/`command_substitution`), `keyword`,
+ * `builtin`, `boolean`, `number`, `variable`, `command_substitution` (a
+ * container), `function`, `file_descriptor`, `operator`, `punctuation`, plus
+ * heredocs (`heredoc` container + `heredoc_delimiter`).
  *
- * Fidelity fixes over the regex model:
+ * Notable behavior:
+ * - command substitution is recognized in both `$(…)` and legacy backtick
+ *   form; both are `command_substitution` containers with an ordinary-bash
+ *   interior.
  * - arithmetic expansion `$((…))` is recognized as distinct from command
  *   substitution `$(…)`; its `$((`/`))` are punctuation and the interior lexes
  *   as ordinary bash (numbers, `$vars`, and general operators fall out
@@ -28,7 +30,7 @@ import {
  *   one line are queued and their bodies consumed in order.
  *
  * Word classification (keyword/builtin/boolean) is a context-free `Map`
- * lookup, matching the old grammar's type-major behavior.
+ * lookup.
  *
  * Resilience: unterminated single-line constructs stop at the line boundary;
  * unterminated strings, command substitutions, and heredocs extend to the
@@ -205,9 +207,17 @@ const scan_dollar_var = (l: Lexer, i: number, to: number): number => {
 	return i + 1; // bare `$`
 };
 
+// bounds recursive `$(…)`/`$((…))` nesting so deeply nested substitutions
+// degrade to plain interiors instead of overflowing the JS call stack — far
+// beyond any nesting real shell reaches. Safe as module state: lexing is
+// synchronous and `lex_bash` resets it per top-level document.
+const MAX_SUBST_DEPTH = 64;
+let subst_depth = 0;
+
 /**
  * Lexes a `$(…)` command substitution at `i` as a container, returning the new
- * position. Interior lexes as ordinary bash; unterminated extends to `to`.
+ * position. Interior lexes as ordinary bash (bounded by `MAX_SUBST_DEPTH`);
+ * unterminated extends to `to`.
  *
  * @mutates `l`
  */
@@ -216,12 +226,16 @@ const lex_bash_cmdsub = (l: Lexer, i: number, to: number): number => {
 	l.open(T_COMMAND_SUBSTITUTION, i);
 	l.leaf(T_PUNCTUATION, i, i + 2); // `$(`
 	const close = scan_cmdsub_end(text, i + 2, to);
+	const inner_end = close === -1 ? to : close;
+	if (subst_depth < MAX_SUBST_DEPTH) {
+		subst_depth++;
+		lex_bash_window(l, i + 2, inner_end);
+		subst_depth--;
+	}
 	if (close === -1) {
-		lex_bash_window(l, i + 2, to);
 		l.close(to);
 		return to;
 	}
-	lex_bash_window(l, i + 2, close);
 	l.leaf(T_PUNCTUATION, close, close + 1); // `)`
 	l.close(close + 1);
 	return close + 1;
@@ -254,18 +268,75 @@ const lex_bash_arith = (l: Lexer, i: number, to: number): number => {
 		}
 	}
 	l.leaf(T_PUNCTUATION, i, i + 3); // `$((`
-	if (depth === 0) {
-		lex_bash_window(l, i + 3, j - 1);
+	const closed = depth === 0;
+	const inner_end = closed ? j - 1 : to;
+	if (subst_depth < MAX_SUBST_DEPTH) {
+		subst_depth++;
+		lex_bash_window(l, i + 3, inner_end);
+		subst_depth--;
+	}
+	if (closed) {
 		l.leaf(T_PUNCTUATION, j - 1, j + 1); // `))`
 		return j + 1;
 	}
-	lex_bash_window(l, i + 3, to); // unterminated
+	return to; // unterminated
+};
+
+/**
+ * Dispatches a `$(`-led expansion at `i`: arithmetic `$((…))` when a second
+ * `(` follows in-window, else command substitution `$(…)`. Returns the new
+ * position. The `i + 2 < to` guard keeps the lookahead inside the window.
+ *
+ * @mutates `l`
+ */
+const lex_bash_dollar_paren = (l: Lexer, i: number, to: number): number =>
+	i + 2 < to && l.text.charCodeAt(i + 2) === 40
+		? lex_bash_arith(l, i, to)
+		: lex_bash_cmdsub(l, i, to);
+
+/**
+ * Lexes a legacy backtick command substitution at `i` as a container,
+ * returning the new position. The interior lexes as ordinary bash (bounded by
+ * `MAX_SUBST_DEPTH`); a backslash escapes the next char; unterminated extends
+ * to `to`.
+ *
+ * @mutates `l`
+ */
+const lex_bash_backtick = (l: Lexer, i: number, to: number): number => {
+	const {text} = l;
+	let j = i + 1;
+	while (j < to) {
+		const c = text.charCodeAt(j);
+		if (c === 92) {
+			j += 2; // backslash escapes the next char (e.g. an inner backtick)
+		} else if (c === 96) {
+			break;
+		} else {
+			j++;
+		}
+	}
+	const closed = j < to && text.charCodeAt(j) === 96;
+	const inner_end = closed ? j : to;
+	l.open(T_COMMAND_SUBSTITUTION, i);
+	l.leaf(T_PUNCTUATION, i, i + 1); // opening backtick
+	if (subst_depth < MAX_SUBST_DEPTH) {
+		subst_depth++;
+		lex_bash_window(l, i + 1, inner_end);
+		subst_depth--;
+	}
+	if (closed) {
+		l.leaf(T_PUNCTUATION, j, j + 1); // closing backtick
+		l.close(j + 1);
+		return j + 1;
+	}
+	l.close(to);
 	return to;
 };
 
 /**
  * Lexes a `"…"` double-quoted string at `i` as a container, returning the new
- * position. `$`-expansions nest; unterminated extends to `to`.
+ * position. `$`-expansions and backtick substitutions nest; unterminated
+ * extends to `to`.
  *
  * @mutates `l`
  */
@@ -283,10 +354,12 @@ const lex_bash_dquote = (l: Lexer, i: number, to: number): number => {
 		} else if (c === 36) {
 			const c1 = text.charCodeAt(j + 1);
 			if (c1 === 40) {
-				j = text.charCodeAt(j + 2) === 40 ? lex_bash_arith(l, j, to) : lex_bash_cmdsub(l, j, to);
+				j = lex_bash_dollar_paren(l, j, to);
 			} else {
 				j = scan_dollar_var(l, j, to);
 			}
+		} else if (c === 96) {
+			j = lex_bash_backtick(l, j, to);
 		} else {
 			j++;
 		}
@@ -348,7 +421,7 @@ const expand_heredoc_body = (l: Lexer, from: number, to: number): void => {
 		if (text.charCodeAt(j) === 36) {
 			const c1 = text.charCodeAt(j + 1);
 			if (c1 === 40) {
-				j = text.charCodeAt(j + 2) === 40 ? lex_bash_arith(l, j, to) : lex_bash_cmdsub(l, j, to);
+				j = lex_bash_dollar_paren(l, j, to);
 			} else {
 				j = scan_dollar_var(l, j, to);
 			}
@@ -479,7 +552,7 @@ const lex_bash_window = (l: Lexer, from: number, to: number): void => {
 		if (c === 36) {
 			const c1 = text.charCodeAt(i + 1);
 			if (c1 === 40) {
-				i = text.charCodeAt(i + 2) === 40 ? lex_bash_arith(l, i, to) : lex_bash_cmdsub(l, i, to);
+				i = lex_bash_dollar_paren(l, i, to);
 				continue;
 			}
 			if (c1 === 39) {
@@ -502,6 +575,12 @@ const lex_bash_window = (l: Lexer, from: number, to: number): void => {
 			const e = close === -1 || close >= to ? to : close + 1;
 			l.leaf(T_STRING, i, e);
 			i = e;
+			continue;
+		}
+
+		// legacy backtick command substitution
+		if (c === 96) {
+			i = lex_bash_backtick(l, i, to);
 			continue;
 		}
 
@@ -697,6 +776,7 @@ const lex_bash_heredoc_start = (
 };
 
 const lex_bash = (l: Lexer): void => {
+	subst_depth = 0;
 	lex_bash_window(l, l.pos, l.end);
 };
 

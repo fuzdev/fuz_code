@@ -58,6 +58,23 @@ describe('lexer_bash variables and expansions', () => {
 		]);
 	});
 
+	test('legacy backtick command substitution is a container', () => {
+		assert.deepEqual(tokens_of('`echo hi`'), [
+			['command_substitution', '`echo hi`'],
+			['punctuation', '`'],
+			['builtin', 'echo'],
+			['punctuation', '`'],
+		]);
+	});
+
+	test('backtick substitution nests inside a double-quoted string', () => {
+		const lexed = syntax_styler_global.lex('"a `id` b"', 'bash');
+		assert.deepEqual(validate_syntax_events(lexed), []);
+		const types = syntax_events_to_tokens(lexed).map((t) => t.type);
+		assert.strictEqual(types.filter((t) => t === 'command_substitution').length, 1);
+		assert.strictEqual(types.filter((t) => t === 'string').length, 1);
+	});
+
 	test('nested command substitution inside a double-quoted string', () => {
 		const lexed = syntax_styler_global.lex('"a $(echo "b $(echo c)")"', 'bash');
 		assert.deepEqual(validate_syntax_events(lexed), []);
@@ -199,6 +216,22 @@ describe('lexer_bash sample', () => {
 		assert.deepEqual(validate_syntax_events(lexed), []);
 	});
 
+	test('sample produces its characteristic token types', () => {
+		const types = new Set(
+			syntax_events_to_tokens(syntax_styler_global.lex(content, 'bash')).map((t) => t.type),
+		);
+		for (const t of [
+			'builtin',
+			'keyword',
+			'string',
+			'variable',
+			'command_substitution',
+			'comment',
+		]) {
+			assert.ok(types.has(t), `expected a ${t} token in the sample`);
+		}
+	});
+
 	test('every prefix lexes without throwing, with valid invariants', () => {
 		for (let len = 0; len <= content.length; len += 11) {
 			const prefix = content.slice(0, len);
@@ -211,5 +244,24 @@ describe('lexer_bash sample', () => {
 		const a = syntax_events_to_tokens(syntax_styler_global.lex(content, 'bash'));
 		const b = syntax_events_to_tokens(syntax_styler_global.lex(content, 'bash'));
 		assert.deepEqual(a, b);
+	});
+});
+
+describe('lexer_bash deep nesting', () => {
+	test('deeply nested command substitutions stay valid without overflowing the stack', () => {
+		const depth = 5000;
+		const input = '$('.repeat(depth) + 'x' + ')'.repeat(depth);
+		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(input, 'bash')), []);
+	});
+
+	test('deeply nested arithmetic expansions stay valid without overflowing the stack', () => {
+		const depth = 5000;
+		const input = '$(('.repeat(depth) + '1' + '))'.repeat(depth);
+		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(input, 'bash')), []);
+	});
+
+	test('nested command substitutions within the depth cap still tokenize', () => {
+		const types = tokens_of('echo $(echo $(date))').map(([type]) => type);
+		assert.equal(types.filter((t) => t === 'command_substitution').length, 2);
 	});
 });

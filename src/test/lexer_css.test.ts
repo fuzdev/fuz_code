@@ -130,6 +130,15 @@ describe('lexer_css sample', () => {
 		assert.deepEqual(validate_syntax_events(lexed), []);
 	});
 
+	test('sample produces its characteristic token types', () => {
+		const types = new Set(
+			syntax_events_to_tokens(syntax_styler_global.lex(content, 'css')).map((t) => t.type),
+		);
+		for (const t of ['selector', 'property', 'function', 'comment', 'string', 'atrule']) {
+			assert.ok(types.has(t), `expected a ${t} token in the sample`);
+		}
+	});
+
 	test('every prefix lexes without throwing, with valid invariants', () => {
 		for (let len = 0; len <= content.length; len += 5) {
 			const prefix = content.slice(0, len);

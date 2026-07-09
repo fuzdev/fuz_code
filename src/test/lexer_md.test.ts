@@ -206,6 +206,15 @@ describe('lexer_md sample', () => {
 		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(content, 'md')), []);
 	});
 
+	test('sample produces its characteristic token types', () => {
+		const types = new Set(
+			syntax_events_to_tokens(syntax_styler_global.lex(content, 'md')).map((t) => t.type),
+		);
+		for (const t of ['heading', 'fenced_code', 'code_fence', 'list', 'bold', 'italic']) {
+			assert.ok(types.has(t), `expected a ${t} token in the sample`);
+		}
+	});
+
 	test('every prefix lexes without throwing, with valid invariants', () => {
 		for (let len = 0; len <= content.length; len += 13) {
 			const prefix = content.slice(0, len);

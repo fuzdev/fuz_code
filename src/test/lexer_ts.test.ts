@@ -256,6 +256,15 @@ describe('lexer_ts sample', () => {
 		assert.deepEqual(validate_syntax_events(lexed), []);
 	});
 
+	test('sample produces its characteristic token types', () => {
+		const types = new Set(
+			syntax_events_to_tokens(syntax_styler_global.lex(content, 'ts')).map((t) => t.type),
+		);
+		for (const t of ['keyword', 'string', 'comment', 'number', 'function', 'operator']) {
+			assert.ok(types.has(t), `expected a ${t} token in the sample`);
+		}
+	});
+
 	test('every prefix lexes without throwing, with valid invariants', () => {
 		for (let len = 0; len <= content.length; len += 13) {
 			const prefix = content.slice(0, len);
@@ -269,5 +278,20 @@ describe('lexer_ts sample', () => {
 		const a = syntax_events_to_tokens(syntax_styler_global.lex(content, 'ts'));
 		const b = syntax_events_to_tokens(syntax_styler_global.lex(content, 'ts'));
 		assert.deepEqual(a, b);
+	});
+});
+
+describe('lexer_ts deep nesting', () => {
+	test('deeply nested template interpolations stay valid without overflowing the stack', () => {
+		const depth = 5000;
+		const input = '`${'.repeat(depth) + '1' + '}`'.repeat(depth);
+		const lexed = syntax_styler_global.lex(input, 'ts');
+		assert.deepEqual(validate_syntax_events(lexed), []);
+	});
+
+	test('nested templates within the depth cap still tokenize', () => {
+		const types = tokens_of('`a${`b${c}d`}e`').map(([type]) => type);
+		assert.equal(types.filter((t) => t === 'template_string').length, 2);
+		assert.equal(types.filter((t) => t === 'interpolation').length, 2);
 	});
 });

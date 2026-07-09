@@ -14,26 +14,22 @@ import {lex_markup_window, type MarkupLexMode} from './lexer_markup.ts';
  * Hand-written Svelte lexer — the shared markup scanner (`lexer_markup.ts`)
  * in svelte mode plus the `{…}` expression lexer.
  *
- * Token vocabulary matches the retired regex grammar: markup's tag/attr/
- * comment/entity structure (no `special_attr` — svelte handles `style=`/
- * `on*=` as ordinary attributes), `script`+`lang_ts` and `style`+`lang_css`
- * regions (svelte scripts are always TypeScript), and `svelte_expression`
- * containers whose forms nest a same-span `block` (`{#if}`/`{:else if}`/
- * `{/each}`/…), `each` (`{#each list as item}`), or `at_directive`
- * (`{@render}`/`{@const}`/…) container with `special_keyword`/`at_keyword`/
- * `keyword` leaves and `lang_ts` interiors.
+ * Emits markup's tag/attr/comment/entity structure (no `special_attr` —
+ * svelte handles `style=`/`on*=` as ordinary attributes), `script`+`lang_ts`
+ * and `style`+`lang_css` regions (svelte scripts are always TypeScript), and
+ * `svelte_expression` containers whose forms nest a same-span `block`
+ * (`{#if}`/`{:else if}`/`{/each}`/…), `each` (`{#each list as item}`), or
+ * `at_directive` (`{@render}`/`{@const}`/…) container with `special_keyword`/
+ * `at_keyword`/`keyword` leaves and `lang_ts` interiors.
  *
- * Fidelity fixes over the regex grammar (per the reviewed-diff policy):
- * expression braces balance to any depth and skip strings/templates/comments
- * (`{'}'}` works); expression-valued attributes emit proper structure
- * (`attr_name` + `attr_value` with `attr_equals`, instead of the `=`
- * swallowed into the name); quoted values interleave text and expressions
- * (`class="a {b} c"`); the `{#each}` expression before `as` is lexed as ts
- * (the old engine left it plain); the closing `}` is always expression
- * punctuation (the old engine folded it into `lang_ts` for each/at-directive
- * forms); `as`/`then` are keywords only where the grammar defines them
- * (each/await) instead of matching anywhere; directive modifiers
- * (`transition:fade|global`) get punctuation pipes.
+ * Notable behavior: expression braces balance to any depth and skip
+ * strings/templates/comments (`{'}'}` works); expression-valued attributes
+ * emit full structure (`attr_name` + `attr_value` with `attr_equals`, not the
+ * `=` swallowed into the name); quoted values interleave text and expressions
+ * (`class="a {b} c"`); the `{#each}` expression before `as` is lexed as ts; the
+ * closing `}` is always expression punctuation; `as`/`then` are keywords only
+ * in the each/await forms that define them, not anywhere they appear; directive
+ * modifiers (`transition:fade|global`) get punctuation pipes.
  *
  * Resilience: an unterminated expression extends to the end of the window.
  */

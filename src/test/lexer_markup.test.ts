@@ -294,6 +294,15 @@ describe('lexer_markup sample', () => {
 		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(content, 'html')), []);
 	});
 
+	test('sample produces its characteristic token types', () => {
+		const types = new Set(
+			syntax_events_to_tokens(syntax_styler_global.lex(content, 'html')).map((t) => t.type),
+		);
+		for (const t of ['tag', 'attr_name', 'attr_value', 'comment', 'doctype']) {
+			assert.ok(types.has(t), `expected a ${t} token in the sample`);
+		}
+	});
+
 	test('every prefix lexes without throwing, with valid invariants', () => {
 		for (let len = 0; len <= content.length; len += 7) {
 			const prefix = content.slice(0, len);

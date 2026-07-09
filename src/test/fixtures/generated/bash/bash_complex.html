@@ -93,6 +93,7 @@ map<span class="token_punctuation">[</span>key<span class="token_punctuation">]<
 <span class="token_comment"># Command substitution</span>
 today=<span class="token_command_substitution"><span class="token_punctuation">$(</span>date +%Y-%m-%d<span class="token_punctuation">)</span></span>
 files=<span class="token_command_substitution"><span class="token_punctuation">$(</span>ls -la <span class="token_operator">|</span> grep <span class="token_string">"\.txt$"</span><span class="token_punctuation">)</span></span>
+legacy=<span class="token_command_substitution"><span class="token_punctuation">`</span><span class="token_builtin">echo</span> <span class="token_string">"<span class="token_variable">$today</span>"</span><span class="token_punctuation">`</span></span>
 
 <span class="token_comment"># Arithmetic expansion</span>
 result=<span class="token_punctuation">$((</span> <span class="token_number">2</span> + <span class="token_number">3</span> * <span class="token_number">4</span> <span class="token_punctuation">))</span>

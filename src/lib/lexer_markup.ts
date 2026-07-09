@@ -11,11 +11,10 @@ import {
 /**
  * Hand-written HTML/XML lexer.
  *
- * Token vocabulary matches the retired regex grammar: flat `comment`,
- * `processing_instruction`, `doctype`, `cdata`, and `entity`
- * (alias `named_entity` for the `&amp;`-style form); a `tag` container holding
- * a nested `tag` (the `<name` opener with `punctuation`/`namespace` children —
- * the name itself stays plain text), `attr_name` (with `namespace`),
+ * Emits: flat `comment`, `processing_instruction`, `doctype`, `cdata`, and
+ * `entity` (alias `named_entity` for the `&amp;`-style form); a `tag` container
+ * holding a nested `tag` (the `<name` opener with `punctuation`/`namespace`
+ * children — the name itself stays plain text), `attr_name` (with `namespace`),
  * `attr_value` (spanning the `=` and quotes, which are `punctuation` with
  * `attr_equals`/`attr_quote` aliases, plus entities), and a final
  * `punctuation` closer; `special_attr` containers for `style=`/`on*=`
@@ -23,14 +22,12 @@ import {
  * containers wrapping `lang_js`/`lang_css` around embedded language windows.
  *
  * Two registrations share this scanner: `lexer_markup` (`markup`/`html`/
- * `mathml`/`svg`) uses HTML semantics — rawtext elements (`script`, `style`,
- * and, as a fidelity upgrade over the old grammar, RCDATA `textarea`/`title`)
- * plus the `style=`/`on*=` attribute embedding; `lexer_xml` (`xml`/`ssml`/
- * `atom`/`rss`) scans plain XML with neither, matching the old engine's
- * separate `xml` grammar clone.
+ * `mathml`/`svg`) uses HTML semantics — rawtext elements (`script`, `style`)
+ * and RCDATA elements (`textarea`/`title`) plus the `style=`/`on*=` attribute
+ * embedding; `lexer_xml` (`xml`/`ssml`/`atom`/`rss`) scans plain XML with
+ * neither.
  *
- * Deliberate divergences from the regex grammar (all toward HTML semantics):
- * a comment ends at the first `-->` (the old pattern refused comments
+ * HTML-semantics details: a comment ends at the first `-->` (even one
  * containing a second `<!--`); doctypes skip a `[…]` internal subset; CDATA
  * sections inside `<script>`/`<style>` are handed to the embedded language
  * as-is (no `included_cdata` structure — HTML treats them as source text);
@@ -38,8 +35,7 @@ import {
  *
  * Resilience: unterminated comments, processing instructions, doctypes,
  * CDATA sections, tags, quoted attribute values, and rawtext regions all
- * extend to the end of the window (the old engine degraded them to plain
- * text).
+ * extend to the end of the window.
  */
 
 const T_COMMENT = token_type('comment');
@@ -119,7 +115,7 @@ const MODE_XML: MarkupLexMode = {
 };
 
 // a tag-name char — anything except whitespace, `>`, `/`, `=`, `$`, `<`, `%`
-// (the old pattern's negated class; `$` and `%` keep template syntax inert)
+// (`$` and `%` are excluded to keep template syntax inert)
 const is_tag_name_char = (c: number): boolean =>
 	!is_space(c) && c !== 62 && c !== 47 && c !== 61 && c !== 36 && c !== 60 && c !== 37;
 
@@ -138,8 +134,8 @@ const is_entity_hex = (c: number): boolean =>
 
 /**
  * Scans an entity reference at the `&` at `i`, returning its exclusive end or
- * -1. Mirrors the old patterns: named `&[\da-z]{1,8};` (case-insensitive) and
- * numeric `&#x?[\da-f]{1,8};` (hex digits allowed in both numeric forms).
+ * -1. Accepts a named form (1–8 case-insensitive alphanumerics, `&…;`) and a
+ * numeric form (`&#…;` or `&#x…;`, 1–8 hex digits allowed in both).
  */
 export const scan_entity_end = (text: string, i: number, end: number): number => {
 	let j = i + 1;
@@ -224,9 +220,9 @@ const lex_markup_value_content = (
  * Emits an attribute value container `[eq, value_end)` — `attr_equals`, the
  * quotes, and the content: entities (plus svelte expressions) for plain
  * values, or (for `style=`/`on*=` special attrs) a `value` container
- * embedding `embed_lang`. Matching the old pattern, the `value` container
- * appears only when the content is non-empty and starts immediately after
- * the opening quote with a non-space char.
+ * embedding `embed_lang`. The `value` container appears only when the content
+ * is non-empty and starts immediately after the opening quote with a non-space
+ * char.
  */
 const lex_markup_attr_value = (
 	l: Lexer,
@@ -290,8 +286,9 @@ const lex_markup_attr_name = (l: Lexer, from: number, to: number, mode: MarkupLe
 };
 
 /**
- * Finds a name span's `ns:` prefix, per the old `^[^\s>/:]+:` pattern.
- * Returns the namespace end (the index after `:`), or -1.
+ * Finds a name span's `ns:` prefix — the run up to the first `:`, containing
+ * no whitespace, `>`, or `/`. Returns the namespace end (the index after `:`),
+ * or -1.
  */
 const scan_namespace_end = (text: string, from: number, to: number): number => {
 	for (let k = from; k < to; k++) {
@@ -336,8 +333,9 @@ const lex_markup_tag = (l: Lexer, i: number, end: number, mode: MarkupLexMode): 
 			tag_end = j + 1;
 			break;
 		}
-		if (c === 47 && text.charCodeAt(j + 1) === 62) {
-			// />
+		if (c === 47 && j + 1 < end && text.charCodeAt(j + 1) === 62) {
+			// `/>` — guard `j + 1 < end` so a trailing `/` at the window edge
+			// (e.g. an embedded sub-window) never reads or emits past `end`
 			l.leaf(T_TAG_PUNCTUATION, j, j + 2);
 			tag_end = j + 2;
 			break;
@@ -404,7 +402,7 @@ const lex_markup_tag = (l: Lexer, i: number, end: number, mode: MarkupLexMode): 
 			value_end = ve;
 		}
 
-		// a special attr needs a quoted or non-empty value, per the old pattern
+		// a special attr needs a quoted or non-empty value
 		const special_lang = mode.special_attrs ? special_attr_lang(text, an_start, an_end) : null;
 		if (special_lang !== null && (quoted || content_end > content_start)) {
 			l.open(T_SPECIAL_ATTR, an_start);

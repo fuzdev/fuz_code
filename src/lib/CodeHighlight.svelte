@@ -77,7 +77,7 @@
 		wrap?: boolean;
 		/**
 		 * Custom `SyntaxStyler` instance to use for highlighting.
-		 * Allows using a different styler with custom grammars or configuration.
+		 * Allows using a different styler with custom languages or configuration.
 		 *
 		 * @default syntax_styler_global
 		 */

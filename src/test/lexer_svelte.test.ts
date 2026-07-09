@@ -275,6 +275,15 @@ describe('lexer_svelte sample', () => {
 		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(content, 'svelte')), []);
 	});
 
+	test('sample produces its characteristic token types', () => {
+		const types = new Set(
+			syntax_events_to_tokens(syntax_styler_global.lex(content, 'svelte')).map((t) => t.type),
+		);
+		for (const t of ['tag', 'svelte_expression', 'lang_ts', 'attr_name', 'block', 'at_directive']) {
+			assert.ok(types.has(t), `expected a ${t} token in the sample`);
+		}
+	});
+
 	test('every prefix lexes without throwing, with valid invariants', () => {
 		for (let len = 0; len <= content.length; len += 11) {
 			const prefix = content.slice(0, len);

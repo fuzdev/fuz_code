@@ -7,29 +7,24 @@ import {lex_markup_construct, MARKUP_MODE_HTML, scan_entity_end} from './lexer_m
  * inline scan per block (bold/italic/strikethrough, inline code, links,
  * entities, and raw markup constructs dispatched through `lexer_markup`).
  *
- * Token vocabulary matches the retired regex grammar with one structurally
- * forced collapse: the 27 per-language/per-size `fenced_code_*` types become
- * a single `fenced_code` container (`code_fence` delimiter lines with the
- * `punctuation` alias + a `lang_*` container embedding the fence language).
- * Everything else keeps its name: `heading`/`blockquote`/`list` containers
- * with aliased `punctuation`, `link` > `link_text_wrapper`/`url_wrapper`,
- * `inline_code` (alias `code`) with `content`, `bold`/`italic`/
- * `strikethrough`, and markup's tag/comment/entity vocabulary for raw HTML.
+ * Fenced code is one `fenced_code` container (`code_fence` delimiter lines
+ * with the `punctuation` alias + a `lang_*` container embedding the fence
+ * language). The rest: `heading`/`blockquote`/`list` containers with aliased
+ * `punctuation`, `link` > `link_text_wrapper`/`url_wrapper`, `inline_code`
+ * (alias `code`) with `content`, `bold`/`italic`/`strikethrough`, and markup's
+ * tag/comment/entity vocabulary for raw HTML.
  *
- * Fidelity fixes over the regex grammar (per the reviewed-diff policy):
- * fence info words match exactly (` ```json ` embeds json — the old js
- * alternation prefix-matched it as javascript) and closing fences accept any
- * length ≥ the opener; interior lines starting with backticks are fence
- * *content*, not stray `code_fence` tokens; heading/blockquote/list
- * interiors get the inline scan (the old type-major engine left them plain);
- * list containers span their line instead of swallowing preceding newlines;
+ * Notable behavior: fence info words match exactly (` ```json ` embeds json,
+ * not javascript) and closing fences accept any length ≥ the opener; interior
+ * lines starting with backticks are fence *content*, not stray `code_fence`
+ * tokens; heading/blockquote/list interiors get the inline scan; list
+ * containers span their line rather than swallowing preceding newlines;
  * horizontal rules (`---`/`***`/`___`) get an `hr` token (alias
- * `punctuation`). Emphasis delimiters keep the old matching rules
- * (non-space-adjacent interiors free of the delimiter, word boundaries for
- * `_` forms) but are line-bounded — the old engine let them span paragraphs.
+ * `punctuation`). Emphasis delimiters require non-space-adjacent interiors
+ * free of the delimiter (and word boundaries for `_` forms) and are
+ * line-bounded — they do not span paragraphs.
  *
- * Resilience: an unterminated fence extends to the end of the window (the
- * old engine re-lexed its interior as markdown).
+ * Resilience: an unterminated fence extends to the end of the window.
  */
 
 const T_FENCED_CODE = token_type('fenced_code');
@@ -305,8 +300,8 @@ const lex_md_fence = (l: Lexer, ls: number, le: number, next: number, end: numbe
 	let bt = ls;
 	while (bt < le && text.charCodeAt(bt) === 96) bt++;
 	const count = bt - ls;
-	// info word — immediately after the backticks (matching the old patterns),
-	// ending at whitespace or the line end
+	// info word — immediately after the backticks, ending at whitespace or the
+	// line end
 	let w = bt;
 	while (w < le && !is_line_space(text.charCodeAt(w))) w++;
 	const lang = w > bt ? FENCE_LANGS.get(text.slice(bt, w)) : undefined;
@@ -331,7 +326,7 @@ const lex_md_fence = (l: Lexer, ls: number, le: number, next: number, end: numbe
 
 	l.open(T_FENCED_CODE, ls);
 	l.leaf(T_CODE_FENCE, ls, le);
-	const content_start = le; // includes the newline, matching the old spans
+	const content_start = le; // includes the newline
 	const content_end = close_ls === -1 ? end : close_ls;
 	if (lang !== undefined && content_end > content_start) {
 		l.open(lang.container, content_start);

@@ -81,6 +81,21 @@ describe('lexer_json sample', () => {
 		assert.deepEqual(validate_syntax_events(lexed), []);
 	});
 
+	test('sample produces its characteristic token types', () => {
+		const types = new Set(
+			syntax_events_to_tokens(syntax_styler_global.lex(content, 'json')).map((t) => t.type),
+		);
+		for (const t of ['property', 'string', 'number', 'boolean', 'null', 'punctuation']) {
+			assert.ok(types.has(t), `expected a ${t} token in the sample`);
+		}
+	});
+
+	test('lexing is deterministic', () => {
+		const a = syntax_events_to_tokens(syntax_styler_global.lex(content, 'json'));
+		const b = syntax_events_to_tokens(syntax_styler_global.lex(content, 'json'));
+		assert.deepEqual(a, b);
+	});
+
 	test('every prefix lexes without throwing, with valid invariants', () => {
 		for (let len = 0; len <= content.length; len += 7) {
 			const prefix = content.slice(0, len);

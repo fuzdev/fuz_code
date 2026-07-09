@@ -6,10 +6,10 @@
 
 **[code.fuz.dev](https://code.fuz.dev/)**
 
-fuz*code is a runtime syntax highlighter: it turns source code into HTML with
-`.token*\_`CSS classes, and knows nothing about the DOM. It originated as a fork
+`fuz_code` is a runtime syntax highlighter: it turns source code into HTML with
+`.token_*` CSS classes, and knows nothing about the DOM. It originated as a fork
 of [Prism](https://github.com/PrismJS/prism) ([prismjs.com](https://prismjs.com/))
-and keeps its`.token\_\_` class vocabulary, but the tokenizer is now a full
+and keeps its `.token_*` class vocabulary, but the tokenizer is now a full
 rewrite — one hand-written single-pass lexer per language emitting a flat token
 event stream, with zero regular expressions.
 
@@ -34,7 +34,7 @@ Compared to [Shiki](https://github.com/shikijs/shiki), fuz_code is much lighter
 and [vastly faster](./benchmark/compare/results.md) for runtime usage: it runs
 hand-written single-pass lexers rather than the
 [Oniguruma regexp engine](https://shiki.matsu.io/guide/regex-engines) that
-TextMate grammars require, and has zero dependencies instead of 38. Shiki
+TextMate grammars require, and has zero runtime dependencies instead of 38. Shiki
 targets build-time use and supports far more languages and themes — pick the
 tool that fits; fuz_code is optimized for small, fast, runtime highlighting.
 

@@ -3,21 +3,19 @@ import {is_space, matches_ci, token_type, type Lexer, type SyntaxLang} from './l
 /**
  * Hand-written CSS lexer.
  *
- * Token vocabulary matches the retired regex grammar: `comment`, `atrule`
- * (a container wrapping `rule` + prelude), `rule`, `selector`, `string`,
- * `property`, `important`, `function`, `url` (a container), `keyword`
- * (`and`/`not`/`only`/`or` inside at-rule preludes), and `punctuation`.
+ * Emits: `comment`, `atrule` (a container wrapping `rule` + prelude), `rule`,
+ * `selector`, `string`, `property`, `important`, `function`, `url` (a
+ * container), `keyword` (`and`/`not`/`only`/`or` inside at-rule preludes), and
+ * `punctuation`.
  *
- * Structure is decided by a brace-context lookahead rather than the old
- * lookahead regexes: from each item, the first top-level `{`, `;`, or `}`
- * (skipping strings, comments, `()`, and `[]`) says whether the item is a
- * qualified rule (its prelude is a `selector`) or a declaration
- * (`property : value`). Because that decision is purely local, the flat main
- * loop nests to any depth — native CSS nesting works for free (the agreed
- * fidelity extra), where the regex model could not express it.
+ * Structure is decided by a brace-context lookahead: from each item, the first
+ * top-level `{`, `;`, or `}` (skipping strings, comments, `()`, and `[]`) says
+ * whether the item is a qualified rule (its prelude is a `selector`) or a
+ * declaration (`property : value`). Because that decision is purely local, the
+ * flat main loop nests to any depth, so native CSS nesting works for free.
  *
- * Values (declaration right-hand sides and at-rule preludes) reproduce the old
- * grammar's sparse output: only strings, `url()`, functions, `!important`, and
+ * Values (declaration right-hand sides and at-rule preludes) are tokenized
+ * sparsely: only strings, `url()`, functions, `!important`, and
  * `property`-before-colon are tokenized; numbers, colors, units, and bare
  * identifiers stay plain text.
  *
@@ -39,7 +37,20 @@ const T_URL = token_type('url');
 const T_KEYWORD = token_type('keyword');
 
 // at-rule prelude keywords (`@media screen and (...)`)
-const ATRULE_KEYWORDS: Set<string> = new Set(['and', 'not', 'only', 'or']);
+// at-rule prelude keywords (`@media screen and (...)`), matched
+// case-insensitively without allocating (matching the rest of this file)
+const is_atrule_keyword = (text: string, from: number, to: number): boolean => {
+	switch (to - from) {
+		case 2:
+			return matches_ci(text, from, 'or');
+		case 3:
+			return matches_ci(text, from, 'and') || matches_ci(text, from, 'not');
+		case 4:
+			return matches_ci(text, from, 'only');
+		default:
+			return false;
+	}
+};
 
 // a css identifier char: letters, digits, `-`, `_`, and non-ASCII
 const is_css_ident = (c: number): boolean =>
@@ -57,7 +68,7 @@ const is_css_ident_start = (c: number): boolean =>
 /**
  * Scans a `"` or `'` string from `i`, returning the exclusive end.
  * Handles `\` escapes (including escaped newlines); an unterminated string
- * stops at the newline (matching the old grammar's `[^"\\\r\n]` class).
+ * stops at the newline.
  */
 const scan_css_string = (text: string, from: number, end: number, quote: number): number => {
 	let i = from + 1;
@@ -190,7 +201,7 @@ const lex_css_value = (l: Lexer, from: number, to: number, is_atrule: boolean): 
 				i = ident_end;
 				continue;
 			}
-			if (is_atrule && ATRULE_KEYWORDS.has(text.slice(i, ident_end).toLowerCase())) {
+			if (is_atrule && is_atrule_keyword(text, i, ident_end)) {
 				l.leaf(T_KEYWORD, i, ident_end);
 				i = ident_end;
 				continue;
