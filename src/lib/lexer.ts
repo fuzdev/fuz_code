@@ -165,12 +165,12 @@ export class Lexer {
 		this.events = new Int32Array(capacity < 256 ? 256 : capacity);
 	}
 
-	#ensure(extra: number): void {
-		if (this.events_len + extra > this.events.length) {
-			const next = new Int32Array(this.events.length * 2);
-			next.set(this.events);
-			this.events = next;
-		}
+	// cold path of the emitters' capacity checks — kept out of line so the
+	// hot check inlines into `leaf`/`open`/`close`
+	#grow(): void {
+		const next = new Int32Array(this.events.length * 2);
+		next.set(this.events);
+		this.events = next;
 	}
 
 	/**
@@ -187,7 +187,7 @@ export class Lexer {
 			events[i + 2] = end;
 			return;
 		}
-		this.#ensure(3);
+		if (this.events_len + 3 > this.events.length) this.#grow();
 		const at = this.events_len;
 		this.events[at] = type_id;
 		this.events[at + 1] = start;
@@ -202,7 +202,7 @@ export class Lexer {
 	 * @mutates `this`
 	 */
 	open(type_id: number, start: number): void {
-		this.#ensure(2);
+		if (this.events_len + 2 > this.events.length) this.#grow();
 		const at = this.events_len;
 		this.events[at] = -type_id;
 		this.events[at + 1] = start;
@@ -216,7 +216,7 @@ export class Lexer {
 	 * @mutates `this`
 	 */
 	close(end: number): void {
-		this.#ensure(2);
+		if (this.events_len + 2 > this.events.length) this.#grow();
 		const at = this.events_len;
 		this.events[at] = 0;
 		this.events[at + 1] = end;

@@ -28,6 +28,8 @@ import {
  * - heredocs match any delimiter, honor `<<-`, and support quoted (no
  *   expansion) vs unquoted (expanded) bodies; multiple heredocs redirected on
  *   one line are queued and their bodies consumed in order.
+ * - `${…}` parameter expansion spans balanced braces — nested expansions
+ *   (`${a:-${b}}`) and quoted `}`s stay inside the one `variable` token.
  *
  * Word classification (keyword/builtin/boolean) is a context-free `Map`
  * lookup.
@@ -198,9 +200,29 @@ const scan_dollar_var = (l: Lexer, i: number, to: number): number => {
 	const {text} = l;
 	const c1 = text.charCodeAt(i + 1);
 	if (c1 === 123) {
-		// `${…}` — to the first `}`
-		const close = text.indexOf('}', i + 2);
-		const end = close === -1 || close >= to ? to : close + 1;
+		// `${…}` — balanced braces, so nested expansions (`${a:-${b}}`) span
+		// fully; quoted spans are skipped (`${a:-"}"}`) and `\` escapes the
+		// next char; unterminated extends to the window end
+		let depth = 1;
+		let j = i + 2;
+		while (j < to) {
+			const c = text.charCodeAt(j);
+			if (c === 34 || c === 39) {
+				j = skip_bash_quote(text, j, to, c);
+			} else if (c === 92) {
+				j += 2;
+			} else if (c === 123) {
+				depth++;
+				j++;
+			} else if (c === 125) {
+				depth--;
+				j++;
+				if (depth === 0) break;
+			} else {
+				j++;
+			}
+		}
+		const end = j > to ? to : j;
 		l.leaf(T_VARIABLE, i, end);
 		return end;
 	}

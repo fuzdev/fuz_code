@@ -94,6 +94,19 @@ describe('lexer_bash variables and expansions', () => {
 	test('a bare $ before a non-name char is plain', () => {
 		assert.deepEqual(picked('"x$"', ['variable']), []);
 	});
+
+	test('nested and quoted parameter expansions span the balanced braces', () => {
+		assert.deepEqual(picked('echo ${a:-${b}} ${c%"}"} "${d:-${e}}"', ['variable']), [
+			['variable', '${a:-${b}}'],
+			['variable', '${c%"}"}'],
+			['variable', '${d:-${e}}'],
+		]);
+	});
+
+	test('an unterminated ${ nest extends to the window end without throwing', () => {
+		const lexed = syntax_styler_global.lex('echo ${a:-${b}', 'bash');
+		assert.deepEqual(validate_syntax_events(lexed), []);
+	});
 });
 
 describe('lexer_bash arithmetic', () => {
