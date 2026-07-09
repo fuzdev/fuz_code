@@ -1,4 +1,4 @@
-import {is_space, token_type, type Lexer, type SyntaxLang} from './lexer.ts';
+import {is_space, matches_ci, token_type, type Lexer, type SyntaxLang} from './lexer.ts';
 
 /**
  * Hand-written CSS lexer.
@@ -234,14 +234,6 @@ const lex_css_url = (l: Lexer, i: number, word_end: number, to: number): number 
 	l.leaf(T_PUNCTUATION, close, close + 1);
 	l.close(close + 1);
 	return close + 1;
-};
-
-// case-insensitive ASCII match of `word` at `text[from..]`
-const matches_ci = (text: string, from: number, word: string): boolean => {
-	for (let k = 0; k < word.length; k++) {
-		if ((text.charCodeAt(from + k) | 0x20) !== word.charCodeAt(k)) return false;
-	}
-	return true;
 };
 
 /**

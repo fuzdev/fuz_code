@@ -210,7 +210,8 @@ describe('lexer_markup script and style regions', () => {
 		assert.deepEqual(tokens_of('<textarea><b>&amp;</b></textarea>').slice(4, -4), [
 			['entity', '&amp;'],
 		]);
-		assert.deepEqual(picked('<title>a <b> b</title>', ['tag']).length, 2 * 2); // only <title> and </title>
+		// 4 = the outer+inner `tag` pairs of <title> and </title> — no <b> tag
+		assert.strictEqual(picked('<title>a <b> b</title>', ['tag']).length, 4);
 	});
 });
 

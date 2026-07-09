@@ -119,15 +119,17 @@ languages registered. Import this for typical usage.
 
 ### Token structure
 
-Tokens form a hierarchical tree where tokens can contain nested tokens:
+Lexer engine: a flat event stream (`LexedSyntax`) — leaf/open/close records
+in one `Int32Array` with interned type ids; plain text is implicit between
+events. The regex engine builds a hierarchical `SyntaxToken` tree instead:
 
 - `type` - token type (e.g., 'keyword', 'string')
 - `content` - text or nested `SyntaxTokenStream`
 - `alias` - CSS class aliases
 - `length` - token text length
 
-Generated HTML uses classes like `.token_keyword`, `.token_string`, styled by
-`theme.css`.
+Both engines generate HTML using classes like `.token_keyword`,
+`.token_string`, styled by `theme.css`.
 
 ### Language definitions
 
@@ -320,10 +322,15 @@ Theme uses CSS variables from fuz_css:
 
 ### Adding a new language
 
-1. Create `src/lib/grammar_{lang}.ts`
-2. Define grammar patterns (see existing languages)
-3. Register in `syntax_styler_global.ts`
-4. Add samples in `src/test/fixtures/samples/sample_{variant}.{lang}`
+New languages are written as lexers (the regex-grammar path is being
+retired):
+
+1. Create `src/lib/lexer_{lang}.ts` exporting a `SyntaxLang` (see existing
+   lexers; zero regex, flat token events)
+2. Register via `add_lexer_lang` in `syntax_styler_global.ts`
+3. Add samples in `src/test/fixtures/samples/sample_{variant}.{lang}`
+4. Add a `src/test/lexer_{lang}.test.ts` suite (targeted cases +
+   prefix-resilience + determinism, mirroring the existing suites)
 5. Generate fixtures and test
 
 ## Known limitations

@@ -444,6 +444,18 @@ CHAR_FLAGS[32] = CF_SPACE; // space
 
 export const is_space = (c: number): boolean => c < 128 && (CHAR_FLAGS[c]! & CF_SPACE) !== 0;
 
+/**
+ * Case-insensitive ASCII match of `word` (must be lowercase) at
+ * `text[from..]`, via `code | 0x20` folding — never allocates, unlike
+ * `toLowerCase()` comparisons.
+ */
+export const matches_ci = (text: string, from: number, word: string): boolean => {
+	for (let k = 0; k < word.length; k++) {
+		if ((text.charCodeAt(from + k) | 0x20) !== word.charCodeAt(k)) return false;
+	}
+	return true;
+};
+
 export const is_digit = (c: number): boolean => c >= 48 && c <= 57;
 
 export const is_ident_start = (c: number): boolean =>

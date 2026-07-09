@@ -1,4 +1,12 @@
-import {is_digit, is_space, skip_space, token_type, type Lexer, type SyntaxLang} from './lexer.ts';
+import {
+	is_digit,
+	is_space,
+	matches_ci,
+	skip_space,
+	token_type,
+	type Lexer,
+	type SyntaxLang,
+} from './lexer.ts';
 
 /**
  * Hand-written HTML/XML lexer.
@@ -55,14 +63,6 @@ const T_LANG_CSS = token_type('lang_css');
 const T_VALUE_JS = token_type('value', ['js', 'lang_js']);
 const T_VALUE_CSS = token_type('value', ['css', 'lang_css']);
 
-// case-insensitive ASCII match of `word` (lowercase) at `text[from..]`
-const matches_ci = (text: string, from: number, word: string): boolean => {
-	for (let k = 0; k < word.length; k++) {
-		if ((text.charCodeAt(from + k) | 0x20) !== word.charCodeAt(k)) return false;
-	}
-	return true;
-};
-
 // a tag-name char — anything except whitespace, `>`, `/`, `=`, `$`, `<`, `%`
 // (the old pattern's negated class; `$` and `%` keep template syntax inert)
 const is_tag_name_char = (c: number): boolean =>
@@ -75,7 +75,7 @@ const is_attr_name_end = (c: number): boolean => is_space(c) || c === 62 || c ==
 const is_unquoted_value_end = (c: number): boolean =>
 	is_space(c) || c === 62 || c === 34 || c === 39 || c === 61;
 
-const is_entity_alnum = (c: number): boolean =>
+const is_ascii_alnum = (c: number): boolean =>
 	(c >= 48 && c <= 57) || ((c | 0x20) >= 97 && (c | 0x20) <= 122);
 
 const is_entity_hex = (c: number): boolean =>
@@ -94,7 +94,7 @@ const scan_entity_end = (text: string, i: number, end: number): number => {
 		if (j < end && (text.charCodeAt(j) | 0x20) === 120) j++; // x
 	}
 	const digits_start = j;
-	const is_wanted = numeric ? is_entity_hex : is_entity_alnum;
+	const is_wanted = numeric ? is_entity_hex : is_ascii_alnum;
 	while (j < end && j - digits_start < 8 && is_wanted(text.charCodeAt(j))) j++;
 	if (j === digits_start) return -1;
 	if (j < end && text.charCodeAt(j) === 59) return j + 1; // ;
@@ -132,7 +132,7 @@ const special_attr_lang = (text: string, from: number, to: number): string | nul
 		for (let k = from + 2; k < to; k++) {
 			const c = text.charCodeAt(k);
 			// \w — letters, digits, `_`
-			if (!is_entity_alnum(c) && c !== 95) return null;
+			if (!is_ascii_alnum(c) && c !== 95) return null;
 		}
 		return 'js';
 	}
@@ -140,42 +140,12 @@ const special_attr_lang = (text: string, from: number, to: number): string | nul
 };
 
 /**
- * Emits a `special_attr` container for a `style=`/`on*=` attribute:
- * `attr_name`, then `attr_value` with `attr_equals`/`attr_quote` punctuation
- * and a `value` container embedding `lang`. Matching the old pattern, the
- * `value` container appears only when the content is non-empty and starts
- * immediately after the opening quote with a non-space char.
- */
-const lex_markup_special_attr = (
-	l: Lexer,
-	an_start: number,
-	an_end: number,
-	eq: number,
-	content_start: number,
-	content_end: number,
-	value_end: number,
-	quoted: boolean,
-	closed: boolean,
-	lang: string,
-): void => {
-	l.open(T_SPECIAL_ATTR, an_start);
-	l.leaf(T_ATTR_NAME, an_start, an_end);
-	l.open(T_ATTR_VALUE, eq);
-	l.leaf(T_ATTR_EQUALS, eq, eq + 1);
-	if (quoted) l.leaf(T_ATTR_QUOTE, content_start - 1, content_start);
-	if (content_end > content_start && !is_space(l.text.charCodeAt(content_start))) {
-		l.open(lang === 'css' ? T_VALUE_CSS : T_VALUE_JS, content_start);
-		l.embed(lang, content_start, content_end);
-		l.close(content_end);
-	}
-	if (quoted && closed) l.leaf(T_ATTR_QUOTE, content_end, content_end + 1);
-	l.close(value_end);
-	l.close(value_end);
-};
-
-/**
- * Emits a plain attribute value container `[eq, value_end)` — `attr_equals`,
- * quotes, and entities in the content.
+ * Emits an attribute value container `[eq, value_end)` — `attr_equals`, the
+ * quotes, and the content: entities for plain values, or (for `style=`/
+ * `on*=` special attrs) a `value` container embedding `embed_lang`. Matching
+ * the old pattern, the `value` container appears only when the content is
+ * non-empty and starts immediately after the opening quote with a non-space
+ * char.
  */
 const lex_markup_attr_value = (
 	l: Lexer,
@@ -185,18 +155,39 @@ const lex_markup_attr_value = (
 	value_end: number,
 	quoted: boolean,
 	closed: boolean,
+	embed_lang: string | null,
 ): void => {
 	l.open(T_ATTR_VALUE, eq);
 	l.leaf(T_ATTR_EQUALS, eq, eq + 1);
 	if (quoted) l.leaf(T_ATTR_QUOTE, content_start - 1, content_start);
-	lex_markup_entities(l, content_start, content_end);
+	if (embed_lang === null) {
+		lex_markup_entities(l, content_start, content_end);
+	} else if (content_end > content_start && !is_space(l.text.charCodeAt(content_start))) {
+		l.open(embed_lang === 'css' ? T_VALUE_CSS : T_VALUE_JS, content_start);
+		l.embed(embed_lang, content_start, content_end);
+		l.close(content_end);
+	}
 	if (quoted && closed) l.leaf(T_ATTR_QUOTE, content_end, content_end + 1);
 	l.close(value_end);
 };
 
 /**
- * Emits an `attr_name` (or the nested `tag` name's) `namespace` prefix when
- * the span contains a `ns:` prefix, per the old `^[^\s>/:]+:` pattern.
+ * Emits an `attr_name` — a container with a `namespace` prefix leaf when the
+ * name has one, else a plain leaf.
+ */
+const lex_markup_attr_name = (l: Lexer, from: number, to: number): void => {
+	const ns_end = scan_namespace_end(l.text, from, to);
+	if (ns_end === -1) {
+		l.leaf(T_ATTR_NAME, from, to);
+	} else {
+		l.open(T_ATTR_NAME, from);
+		l.leaf(T_NAMESPACE, from, ns_end);
+		l.close(to);
+	}
+};
+
+/**
+ * Finds a name span's `ns:` prefix, per the old `^[^\s>/:]+:` pattern.
  * Returns the namespace end (the index after `:`), or -1.
  */
 const scan_namespace_end = (text: string, from: number, to: number): number => {
@@ -263,14 +254,7 @@ const lex_markup_tag = (l: Lexer, i: number, end: number, html_mode: boolean): n
 		const eq = skip_space(text, an_end, end);
 		if (eq >= end || text.charCodeAt(eq) !== 61) {
 			// bare attribute
-			const attr_ns = scan_namespace_end(text, an_start, an_end);
-			if (attr_ns !== -1) {
-				l.open(T_ATTR_NAME, an_start);
-				l.leaf(T_NAMESPACE, an_start, attr_ns);
-				l.close(an_end);
-			} else {
-				l.leaf(T_ATTR_NAME, an_start, an_end);
-			}
+			lex_markup_attr_name(l, an_start, an_end);
 			j = an_end;
 			continue;
 		}
@@ -305,10 +289,10 @@ const lex_markup_tag = (l: Lexer, i: number, end: number, html_mode: boolean): n
 		// a special attr needs a quoted or non-empty value, per the old pattern
 		const special_lang = html_mode ? special_attr_lang(text, an_start, an_end) : null;
 		if (special_lang !== null && (quoted || content_end > content_start)) {
-			lex_markup_special_attr(
+			l.open(T_SPECIAL_ATTR, an_start);
+			l.leaf(T_ATTR_NAME, an_start, an_end);
+			lex_markup_attr_value(
 				l,
-				an_start,
-				an_end,
 				eq,
 				content_start,
 				content_end,
@@ -317,18 +301,12 @@ const lex_markup_tag = (l: Lexer, i: number, end: number, html_mode: boolean): n
 				closed,
 				special_lang,
 			);
+			l.close(value_end);
 		} else {
-			const attr_ns = scan_namespace_end(text, an_start, an_end);
-			if (attr_ns !== -1) {
-				l.open(T_ATTR_NAME, an_start);
-				l.leaf(T_NAMESPACE, an_start, attr_ns);
-				l.close(an_end);
-			} else {
-				l.leaf(T_ATTR_NAME, an_start, an_end);
-			}
-			lex_markup_attr_value(l, eq, content_start, content_end, value_end, quoted, closed);
+			lex_markup_attr_name(l, an_start, an_end);
+			lex_markup_attr_value(l, eq, content_start, content_end, value_end, quoted, closed, null);
 		}
-		j = value_end > an_end ? value_end : an_end + 1;
+		j = value_end;
 	}
 	l.close(tag_end);
 	return tag_end;
