@@ -11,12 +11,18 @@ import {format_file} from '@fuzdev/gro/format_file.ts';
 
 import {samples as all_samples} from '../src/routes/samples/all.ts';
 import {syntax_styler_global} from '../src/lib/syntax_styler_global.ts';
+import {PATHOLOGICAL_CASES} from '../src/test/pathological.ts';
 
 /* eslint-disable no-console */
 
 const BENCHMARK_TIME = 10000;
 const WARMUP_ITERATIONS = 50;
 const LARGE_CONTENT_MULTIPLIER = 100;
+// pathological cases are regression tripwires, not headline numbers — a
+// shorter budget keeps the full run's added cost modest while still giving
+// the baseline compare thousands of iterations per case
+const PATHOLOGICAL_BENCHMARK_TIME = 3000;
+const PATHOLOGICAL_SIZE = 32768;
 
 const BASELINE_PATH = 'benchmark';
 const BASELINE_FILE = `${BASELINE_PATH}/baseline.json`;
@@ -60,7 +66,27 @@ export const run_benchmark = async (filter?: string): Promise<Array<BenchmarkRes
 		});
 	}
 
-	return bench.run();
+	const results = await bench.run();
+
+	// pathological workloads run on a separate instance with a shorter budget
+	const pathological_bench = new Benchmark({
+		duration_ms: PATHOLOGICAL_BENCHMARK_TIME,
+		warmup_iterations: WARMUP_ITERATIONS,
+	});
+	let pathological_count = 0;
+	for (const c of PATHOLOGICAL_CASES) {
+		if (filter && !c.name.includes(filter) && filter !== c.lang) continue;
+		const content = c.generate(PATHOLOGICAL_SIZE);
+		pathological_bench.add(`pathological:${c.name}`, () => {
+			syntax_styler_global.stylize(content, c.lang);
+		});
+		pathological_count++;
+	}
+	if (pathological_count > 0) {
+		return results.concat(await pathological_bench.run());
+	}
+
+	return results;
 };
 
 // `baseline:` and `large:` measure different workload sizes (1x vs 100x
@@ -71,6 +97,7 @@ export const run_benchmark = async (filter?: string): Promise<Array<BenchmarkRes
 const GROUPS: Array<BenchmarkGroup> = [
 	{name: 'Baseline (1x content)', filter: (r) => r.name.startsWith('baseline:')},
 	{name: 'Large (100x content)', filter: (r) => r.name.startsWith('large:')},
+	{name: 'Pathological (generated, 32KB)', filter: (r) => r.name.startsWith('pathological:')},
 ];
 
 // Heading kept inside the auto-managed region so the writer round-trips the

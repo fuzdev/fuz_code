@@ -1,6 +1,7 @@
 import {test, assert, describe} from 'vitest';
 
 import {SyntaxStyler} from '$lib/syntax_styler.ts';
+import {token_types_global, TokenTypeRegistry} from '$lib/lexer.ts';
 import {tokenize_syntax} from '$lib/tokenize_syntax.ts';
 import {add_grammar_js} from '$lib/grammar_js.ts';
 import {add_grammar_ts} from '$lib/grammar_ts.ts';
@@ -654,5 +655,32 @@ describe('tokenize (hooked tokenization)', () => {
 
 		syntax_styler.stylize('const x = 1;', 'js');
 		assert.equal(wrap_lang, 'rewritten');
+	});
+});
+
+describe('token_types injection', () => {
+	test('defaults to the shared global registry', () => {
+		const syntax_styler = new SyntaxStyler();
+		assert.strictEqual(syntax_styler.token_types, token_types_global);
+		assert.strictEqual(syntax_styler_global.token_types, token_types_global);
+	});
+
+	test('an injected registry flows through lex and stylize', () => {
+		const types = new TokenTypeRegistry();
+		const t_word = types.intern('word');
+		const syntax_styler = new SyntaxStyler({token_types: types});
+		syntax_styler.add_lexer_lang({
+			id: 'test_words',
+			lex: (l) => {
+				l.leaf(t_word, l.pos, l.end);
+				l.pos = l.end;
+			},
+		});
+		const lexed = syntax_styler.lex('abc', 'test_words');
+		assert.strictEqual(lexed.types, types);
+		assert.strictEqual(
+			syntax_styler.stylize('abc', 'test_words'),
+			'<span class="token_word">abc</span>',
+		);
 	});
 });

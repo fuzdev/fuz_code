@@ -67,9 +67,11 @@ src/
 ├── lib/                        # exportable library code
 │   ├── syntax_styler.ts        # SyntaxStyler class, hook system
 │   ├── syntax_styler_global.ts # pre-configured global instance
-│   ├── tokenize_syntax.ts      # tokenize_syntax() function
+│   ├── lexer.ts                # lexer-engine substrate: Lexer, TokenTypeRegistry, flat events, HTML render
+│   ├── lexer_*.ts              # hand-written lexers (json, ts, css, bash, markup)
+│   ├── tokenize_syntax.ts      # tokenize_syntax() function (regex engine)
 │   ├── syntax_token.ts         # SyntaxToken class, type definitions
-│   ├── grammar_*.ts            # language definitions (8 files)
+│   ├── grammar_*.ts            # regex language definitions (8 files)
 │   ├── Code.svelte             # main Svelte component
 │   ├── CodeHighlight.svelte    # experimental CSS Highlight API
 │   ├── highlight_manager.ts    # CSS Highlight API manager
@@ -80,6 +82,9 @@ src/
 ├── test/                       # test files and fixtures
 │   ├── syntax_styler.test.ts
 │   ├── highlight_manager.test.ts
+│   ├── lexer*.test.ts          # lexer-engine suites (substrate + per language)
+│   ├── lexer.pathological.test.ts # linearity + validity on adversarial inputs
+│   ├── pathological.ts         # pathological input generators (tests + benchmark)
 │   └── fixtures/
 │       ├── samples/            # source of truth sample files
 │       ├── generated/          # generated fixture outputs
@@ -93,15 +98,24 @@ src/
 
 ### Core system
 
-**SyntaxStyler** - The main class for tokenization and HTML generation. Uses
-regex-based tokenization inherited from PrismJS, maintaining compatibility with
-existing language definitions.
+Two engines currently coexist (the lexer engine is replacing the regex
+engine, language by language, on the `lexer-architecture` branch):
 
-**syntax_styler_global** - Pre-configured instance with all built-in grammars
-registered. Import this for typical usage.
+**Lexer engine** (`lexer.ts` + `lexer_*.ts`) - hand-written single-pass
+lexers emitting flat token events (`Int32Array`) rendered to HTML in one
+forward pass. `stylize` routes through it for ported languages (json, ts/js,
+css, bash, html/markup + xml). Token types intern into a `TokenTypeRegistry`
+(`token_types_global` by default, injectable via `SyntaxStylerOptions`).
 
-**tokenize_syntax()** - Core tokenization function that processes text through
-grammar patterns and returns a token stream.
+**Regex engine** (`tokenize_syntax.ts` + `grammar_*.ts`) - PrismJS-inherited
+multi-pass tokenization; still serves `tokenize()`, the unported languages
+(svelte, md), and embedded regions inside unported grammars.
+
+**SyntaxStyler** - The main class for tokenization and HTML generation,
+fronting both engines.
+
+**syntax_styler_global** - Pre-configured instance with all built-in
+languages registered. Import this for typical usage.
 
 ### Token structure
 
@@ -116,6 +130,19 @@ Generated HTML uses classes like `.token_keyword`, `.token_string`, styled by
 `theme.css`.
 
 ### Language definitions
+
+Lexer engine (preferred by `stylize` when registered):
+
+- `lexer_json.ts` - JSON (with comments)
+- `lexer_ts.ts` - TypeScript; also registers the `js`/`javascript` aliases
+  (TS is a syntactic superset — there is no separate JS lexer)
+- `lexer_css.ts` - CSS (including native nesting)
+- `lexer_bash.ts` - Bash/shell
+- `lexer_markup.ts` - HTML (`markup`/`html`/`mathml`/`svg`: rawtext
+  script/style/textarea/title, `style=`/`on*=` attribute embedding) and XML
+  (`xml`/`ssml`/`atom`/`rss`: plain tag scanning), one shared scanner
+
+Regex grammars (unported languages + `tokenize()` until cutover):
 
 - `grammar_clike.ts` - base for C-like languages
 - `grammar_js.ts` - JavaScript
@@ -199,8 +226,12 @@ in-tree baseline comparison the internal benchmark performs via
 runs the baseline compare on every invocation (free; just reads
 `benchmark/baseline.json`); only `--save` mutates it.
 
-Internal benchmark tests all sample files at normal and 100x sizes. The vs
-comparison tests against Prism and Shiki (JS and Oniguruma engines).
+Internal benchmark tests all sample files at normal and 100x sizes, plus a
+`pathological:` group of generated adversarial inputs (`src/test/pathological.ts`,
+32KB each, shorter per-case budget) that tracks the lexer engine's worst-case
+constants; the same generators back the CI linearity suite
+(`src/test/lexer.pathological.test.ts`). The vs comparison tests against
+Prism and Shiki (JS and Oniguruma engines).
 
 ### Updating committed result snapshots
 

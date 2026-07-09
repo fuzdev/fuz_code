@@ -17,9 +17,9 @@
  */
 
 /**
- * Interned metadata for a token type, shared by all lexers and stylers.
+ * Interned metadata for a token type.
  */
-export interface SyntaxTypeInfo {
+export interface TokenTypeInfo {
 	id: number;
 	name: string;
 	aliases: Array<string>;
@@ -33,35 +33,66 @@ export interface SyntaxTypeInfo {
 	open_tag: string;
 }
 
-const type_infos: Array<SyntaxTypeInfo> = [
-	// id 0 is reserved — it's the close-event tag
-	{id: 0, name: '', aliases: [], classes: '', open_tag: ''},
-];
-const type_ids: Map<string, number> = new Map();
+/**
+ * An id space of interned token types with precomputed CSS classes and HTML
+ * open tags. Ids are only meaningful against the registry that interned them —
+ * a lexed event stream resolves back through the registry stamped on its
+ * `LexedSyntax`.
+ */
+export class TokenTypeRegistry {
+	/**
+	 * Interned infos indexed by id. Hot loops hoist and index this directly;
+	 * grow it only via `intern`.
+	 */
+	readonly infos: Array<TokenTypeInfo> = [
+		// id 0 is reserved — it's the close-event tag
+		{id: 0, name: '', aliases: [], classes: '', open_tag: ''},
+	];
+	#ids: Map<string, number> = new Map();
+
+	/**
+	 * Interns a token type by name (+ optional aliases) and returns its id.
+	 * Repeated calls with the same name and aliases return the same id. The CSS
+	 * class list and HTML open tag are precomputed here so emitters never build
+	 * class strings at runtime.
+	 */
+	intern(name: string, alias?: string | Array<string>): number {
+		const aliases = alias === undefined ? [] : Array.isArray(alias) ? alias : [alias];
+		const key = name + '\x1F' + aliases.join('\x1F');
+		const existing = this.#ids.get(key);
+		if (existing !== undefined) return existing;
+		let classes = 'token_' + name;
+		for (const a of aliases) classes += ' token_' + a;
+		const id = this.infos.length;
+		this.infos.push({id, name, aliases, classes, open_tag: '<span class="' + classes + '">'});
+		this.#ids.set(key, id);
+		return id;
+	}
+
+	/**
+	 * Looks up the interned info for a token type id.
+	 */
+	info(id: number): TokenTypeInfo {
+		return this.infos[id]!;
+	}
+}
 
 /**
- * Interns a token type by name (+ optional aliases) into the global id space
- * and returns its id. Repeated calls with the same name and aliases return the
- * same id. The CSS class list and HTML open tag are precomputed here so
- * emitters never build class strings at runtime.
+ * The shared default registry — the single id space used by the built-in
+ * lexers' module-load `token_type` constants and by any `SyntaxStyler` not
+ * given its own registry. The type vocabulary is global by design, mirroring
+ * the global `.token_*` CSS namespace; per-registry isolation exists for
+ * fully-custom stylers and tests, whose lexers must intern into the same
+ * registry they're rendered against.
  */
-export const token_type = (name: string, alias?: string | Array<string>): number => {
-	const aliases = alias === undefined ? [] : Array.isArray(alias) ? alias : [alias];
-	const key = name + '\x1F' + aliases.join('\x1F');
-	const existing = type_ids.get(key);
-	if (existing !== undefined) return existing;
-	let classes = 'token_' + name;
-	for (const a of aliases) classes += ' token_' + a;
-	const id = type_infos.length;
-	type_infos.push({id, name, aliases, classes, open_tag: '<span class="' + classes + '">'});
-	type_ids.set(key, id);
-	return id;
-};
+export const token_types_global: TokenTypeRegistry = new TokenTypeRegistry();
 
 /**
- * Looks up the interned info for a token type id.
+ * Interns a token type into `token_types_global` — the zero-config authoring
+ * path used by the built-in lexers' module-load type constants.
  */
-export const token_type_info = (id: number): SyntaxTypeInfo => type_infos[id]!;
+export const token_type = (name: string, alias?: string | Array<string>): number =>
+	token_types_global.intern(name, alias);
 
 /**
  * A lexer-based language registration — the replacement for regex grammars.
@@ -89,6 +120,12 @@ export interface LexedSyntax {
 	text: string;
 	events: Int32Array;
 	events_len: number;
+	/**
+	 * The registry that interned the type ids in `events` — consumers resolve
+	 * ids through it, so a stream can never be rendered against the wrong
+	 * id space.
+	 */
+	types: TokenTypeRegistry;
 }
 
 /**
@@ -205,11 +242,14 @@ export class Lexer {
  * @param text - the source text
  * @param lang - the language to lex with
  * @param langs - registry used to resolve embedded languages by id
+ * @param types - token-type registry stamped on the result; must be the one
+ *   `lang` (and any embedded language) interned its type ids into
  */
 export const lex_syntax = (
 	text: string,
 	lang: SyntaxLang,
 	langs?: Map<string, SyntaxLang>,
+	types: TokenTypeRegistry = token_types_global,
 ): LexedSyntax => {
 	// capacity heuristic: dense token streams run ~1 int per source char
 	const lexer = new Lexer(text.length);
@@ -218,7 +258,7 @@ export const lex_syntax = (
 	lexer.end = text.length;
 	lexer.langs = langs ?? null;
 	lang.lex(lexer);
-	return {text, events: lexer.events, events_len: lexer.events_len};
+	return {text, events: lexer.events, events_len: lexer.events_len, types};
 };
 
 /**
@@ -251,6 +291,7 @@ const escape_html_slice = (text: string, from: number, to: number): string => {
  */
 export const render_syntax_html = (lexed: LexedSyntax): string => {
 	const {text, events, events_len} = lexed;
+	const {infos} = lexed.types;
 	let out = '';
 	let pos = 0;
 	let i = 0;
@@ -260,13 +301,13 @@ export const render_syntax_html = (lexed: LexedSyntax): string => {
 			const start = events[i + 1]!;
 			const end = events[i + 2]!;
 			if (start > pos) out += escape_html_slice(text, pos, start);
-			out += type_infos[tag]!.open_tag + escape_html_slice(text, start, end) + '</span>';
+			out += infos[tag]!.open_tag + escape_html_slice(text, start, end) + '</span>';
 			pos = end;
 			i += 3;
 		} else if (tag < 0) {
 			const start = events[i + 1]!;
 			if (start > pos) out += escape_html_slice(text, pos, start);
-			out += type_infos[-tag]!.open_tag;
+			out += infos[-tag]!.open_tag;
 			pos = start;
 			i += 2;
 		} else {
@@ -297,16 +338,17 @@ export interface SyntaxEventToken {
  */
 export const syntax_events_to_tokens = (lexed: LexedSyntax): Array<SyntaxEventToken> => {
 	const {events, events_len} = lexed;
+	const {infos} = lexed.types;
 	const tokens: Array<SyntaxEventToken> = [];
 	const stack: Array<SyntaxEventToken> = [];
 	let i = 0;
 	while (i < events_len) {
 		const tag = events[i]!;
 		if (tag > 0) {
-			tokens.push({type: type_infos[tag]!.name, start: events[i + 1]!, end: events[i + 2]!});
+			tokens.push({type: infos[tag]!.name, start: events[i + 1]!, end: events[i + 2]!});
 			i += 3;
 		} else if (tag < 0) {
-			const t: SyntaxEventToken = {type: type_infos[-tag]!.name, start: events[i + 1]!, end: -1};
+			const t: SyntaxEventToken = {type: infos[-tag]!.name, start: events[i + 1]!, end: -1};
 			tokens.push(t);
 			stack.push(t);
 			i += 2;
@@ -326,6 +368,7 @@ export const syntax_events_to_tokens = (lexed: LexedSyntax): Array<SyntaxEventTo
  */
 export const validate_syntax_events = (lexed: LexedSyntax): Array<string> => {
 	const {text, events, events_len} = lexed;
+	const {infos} = lexed.types;
 	const issues: Array<string> = [];
 	const stack: Array<number> = [];
 	let cursor = 0;
@@ -339,7 +382,7 @@ export const validate_syntax_events = (lexed: LexedSyntax): Array<string> => {
 			}
 			const start = events[i + 1]!;
 			const end = events[i + 2]!;
-			if (tag >= type_infos.length) issues.push(`unknown type id ${tag} at ${i}`);
+			if (tag >= infos.length) issues.push(`unknown type id ${tag} at ${i}`);
 			if (start < cursor) issues.push(`leaf start ${start} overlaps cursor ${cursor} at ${i}`);
 			if (end <= start) issues.push(`empty or inverted leaf [${start}, ${end}) at ${i}`);
 			if (end > text.length) issues.push(`leaf end ${end} out of bounds at ${i}`);
@@ -351,7 +394,7 @@ export const validate_syntax_events = (lexed: LexedSyntax): Array<string> => {
 				break;
 			}
 			const start = events[i + 1]!;
-			if (-tag >= type_infos.length) issues.push(`unknown type id ${-tag} at ${i}`);
+			if (-tag >= infos.length) issues.push(`unknown type id ${-tag} at ${i}`);
 			if (start < cursor) issues.push(`open start ${start} overlaps cursor ${cursor} at ${i}`);
 			if (start > text.length) issues.push(`open start ${start} out of bounds at ${i}`);
 			stack.push(start);

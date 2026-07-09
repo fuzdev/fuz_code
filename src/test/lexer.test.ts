@@ -6,7 +6,8 @@ import {
 	render_syntax_html,
 	syntax_events_to_tokens,
 	token_type,
-	token_type_info,
+	token_types_global,
+	TokenTypeRegistry,
 	validate_syntax_events,
 	type LexedSyntax,
 	type SyntaxLang,
@@ -22,7 +23,7 @@ const lexed_of = (text: string, build: (l: Lexer) => void): LexedSyntax => {
 	lexer.text = text;
 	lexer.end = text.length;
 	build(lexer);
-	return {text, events: lexer.events, events_len: lexer.events_len};
+	return {text, events: lexer.events, events_len: lexer.events_len, types: token_types_global};
 };
 
 describe('token_type', () => {
@@ -32,9 +33,35 @@ describe('token_type', () => {
 	});
 
 	test('precomputes classes and open tag', () => {
-		const info = token_type_info(T_ALIASED);
+		const info = token_types_global.info(T_ALIASED);
 		assert.strictEqual(info.classes, 'token_test_aliased token_test_alias_1 token_test_alias_2');
 		assert.strictEqual(info.open_tag, `<span class="${info.classes}">`);
+	});
+});
+
+describe('TokenTypeRegistry', () => {
+	test('isolates id spaces per registry', () => {
+		const types = new TokenTypeRegistry();
+		const global_size = token_types_global.infos.length;
+		const t_word = types.intern('word');
+		// a fresh registry starts its own id space at 1 (0 is the close tag)
+		assert.strictEqual(t_word, 1);
+		assert.strictEqual(types.intern('word'), t_word);
+		// interning into the isolated registry leaves the global one untouched
+		assert.strictEqual(token_types_global.infos.length, global_size);
+
+		const lang: SyntaxLang = {
+			id: 'test_isolated',
+			lex: (l) => {
+				l.leaf(t_word, 0, 4);
+				l.pos = l.end;
+			},
+		};
+		const lexed = lex_syntax('abcd', lang, undefined, types);
+		assert.strictEqual(lexed.types, types);
+		assert.deepEqual(validate_syntax_events(lexed), []);
+		assert.strictEqual(render_syntax_html(lexed), '<span class="token_word">abcd</span>');
+		assert.deepEqual(syntax_events_to_tokens(lexed), [{type: 'word', start: 0, end: 4}]);
 	});
 });
 

@@ -134,6 +134,34 @@ const P_DOT = 2; // after `.` member access — next word is a property, not a k
 // bounded lookahead for heuristic scans (generics, annotations, arrow params)
 const MAX_SCAN = 600;
 
+/**
+ * Monotonic next-occurrence caches for the heuristic-scan prechecks. Each
+ * bounded scan can only succeed if its success char (`=` for type
+ * annotations, `>` for generics, `)` for arrow params) occurs within its
+ * `MAX_SCAN` window, so a cached native `indexOf` probe skips scans that
+ * cannot succeed. The caches advance monotonically through the document, so
+ * total probe work is O(n) — this is what keeps colon/angle/paren-dense
+ * pathological inputs linear instead of paying `MAX_SCAN` per occurrence.
+ */
+interface TsScanCache {
+	next_eq: number;
+	next_gt: number;
+	next_rparen: number;
+}
+
+const create_ts_scan_cache = (): TsScanCache => ({next_eq: -1, next_gt: -1, next_rparen: -1});
+
+/**
+ * Returns the cached next occurrence of `ch` at or after `from`, re-probing
+ * with `indexOf` only when the cached position has fallen behind. `Infinity`
+ * when the text has no further occurrence.
+ */
+const advance_probe = (text: string, cached: number, from: number, ch: string): number => {
+	if (cached >= from) return cached;
+	const found = text.indexOf(ch, from);
+	return found === -1 ? Infinity : found;
+};
+
 const is_upper = (c: number): boolean => c >= 65 && c <= 90;
 
 /**
@@ -271,8 +299,11 @@ const scan_balanced_braces = (text: string, i: number, end: number): number => {
  * Finds the matching `>` for the `<` at `i` (generic argument lists), skipping
  * strings. Bounded by `MAX_SCAN`; returns -1 when unbalanced.
  */
-const scan_balanced_angle = (text: string, i: number, end: number): number => {
+const scan_balanced_angle = (text: string, i: number, end: number, cache: TsScanCache): number => {
 	const limit = i + MAX_SCAN < end ? i + MAX_SCAN : end;
+	// success needs a `>` within the window — skip the scan when there is none
+	cache.next_gt = advance_probe(text, cache.next_gt, i + 1, '>');
+	if (cache.next_gt >= limit) return -1;
 	let depth = 0;
 	let j = i;
 	while (j < limit) {
@@ -299,8 +330,11 @@ const scan_balanced_angle = (text: string, i: number, end: number): number => {
  * Finds the matching `)` for the `(` at `i`, skipping strings and nested
  * parens. Bounded by `MAX_SCAN`; returns -1 when unbalanced.
  */
-const scan_balanced_parens = (text: string, i: number, end: number): number => {
+const scan_balanced_parens = (text: string, i: number, end: number, cache: TsScanCache): number => {
 	const limit = i + MAX_SCAN < end ? i + MAX_SCAN : end;
+	// success needs a `)` within the window — skip the scan when there is none
+	cache.next_rparen = advance_probe(text, cache.next_rparen, i + 1, ')');
+	if (cache.next_rparen >= limit) return -1;
 	let depth = 0;
 	let j = i;
 	while (j < limit) {
@@ -326,7 +360,12 @@ const scan_balanced_parens = (text: string, i: number, end: number): number => {
  * variable: `ident` followed by `=` or `:`, then optional `async`, then a
  * `function` keyword, `(params) =>`, or `param =>`.
  */
-const is_function_variable = (text: string, ident_end: number, end: number): boolean => {
+const is_function_variable = (
+	text: string,
+	ident_end: number,
+	end: number,
+	cache: TsScanCache,
+): boolean => {
 	let j = skip_space(text, ident_end, end);
 	const c = text.charCodeAt(j);
 	if (c === 61) {
@@ -346,7 +385,7 @@ const is_function_variable = (text: string, ident_end: number, end: number): boo
 	const c3 = text.charCodeAt(j);
 	if (c3 === 40) {
 		// `(params)` then optional `: type` then `=>`
-		const close = scan_balanced_parens(text, j, end);
+		const close = scan_balanced_parens(text, j, end, cache);
 		if (close === -1) return false;
 		let k = skip_space(text, close + 1, end);
 		if (text.charCodeAt(k) === 58) {
@@ -377,8 +416,12 @@ const is_function_variable = (text: string, ident_end: number, end: number): boo
  * `<>`/`[]`/`{}`/`()`, succeeding at a top-level `=` (not `==`/`=>`).
  * Returns the exclusive end of the type text, or -1.
  */
-const scan_type_annotation = (text: string, i: number, end: number): number => {
+const scan_type_annotation = (text: string, i: number, end: number, cache: TsScanCache): number => {
 	const limit = i + MAX_SCAN < end ? i + MAX_SCAN : end;
+	// success needs a top-level `=` within the window — skip the scan when
+	// there is no `=` at all
+	cache.next_eq = advance_probe(text, cache.next_eq, i + 1, '=');
+	if (cache.next_eq >= limit) return -1;
 	let angle = 0;
 	let square = 0;
 	let j = i + 1;
@@ -482,7 +525,7 @@ const scan_operator = (text: string, i: number, end: number): number => {
  * Lexes a template literal starting at the backtick at `i`, returning the new
  * position. Interpolations recurse through the full lexer.
  */
-const lex_ts_template = (l: Lexer, i: number, to: number): number => {
+const lex_ts_template = (l: Lexer, i: number, to: number, cache: TsScanCache): number => {
 	const {text} = l;
 	l.open(T_TEMPLATE_STRING, i);
 	l.leaf(T_TEMPLATE_PUNCTUATION, i, i + 1);
@@ -505,7 +548,7 @@ const lex_ts_template = (l: Lexer, i: number, to: number): number => {
 			const inner_end = close === -1 ? to : close;
 			l.open(T_INTERPOLATION, j);
 			l.leaf(T_INTERPOLATION_PUNCTUATION, j, j + 2);
-			lex_ts_window(l, j + 2, inner_end, false);
+			lex_ts_window(l, j + 2, inner_end, false, cache);
 			if (close === -1) {
 				l.close(to);
 				j = to;
@@ -531,7 +574,13 @@ const lex_ts_template = (l: Lexer, i: number, to: number): number => {
  * The core window lexer. `type_mode` switches capitalized identifiers to
  * `type_name` (used for generics and type annotations).
  */
-const lex_ts_window = (l: Lexer, from: number, to: number, type_mode: boolean): void => {
+const lex_ts_window = (
+	l: Lexer,
+	from: number,
+	to: number,
+	type_mode: boolean,
+	cache: TsScanCache,
+): void => {
 	const {text} = l;
 	let i = from;
 	let prev = P_NONE;
@@ -574,9 +623,9 @@ const lex_ts_window = (l: Lexer, from: number, to: number, type_mode: boolean): 
 				}
 				const angle_start = skip_space(text, i, to);
 				if (text.charCodeAt(angle_start) === 60) {
-					const angle_end = scan_balanced_angle(text, angle_start, to);
+					const angle_end = scan_balanced_angle(text, angle_start, to, cache);
 					if (angle_end !== -1) {
-						lex_ts_window(l, angle_start, angle_end + 1, true);
+						lex_ts_window(l, angle_start, angle_end + 1, true, cache);
 						i = angle_end + 1;
 					}
 				}
@@ -660,7 +709,7 @@ const lex_ts_window = (l: Lexer, from: number, to: number, type_mode: boolean): 
 			}
 
 			// function-valued variables: `f = () => …`, `f: async x => …`
-			if (!type_mode && c !== 35 && is_function_variable(text, ident_end, to)) {
+			if (!type_mode && c !== 35 && is_function_variable(text, ident_end, to, cache)) {
 				l.leaf(T_FUNCTION_VARIABLE, start, ident_end);
 				continue;
 			}
@@ -696,12 +745,12 @@ const lex_ts_window = (l: Lexer, from: number, to: number, type_mode: boolean): 
 			{
 				const angle_start = skip_space(text, ident_end, to);
 				if (text.charCodeAt(angle_start) === 60) {
-					const angle_end = scan_balanced_angle(text, angle_start, to);
+					const angle_end = scan_balanced_angle(text, angle_start, to, cache);
 					if (angle_end !== -1 && text.charCodeAt(skip_space(text, angle_end + 1, to)) === 40) {
 						l.open(T_GENERIC_FUNCTION, start);
 						l.leaf(T_FUNCTION, start, ident_end);
 						l.open(T_GENERIC, angle_start);
-						lex_ts_window(l, angle_start, angle_end + 1, true);
+						lex_ts_window(l, angle_start, angle_end + 1, true, cache);
 						l.close(angle_end + 1);
 						l.close(angle_end + 1);
 						i = angle_end + 1;
@@ -791,7 +840,7 @@ const lex_ts_window = (l: Lexer, from: number, to: number, type_mode: boolean): 
 
 		// template literals
 		if (c === 96) {
-			i = lex_ts_template(l, i, to);
+			i = lex_ts_template(l, i, to, cache);
 			prev = P_VALUE;
 			prev_code = 0;
 			class_ctx = as_ctx = import_ctx = false;
@@ -844,7 +893,7 @@ const lex_ts_window = (l: Lexer, from: number, to: number, type_mode: boolean): 
 		if (c === 58) {
 			class_ctx = as_ctx = import_ctx = false;
 			if (!type_mode) {
-				const type_end = scan_type_annotation(text, i, to);
+				const type_end = scan_type_annotation(text, i, to, cache);
 				if (type_end !== -1) {
 					const type_start = skip_space(text, i + 1, to);
 					let content_end = type_end;
@@ -855,7 +904,7 @@ const lex_ts_window = (l: Lexer, from: number, to: number, type_mode: boolean): 
 						l.open(T_TYPE_ANNOTATION, i);
 						l.leaf(T_COLON, i, i + 1);
 						l.open(T_TYPE, type_start);
-						lex_ts_window(l, type_start, content_end, true);
+						lex_ts_window(l, type_start, content_end, true, cache);
 						l.close(content_end);
 						l.close(content_end);
 						i = type_end;
@@ -966,7 +1015,7 @@ const lex_ts = (l: Lexer): void => {
 		l.leaf(T_HASHBANG, 0, line_end);
 		i = line_end;
 	}
-	lex_ts_window(l, i, l.end, false);
+	lex_ts_window(l, i, l.end, false, create_ts_scan_cache());
 	l.pos = l.end;
 };
 

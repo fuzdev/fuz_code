@@ -1,8 +1,25 @@
 import {SyntaxToken, type SyntaxTokenStream} from './syntax_token.ts';
 import {tokenize_syntax} from './tokenize_syntax.ts';
-import {lex_syntax, render_syntax_html, type LexedSyntax, type SyntaxLang} from './lexer.ts';
+import {
+	lex_syntax,
+	render_syntax_html,
+	token_types_global,
+	TokenTypeRegistry,
+	type LexedSyntax,
+	type SyntaxLang,
+} from './lexer.ts';
 
 export type AddSyntaxGrammar = (syntax_styler: SyntaxStyler) => void;
+
+export interface SyntaxStylerOptions {
+	/**
+	 * Token-type id space used by lexer-engine languages. Defaults to the
+	 * shared `token_types_global`, which the built-in lexers intern into —
+	 * inject a separate registry only when every registered lexer interns
+	 * into that same registry.
+	 */
+	token_types?: TokenTypeRegistry;
+}
 
 /**
  * Maps a matched `&`, `<`, or non-breaking space in text content to its
@@ -24,21 +41,15 @@ export class SyntaxStyler {
 		plaintext: {},
 	};
 
-	// constructor() {
-	// TODO this API? problem is the grammars rely on mutating existing grammars in the `syntax_styler`,
-	// so for now adding grammars will remain inherently stateful
-	// export interface SyntaxStylerOptions {
-	// 	grammars?: AddGrammar[];
-	// }
-	// options: SyntaxStylerOptions = {}
-	// const {grammars} = options;
-	// if (grammars) {
-	// 	for (const add_grammar of grammars) {
-	// this.langs[id] =
-	// 		add_grammar(this);
-	// 	}
-	// }
-	// }
+	/**
+	 * Token-type id space for this styler's lexer-engine languages.
+	 * See `SyntaxStylerOptions.token_types`.
+	 */
+	readonly token_types: TokenTypeRegistry;
+
+	constructor(options: SyntaxStylerOptions = {}) {
+		this.token_types = options.token_types ?? token_types_global;
+	}
 
 	/**
 	 * Languages ported to the hand-written lexer engine (`lexer.ts`).
@@ -75,7 +86,7 @@ export class SyntaxStyler {
 		if (lexer_lang === undefined) {
 			throw Error(`The language "${lang}" has no lexer.`);
 		}
-		return lex_syntax(text, lexer_lang, this.lexer_langs);
+		return lex_syntax(text, lexer_lang, this.lexer_langs, this.token_types);
 	}
 
 	add_lang(id: string, grammar: SyntaxGrammarRaw, aliases?: Array<string>): void {
@@ -174,7 +185,7 @@ export class SyntaxStyler {
 			// lexer-engine languages take priority over their grammar registrations
 			const lexer_lang = this.lexer_langs.get(lang);
 			if (lexer_lang !== undefined) {
-				return render_syntax_html(lex_syntax(text, lexer_lang, this.lexer_langs));
+				return render_syntax_html(lex_syntax(text, lexer_lang, this.lexer_langs, this.token_types));
 			}
 			resolved_grammar = this.get_lang(lang);
 		}
