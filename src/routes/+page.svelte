@@ -31,9 +31,12 @@
 				components, and it has a <a href={resolve('/docs/usage#Preprocessor' as any)}
 					>preprocessor</a
 				>
-				for static compilation. It's based on <a href="https://github.com/PrismJS/prism">Prism</a>
+				for static compilation. It runs one hand-written lexer per language with zero regular expressions;
+				it originated as a fork of
+				<a href="https://github.com/PrismJS/prism">Prism</a>
 				(<a href="https://prismjs.com/">prismjs.com</a>) by
-				<a href="https://lea.verou.me/">Lea Verou</a>. More at the
+				<a href="https://lea.verou.me/">Lea Verou</a>
+				and keeps its <code>.token_*</code> class vocabulary. More at the
 				<a href={resolve('/docs')}>docs</a>.
 			</p>
 			<p>

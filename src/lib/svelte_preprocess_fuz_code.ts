@@ -191,12 +191,8 @@ const find_code_usages = (
 			const content_attr = find_attribute(node, 'content');
 			if (!content_attr) return;
 
-			// Skip if already preprocessed or custom grammar/syntax_styler is provided
-			if (
-				find_attribute(node, 'dangerous_raw_html') ||
-				find_attribute(node, 'grammar') ||
-				find_attribute(node, 'syntax_styler')
-			) {
+			// Skip if already preprocessed or a custom syntax_styler is provided
+			if (find_attribute(node, 'dangerous_raw_html') || find_attribute(node, 'syntax_styler')) {
 				return;
 			}
 
@@ -206,7 +202,7 @@ const find_code_usages = (
 				? extract_static_string(lang_attr.value, options.bindings)
 				: 'svelte';
 			if (lang_value === null) return;
-			if (!syntax_styler.langs[lang_value]) return;
+			if (!syntax_styler.has_lang(lang_value)) return;
 
 			// Try simple static string
 			const content_value = extract_static_string(content_attr.value, options.bindings);

@@ -11,12 +11,19 @@ import {format_file} from '@fuzdev/gro/format_file.ts';
 
 import {samples as all_samples} from '../src/routes/samples/all.ts';
 import {syntax_styler_global} from '../src/lib/syntax_styler_global.ts';
+import {render_syntax_html, type LexedSyntax} from '../src/lib/lexer.ts';
+import {PATHOLOGICAL_CASES} from '../src/test/pathological.ts';
 
 /* eslint-disable no-console */
 
 const BENCHMARK_TIME = 10000;
 const WARMUP_ITERATIONS = 50;
 const LARGE_CONTENT_MULTIPLIER = 100;
+// pathological cases are regression tripwires, not headline numbers — a
+// shorter budget keeps the full run's added cost modest while still giving
+// the baseline compare thousands of iterations per case
+const PATHOLOGICAL_BENCHMARK_TIME = 3000;
+const PATHOLOGICAL_SIZE = 32768;
 
 const BASELINE_PATH = 'benchmark';
 const BASELINE_FILE = `${BASELINE_PATH}/baseline.json`;
@@ -25,16 +32,21 @@ const BASELINE_FILE = `${BASELINE_PATH}/baseline.json`;
 const REGRESSION_THRESHOLD = 1.1;
 const STALENESS_WARNING_DAYS = 30;
 
+const filter_samples = (filter?: string): Array<{name: string; lang: string; content: string}> => {
+	const samples = Object.values(all_samples);
+	return filter ? samples.filter((s) => s.name.includes(filter) || s.lang === filter) : samples;
+};
+
+const pathological_matches = (name: string, lang: string, filter?: string): boolean =>
+	!filter || name.includes(filter) || filter === lang;
+
 export const run_benchmark = async (filter?: string): Promise<Array<BenchmarkResult>> => {
 	const bench = new Benchmark({
 		duration_ms: BENCHMARK_TIME,
 		warmup_iterations: WARMUP_ITERATIONS,
 	});
 
-	const samples = Object.values(all_samples);
-	const samples_to_run = filter
-		? samples.filter((s) => s.name.includes(filter) || s.lang === filter)
-		: samples;
+	const samples_to_run = filter_samples(filter);
 
 	for (const sample of samples_to_run) {
 		bench.add(`baseline:${sample.name}`, () => {
@@ -60,7 +72,98 @@ export const run_benchmark = async (filter?: string): Promise<Array<BenchmarkRes
 		});
 	}
 
-	return bench.run();
+	const results = await bench.run();
+
+	// pathological workloads run on a separate instance with a shorter budget
+	const pathological_bench = new Benchmark({
+		duration_ms: PATHOLOGICAL_BENCHMARK_TIME,
+		warmup_iterations: WARMUP_ITERATIONS,
+	});
+	let pathological_count = 0;
+	for (const c of PATHOLOGICAL_CASES) {
+		if (!pathological_matches(c.name, c.lang, filter)) continue;
+		const content = c.generate(PATHOLOGICAL_SIZE);
+		pathological_bench.add(`pathological:${c.name}`, () => {
+			syntax_styler_global.stylize(content, c.lang);
+		});
+		pathological_count++;
+	}
+	if (pathological_count > 0) {
+		return results.concat(await pathological_bench.run());
+	}
+
+	return results;
+};
+
+// Output metrics — deterministic DOM-cost proxies tracked alongside time
+// (span count and HTML bytes are what the browser has to parse and
+// instantiate, the dominant cost of stylize-into-DOM). Computed once per
+// case, not timed; regression gating against the baseline needs fuz_util
+// schema support and is deferred — for now the table makes output changes
+// reviewable in `results.md` diffs.
+
+interface OutputMetrics {
+	name: string;
+	input_chars: number;
+	spans: number;
+	html_bytes: number;
+}
+
+/**
+ * Counts the `<span>`s a lexed stream renders to — one per leaf and one per
+ * container open.
+ */
+const count_spans = (lexed: LexedSyntax): number => {
+	const {events, events_len} = lexed;
+	let spans = 0;
+	let i = 0;
+	while (i < events_len) {
+		const tag = events[i]!;
+		if (tag > 0) {
+			spans++;
+			i += 3;
+		} else {
+			if (tag < 0) spans++;
+			i += 2;
+		}
+	}
+	return spans;
+};
+
+const measure_output = (name: string, content: string, lang: string): OutputMetrics => {
+	const lexed = syntax_styler_global.lex(content, lang);
+	return {
+		name,
+		input_chars: content.length,
+		spans: count_spans(lexed),
+		html_bytes: Buffer.byteLength(render_syntax_html(lexed), 'utf8'),
+	};
+};
+
+export const collect_output_metrics = (filter?: string): Array<OutputMetrics> => {
+	const metrics: Array<OutputMetrics> = [];
+	for (const sample of filter_samples(filter)) {
+		metrics.push(measure_output(`baseline:${sample.name}`, sample.content, sample.lang));
+	}
+	for (const c of PATHOLOGICAL_CASES) {
+		if (!pathological_matches(c.name, c.lang, filter)) continue;
+		metrics.push(measure_output(`pathological:${c.name}`, c.generate(PATHOLOGICAL_SIZE), c.lang));
+	}
+	return metrics;
+};
+
+const format_output_metrics = (metrics: Array<OutputMetrics>): string => {
+	let out = '### Output metrics\n\n';
+	out +=
+		'Deterministic DOM-cost proxies (not timed): spans rendered and utf8 HTML bytes per case.\n\n';
+	out += '| task | input chars | spans | html bytes | bytes/char |\n';
+	out += '| :-- | --: | --: | --: | --: |\n';
+	for (const m of metrics) {
+		out += `| ${m.name} | ${m.input_chars} | ${m.spans} | ${m.html_bytes} | ${(
+			m.html_bytes / m.input_chars
+		).toFixed(2)} |\n`;
+	}
+	return out;
 };
 
 // `baseline:` and `large:` measure different workload sizes (1x vs 100x
@@ -71,13 +174,14 @@ export const run_benchmark = async (filter?: string): Promise<Array<BenchmarkRes
 const GROUPS: Array<BenchmarkGroup> = [
 	{name: 'Baseline (1x content)', filter: (r) => r.name.startsWith('baseline:')},
 	{name: 'Large (100x content)', filter: (r) => r.name.startsWith('large:')},
+	{name: 'Pathological (generated, 32KB)', filter: (r) => r.name.startsWith('pathological:')},
 ];
 
 // Heading kept inside the auto-managed region so the writer round-trips the
 // whole "## Benchmark Results" block — easier than threading the heading
 // through the marker logic.
-const format_section = (results: Array<BenchmarkResult>): string =>
-	`## Benchmark Results\n\n${benchmark_format_markdown_grouped(results, GROUPS)}`;
+const format_section = (results: Array<BenchmarkResult>, metrics: Array<OutputMetrics>): string =>
+	`## Benchmark Results\n\n${benchmark_format_markdown_grouped(results, GROUPS)}\n\n${format_output_metrics(metrics)}`;
 
 /**
  * Compare results against the stored baseline and print the report plus any
@@ -132,7 +236,7 @@ export const run_and_print_benchmark = async (filter?: string): Promise<void> =>
 
 	const results = await run_benchmark(filter);
 
-	console.log(format_section(results));
+	console.log(format_section(results, collect_output_metrics(filter)));
 
 	await print_baseline_comparison(results);
 
@@ -202,7 +306,7 @@ export const run_and_save_benchmark = async (
 	console.log('Starting benchmark...\n');
 
 	const results = await run_benchmark(filter);
-	const formatted = format_section(results);
+	const formatted = format_section(results, collect_output_metrics(filter));
 
 	console.log(formatted);
 

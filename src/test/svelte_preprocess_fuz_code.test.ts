@@ -503,22 +503,21 @@ const y = 2;" lang="ts" />`;
 			const raw_html = extract_raw_html(result);
 			assert.include(raw_html!, '&lt;');
 		});
-	});
 
-	describe('skip conditions', () => {
-		test('skips custom grammar', async () => {
+		test('skips static content that stylizes to itself', async () => {
 			const input = `<script lang="ts">
 	import Code from '@fuzdev/fuz_code/Code.svelte';
-	const g = {};
 </script>
 
-<Code content="x" grammar={g} />`;
+<Code content="x" />`;
 			const result = await run(input);
 
 			assert.include(result, 'content="x"');
 			assert.notInclude(result, 'dangerous_raw_html');
 		});
+	});
 
+	describe('skip conditions', () => {
 		test('skips custom syntax_styler', async () => {
 			const input = `<script lang="ts">
 	import Code from '@fuzdev/fuz_code/Code.svelte';
@@ -924,7 +923,7 @@ const y = 2;" lang="ts" />`;
 
 		test('on_error throw mode throws on stylize failure', async () => {
 			const bad_styler = {
-				langs: {ts: {}},
+				has_lang: () => true,
 				stylize() {
 					throw new Error('test error');
 				},
@@ -948,7 +947,7 @@ const y = 2;" lang="ts" />`;
 
 		test('on_error log mode skips failed transformation', async () => {
 			const bad_styler = {
-				langs: {ts: {}},
+				has_lang: () => true,
 				stylize() {
 					throw new Error('test error');
 				},

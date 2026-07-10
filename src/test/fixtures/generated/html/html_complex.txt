@@ -1,8 +1,8 @@
 === STATS ===
 Sample length: 733 characters
-Total tokens: 229
+Total tokens: 230
 
-Token types (19 unique):
+Token types (20 unique):
   punctuation: 117
   tag: 64
   attr_name: 16
@@ -12,6 +12,7 @@ Token types (19 unique):
   comment: 1
   special_attr: 1
   value: 1
+  builtin: 1
   function: 1
   script: 1
   lang_js: 1
@@ -95,6 +96,7 @@ Token types (19 unique):
  232-233   punctuation               =
  233-234   punctuation               "
  234-251   value                     console.log('hi')
+ 234-241   builtin                   console
  241-242   punctuation               .
  242-245   function                  log
  245-246   punctuation               (

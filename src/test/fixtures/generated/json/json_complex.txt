@@ -1,9 +1,9 @@
 === STATS ===
 Sample length: 327 characters
-Total tokens: 83
+Total tokens: 77
 
 Token types (7 unique):
-  punctuation: 37
+  punctuation: 31
   string: 14
   property: 12
   operator: 12
@@ -48,8 +48,7 @@ Token types (7 unique):
  167-170   string                    "b"
  170-171   punctuation               ,
  172-177   boolean                   false
- 177-178   punctuation               ]
- 178-179   punctuation               ,
+ 177-179   punctuation               ],
  182-191   property                  "strings"
  191-192   operator                  :
  193-194   punctuation               [
@@ -58,8 +57,7 @@ Token types (7 unique):
  199-202   string                    "2"
  202-203   punctuation               ,
  204-207   string                    "3"
- 207-208   punctuation               ]
- 208-209   punctuation               ,
+ 207-209   punctuation               ],
  212-219   property                  "mixed"
  219-220   operator                  :
  221-222   punctuation               [
@@ -74,24 +72,20 @@ Token types (7 unique):
  252-256   null                      null
  256-257   punctuation               ,
  258-263   string                    "end"
- 263-264   punctuation               ]
- 264-265   punctuation               ,
+ 263-265   punctuation               ],
  268-276   property                  "nested"
  276-277   operator                  :
- 278-279   punctuation               [
- 279-280   punctuation               [
+ 278-280   punctuation               [[
  280-283   string                    "a"
  283-284   punctuation               ,
  285-290   string                    "str"
  290-291   punctuation               ,
  292-294   string                    ""
- 294-295   punctuation               ]
- 295-296   punctuation               ,
+ 294-296   punctuation               ],
  297-298   punctuation               {
  298-303   property                  "key"
  303-304   operator                  :
  305-319   string                    "nested value"
- 319-320   punctuation               }
- 320-321   punctuation               ]
+ 319-321   punctuation               }]
  323-324   punctuation               }
  325-326   punctuation               }

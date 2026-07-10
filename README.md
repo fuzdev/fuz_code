@@ -6,40 +6,37 @@
 
 **[code.fuz.dev](https://code.fuz.dev/)**
 
-fuz_code is a rework of [Prism](https://github.com/PrismJS/prism)
-([prismjs.com](https://prismjs.com/)).
-The main changes:
+`fuz_code` is a runtime syntax highlighter: it turns source code into HTML with
+`.token_*` CSS classes, and knows nothing about the DOM. It originated as a fork
+of [Prism](https://github.com/PrismJS/prism) ([prismjs.com](https://prismjs.com/))
+and keeps its `.token_*` class vocabulary, but the tokenizer is now a full
+rewrite — one hand-written single-pass lexer per language emitting a flat token
+event stream, with zero regular expressions.
 
-- has a minimal and explicit API to generate stylized HTML, and knows nothing about the DOM
-- uses stateless ES modules, instead of globals with side effects and pseudo-module behaviors
-- has various incompatible changes, so using Prism grammars requires some tweaks
-- smaller (by 7kB minified and 3kB gzipped, ~1/3 less)
-- written in TypeScript
-- is a fork, see the [MIT license](https://github.com/fuzdev/fuz_code/blob/main/LICENSE)
+Highlights:
 
-Like Prism, there are zero dependencies (unless you count Prism's `@types/prismjs`),
-but there are two optional dependencies:
+- a minimal, explicit API to generate stylized HTML — `stylize(code, lang)`
+- stateless ES modules, instead of globals with side effects
+- written in TypeScript, with zero runtime dependencies
+- eight built-in languages (see below), extensible by writing a lexer
 
-- fuz_code provides optional builtin [Svelte](https://svelte.dev/) support
-  with a [Svelte grammar](src/lib/grammar_svelte.ts)
-  based on [`prism-svelte`](https://github.com/pngwn/prism-svelte)
-  and a [Svelte component](src/lib/Code.svelte) for convenient usage.
+Two optional integrations:
+
+- optional builtin [Svelte](https://svelte.dev/) support with a
+  [Svelte lexer](src/lib/lexer_svelte.ts) and a
+  [Svelte component](src/lib/Code.svelte) for convenient usage.
 - The [default theme](src/lib/theme.css) integrates
   with my CSS library [fuz_css](https://github.com/fuzdev/fuz_css) for colors that adapt to the user's runtime `color-scheme` preference.
   Non-fuz_css users should import [theme_variables.css](src/lib/theme_variables.css)
   or otherwise define those variables.
 
-Compared to [Shiki](https://github.com/shikijs/shiki),
-this library is much lighter
-(with its faster `shiki/engine/javascript`, 503kB minified to 16kB, 63kb gzipped to 5.6kB),
-and [vastly faster](./benchmark/compare/results.md)
-for runtime usage because it uses JS regexps instead of
-the [Onigurama regexp engine](https://shiki.matsu.io/guide/regex-engines)
-used by TextMate grammars.
-Shiki also has 38 dependencies instead of 0.
-However this is not a fair comparison because
-Prism grammars are much simpler and less powerful than TextMate's,
-and Shiki is designed mainly for buildtime usage.
+Compared to [Shiki](https://github.com/shikijs/shiki), fuz_code is much lighter
+and [vastly faster](./benchmark/compare/results.md) for runtime usage: it runs
+hand-written single-pass lexers rather than the
+[Oniguruma regexp engine](https://shiki.matsu.io/guide/regex-engines) that
+TextMate grammars require, and has zero runtime dependencies instead of 38. Shiki
+targets build-time use and supports far more languages and themes — pick the
+tool that fits; fuz_code is optimized for small, fast, runtime highlighting.
 
 ## Usage
 
@@ -64,9 +61,8 @@ import {syntax_styler_global} from '@fuzdev/fuz_code/syntax_styler_global.ts';
 // Generate HTML with syntax highlighting
 const html = syntax_styler_global.stylize(code, 'ts');
 
-// Get raw tokens for custom processing
-import {tokenize_syntax} from '@fuzdev/fuz_code/tokenize_syntax.ts';
-const tokens = tokenize_syntax(code, syntax_styler_global.get_lang('ts'));
+// Get the raw flat token event stream for custom processing
+const lexed = syntax_styler_global.lex(code, 'ts');
 ```
 
 Themes are just CSS files, so they work with any JS framework.
@@ -93,8 +89,8 @@ import '@fuzdev/fuz_code/theme_variables.css';
 
 ### Modules
 
-- [@fuzdev/fuz_code/syntax_styler_global.js](src/lib/syntax_styler_global.ts) - pre-configured instance with all grammars
-- [@fuzdev/fuz_code/syntax_styler.js](src/lib/syntax_styler.ts) - base class for custom grammars
+- [@fuzdev/fuz_code/syntax_styler_global.js](src/lib/syntax_styler_global.ts) - pre-configured instance with all built-in languages
+- [@fuzdev/fuz_code/syntax_styler.js](src/lib/syntax_styler.ts) - the `SyntaxStyler` class (register your own lexers)
 - [@fuzdev/fuz_code/theme.css](src/lib/theme.css) -
   default theme that depends on [fuz_css](https://github.com/fuzdev/fuz_css)
 - [@fuzdev/fuz_code/theme_variables.css](src/lib/theme_variables.css) -
@@ -104,19 +100,21 @@ import '@fuzdev/fuz_code/theme_variables.css';
 
 I encourage you to poke around [`src/lib`](src/lib) if you're interested in using fuz_code.
 
-### Grammars
+### Languages
 
-Enabled by default in `syntax_styler_global`:
+Registered by default in `syntax_styler_global` — one hand-written lexer each:
 
-- [`markup`](src/lib/grammar_markup.ts) (html, xml, etc)
-- [`svelte`](src/lib/grammar_svelte.ts)
-- [`markdown`](src/lib/grammar_markdown.ts)
-- [`ts`](src/lib/grammar_ts.ts)
-- [`css`](src/lib/grammar_css.ts)
-- [`js`](src/lib/grammar_js.ts)
-- [`json`](src/lib/grammar_json.ts)
-- [`clike`](src/lib/grammar_clike.ts)
-- [`bash`](src/lib/grammar_bash.ts)
+- [`markup`](src/lib/lexer_markup.ts) (`html`, `mathml`, `svg`)
+- [`xml`](src/lib/lexer_markup.ts) (`ssml`, `atom`, `rss`)
+- [`svelte`](src/lib/lexer_svelte.ts)
+- [`md`](src/lib/lexer_md.ts) (markdown)
+- [`ts`](src/lib/lexer_ts.ts) (TypeScript — also serves `js`/`javascript`, a syntactic subset)
+- [`css`](src/lib/lexer_css.ts)
+- [`json`](src/lib/lexer_json.ts) (with comments — jsonc)
+- [`bash`](src/lib/lexer_bash.ts) (`sh`/`shell`)
+
+Add a language by writing a `SyntaxLang` lexer and registering it with
+`add_lang` — see the existing `lexer_*.ts` modules.
 
 ### More
 
@@ -126,8 +124,8 @@ Docs are a work in progress:
 - [CLAUDE.md](./CLAUDE.md) has more high-level docs including benchmarks
 - [code.fuz.dev](https://code.fuz.dev/) has usage examples with the Svelte component
 - [samples](https://code.fuz.dev/samples) on the website
-  (also see the [sample files](src/lib/samples/))
-- [tests](src/lib/syntax_styler.test.ts)
+  (also see the [sample files](src/test/fixtures/samples/))
+- [tests](src/test/)
 
 Please open issues if you need any help.
 
@@ -176,11 +174,12 @@ Experimental modules:
 
 ## License [🐦](https://wikipedia.org/wiki/Free_and_open-source_software)
 
-based on [Prism](https://github.com/PrismJS/prism) ([prismjs.com](https://prismjs.com/))
-by [Lea Verou](https://lea.verou.me/)
-
-the [Svelte grammar](src/lib/grammar_svelte.ts)
-is based on [`prism-svelte`](https://github.com/pngwn/prism-svelte)
-by [@pngwn](https://github.com/pngwn)
+originally forked from [Prism](https://github.com/PrismJS/prism)
+([prismjs.com](https://prismjs.com/)) by [Lea Verou](https://lea.verou.me/) —
+with the Svelte support originally based on
+[`prism-svelte`](https://github.com/pngwn/prism-svelte) by
+[@pngwn](https://github.com/pngwn). The tokenizer has since been rewritten as
+hand-written lexers, but the `.token_*` class vocabulary and the fork's lineage
+remain.
 
 [MIT](LICENSE)
