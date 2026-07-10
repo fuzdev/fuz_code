@@ -1051,8 +1051,10 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 		}
 
 		// numbers (also `.5` — the scan handles a leading `.` before digits)
-		if (is_digit(c) || (c === 46 && is_digit(text.charCodeAt(i + 1)))) {
-			const num_end = scan_ts_number(text, i, to);
+		if (is_digit(c) || (c === 46 && i + 1 < to && is_digit(text.charCodeAt(i + 1)))) {
+			let num_end = scan_ts_number(text, i, to);
+			// an embed window can end mid-number (e.g. mid-exponent); never emit past `to`
+			if (num_end > to) num_end = to;
 			l.leaf(T_NUMBER, i, num_end);
 			i = num_end;
 			prev = P_VALUE;
@@ -1064,7 +1066,7 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 		// `.` — member access or spread
 		if (c === 46) {
 			class_ctx = as_ctx = import_ctx = false;
-			if (text.charCodeAt(i + 1) === 46 && text.charCodeAt(i + 2) === 46) {
+			if (i + 2 < to && text.charCodeAt(i + 1) === 46 && text.charCodeAt(i + 2) === 46) {
 				l.leaf(T_OPERATOR, i, i + 3);
 				i += 3;
 				prev = P_NONE;
