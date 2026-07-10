@@ -1,6 +1,6 @@
 {
   "name": "@fuzdev/fuz_code",
-  "version": "0.46.3",
+  "version": "0.47.0",
   "description": "syntax styling utilities and components for TypeScript, Svelte, Markdown, and more",
   "glyph": "🎨",
   "logo": "logo.svg",
@@ -59,7 +59,7 @@
     "@fuzdev/fuz_ui": "^0.206.6",
     "@fuzdev/fuz_util": "^0.65.1",
     "@fuzdev/gro": "^0.205.1",
-    "@fuzdev/mdz": "^0.2.0",
+    "@fuzdev/mdz": "^0.3.0",
     "@ryanatkn/eslint-config": "^0.12.1",
     "@sveltejs/acorn-typescript": "^1.0.9",
     "@sveltejs/adapter-static": "^3.0.10",
