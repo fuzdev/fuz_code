@@ -1,4 +1,12 @@
-import {is_space, matches_ci, token_type, type Lexer, type SyntaxLang} from './lexer.ts';
+import {
+	is_space,
+	matches_ci,
+	skip_quoted,
+	token_type,
+	trim_space_end,
+	type Lexer,
+	type SyntaxLang,
+} from './lexer.ts';
 
 /**
  * Hand-written CSS lexer.
@@ -67,28 +75,6 @@ const is_css_ident_start = (c: number): boolean =>
 	(c >= 97 && c <= 122) || (c >= 65 && c <= 90) || c === 45 || c === 95 || c >= 0xa0;
 
 /**
- * Scans a `"` or `'` string from `i`, returning the exclusive end.
- * Handles `\` escapes (including escaped newlines); an unterminated string
- * stops at the newline.
- */
-const scan_css_string = (text: string, from: number, end: number, quote: number): number => {
-	let i = from + 1;
-	while (i < end) {
-		const c = text.charCodeAt(i);
-		if (c === 92) {
-			i += 2; // escape
-		} else if (c === quote) {
-			return i + 1;
-		} else if (c === 10 || c === 13) {
-			return i; // unterminated
-		} else {
-			i++;
-		}
-	}
-	return end;
-};
-
-/**
  * Scans a block comment from the slash-star at `i`, returning the exclusive
  * end. Unterminated comments extend to the window end.
  */
@@ -109,7 +95,7 @@ const scan_to_terminator = (text: string, i: number, end: number): number => {
 	while (j < end) {
 		const c = text.charCodeAt(j);
 		if (c === 34 || c === 39) {
-			j = scan_css_string(text, j, end, c);
+			j = skip_quoted(text, j, end, c);
 		} else if (c === 47 && text.charCodeAt(j + 1) === 42) {
 			j = scan_css_comment(text, j, end);
 		} else if (c === 40) {
@@ -130,13 +116,6 @@ const scan_to_terminator = (text: string, i: number, end: number): number => {
 			j++;
 		}
 	}
-	return end;
-};
-
-// trims trailing whitespace from a `[from, to)` span, returning the new `to`
-const trim_end = (text: string, from: number, to: number): number => {
-	let end = to;
-	while (end > from && is_space(text.charCodeAt(end - 1))) end--;
 	return end;
 };
 
@@ -162,7 +141,7 @@ const lex_css_value = (l: Lexer, from: number, to: number, is_atrule: boolean): 
 			continue;
 		}
 		if (c === 34 || c === 39) {
-			const str_end = scan_css_string(text, i, to, c);
+			const str_end = skip_quoted(text, i, to, c);
 			l.leaf(T_STRING, i, str_end);
 			i = str_end;
 			continue;
@@ -233,7 +212,7 @@ const lex_css_url = (l: Lexer, i: number, word_end: number, to: number): number 
 	while (j < to && is_space(text.charCodeAt(j))) j++;
 	const c = text.charCodeAt(j);
 	if (c === 34 || c === 39) {
-		const str_end = scan_css_string(text, j, to, c);
+		const str_end = skip_quoted(text, j, to, c);
 		l.leaf(T_STRING_URL, j, str_end);
 		j = str_end;
 	}
@@ -280,7 +259,7 @@ const lex_css_atrule = (l: Lexer, i: number, end: number): number => {
 	let rule_end = i + 1;
 	while (rule_end < end && is_css_ident(text.charCodeAt(rule_end))) rule_end++;
 	const term = scan_to_terminator(text, rule_end, end);
-	const prelude_end = trim_end(text, i, term);
+	const prelude_end = trim_space_end(text, i, term);
 	l.open(T_ATRULE, i);
 	l.leaf(T_RULE, i, rule_end);
 	lex_css_value(l, rule_end, prelude_end, true);
@@ -321,7 +300,7 @@ const lex_css = (l: Lexer): void => {
 		// a qualified rule (selector) or a declaration — decided by lookahead
 		const term = scan_to_terminator(text, i, end);
 		if (text.charCodeAt(term) === 123) {
-			const sel_end = trim_end(text, i, term);
+			const sel_end = trim_space_end(text, i, term);
 			l.leaf(T_SELECTOR, i, sel_end);
 			l.leaf(T_PUNCTUATION, term, term + 1); // `{`
 			i = term + 1;

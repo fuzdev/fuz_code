@@ -1,5 +1,8 @@
 import {
+	advance_probe,
+	is_ascii_alnum,
 	is_digit,
+	is_hex_digit,
 	is_space,
 	matches_ci,
 	skip_space,
@@ -128,11 +131,23 @@ const is_attr_name_end = (c: number): boolean => is_space(c) || c === 62 || c ==
 const is_unquoted_value_end = (c: number): boolean =>
 	is_space(c) || c === 62 || c === 34 || c === 39 || c === 61;
 
-const is_ascii_alnum = (c: number): boolean =>
-	(c >= 48 && c <= 57) || ((c | 0x20) >= 97 && (c | 0x20) <= 122);
+/**
+ * Monotonic next-occurrence caches for the markup scanner's probes (see
+ * `advance_probe`). The scan visits constructs in increasing position order,
+ * but its probes (`<`/`{` between constructs, `&` in text gaps and attribute
+ * values) target chars the current construct doesn't consume — without the
+ * caches, input dense in one probe char but lacking another re-scans the
+ * document tail per construct, quadratic in document size. One cache spans a
+ * whole window scan (or a whole md document scan, threaded through
+ * `lex_markup_construct`); embedded guest windows create their own.
+ */
+export interface MarkupProbeCache {
+	lt: number;
+	brace: number;
+	amp: number;
+}
 
-const is_entity_hex = (c: number): boolean =>
-	(c >= 48 && c <= 57) || ((c | 0x20) >= 97 && (c | 0x20) <= 102);
+export const create_markup_probe_cache = (): MarkupProbeCache => ({lt: -1, brace: -1, amp: -1});
 
 /**
  * Scans an entity reference at the `&` at `i`, returning its exclusive end or
@@ -147,7 +162,7 @@ export const scan_entity_end = (text: string, i: number, end: number): number =>
 		if (j < end && (text.charCodeAt(j) | 0x20) === 120) j++; // x
 	}
 	const digits_start = j;
-	const is_wanted = numeric ? is_entity_hex : is_ascii_alnum;
+	const is_wanted = numeric ? is_hex_digit : is_ascii_alnum;
 	while (j < end && j - digits_start < 8 && is_wanted(text.charCodeAt(j))) j++;
 	if (j === digits_start) return -1;
 	if (j < end && text.charCodeAt(j) === 59) return j + 1; // ;
@@ -158,12 +173,13 @@ export const scan_entity_end = (text: string, i: number, end: number): number =>
  * Emits entity leaves found in `[from, to)`. `<` is not special here — this
  * runs over plain text runs, RCDATA regions, and attribute-value contents.
  */
-const lex_markup_entities = (l: Lexer, from: number, to: number): void => {
+const lex_markup_entities = (l: Lexer, from: number, to: number, cache: MarkupProbeCache): void => {
 	const {text} = l;
 	let i = from;
 	while (i < to) {
-		const amp = text.indexOf('&', i);
-		if (amp === -1 || amp >= to) return;
+		cache.amp = advance_probe(text, cache.amp, i, '&');
+		const amp = cache.amp;
+		if (amp >= to) return;
 		const entity_end = scan_entity_end(text, amp, to);
 		if (entity_end === -1) {
 			i = amp + 1;
@@ -201,18 +217,19 @@ const lex_markup_value_content = (
 	from: number,
 	to: number,
 	mode: MarkupLexMode,
+	cache: MarkupProbeCache,
 ): void => {
 	const {lex_expression} = mode;
 	if (lex_expression === null) {
-		lex_markup_entities(l, from, to);
+		lex_markup_entities(l, from, to, cache);
 		return;
 	}
 	const {text} = l;
 	let i = from;
 	while (i < to) {
-		let brace = text.indexOf('{', i);
-		if (brace === -1 || brace >= to) brace = to;
-		if (brace > i) lex_markup_entities(l, i, brace);
+		cache.brace = advance_probe(text, cache.brace, i, '{');
+		const brace = cache.brace >= to ? to : cache.brace;
+		if (brace > i) lex_markup_entities(l, i, brace, cache);
 		if (brace >= to) break;
 		i = lex_expression(l, brace, to, false);
 	}
@@ -236,12 +253,13 @@ const lex_markup_attr_value = (
 	closed: boolean,
 	embed_lang: string | null,
 	mode: MarkupLexMode,
+	cache: MarkupProbeCache,
 ): void => {
 	l.open(T_ATTR_VALUE, eq);
 	l.leaf(T_ATTR_EQUALS, eq, eq + 1);
 	if (quoted) l.leaf(T_ATTR_QUOTE, content_start - 1, content_start);
 	if (embed_lang === null) {
-		lex_markup_value_content(l, content_start, content_end, mode);
+		lex_markup_value_content(l, content_start, content_end, mode, cache);
 	} else if (content_end > content_start && !is_space(l.text.charCodeAt(content_start))) {
 		l.open(embed_lang === 'css' ? T_VALUE_CSS : T_VALUE_JS, content_start);
 		l.embed(embed_lang, content_start, content_end);
@@ -304,7 +322,13 @@ const scan_namespace_end = (text: string, from: number, to: number): number => {
  * `>` (or the window end when unterminated). Returns `i + 1` — leaving the
  * `<` as plain text — when no tag name follows.
  */
-const lex_markup_tag = (l: Lexer, i: number, end: number, mode: MarkupLexMode): number => {
+const lex_markup_tag = (
+	l: Lexer,
+	i: number,
+	end: number,
+	mode: MarkupLexMode,
+	cache: MarkupProbeCache,
+): number => {
 	const {text} = l;
 	const closing = text.charCodeAt(i + 1) === 47;
 	const name_start = i + (closing ? 2 : 1);
@@ -419,6 +443,7 @@ const lex_markup_tag = (l: Lexer, i: number, end: number, mode: MarkupLexMode): 
 				closed,
 				special_lang,
 				mode,
+				cache,
 			);
 			l.close(value_end);
 		} else {
@@ -433,6 +458,7 @@ const lex_markup_tag = (l: Lexer, i: number, end: number, mode: MarkupLexMode): 
 				closed,
 				null,
 				mode,
+				cache,
 			);
 		}
 		j = value_end;
@@ -497,6 +523,7 @@ const lex_markup_rawtext = (
 	from: number,
 	end: number,
 	mode: MarkupLexMode,
+	cache: MarkupProbeCache,
 ): number => {
 	const {text} = l;
 	let content_end = end;
@@ -527,7 +554,7 @@ const lex_markup_rawtext = (
 			l.close(content_end);
 			l.close(content_end);
 		} else {
-			lex_markup_entities(l, from, content_end);
+			lex_markup_entities(l, from, content_end, cache);
 		}
 	}
 	return content_end;
@@ -542,6 +569,7 @@ export const lex_markup_construct = (
 	i: number,
 	end: number,
 	mode: MarkupLexMode,
+	cache: MarkupProbeCache,
 ): number => {
 	const {text} = l;
 	const c1 = i + 1 < end ? text.charCodeAt(i + 1) : 0;
@@ -588,13 +616,13 @@ export const lex_markup_construct = (
 		l.leaf(T_PROCESSING_INSTRUCTION, i, pi_end);
 		return pi_end;
 	}
-	const after_tag = lex_markup_tag(l, i, end, mode);
+	const after_tag = lex_markup_tag(l, i, end, mode, cache);
 	// rawtext elements — opening tags only; a self-closing slash is ignored
 	// (per HTML parsing, `<script/>` still opens script data)
 	if (mode.script_embed !== null && after_tag > i + 1 && text.charCodeAt(i + 1) !== 47) {
 		const raw_name = rawtext_name_at(text, i + 1, end, mode.rcdata);
 		if (raw_name !== null) {
-			return lex_markup_rawtext(l, raw_name, after_tag, end, mode);
+			return lex_markup_rawtext(l, raw_name, after_tag, end, mode, cache);
 		}
 	}
 	return after_tag;
@@ -607,20 +635,21 @@ export const lex_markup_construct = (
 export const lex_markup_window = (l: Lexer, mode: MarkupLexMode): void => {
 	const {text, end} = l;
 	const {lex_expression} = mode;
+	const cache = create_markup_probe_cache();
 	let i = l.pos;
 	while (i < end) {
-		let next = text.indexOf('<', i);
-		if (next === -1 || next >= end) next = end;
+		cache.lt = advance_probe(text, cache.lt, i, '<');
+		let next = cache.lt >= end ? end : cache.lt;
 		if (lex_expression !== null) {
-			const brace = text.indexOf('{', i);
-			if (brace !== -1 && brace < next) next = brace;
+			cache.brace = advance_probe(text, cache.brace, i, '{');
+			if (cache.brace < next) next = cache.brace;
 		}
-		if (next > i) lex_markup_entities(l, i, next);
+		if (next > i) lex_markup_entities(l, i, next, cache);
 		if (next >= end) break;
 		i =
 			text.charCodeAt(next) === 123
 				? lex_expression!(l, next, end, true)
-				: lex_markup_construct(l, next, end, mode);
+				: lex_markup_construct(l, next, end, mode, cache);
 	}
 	l.pos = end;
 };

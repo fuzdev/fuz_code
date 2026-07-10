@@ -1,9 +1,13 @@
 import {
+	is_ascii_alnum,
+	is_ascii_word,
 	is_digit,
+	is_hex_digit,
 	is_space,
 	scan_to_line_end,
 	skip_space,
 	token_type,
+	words_map,
 	type Lexer,
 	type SyntaxLang,
 } from './lexer.ts';
@@ -76,34 +80,23 @@ const K_KEYWORD = 1;
 const K_BUILTIN = 2;
 const K_BOOLEAN = 3;
 
-const WORDS: Map<string, number> = new Map();
-const add_words = (kind: number, words: string): void => {
-	for (const word of words.split(' ')) WORDS.set(word, kind);
-};
-add_words(
-	K_KEYWORD,
-	'if then else elif fi for while until do done case esac in select function return local ' +
-		'export declare typeset readonly unset set shift trap break continue coproc time',
+const WORDS: Map<string, number> = words_map(
+	[
+		K_KEYWORD,
+		'if then else elif fi for while until do done case esac in select function return local ' +
+			'export declare typeset readonly unset set shift trap break continue coproc time',
+	],
+	[
+		K_BUILTIN,
+		'echo printf cd pwd read test source eval exec exit getopts hash type ulimit umask wait kill ' +
+			'jobs bg fg disown alias unalias command shopt',
+	],
+	[K_BOOLEAN, 'true false'],
 );
-add_words(
-	K_BUILTIN,
-	'echo printf cd pwd read test source eval exec exit getopts hash type ulimit umask wait kill ' +
-		'jobs bg fg disown alias unalias command shopt',
-);
-add_words(K_BOOLEAN, 'true false');
 
 // `$`-followed single-char special variables (`$@ $# $? $$ $! $* $-`); digits
 // are handled by the `$word` scan
 const SPECIAL_VAR: Set<number> = new Set([33, 64, 35, 36, 42, 63, 45]);
-
-const is_word_char = (c: number): boolean =>
-	(c >= 97 && c <= 122) || (c >= 65 && c <= 90) || (c >= 48 && c <= 57) || c === 95;
-
-const is_alnum = (c: number): boolean =>
-	(c >= 97 && c <= 122) || (c >= 65 && c <= 90) || (c >= 48 && c <= 57);
-
-const is_hex = (c: number): boolean =>
-	(c >= 48 && c <= 57) || (c >= 97 && c <= 102) || (c >= 65 && c <= 70);
 
 const skip_blank = (text: string, from: number, end: number): number => {
 	let i = from;
@@ -127,14 +120,19 @@ const line_end_of = (text: string, i: number, end: number): number => {
 const scan_bash_number = (text: string, i: number, end: number): number => {
 	if (text.charCodeAt(i) === 48 && (text.charCodeAt(i + 1) | 0x20) === 120) {
 		let j = i + 2;
-		while (j < end && is_hex(text.charCodeAt(j))) j++;
+		while (j < end && is_hex_digit(text.charCodeAt(j))) j++;
 		return j;
 	}
 	let j = i;
 	while (j < end && is_digit(text.charCodeAt(j))) j++;
-	if (j < end && text.charCodeAt(j) === 35 && j + 1 < end && is_alnum(text.charCodeAt(j + 1))) {
+	if (
+		j < end &&
+		text.charCodeAt(j) === 35 &&
+		j + 1 < end &&
+		is_ascii_alnum(text.charCodeAt(j + 1))
+	) {
 		j++;
-		while (j < end && is_alnum(text.charCodeAt(j))) j++;
+		while (j < end && is_ascii_alnum(text.charCodeAt(j))) j++;
 	}
 	return j;
 };
@@ -205,9 +203,9 @@ const scan_dollar_var = (l: Lexer, i: number, to: number): number => {
 		l.leaf(T_VARIABLE, i, end);
 		return end;
 	}
-	if (is_word_char(c1)) {
+	if (is_ascii_word(c1)) {
 		let j = i + 1;
-		while (j < to && is_word_char(text.charCodeAt(j))) j++;
+		while (j < to && is_ascii_word(text.charCodeAt(j))) j++;
 		l.leaf(T_VARIABLE, i, j);
 		return j;
 	}
@@ -740,7 +738,7 @@ const run_bash_window = (mac: BashMachine, frame: BashFrame): boolean => {
 				continue;
 			}
 			const num_end = scan_bash_number(text, i, to);
-			if (!is_word_char(text.charCodeAt(num_end))) {
+			if (!is_ascii_word(text.charCodeAt(num_end))) {
 				l.leaf(T_NUMBER, i, num_end);
 				i = num_end;
 				continue;
@@ -749,9 +747,9 @@ const run_bash_window = (mac: BashMachine, frame: BashFrame): boolean => {
 		}
 
 		// words: function defs, keywords, builtins, booleans, else plain
-		if (is_word_char(c)) {
+		if (is_ascii_word(c)) {
 			let wend = i + 1;
-			while (wend < to && is_word_char(text.charCodeAt(wend))) wend++;
+			while (wend < to && is_ascii_word(text.charCodeAt(wend))) wend++;
 			if (fn) {
 				l.leaf(T_FUNCTION, i, wend);
 				i = wend;
@@ -809,8 +807,8 @@ const run_bash_window = (mac: BashMachine, frame: BashFrame): boolean => {
 		if (
 			c === 38 &&
 			is_digit(text.charCodeAt(i + 1)) &&
-			!is_word_char(text.charCodeAt(i + 2)) &&
-			(i === 0 || !is_word_char(text.charCodeAt(i - 1)))
+			!is_ascii_word(text.charCodeAt(i + 2)) &&
+			(i === 0 || !is_ascii_word(text.charCodeAt(i - 1)))
 		) {
 			l.leaf(T_FILE_DESCRIPTOR, i, i + 2);
 			i += 2;
@@ -899,7 +897,7 @@ const lex_bash_heredoc_start = (
 		k++;
 	}
 	const dstart = k;
-	while (k < to && is_word_char(text.charCodeAt(k))) k++;
+	while (k < to && is_ascii_word(text.charCodeAt(k))) k++;
 	if (k === dstart) return -1; // no delimiter word
 	const delim = text.slice(dstart, k);
 	let delim_token_end = k;

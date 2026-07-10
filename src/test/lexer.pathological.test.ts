@@ -8,11 +8,15 @@ import {PATHOLOGICAL_CASES} from './pathological.ts';
 // linearity rule: no rescans, work O(n) per language layer. Realistic samples
 // can't catch a quadratic boundary scan; these inputs are built to.
 
-const SMALL_SIZE = 4096;
-const SCALE = 8;
+const SMALL_SIZE = 16384;
+const SCALE = 16;
 // linear scaling gives a time ratio near SCALE; quadratic gives near SCALE² —
-// the bound sits well above linear-with-noise and well below quadratic
-const MAX_RATIO = SCALE * 5;
+// the bound sits well above linear-with-noise and well below quadratic. The
+// sizes matter as much as the bound: a quadratic backed by native `indexOf`
+// (memchr-class speed) hides inside its constant factor at small sizes — at
+// 4KB→32KB such a case measured ~26x, under the old 40x bound; at these sizes
+// it measures well over 100x.
+const MAX_RATIO = SCALE * 4;
 
 /**
  * Times one lex of `text`, taking the best of several batches with enough

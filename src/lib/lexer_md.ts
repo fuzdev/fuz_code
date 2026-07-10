@@ -1,12 +1,19 @@
 import {
 	advance_probe,
+	is_ascii_word,
 	is_space,
 	scan_to_line_end,
 	token_type,
 	type Lexer,
 	type SyntaxLang,
 } from './lexer.ts';
-import {lex_markup_construct, MARKUP_MODE_HTML, scan_entity_end} from './lexer_markup.ts';
+import {
+	create_markup_probe_cache,
+	lex_markup_construct,
+	MARKUP_MODE_HTML,
+	scan_entity_end,
+	type MarkupProbeCache,
+} from './lexer_markup.ts';
 
 /**
  * Hand-written Markdown lexer — the structural rethink: a line-oriented block
@@ -93,10 +100,6 @@ add_fence_lang('md markdown', 'md', T_LANG_MD);
 // line-internal whitespace — `is_space` from the toolkit includes newlines
 const is_line_space = (c: number): boolean => c === 32 || c === 9;
 
-// a `\w` word char, for the `_` emphasis word-boundary rule
-const is_word = (c: number): boolean =>
-	(c >= 48 && c <= 57) || ((c | 0x20) >= 97 && (c | 0x20) <= 122) || c === 95;
-
 const next_line_start = (text: string, from: number, end: number): number => {
 	const nl = text.indexOf('\n', from);
 	return nl === -1 || nl >= end ? end : nl + 1;
@@ -128,7 +131,7 @@ const lex_md_emphasis = (
 	allow_single: boolean,
 ): number => {
 	const {text} = l;
-	if (word_boundary && is_word(text.charCodeAt(i - 1))) return i + 1;
+	if (word_boundary && is_ascii_word(text.charCodeAt(i - 1))) return i + 1;
 	if (text.charCodeAt(i + 1) === code) {
 		// double form — interior is [i+2, k), closer [k, k+2)
 		const k = text.indexOf(ds, i + 2);
@@ -139,7 +142,7 @@ const lex_md_emphasis = (
 			text.charCodeAt(k + 1) === code &&
 			!is_space(text.charCodeAt(i + 2)) &&
 			!is_space(text.charCodeAt(k - 1)) &&
-			(!word_boundary || !is_word(text.charCodeAt(k + 2)))
+			(!word_boundary || !is_ascii_word(text.charCodeAt(k + 2)))
 		) {
 			l.open(double_type, i);
 			l.leaf(T_PUNCTUATION, i, i + 2);
@@ -158,7 +161,7 @@ const lex_md_emphasis = (
 		k > i + 1 &&
 		!is_space(text.charCodeAt(i + 1)) &&
 		!is_space(text.charCodeAt(k - 1)) &&
-		(!word_boundary || !is_word(text.charCodeAt(k + 1)))
+		(!word_boundary || !is_ascii_word(text.charCodeAt(k + 1)))
 	) {
 		l.open(T_ITALIC, i);
 		l.leaf(T_PUNCTUATION, i, i + 1);
@@ -170,16 +173,20 @@ const lex_md_emphasis = (
 };
 
 /**
- * Monotonic next-occurrence caches for `lex_md_link`'s `]` and `)` searches.
- * Because a `[` searches for a *different* char, a `[`-dense (or `[x](`-dense)
- * line would otherwise pay a full forward `indexOf` per `[` while advancing
- * only one char — O(n²). The caches advance forward through the inline scan
- * (which visits `[` positions in increasing order), so total probe work is
- * O(n). `Infinity` means the char has no further occurrence.
+ * Monotonic next-occurrence caches for the whole-document md scan: the link
+ * scanner's `]`/`)` probes plus the markup probe cache threaded into raw
+ * markup constructs. Because these probes target chars *other* than the one
+ * that triggered them, a failed probe re-scans text the scan doesn't consume —
+ * uncached (or cached only per line), a `[x](`-per-line document pays a full
+ * forward `indexOf` per line, O(n²) across the document. The caches advance
+ * forward through the block and inline scans (which visit positions in
+ * increasing order), so total probe work is O(n). `Infinity` means the char
+ * has no further occurrence.
  */
-interface MdLinkCache {
+interface MdScanCache {
 	rbracket: number;
 	rparen: number;
+	markup: MarkupProbeCache;
 }
 
 /**
@@ -188,7 +195,7 @@ interface MdLinkCache {
  * `[`/`]`, url interior free of `)`, both line-bounded and non-empty, `(`
  * immediately after `]`.
  */
-const lex_md_link = (l: Lexer, i: number, line_end: number, cache: MdLinkCache): number => {
+const lex_md_link = (l: Lexer, i: number, line_end: number, cache: MdScanCache): number => {
 	const {text} = l;
 	cache.rbracket = advance_probe(text, cache.rbracket, i + 1, ']');
 	const rb = cache.rbracket;
@@ -222,17 +229,21 @@ const lex_md_link = (l: Lexer, i: number, line_end: number, cache: MdLinkCache):
  * containers, so container nesting stays valid). Returns the final position,
  * which exceeds `to` only when a paragraph construct spanned lines.
  */
-const lex_md_inline = (l: Lexer, from: number, to: number, construct_end: number): number => {
+const lex_md_inline = (
+	l: Lexer,
+	from: number,
+	to: number,
+	construct_end: number,
+	cache: MdScanCache,
+): number => {
 	const {text} = l;
-	// per-call caches so a `[`-dense line stays linear (see `advance_probe`)
-	const link_cache: MdLinkCache = {rbracket: -1, rparen: -1};
 	let i = from;
 	let line_end = to;
 	while (i < line_end) {
 		const c = text.charCodeAt(i);
 		if (c === 60) {
 			// < — raw markup construct
-			i = lex_markup_construct(l, i, construct_end, MARKUP_MODE_HTML);
+			i = lex_markup_construct(l, i, construct_end, MARKUP_MODE_HTML, cache.markup);
 			if (i > line_end) line_end = scan_to_line_end(text, i, construct_end);
 			continue;
 		}
@@ -279,7 +290,7 @@ const lex_md_inline = (l: Lexer, from: number, to: number, construct_end: number
 		}
 		if (c === 91) {
 			// [
-			i = lex_md_link(l, i, line_end, link_cache);
+			i = lex_md_link(l, i, line_end, cache);
 			continue;
 		}
 		i++;
@@ -344,7 +355,14 @@ const lex_md_fence = (l: Lexer, ls: number, le: number, next: number, end: numbe
 /**
  * Lexes one line starting at `ls`, returning the next scan position.
  */
-const lex_md_line = (l: Lexer, ls: number, le: number, next: number, end: number): number => {
+const lex_md_line = (
+	l: Lexer,
+	ls: number,
+	le: number,
+	next: number,
+	end: number,
+	cache: MdScanCache,
+): number => {
 	const {text} = l;
 	const c = text.charCodeAt(ls);
 
@@ -365,7 +383,7 @@ const lex_md_line = (l: Lexer, ls: number, le: number, next: number, end: number
 		) {
 			l.open(T_HEADING, ls);
 			l.leaf(T_HEADING_PUNCTUATION, ls, h);
-			lex_md_inline(l, h, le, le);
+			lex_md_inline(l, h, le, le, cache);
 			l.close(le);
 			return next;
 		}
@@ -375,7 +393,7 @@ const lex_md_line = (l: Lexer, ls: number, le: number, next: number, end: number
 	if (c === 62 && has_inline_content(text, ls + 1, le)) {
 		l.open(T_BLOCKQUOTE, ls);
 		l.leaf(T_BLOCKQUOTE_PUNCTUATION, ls, ls + 1);
-		lex_md_inline(l, ls + 1, le, le);
+		lex_md_inline(l, ls + 1, le, le, cache);
 		l.close(le);
 		return next;
 	}
@@ -403,19 +421,21 @@ const lex_md_line = (l: Lexer, ls: number, le: number, next: number, end: number
 		) {
 			l.open(T_LIST, ls);
 			l.leaf(T_PUNCTUATION, ls, m + 1);
-			lex_md_inline(l, m + 1, le, le);
+			lex_md_inline(l, m + 1, le, le, cache);
 			l.close(le);
 			return next;
 		}
 	}
 
 	// paragraph text — markup constructs may span lines
-	const after = lex_md_inline(l, ls, le, end);
+	const after = lex_md_inline(l, ls, le, end, cache);
 	return next_line_start(text, after > le ? after : le, end);
 };
 
 const lex_md = (l: Lexer): void => {
 	const {text, end} = l;
+	// one cache for the whole document scan — see `MdScanCache`
+	const cache: MdScanCache = {rbracket: -1, rparen: -1, markup: create_markup_probe_cache()};
 	let i = l.pos;
 	while (i < end) {
 		const le = scan_to_line_end(text, i, end);
@@ -424,7 +444,7 @@ const lex_md = (l: Lexer): void => {
 			i = next_line_start(text, i, end);
 			continue;
 		}
-		i = lex_md_line(l, i, le, next_line_start(text, i, end), end);
+		i = lex_md_line(l, i, le, next_line_start(text, i, end), end, cache);
 	}
 	l.pos = end;
 };

@@ -94,6 +94,20 @@ export const token_type = (name: string, alias?: string | Array<string>): number
 	token_types_global.intern(name, alias);
 
 /**
+ * Builds a word→kind classification map from `[kind, words]` entries, where
+ * `words` is space-separated — the shared shape of the lexers' keyword tables.
+ */
+export const words_map = (
+	...entries: Array<[kind: number, words: string]>
+): Map<string, number> => {
+	const map: Map<string, number> = new Map();
+	for (const [kind, words] of entries) {
+		for (const word of words.split(' ')) map.set(word, kind);
+	}
+	return map;
+};
+
+/**
  * A lexer-based language registration.
  */
 export interface SyntaxLang {
@@ -466,6 +480,17 @@ export const matches_ci = (text: string, from: number, word: string): boolean =>
 
 export const is_digit = (c: number): boolean => c >= 48 && c <= 57;
 
+export const is_ascii_alnum = (c: number): boolean =>
+	(c >= 48 && c <= 57) || ((c | 0x20) >= 97 && (c | 0x20) <= 122);
+
+/**
+ * A `\w` word char — ASCII letters, digits, and `_`.
+ */
+export const is_ascii_word = (c: number): boolean => is_ascii_alnum(c) || c === 95;
+
+export const is_hex_digit = (c: number): boolean =>
+	(c >= 48 && c <= 57) || ((c | 0x20) >= 97 && (c | 0x20) <= 102);
+
 export const is_ident_start = (c: number): boolean =>
 	c < 128 ? (CHAR_FLAGS[c]! & CF_IDENT_START) !== 0 : c >= 0xa0;
 
@@ -490,6 +515,16 @@ export const skip_space = (text: string, from: number, end: number): number => {
 	let i = from;
 	while (i < end && is_space(text.charCodeAt(i))) i++;
 	return i;
+};
+
+/**
+ * Trims trailing whitespace from a `[from, to)` span, returning the new
+ * exclusive end.
+ */
+export const trim_space_end = (text: string, from: number, to: number): number => {
+	let end = to;
+	while (end > from && is_space(text.charCodeAt(end - 1))) end--;
+	return end;
 };
 
 /**

@@ -4,6 +4,7 @@ import {
 	is_space,
 	scan_ident,
 	scan_to_line_end,
+	skip_quoted,
 	token_type,
 	type Lexer,
 	type SyntaxLang,
@@ -30,27 +31,6 @@ const T_PUNCTUATION = token_type('punctuation');
 const T_OPERATOR = token_type('operator');
 const T_BOOLEAN = token_type('boolean');
 const T_NULL = token_type('null', 'keyword');
-
-/**
- * Scans a `"` string from `i`, returning the exclusive end index.
- * Stops before an unescaped newline (unterminated) or at end of window.
- */
-const scan_json_string = (text: string, from: number, end: number): number => {
-	let i = from + 1;
-	while (i < end) {
-		const c = text.charCodeAt(i);
-		if (c === 92) {
-			i += 2; // escape — skip escaped char
-		} else if (c === 34) {
-			return i + 1;
-		} else if (c === 10 || c === 13) {
-			return i; // unterminated: stop at the line boundary
-		} else {
-			i++;
-		}
-	}
-	return end;
-};
 
 /**
  * Scans a number from `i` (at `-` or a digit), returning the exclusive end.
@@ -88,8 +68,9 @@ const lex_json = (l: Lexer): void => {
 			continue;
 		}
 		if (c === 34) {
-			// `"` — string; a key when followed by `:`
-			const str_end = scan_json_string(text, i, end);
+			// `"` — string; a key when followed by `:` (unterminated stops at the
+			// line boundary — see `skip_quoted`)
+			const str_end = skip_quoted(text, i, end, 34);
 			let j = str_end;
 			while (j < end && is_space(text.charCodeAt(j))) j++;
 			l.leaf(j < end && text.charCodeAt(j) === 58 ? T_PROPERTY : T_STRING, i, str_end);

@@ -9,6 +9,8 @@ import {
 	skip_quoted,
 	skip_space,
 	token_type,
+	trim_space_end,
+	words_map,
 	type Lexer,
 	type SyntaxLang,
 } from './lexer.ts';
@@ -85,28 +87,26 @@ const K_TS_COND = 8; // ts keyword before ident/`{`
 const K_BOOLEAN = 9;
 const K_NUMBER_WORD = 10; // NaN/Infinity
 
-const WORDS: Map<string, number> = new Map();
-const add_words = (kind: number, words: string): void => {
-	for (const word of words.split(' ')) WORDS.set(word, kind);
-};
-add_words(
-	K_KEYWORD,
-	'class const debugger delete enum extends function implements in instanceof interface let ' +
-		'new null of package private protected public static super this typeof undefined var void with',
+const WORDS: Map<string, number> = words_map(
+	[
+		K_KEYWORD,
+		'class const debugger delete enum extends function implements in instanceof interface let ' +
+			'new null of package private protected public static super this typeof undefined var void with',
+	],
+	[
+		K_SPECIAL,
+		'as await break case catch continue default do else export finally for from if import ' +
+			'return switch throw try while yield',
+	],
+	[K_TS, 'abstract declare is keyof readonly require satisfies'],
+	[K_TS_COND, 'asserts infer module namespace'],
+	[K_ASYNC, 'async'],
+	[K_GET_SET, 'get set'],
+	[K_ASSERT, 'assert'],
+	[K_TYPE_WORD, 'type'],
+	[K_BOOLEAN, 'true false'],
+	[K_NUMBER_WORD, 'NaN Infinity'],
 );
-add_words(
-	K_SPECIAL,
-	'as await break case catch continue default do else export finally for from if import ' +
-		'return switch throw try while yield',
-);
-add_words(K_TS, 'abstract declare is keyof readonly require satisfies');
-add_words(K_TS_COND, 'asserts infer module namespace');
-add_words(K_ASYNC, 'async');
-add_words(K_GET_SET, 'get set');
-add_words(K_ASSERT, 'assert');
-add_words(K_TYPE_WORD, 'type');
-add_words(K_BOOLEAN, 'true false');
-add_words(K_NUMBER_WORD, 'NaN Infinity');
 
 // keywords that put the lexer in a class-name context for the next identifier
 const CLASS_CTX_WORDS: Set<string> = new Set([
@@ -197,6 +197,11 @@ const scan_ts_string = (text: string, from: number, end: number, quote: number):
  * Scans a numeric literal from `i` (at a digit, or `.` before a digit),
  * returning the exclusive end. Handles hex/binary/octal, `_` separators,
  * exponents, and bigint `n` suffixes.
+ *
+ * The per-call closures are a measured exception to the top-level-functions
+ * rule: V8 inlines them into specialized loops inside this function, and
+ * hoisted top-level variants (both a param'd helper and a decimal-specialized
+ * one) run ~1.2x slower on number-dense input.
  */
 const scan_ts_number = (text: string, i: number, end: number): number => {
 	const scan_digits = (from: number, is_wanted: (c: number) => boolean): number => {
@@ -1101,10 +1106,7 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 				const type_end = scan_type_annotation(text, i, to, cache);
 				if (type_end !== -1) {
 					const type_start = skip_space(text, i + 1, to);
-					let content_end = type_end;
-					while (content_end > type_start && is_space(text.charCodeAt(content_end - 1))) {
-						content_end--;
-					}
+					const content_end = trim_space_end(text, type_start, type_end);
 					if (content_end > type_start) {
 						l.open(T_TYPE_ANNOTATION, i);
 						l.leaf(T_COLON, i, i + 1);

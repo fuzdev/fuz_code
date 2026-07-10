@@ -1,10 +1,10 @@
 import {
 	is_ident,
-	is_space,
 	scan_balanced_braces,
 	skip_quoted,
 	skip_space,
 	token_type,
+	trim_space_end,
 	type Lexer,
 	type SyntaxLang,
 } from './lexer.ts';
@@ -66,8 +66,7 @@ const BLOCK_WORDS: Set<string> = new Set([
 const lex_ts_interior = (l: Lexer, from: number, to: number): void => {
 	const {text} = l;
 	const start = skip_space(text, from, to);
-	let content_end = to;
-	while (content_end > start && is_space(text.charCodeAt(content_end - 1))) content_end--;
+	const content_end = trim_space_end(text, start, to);
 	if (content_end <= start) return;
 	l.open(T_LANG_TS, start);
 	l.embed('ts', start, content_end);

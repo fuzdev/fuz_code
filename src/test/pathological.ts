@@ -1,9 +1,12 @@
 /**
  * Pathological input generators for the lexer engine — workload classes that
  * realistic samples don't cover: deep nesting, huge single lines, very long
- * and escape-heavy strings, many tiny tokens, and colon/angle/paren-dense
+ * and escape-heavy strings, many tiny tokens, colon/angle/paren-dense
  * text that stresses the ts lexer's bounded heuristic scans
- * (`scan_type_annotation`, `scan_balanced_angle`, `is_function_variable`).
+ * (`scan_type_annotation`, `scan_balanced_angle`, `is_function_variable`),
+ * and probe-starved text — dense in a construct char while lacking a char
+ * its scanner probes for (`<` vs `{` vs `&`, link `]`/`)`) — that stresses
+ * the monotonic probe caches (`advance_probe`).
  *
  * Shared by the linearity suite (`lexer.pathological.test.ts`) and the
  * benchmark runner (`benchmark/benchmarks.ts`) so the same workloads are both
@@ -152,6 +155,35 @@ export const PATHOLOGICAL_CASES: Array<PathologicalCase> = [
 		name: 'svelte_attr_expr_dense',
 		lang: 'svelte',
 		generate: (size) => repeat_to_size('<a b={c} {d} />', size),
+	},
+	{
+		// tag-dense svelte with no `{` anywhere — the expression-brace probe
+		// never hits, so it must be cached rather than re-run per tag
+		name: 'svelte_tag_only_dense',
+		lang: 'svelte',
+		generate: (size) => repeat_to_size('<i>a</i>', size),
+	},
+	{
+		// tag-dense html with no `&` anywhere — the entity probe never hits, so
+		// it must be cached across text gaps and attribute values
+		name: 'html_no_entity_dense',
+		lang: 'html',
+		generate: (size) => repeat_to_size('<i>a</i>', size),
+	},
+	{
+		// one raw-markup tag per line — md threads the markup probe caches
+		// across lines, so an absent `&` costs one probe per document, not one
+		// per line
+		name: 'md_tag_per_line',
+		lang: 'md',
+		generate: (size) => repeat_to_size('<b c="d">x</b>\n', size),
+	},
+	{
+		// one link opener per line with no `)` anywhere — the link probes must
+		// stay monotonic across lines, not just within one
+		name: 'md_link_paren_per_line',
+		lang: 'md',
+		generate: (size) => repeat_to_size('[x](y\n', size),
 	},
 	{
 		// nested rules NESTING_DEPTH deep — the native-nesting state stack
