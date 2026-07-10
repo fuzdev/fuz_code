@@ -204,8 +204,11 @@ Internal benchmark tests all sample files at normal and 100x sizes, plus a
 `pathological:` group of generated adversarial inputs (`src/test/pathological.ts`,
 32KB each, shorter per-case budget) that tracks the lexer engine's worst-case
 constants; the same generators back the CI linearity suite
-(`src/test/lexer.pathological.test.ts`). The vs comparison tests against
-Prism and Shiki (JS and Oniguruma engines).
+(`src/test/lexer.pathological.test.ts`). Each run also reports a
+deterministic "Output metrics" table (spans rendered and utf8 HTML bytes per
+case — DOM-cost proxies, not timed) that lands in `results.md` alongside the
+timings. The vs comparison tests against Prism and Shiki (JS and Oniguruma
+engines).
 
 ### Updating committed result snapshots
 

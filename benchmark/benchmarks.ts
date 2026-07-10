@@ -32,16 +32,21 @@ const BASELINE_FILE = `${BASELINE_PATH}/baseline.json`;
 const REGRESSION_THRESHOLD = 1.1;
 const STALENESS_WARNING_DAYS = 30;
 
+const filter_samples = (filter?: string): Array<{name: string; lang: string; content: string}> => {
+	const samples = Object.values(all_samples);
+	return filter ? samples.filter((s) => s.name.includes(filter) || s.lang === filter) : samples;
+};
+
+const pathological_matches = (name: string, lang: string, filter?: string): boolean =>
+	!filter || name.includes(filter) || filter === lang;
+
 export const run_benchmark = async (filter?: string): Promise<Array<BenchmarkResult>> => {
 	const bench = new Benchmark({
 		duration_ms: BENCHMARK_TIME,
 		warmup_iterations: WARMUP_ITERATIONS,
 	});
 
-	const samples = Object.values(all_samples);
-	const samples_to_run = filter
-		? samples.filter((s) => s.name.includes(filter) || s.lang === filter)
-		: samples;
+	const samples_to_run = filter_samples(filter);
 
 	for (const sample of samples_to_run) {
 		bench.add(`baseline:${sample.name}`, () => {
@@ -76,7 +81,7 @@ export const run_benchmark = async (filter?: string): Promise<Array<BenchmarkRes
 	});
 	let pathological_count = 0;
 	for (const c of PATHOLOGICAL_CASES) {
-		if (filter && !c.name.includes(filter) && filter !== c.lang) continue;
+		if (!pathological_matches(c.name, c.lang, filter)) continue;
 		const content = c.generate(PATHOLOGICAL_SIZE);
 		pathological_bench.add(`pathological:${c.name}`, () => {
 			syntax_styler_global.stylize(content, c.lang);
@@ -137,15 +142,11 @@ const measure_output = (name: string, content: string, lang: string): OutputMetr
 
 export const collect_output_metrics = (filter?: string): Array<OutputMetrics> => {
 	const metrics: Array<OutputMetrics> = [];
-	const samples = Object.values(all_samples);
-	const samples_to_run = filter
-		? samples.filter((s) => s.name.includes(filter) || s.lang === filter)
-		: samples;
-	for (const sample of samples_to_run) {
+	for (const sample of filter_samples(filter)) {
 		metrics.push(measure_output(`baseline:${sample.name}`, sample.content, sample.lang));
 	}
 	for (const c of PATHOLOGICAL_CASES) {
-		if (filter && !c.name.includes(filter) && filter !== c.lang) continue;
+		if (!pathological_matches(c.name, c.lang, filter)) continue;
 		metrics.push(measure_output(`pathological:${c.name}`, c.generate(PATHOLOGICAL_SIZE), c.lang));
 	}
 	return metrics;

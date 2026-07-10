@@ -344,26 +344,26 @@ const scan_balanced_parens = (text: string, i: number, end: number, cache: TsSca
 };
 
 /**
- * Detects whether the identifier ending at `ident_end` is a function-valued
- * variable: `ident` followed by `=` or `:`, then optional `async`, then a
- * `function` keyword, `(params) =>`, or `param =>`.
+ * Detects whether an identifier is a function-valued variable: followed by
+ * `=` or `:` (`after` is the identifier's next significant position, already
+ * past whitespace), then optional `async`, then a `function` keyword,
+ * `(params) =>`, or `param =>`.
  */
 const is_function_variable = (
 	text: string,
-	ident_end: number,
+	after: number,
 	end: number,
 	cache: TsScanCache,
 ): boolean => {
-	let j = skip_space(text, ident_end, end);
-	const c = text.charCodeAt(j);
+	const c = text.charCodeAt(after);
 	if (c === 61) {
 		// `=` — but not `==`/`=>`/`===`
-		const c2 = text.charCodeAt(j + 1);
+		const c2 = text.charCodeAt(after + 1);
 		if (c2 === 61 || c2 === 62) return false;
 	} else if (c !== 58) {
 		return false;
 	}
-	j = skip_space(text, j + 1, end);
+	let j = skip_space(text, after + 1, end);
 	// optional `async`
 	if (text.startsWith('async', j)) {
 		const after = j + 5;
@@ -888,8 +888,14 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 				}
 			}
 
+			// one shared lookahead past the identifier — the classification checks
+			// below (function-variable, generic call, plain call) all probe the
+			// same next-significant position
+			const after_ident = skip_space(text, ident_end, to);
+			const after_c = text.charCodeAt(after_ident);
+
 			// function-valued variables: `f = () => …`, `f: async x => …`
-			if (!type_mode && c !== 35 && is_function_variable(text, ident_end, to, cache)) {
+			if (!type_mode && c !== 35 && is_function_variable(text, after_ident, to, cache)) {
 				l.leaf(T_FUNCTION_VARIABLE, start, ident_end);
 				continue;
 			}
@@ -922,38 +928,35 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 			}
 
 			// generic call: `foo<T>(…)`
-			{
-				const angle_start = skip_space(text, ident_end, to);
-				if (text.charCodeAt(angle_start) === 60) {
-					const angle_end = scan_balanced_angle(text, angle_start, to, cache);
-					if (angle_end !== -1 && text.charCodeAt(skip_space(text, angle_end + 1, to)) === 40) {
-						l.open(T_GENERIC_FUNCTION, start);
-						l.leaf(T_FUNCTION, start, ident_end);
-						l.open(T_GENERIC, angle_start);
-						frame.i = i;
-						frame.prev = prev;
-						frame.prev_code = prev_code;
-						frame.class_ctx = class_ctx;
-						frame.as_ctx = as_ctx;
-						frame.import_ctx = import_ctx;
-						mac_push_window(
-							mac,
-							angle_start,
-							angle_end + 1,
-							true,
-							R_GENERIC_CALL,
-							angle_end + 1,
-							0,
-							0,
-							0,
-						);
-						return false;
-					}
+			if (after_c === 60) {
+				const angle_end = scan_balanced_angle(text, after_ident, to, cache);
+				if (angle_end !== -1 && text.charCodeAt(skip_space(text, angle_end + 1, to)) === 40) {
+					l.open(T_GENERIC_FUNCTION, start);
+					l.leaf(T_FUNCTION, start, ident_end);
+					l.open(T_GENERIC, after_ident);
+					frame.i = i;
+					frame.prev = prev;
+					frame.prev_code = prev_code;
+					frame.class_ctx = class_ctx;
+					frame.as_ctx = as_ctx;
+					frame.import_ctx = import_ctx;
+					mac_push_window(
+						mac,
+						after_ident,
+						angle_end + 1,
+						true,
+						R_GENERIC_CALL,
+						angle_end + 1,
+						0,
+						0,
+						0,
+					);
+					return false;
 				}
 			}
 
 			// call: `foo(…)` (also `#private(…)`)
-			if (text.charCodeAt(skip_space(text, ident_end, to)) === 40) {
+			if (after_c === 40) {
 				l.leaf(T_FUNCTION, start, ident_end);
 				continue;
 			}
