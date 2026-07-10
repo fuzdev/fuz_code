@@ -1,6 +1,6 @@
 import {DEV} from 'esm-env';
 
-import type {LexedSyntax} from './lexer.ts';
+import type {LexedSyntax, TokenTypeInfo} from './lexer.ts';
 import {highlight_priorities} from './highlight_priorities.ts';
 
 export type HighlightMode = 'auto' | 'ranges' | 'html';
@@ -49,6 +49,24 @@ const push_range = (
 	} else {
 		ranges_by_name.set(name, [range]);
 	}
+};
+
+/**
+ * Prefixed highlight names (`token_<name>` plus one per alias) per token type,
+ * computed once per type instead of once per token — the ranges-path analog of
+ * the registry's precomputed `open_tag`. Module-level so managers share it;
+ * keyed weakly so custom registries' infos don't leak.
+ */
+const highlight_names_cache: WeakMap<TokenTypeInfo, Array<string>> = new WeakMap();
+
+const highlight_names_of = (info: TokenTypeInfo): Array<string> => {
+	let names = highlight_names_cache.get(info);
+	if (names === undefined) {
+		names = [`token_${info.name}`];
+		for (const alias of info.aliases) names.push(`token_${alias}`);
+		highlight_names_cache.set(info, names);
+	}
+	return names;
 };
 
 /**
@@ -244,10 +262,12 @@ export class HighlightManager {
 	/**
 	 * Pushes one range for `[start, end)` (clamped to `text_length`), shared
 	 * across the token type's own class and each of its aliases — the same range
-	 * object can belong to multiple `Highlight` sets.
+	 * object can belong to multiple `Highlight` sets. Names come precomputed
+	 * from `highlight_names_of`, so nothing allocates per token here except the
+	 * range itself.
 	 */
 	#push_token(
-		info: {name: string; aliases: Array<string>},
+		info: TokenTypeInfo,
 		start: number,
 		end: number,
 		text_node: Node,
@@ -257,9 +277,8 @@ export class HighlightManager {
 		const safe_end = end > text_length ? text_length : end;
 		if (safe_end <= start) return;
 		const range = this.#make_range(text_node, start, safe_end);
-		push_range(ranges_by_name, `token_${info.name}`, range);
-		for (const alias of info.aliases) {
-			push_range(ranges_by_name, `token_${alias}`, range);
+		for (const name of highlight_names_of(info)) {
+			push_range(ranges_by_name, name, range);
 		}
 	}
 }
