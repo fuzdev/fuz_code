@@ -171,6 +171,14 @@ describe('lexer_md inline', () => {
 		assert.deepEqual(picked('[a[b]](c) and [d] (e)', ['link']), []);
 	});
 
+	test('links on later lines survive failed probes on earlier ones', () => {
+		// the `]`/`)` probes are cached for the whole document (`MdScanCache`) —
+		// an opener that fails to match on one line must not lose a real link on
+		// a later line
+		assert.deepEqual(picked('[a](b\ntext\n[c](d) e', ['link']), [['link', '[c](d)']]);
+		assert.deepEqual(picked('[a b\n[c](d)', ['link']), [['link', '[c](d)']]);
+	});
+
 	test('entities', () => {
 		assert.deepEqual(picked('a &amp; b &#38; c', ['entity']), [
 			['entity', '&amp;'],
@@ -203,6 +211,15 @@ describe('lexer_md raw markup', () => {
 		const text = '> quote <b unterminated\nplain';
 		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'md')), []);
 		assert.deepEqual(picked(text, ['tag']).slice(0, 1), [['tag', '<b unterminated']]);
+	});
+
+	test('attribute entities on later lines survive entity-less earlier tags', () => {
+		// the markup probe cache is shared across the whole document scan
+		// (`MdScanCache.markup`) — entity-less attribute values on earlier lines
+		// must not lose an entity in a later one
+		assert.deepEqual(picked('<b c="v">x</b>\n\n<i d="&amp;">y</i>', ['entity']), [
+			['entity', '&amp;'],
+		]);
 	});
 });
 

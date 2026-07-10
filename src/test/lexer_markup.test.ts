@@ -109,6 +109,14 @@ describe('lexer_markup entities', () => {
 	test('entities inside attribute values', () => {
 		assert.deepEqual(picked('<a title="a &amp; b">', ['entity']), [['entity', '&amp;']]);
 	});
+
+	test('entities after entity-less gaps and attribute values', () => {
+		// the `&` probe is cached across text gaps and attribute values
+		// (`MarkupProbeCache`) — entity-less regions before an entity must not
+		// lose it
+		assert.deepEqual(picked('<b>x</b> y <i>z</i> &amp; w', ['entity']), [['entity', '&amp;']]);
+		assert.deepEqual(picked('<a b="c" d="&#x27;">', ['entity']), [['entity', '&#x27;']]);
+	});
 });
 
 describe('lexer_markup comments, doctype, cdata, processing instructions', () => {

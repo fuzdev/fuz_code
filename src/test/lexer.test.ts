@@ -1,6 +1,7 @@
 import {describe, test, assert} from 'vitest';
 
 import {
+	advance_probe,
 	Lexer,
 	lex_syntax,
 	render_syntax_html,
@@ -106,6 +107,23 @@ describe('Lexer', () => {
 		});
 		assert.strictEqual(syntax_events_to_tokens(lexed).length, 1000);
 		assert.deepEqual(validate_syntax_events(lexed), []);
+	});
+});
+
+describe('advance_probe', () => {
+	test('probes, reuses, and re-probes monotonically', () => {
+		// fresh cache probes from `from`
+		assert.strictEqual(advance_probe('a&b&c', -1, 0, '&'), 1);
+		// a cached position at or ahead of `from` is reused as-is
+		assert.strictEqual(advance_probe('a&b&c', 3, 2, '&'), 3);
+		assert.strictEqual(advance_probe('a&b&c', 1, 1, '&'), 1);
+		// a cached position behind `from` re-probes
+		assert.strictEqual(advance_probe('a&b&c', 1, 2, '&'), 3);
+	});
+
+	test('no further occurrence is Infinity, and Infinity persists', () => {
+		assert.strictEqual(advance_probe('abc', -1, 0, '&'), Infinity);
+		assert.strictEqual(advance_probe('abc', Infinity, 2, '&'), Infinity);
 	});
 });
 

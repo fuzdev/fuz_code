@@ -52,6 +52,20 @@ describe('lexer_svelte expressions', () => {
 		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'svelte')), []);
 		assert.deepEqual(picked(text, ['special_keyword']), [['special_keyword', '#if']]);
 	});
+
+	test('expressions and tags lex across probe-starved prefixes', () => {
+		// the window's `<`/`{` probes are cached (`MarkupProbeCache`) — a run of
+		// constructs without one probe char must not lose the construct after it
+		assert.deepEqual(picked('<b>a</b><b>a</b>{x}', ['svelte_expression']), [
+			['svelte_expression', '{x}'],
+		]);
+		assert.deepEqual(picked('{x}{y}<b>a</b>', ['tag']), [
+			['tag', '<b>'],
+			['tag', '<b'],
+			['tag', '</b>'],
+			['tag', '</b'],
+		]);
+	});
 });
 
 describe('lexer_svelte blocks', () => {
