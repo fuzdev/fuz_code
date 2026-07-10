@@ -41,7 +41,7 @@ import {
  * Scope: the bash family — `sh`/`shell` alias this lexer. POSIX sh is a
  * syntactic subset of bash for highlighting purposes (everything sh scripts
  * use — `$(…)`, `$((…))`, backticks, heredocs, `${…}` — is shared syntax),
- * and bash-only forms simply don't occur in sh input. Shells with their own
+ * and bash-only forms don't occur in sh input. Shells with their own
  * syntax (fish, PowerShell) are out of scope.
  *
  * Resilience: unterminated single-line constructs stop at the line boundary;
@@ -52,6 +52,8 @@ import {
  * that damage propagates rather than being contained: a malformed interior
  * that consumes the closing `)` (say an unterminated string) extends the
  * substitution past it, editor-style.
+ *
+ * @module
  */
 
 const T_SHEBANG = token_type('shebang', 'comment');
@@ -172,8 +174,6 @@ const scan_ansi_c = (text: string, i: number, end: number): number => {
  * Emits a `$`-variable at `i` (`${…}`, `$word`, or `$special`), returning the
  * new position. A `$` with no valid expansion after it is plain text (returns
  * `i + 1` with no token).
- *
- * @mutates `l`
  */
 const scan_dollar_var = (l: Lexer, i: number, to: number): number => {
 	const {text} = l;
@@ -319,8 +319,6 @@ const create_bash_frame = (): BashFrame => ({
  * stack top. `ret`/`ret_a` are applied when it completes. A nonzero `term`
  * makes the window self-discovering: it terminates at the `term` char that
  * brings `depth` to 0, writing the discovered position to `ret_a`.
- *
- * @mutates `mac`
  */
 const mac_push_window = (
 	mac: BashMachine,
@@ -358,8 +356,6 @@ const mac_push_window = (
  * state and return `false`); the driver's finalize emits the trailing
  * punctuation and advances the caller past it. The `i + 2 < to` guard keeps
  * the arithmetic lookahead inside the window.
- *
- * @mutates `mac`
  */
 const mac_push_dollar_paren = (mac: BashMachine, i: number, to: number): void => {
 	const l = mac.l;
@@ -383,8 +379,6 @@ const mac_push_dollar_paren = (mac: BashMachine, i: number, to: number): void =>
  * Starts a legacy backtick command substitution at `i`: emits the container
  * open and opening backtick, and pushes the interior window frame. A backslash
  * escapes the next char (e.g. an inner backtick); unterminated extends to `to`.
- *
- * @mutates `mac`
  */
 const mac_push_backtick = (mac: BashMachine, i: number, to: number): void => {
 	const l = mac.l;
@@ -412,8 +406,6 @@ const mac_push_backtick = (mac: BashMachine, i: number, to: number): void => {
  * window end when unterminated), or the bitwise complement of the position of
  * a `$(`/backtick nesting construct — the fast path lets bodies without
  * substitutions complete without a frame.
- *
- * @mutates `l`
  */
 const scan_dquote_body = (l: Lexer, j: number, to: number): number => {
 	const {text} = l;
@@ -486,8 +478,6 @@ interface PendingHeredoc {
  * complement of the position of a `$(` substitution — the fast path lets
  * bodies without substitutions complete without a frame. Hops between `$`s
  * with native `indexOf`.
- *
- * @mutates `l`
  */
 const scan_heredoc_body = (l: Lexer, j: number, to: number): number => {
 	const {text} = l;
@@ -507,8 +497,6 @@ const scan_heredoc_body = (l: Lexer, j: number, to: number): number => {
  * mid-body (`S_HEREDOC`) — this returns `false`, and the submode resume
  * finishes the body and re-enters here for the rest of the queue. Returns
  * `true` once the queue is empty.
- *
- * @mutates `mac`
  */
 const drain_pending = (mac: BashMachine, frame: BashFrame): boolean => {
 	const l = mac.l;
@@ -583,8 +571,6 @@ const bash_operator_len = (text: string, i: number, to: number, c: number): numb
  * Returns `false` when the body hit another substitution and the frame
  * suspended again; on completion clears the submode and returns `true`, with
  * `frame.i` at the main scan's resume position.
- *
- * @mutates `mac`
  */
 const run_bash_sub = (mac: BashMachine, frame: BashFrame): boolean => {
 	const l = mac.l;
@@ -629,8 +615,6 @@ const run_bash_sub = (mac: BashMachine, frame: BashFrame): boolean => {
  * (position recorded in `frame.ret_a`) — or `false` after pushing a
  * substitution-interior frame, which the driver runs before resuming this
  * frame.
- *
- * @mutates `mac`
  */
 const run_bash_window = (mac: BashMachine, frame: BashFrame): boolean => {
 	const l = mac.l;
@@ -891,8 +875,6 @@ const run_bash_window = (mac: BashMachine, frame: BashFrame): boolean => {
  * newline. Returns the new position, -1 when no delimiter follows (the caller
  * emits `<<` as an operator), or -2 when the inline body hit a substitution
  * and the window suspended mid-body (the caller returns `false`).
- *
- * @mutates `mac`
  */
 const lex_bash_heredoc_start = (
 	mac: BashMachine,
@@ -972,8 +954,6 @@ const lex_bash_heredoc_start = (
  * region. A frame that pushes a child returns `false`, so the child runs next
  * and this frame resumes only once the child (and its own descendants) have
  * completed.
- *
- * @mutates `mac`
  */
 const run_bash = (mac: BashMachine): void => {
 	const l = mac.l;

@@ -32,6 +32,8 @@ import {lex_markup_window, type MarkupLexMode} from './lexer_markup.ts';
  * modifiers (`transition:fade|global`) get punctuation pipes.
  *
  * Resilience: an unterminated expression extends to the end of the window.
+ *
+ * @module
  */
 
 const T_SVELTE_EXPRESSION = token_type('svelte_expression');

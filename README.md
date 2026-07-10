@@ -104,7 +104,8 @@ I encourage you to poke around [`src/lib`](src/lib) if you're interested in usin
 
 Registered by default in `syntax_styler_global` — one hand-written lexer each:
 
-- [`markup`](src/lib/lexer_markup.ts) (`html`, `mathml`, `svg`; plus `xml`/`ssml`/`atom`/`rss`)
+- [`markup`](src/lib/lexer_markup.ts) (`html`, `mathml`, `svg`)
+- [`xml`](src/lib/lexer_markup.ts) (`ssml`, `atom`, `rss`)
 - [`svelte`](src/lib/lexer_svelte.ts)
 - [`md`](src/lib/lexer_md.ts) (markdown)
 - [`ts`](src/lib/lexer_ts.ts) (TypeScript — also serves `js`/`javascript`, a syntactic subset)

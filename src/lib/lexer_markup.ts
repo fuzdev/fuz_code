@@ -36,6 +36,8 @@ import {
  * Resilience: unterminated comments, processing instructions, doctypes,
  * CDATA sections, tags, quoted attribute values, and rawtext regions all
  * extend to the end of the window.
+ *
+ * @module
  */
 
 const T_COMMENT = token_type('comment');

@@ -176,8 +176,6 @@ export class Lexer {
 	/**
 	 * Emits a leaf token. Empty spans are dropped; a leaf adjacent to a
 	 * preceding leaf of the same type extends it instead (span coalescing).
-	 *
-	 * @mutates `this`
 	 */
 	leaf(type_id: number, start: number, end: number): void {
 		if (start >= end) return;
@@ -198,8 +196,6 @@ export class Lexer {
 
 	/**
 	 * Opens a container token at `start`. Must be balanced by a later `close`.
-	 *
-	 * @mutates `this`
 	 */
 	open(type_id: number, start: number): void {
 		if (this.events_len + 2 > this.events.length) this.#grow();
@@ -212,8 +208,6 @@ export class Lexer {
 
 	/**
 	 * Closes the innermost open container at `end`.
-	 *
-	 * @mutates `this`
 	 */
 	close(end: number): void {
 		if (this.events_len + 2 > this.events.length) this.#grow();
@@ -229,8 +223,6 @@ export class Lexer {
 	 * restoring this lexer's window afterward. Returns `false` (leaving the
 	 * region as plain text) when the language isn't registered or embedding
 	 * is nested past `MAX_EMBED_DEPTH`.
-	 *
-	 * @mutates `this`
 	 */
 	embed(lang_id: string, start: number, end: number): boolean {
 		if (start >= end) return false;
@@ -257,8 +249,6 @@ export class Lexer {
 /**
  * Lexes `text` with `lang`, returning the flat token event stream.
  *
- * @param text - the source text
- * @param lang - the language to lex with
  * @param langs - registry used to resolve embedded languages by id
  * @param types - token-type registry stamped on the result; must be the one
  *   `lang` (and any embedded language) interned its type ids into
@@ -443,11 +433,11 @@ export const validate_syntax_events = (lexed: LexedSyntax): Array<string> => {
 // Shared ASCII char-class flags. Code units >= 0xa0 are identifier chars by
 // policy (matches the inherited U+00A0-U+FFFF identifier ranges; surrogate
 // halves are >= 0xa0 so astral chars behave consistently).
-export const CF_SPACE = 1;
-export const CF_IDENT_START = 2;
-export const CF_IDENT = 4;
+const CF_SPACE = 1;
+const CF_IDENT_START = 2;
+const CF_IDENT = 4;
 
-export const CHAR_FLAGS: Uint8Array = new Uint8Array(128);
+const CHAR_FLAGS: Uint8Array = new Uint8Array(128);
 for (let c = 48; c <= 57; c++) CHAR_FLAGS[c] = CF_IDENT; // 0-9
 for (let c = 65; c <= 90; c++) CHAR_FLAGS[c] = CF_IDENT_START | CF_IDENT; // A-Z
 for (let c = 97; c <= 122; c++) CHAR_FLAGS[c] = CF_IDENT_START | CF_IDENT; // a-z
@@ -528,6 +518,18 @@ export const skip_quoted = (text: string, from: number, end: number, quote: numb
 		else i++;
 	}
 	return end;
+};
+
+/**
+ * Returns the cached next occurrence of `ch` at or after `from`, re-probing
+ * with `indexOf` only when the cached position has fallen behind. `Infinity`
+ * when the text has no further occurrence — a monotonic probe that keeps
+ * delimiter scans linear across a construct that is dense in `ch`.
+ */
+export const advance_probe = (text: string, cached: number, from: number, ch: string): number => {
+	if (cached >= from) return cached;
+	const found = text.indexOf(ch, from);
+	return found === -1 ? Infinity : found;
 };
 
 /**

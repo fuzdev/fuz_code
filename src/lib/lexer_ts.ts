@@ -1,4 +1,5 @@
 import {
+	advance_probe,
 	is_digit,
 	is_ident,
 	is_ident_start,
@@ -32,6 +33,8 @@ import {
  * damage propagates rather than being contained: a malformed interior that
  * consumes the closing `}` (say an unterminated block comment) extends the
  * interpolation past it, editor-style.
+ *
+ * @module
  */
 
 const T_COMMENT = token_type('comment');
@@ -165,17 +168,6 @@ const create_ts_scan_cache = (): TsScanCache => ({
 	next_gt: -1,
 	next_rparen: -1,
 });
-
-/**
- * Returns the cached next occurrence of `ch` at or after `from`, re-probing
- * with `indexOf` only when the cached position has fallen behind. `Infinity`
- * when the text has no further occurrence.
- */
-const advance_probe = (text: string, cached: number, from: number, ch: string): number => {
-	if (cached >= from) return cached;
-	const found = text.indexOf(ch, from);
-	return found === -1 ? Infinity : found;
-};
 
 const is_upper = (c: number): boolean => c >= 65 && c <= 90;
 
@@ -596,8 +588,6 @@ const create_ts_frame = (): TsFrame => ({
  * stack top. `ret`/`ret_a`/`ret_b` are applied when it completes. A nonzero
  * `term` makes the window self-discovering: it terminates at the `term` char
  * that brings `depth` to 0, writing the discovered position to `ret_a`.
- *
- * @mutates `mac`
  */
 const mac_push_window = (
 	mac: TsMachine,
@@ -638,8 +628,6 @@ const mac_push_window = (
  * caller emitted the literal's opening events and scanned the leading chunk
  * (which starts at `chunk_start`, past the opening backtick); the frame always
  * finalizes by advancing the window beneath it past the literal.
- *
- * @mutates `mac`
  */
 const mac_push_template = (mac: TsMachine, from: number, chunk_start: number, to: number): void => {
 	const {stack, sp} = mac;
@@ -688,8 +676,6 @@ const scan_ts_template_body = (text: string, from: number, to: number): number =
  * returns `false`; the driver's `R_INTERP` finalize closes the interpolation
  * and resumes this frame past it. Returns `true` once the literal is complete
  * (closed, or extended to the window end when unterminated).
- *
- * @mutates `mac`
  */
 const run_ts_template = (mac: TsMachine, frame: TsFrame): boolean => {
 	const l = mac.l;
@@ -736,8 +722,6 @@ const run_ts_template = (mac: TsMachine, frame: TsFrame): boolean => {
  * `frame.ret_a`) — or `false` after pushing a nested frame (interpolation,
  * generics, or type annotation), which the driver runs before resuming this
  * frame.
- *
- * @mutates `mac`
  */
 const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 	const l = mac.l;
@@ -1252,8 +1236,6 @@ const scan_regex_body = (text: string, i: number, to: number): number => {
  * container's closing events and advancing that frame past the consumed region.
  * A frame that pushes a child returns `false`, so the child runs next and this
  * frame resumes only once the child (and its own descendants) have completed.
- *
- * @mutates `mac`
  */
 const run_ts = (mac: TsMachine): void => {
 	const l = mac.l;

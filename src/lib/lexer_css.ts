@@ -21,6 +21,8 @@ import {is_space, matches_ci, token_type, type Lexer, type SyntaxLang} from './l
  *
  * Resilience: unterminated strings extend to end of line; unterminated
  * comments and blocks extend to end of window.
+ *
+ * @module
  */
 
 const T_COMMENT = token_type('comment');
@@ -36,7 +38,6 @@ const T_PUNCTUATION = token_type('punctuation');
 const T_URL = token_type('url');
 const T_KEYWORD = token_type('keyword');
 
-// at-rule prelude keywords (`@media screen and (...)`)
 // at-rule prelude keywords (`@media screen and (...)`), matched
 // case-insensitively without allocating (matching the rest of this file)
 const is_atrule_keyword = (text: string, from: number, to: number): boolean => {

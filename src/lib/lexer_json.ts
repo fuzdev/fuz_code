@@ -18,6 +18,8 @@ import {
  *
  * Resilience: unterminated strings extend to end of line; unterminated block
  * comments extend to end of window.
+ *
+ * @module
  */
 
 const T_PROPERTY = token_type('property');

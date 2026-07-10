@@ -1,4 +1,11 @@
-import {is_space, scan_to_line_end, token_type, type Lexer, type SyntaxLang} from './lexer.ts';
+import {
+	advance_probe,
+	is_space,
+	scan_to_line_end,
+	token_type,
+	type Lexer,
+	type SyntaxLang,
+} from './lexer.ts';
 import {lex_markup_construct, MARKUP_MODE_HTML, scan_entity_end} from './lexer_markup.ts';
 
 /**
@@ -25,6 +32,8 @@ import {lex_markup_construct, MARKUP_MODE_HTML, scan_entity_end} from './lexer_m
  * line-bounded — they do not span paragraphs.
  *
  * Resilience: an unterminated fence extends to the end of the window.
+ *
+ * @module
  */
 
 const T_FENCED_CODE = token_type('fenced_code');
@@ -60,8 +69,8 @@ const T_ENTITY = token_type('entity');
 const T_NAMED_ENTITY = token_type('entity', 'named_entity');
 
 /**
- * Fence info words → embedded language. Exact-word matching (the old
- * alternations prefix-matched, misclassifying ` ```json ` as javascript).
+ * Fence info words → embedded language. Exact-word matching: ` ```json `
+ * embeds json, not javascript.
  */
 interface MdFenceLang {
 	id: string;
@@ -104,7 +113,7 @@ const has_inline_content = (text: string, from: number, to: number): boolean => 
 /**
  * Lexes an emphasis form at the delimiter `code` at `i` — the double form
  * (`**`/`__`/`~~`) into `double_type`, falling back to the single form
- * (`*`/`_`) into `italic` when allowed. Old matching rules: the interior is
+ * (`*`/`_`) into `italic` when allowed. Matching rules: the interior is
  * free of the delimiter char with non-space first/last chars; `_` forms
  * require word boundaries outside. Returns the next scan position.
  */
@@ -174,30 +183,20 @@ interface MdLinkCache {
 }
 
 /**
- * Returns the cached next occurrence of `ch` at or after `from`, re-probing
- * with `indexOf` only when the cached position has fallen behind `from`.
- */
-const md_probe = (text: string, cached: number, from: number, ch: string): number => {
-	if (cached >= from) return cached;
-	const found = text.indexOf(ch, from);
-	return found === -1 ? Infinity : found;
-};
-
-/**
  * Lexes a `[text](url)` link at the `[` at `i`, returning the next scan
- * position (`i + 1` when it isn't a link). Old constraints: text interior
- * free of `[`/`]`, url interior free of `)`, both line-bounded and non-empty,
- * `(` immediately after `]`.
+ * position (`i + 1` when it isn't a link). Constraints: text interior free of
+ * `[`/`]`, url interior free of `)`, both line-bounded and non-empty, `(`
+ * immediately after `]`.
  */
 const lex_md_link = (l: Lexer, i: number, line_end: number, cache: MdLinkCache): number => {
 	const {text} = l;
-	cache.rbracket = md_probe(text, cache.rbracket, i + 1, ']');
+	cache.rbracket = advance_probe(text, cache.rbracket, i + 1, ']');
 	const rb = cache.rbracket;
 	if (rb >= line_end || rb === i + 1) return i + 1;
 	const lb2 = text.indexOf('[', i + 1);
 	if (lb2 !== -1 && lb2 < rb) return i + 1;
 	if (text.charCodeAt(rb + 1) !== 40) return i + 1;
-	cache.rparen = md_probe(text, cache.rparen, rb + 2, ')');
+	cache.rparen = advance_probe(text, cache.rparen, rb + 2, ')');
 	const cp = cache.rparen;
 	if (cp >= line_end || cp === rb + 2) return i + 1;
 	l.open(T_LINK, i);
@@ -225,7 +224,7 @@ const lex_md_link = (l: Lexer, i: number, line_end: number, cache: MdLinkCache):
  */
 const lex_md_inline = (l: Lexer, from: number, to: number, construct_end: number): number => {
 	const {text} = l;
-	// per-call caches so a `[`-dense line stays linear (see `md_probe`)
+	// per-call caches so a `[`-dense line stays linear (see `advance_probe`)
 	const link_cache: MdLinkCache = {rbracket: -1, rparen: -1};
 	let i = from;
 	let line_end = to;
