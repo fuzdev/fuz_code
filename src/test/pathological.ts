@@ -190,6 +190,25 @@ export const PATHOLOGICAL_CASES: Array<PathologicalCase> = [
 		},
 	},
 	{
+		// heredocs opened inside command substitutions, nested as deep as the
+		// input allows — each body suspends at the next `$(`, so the closing
+		// delimiter must be discovered in the same forward pass (a per-heredoc
+		// close-prescan would be O(depth²), the bug this case guards against)
+		name: 'bash_heredoc_sub_full_depth',
+		lang: 'bash',
+		generate: (size: number): string => {
+			const depth = Math.max(1, Math.floor(size / 12));
+			return '$(cat <<EOF\n'.repeat(depth) + 'x';
+		},
+	},
+	{
+		// many sequential heredocs with expanded, substitution-bearing bodies —
+		// exercises the line-walk close scan and the suspend/resume drain at scale
+		name: 'bash_heredoc_dense',
+		lang: 'bash',
+		generate: (size) => repeat_to_size('cat <<EOF\nx $y $(z)\nEOF\n', size),
+	},
+	{
 		// a cascade of unterminated ```md fences — each embeds the rest of the
 		// document as markdown, bounded by the embed depth cap
 		name: 'md_deep_self_embed',

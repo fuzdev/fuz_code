@@ -2,7 +2,14 @@ import {describe, test, assert} from 'vitest';
 import {readFileSync} from 'node:fs';
 
 import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
-import {syntax_events_to_tokens, validate_syntax_events} from '$lib/lexer.ts';
+import {SyntaxStyler} from '$lib/syntax_styler.ts';
+import {lexer_ts} from '$lib/lexer_ts.ts';
+import {
+	syntax_events_to_tokens,
+	token_type,
+	validate_syntax_events,
+	type SyntaxLang,
+} from '$lib/lexer.ts';
 
 /**
  * Lexes `text` as ts and returns `[type, text]` pairs.
@@ -342,5 +349,57 @@ describe('lexer_ts deep nesting', () => {
 		const types = tokens_of('`a${`b${c}d`}e`').map(([type]) => type);
 		assert.equal(types.filter((t) => t === 'template_string').length, 2);
 		assert.equal(types.filter((t) => t === 'interpolation').length, 2);
+	});
+});
+
+describe('lexer_ts as an embedded guest', () => {
+	// a host lexer embeds ts over `[0, split)` then emits its own token for the
+	// tail. Built-in embedders trim ts regions to a whitespace/delimiter
+	// boundary, but the public `Lexer.embed` API lets a custom lexer end the
+	// window mid-construct — where an unbounded number/spread peek used to read
+	// and emit one char past `split`, producing an out-of-window (invalid) span.
+	const T_TAIL = token_type('comment');
+	const embed_ts = (text: string, split: number) => {
+		const host: SyntaxLang = {
+			id: 'ts_embed_host',
+			lex: (l) => {
+				l.embed('ts', 0, split);
+				if (l.end > split) l.leaf(T_TAIL, split, l.end);
+			},
+		};
+		const styler = new SyntaxStyler();
+		styler.add_lang(lexer_ts);
+		styler.add_lang(host);
+		return styler.lex(text, 'ts_embed_host');
+	};
+
+	// each split lands mid-construct: after `e`/`e+`, inside `0x`, mid-`..`
+	for (const [text, split] of [
+		['9e+5', 2],
+		['9e-5', 2],
+		['0xff', 1],
+		['0n', 1],
+		['a...', 3],
+		['1.5', 2],
+	] as Array<[string, number]>) {
+		test(`stays within its window: ${JSON.stringify(text)} @ ${split}`, () => {
+			const lexed = embed_ts(text, split);
+			// the guest must not emit past `split` — else it overlaps the host tail
+			assert.deepEqual(validate_syntax_events(lexed), []);
+			for (const t of syntax_events_to_tokens(lexed)) {
+				assert.ok(
+					!(t.start < split && t.end > split),
+					`token ${t.type} [${t.start},${t.end}) crosses the embed boundary ${split}`,
+				);
+			}
+		});
+	}
+
+	test('a spread fully inside the window is still recognized', () => {
+		const lexed = embed_ts('...x', 4);
+		assert.deepEqual(validate_syntax_events(lexed), []);
+		assert.ok(
+			syntax_events_to_tokens(lexed).some((t) => t.type === 'operator' && t.end - t.start === 3),
+		);
 	});
 });

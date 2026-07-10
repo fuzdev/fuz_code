@@ -134,13 +134,21 @@ describe('render_syntax_html', () => {
 	});
 
 	test('escapes text content', () => {
-		const lexed = lexed_of('a & <b> c', (l) => {
+		const lexed = lexed_of('a & <b> c', (l) => {
 			l.leaf(T_A, 4, 7);
 		});
 		assert.strictEqual(
 			render_syntax_html(lexed),
 			'a &amp; <span class="token_test_a">&lt;b></span> c',
 		);
+	});
+
+	test('normalizes non-breaking spaces to regular spaces', () => {
+		// U+00A0 in a token span and in gap text both render as a normal space
+		const lexed = lexed_of('a\u00a0b\u00a0c', (l) => {
+			l.leaf(T_A, 0, 3); // 'a\u00a0b'
+		});
+		assert.strictEqual(render_syntax_html(lexed), '<span class="token_test_a">a b</span> c');
 	});
 });
 

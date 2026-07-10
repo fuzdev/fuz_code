@@ -253,11 +253,17 @@ interface BashFrame {
 	to: number;
 	/** Mid-construct submode — an interrupted body scan resumed before the main scan. */
 	sub: number;
-	/** `S_HEREDOC`: exclusive body end. */
-	sub_to: number;
-	/** `S_HEREDOC`: closing delimiter start, or -1 when unterminated. */
+	/** `S_HEREDOC`: the delimiter word, for resumed close-line discovery. */
+	hd_delim: string;
+	/** `S_HEREDOC`: quoted heredoc (a plain, unexpanded body). */
+	hd_quoted: boolean;
+	/** `S_HEREDOC`: an inline (contiguous, sole) heredoc vs a drained one — selects the resume position. */
+	hd_inline: boolean;
+	/** `S_HEREDOC`: `<<-` redirect — the close delimiter may be blank-indented. */
+	hd_dash: boolean;
+	/** `S_HEREDOC`: discovered closing delimiter start, or -1 when unterminated. */
 	hd_delim_start: number;
-	/** `S_HEREDOC`: closing delimiter end. */
+	/** `S_HEREDOC`: discovered closing delimiter end. */
 	hd_delim_end: number;
 	/** `S_HEREDOC`: where the main scan resumes after the body. */
 	hd_resume: number;
@@ -300,7 +306,10 @@ const create_bash_frame = (): BashFrame => ({
 	i: 0,
 	to: 0,
 	sub: S_NONE,
-	sub_to: 0,
+	hd_delim: '',
+	hd_quoted: false,
+	hd_inline: false,
+	hd_dash: false,
 	hd_delim_start: -1,
 	hd_delim_end: 0,
 	hd_resume: 0,
@@ -428,66 +437,73 @@ const scan_dquote_body = (l: Lexer, j: number, to: number): number => {
 	return i > to ? to : i;
 };
 
-interface HeredocClose {
-	// start of the delimiter word on its line (after leading blanks)
-	delim_start: number;
-	// exclusive end of the delimiter word
-	delim_end: number;
-	// start of the closing delimiter's line (end of the body region)
-	line_start: number;
-}
-
-/**
- * Finds the closing line of a heredoc with delimiter `delim`, scanning from
- * `from`. A closing line is (optional leading blanks) + `delim` + (only blanks)
- * before its newline. Returns the match, or `null` when unterminated.
- */
-const find_heredoc_close = (
-	text: string,
-	from: number,
-	end: number,
-	delim: string,
-): HeredocClose | null => {
-	let j = from;
-	while (j < end) {
-		const line_start = j;
-		const le = line_end_of(text, j, end);
-		// the line's content excludes a trailing `\r` (CRLF)
-		const content_end = le > line_start && text.charCodeAt(le - 1) === 13 ? le - 1 : le;
-		const k = skip_blank(text, line_start, content_end);
-		if (text.startsWith(delim, k) && k + delim.length <= content_end) {
-			const rest = skip_blank(text, k + delim.length, content_end);
-			if (rest === content_end) {
-				return {delim_start: k, delim_end: k + delim.length, line_start};
-			}
-		}
-		if (le >= end) break;
-		j = le + 1;
-	}
-	return null;
-};
-
 interface PendingHeredoc {
 	delim: string;
 	quoted: boolean;
+	dash: boolean;
 }
 
 /**
- * Scans an unquoted heredoc body `[j, to)`, emitting `$`-variable leaves;
- * other text stays plain. Returns `to` when complete, or the bitwise
- * complement of the position of a `$(` substitution — the fast path lets
- * bodies without substitutions complete without a frame. Hops between `$`s
- * with native `indexOf`.
+ * Scans a heredoc body from `j` toward `frame.to`, emitting `$`-variable leaves
+ * (unquoted bodies only) and discovering the closing-delimiter line in the same
+ * forward pass. There is no prescan for the close: the scan suspends at the
+ * first `$(…)` it meets (returning the bitwise complement of its position), so
+ * deeply `$(…)`-nested heredocs stay linear instead of re-scanning overlapping
+ * suffixes.
+ *
+ * Reads `frame.hd_delim`/`hd_quoted`/`hd_inline`. `j` may be mid-line (a resume
+ * past a substitution) — a closing line is recognized only at a real line
+ * start, so the current line finishes first. On the close line, records
+ * `frame.hd_delim_start`/`hd_delim_end`/`hd_resume` and returns the body end
+ * (the close line's start). On a `$(` substitution, returns the bitwise
+ * complement of its position. When unterminated, records `hd_delim_start = -1`,
+ * `hd_resume = frame.to`, and returns `frame.to`.
  */
-const scan_heredoc_body = (l: Lexer, j: number, to: number): number => {
+const scan_heredoc_body = (l: Lexer, frame: BashFrame, j: number): number => {
 	const {text} = l;
+	const to = frame.to;
+	const delim = frame.hd_delim;
+	const quoted = frame.hd_quoted;
 	let i = j;
 	while (i < to) {
-		const d = text.indexOf('$', i);
-		if (d === -1 || d >= to) return to;
-		if (text.charCodeAt(d + 1) === 40) return ~d;
-		i = scan_dollar_var(l, d, to);
+		const le = line_end_of(text, i, to);
+		// the line's content excludes a trailing `\r` (CRLF)
+		const content_end = le > i && text.charCodeAt(le - 1) === 13 ? le - 1 : le;
+		// a closing line is (optional blanks) + `delim` + (only blanks) — checked
+		// only at a real line start, so a mid-line resume finishes its line first
+		if (i === 0 || text.charCodeAt(i - 1) === 10) {
+			// `<<-` allows the close delimiter to be blank-indented; plain `<<`
+			// requires it at column 0. Either way the delimiter must be the whole
+			// (indent-stripped) line — no trailing content, blanks included.
+			const k = frame.hd_dash ? skip_blank(text, i, content_end) : i;
+			if (text.startsWith(delim, k) && k + delim.length === content_end) {
+				frame.hd_delim_start = k;
+				frame.hd_delim_end = k + delim.length;
+				frame.hd_resume = frame.hd_inline ? k + delim.length : le >= to ? to : le + 1;
+				return i;
+			}
+		}
+		if (!quoted) {
+			let p = i;
+			while (p < content_end) {
+				const d = text.indexOf('$', p);
+				if (d === -1 || d >= content_end) break;
+				if (text.charCodeAt(d + 1) === 40) return ~d; // `$(` — suspend
+				p = scan_dollar_var(l, d, to);
+				if (p > content_end) break; // a `${…}` spanned past this line
+			}
+			if (p > content_end) {
+				// a `${…}` ran past this line — resume the walk at the next line start
+				i = p >= to ? to : line_end_of(text, p, to);
+				if (i < to) i++;
+				continue;
+			}
+		}
+		if (le >= to) break;
+		i = le + 1;
 	}
+	frame.hd_delim_start = -1;
+	frame.hd_resume = to;
 	return to;
 };
 
@@ -500,7 +516,6 @@ const scan_heredoc_body = (l: Lexer, j: number, to: number): number => {
  */
 const drain_pending = (mac: BashMachine, frame: BashFrame): boolean => {
 	const l = mac.l;
-	const {text} = l;
 	const to = frame.to;
 	const {pending} = frame;
 	while (frame.pending_idx < pending.length) {
@@ -508,36 +523,26 @@ const drain_pending = (mac: BashMachine, frame: BashFrame): boolean => {
 		const hd = pending[frame.pending_idx]!;
 		frame.pending_idx++;
 		const body_start = frame.i;
-		const close = find_heredoc_close(text, body_start, to, hd.delim);
 		l.open(T_HEREDOC, body_start);
-		const body_end = close ? close.line_start : to;
-		// the parent resumes past the closing delimiter's line, at the next body
-		let resume = to;
-		if (close) {
-			const nl = line_end_of(text, close.delim_end, to);
-			resume = nl >= to ? to : nl + 1;
+		frame.hd_delim = hd.delim;
+		frame.hd_quoted = hd.quoted;
+		frame.hd_inline = false;
+		frame.hd_dash = hd.dash;
+		const r = scan_heredoc_body(l, frame, body_start);
+		if (r < 0) {
+			// the body hit a substitution — suspend mid-body; the submode resume
+			// finishes it (and this drain) afterward
+			frame.sub = S_HEREDOC;
+			mac_push_dollar_paren(mac, ~r, to);
+			return false;
 		}
-		if (!hd.quoted) {
-			const r = scan_heredoc_body(l, body_start, body_end);
-			if (r < 0) {
-				// the body contains a substitution — suspend mid-body; the
-				// submode resume finishes it (and this drain) afterward
-				frame.sub = S_HEREDOC;
-				frame.sub_to = body_end;
-				frame.hd_delim_start = close ? close.delim_start : -1;
-				frame.hd_delim_end = close ? close.delim_end : 0;
-				frame.hd_resume = resume;
-				mac_push_dollar_paren(mac, ~r, body_end);
-				return false;
-			}
-		}
-		if (close) {
-			l.leaf(T_HEREDOC_DELIMITER, close.delim_start, close.delim_end);
-			l.close(close.delim_end);
-		} else {
+		if (frame.hd_delim_start === -1) {
 			l.close(to);
+		} else {
+			l.leaf(T_HEREDOC_DELIMITER, frame.hd_delim_start, frame.hd_delim_end);
+			l.close(frame.hd_delim_end);
 		}
-		frame.i = resume;
+		frame.i = frame.hd_resume;
 	}
 	pending.length = 0;
 	frame.pending_idx = 0;
@@ -575,14 +580,14 @@ const bash_operator_len = (text: string, i: number, to: number, c: number): numb
 const run_bash_sub = (mac: BashMachine, frame: BashFrame): boolean => {
 	const l = mac.l;
 	if (frame.sub === S_HEREDOC) {
-		const r = scan_heredoc_body(l, frame.i, frame.sub_to);
+		const r = scan_heredoc_body(l, frame, frame.i);
 		if (r < 0) {
 			frame.i = ~r;
-			mac_push_dollar_paren(mac, ~r, frame.sub_to);
+			mac_push_dollar_paren(mac, ~r, frame.to);
 			return false;
 		}
 		if (frame.hd_delim_start === -1) {
-			l.close(frame.sub_to);
+			l.close(frame.to);
 		} else {
 			l.leaf(T_HEREDOC_DELIMITER, frame.hd_delim_start, frame.hd_delim_end);
 			l.close(frame.hd_delim_end);
@@ -885,7 +890,8 @@ const lex_bash_heredoc_start = (
 	const l = mac.l;
 	const {text} = l;
 	let k = i + 2;
-	if (text.charCodeAt(k) === 45) k++; // `<<-`
+	const dash = text.charCodeAt(k) === 45;
+	if (dash) k++; // `<<-`
 	k = skip_blank(text, k, to);
 	let quote = 0;
 	if (text.charCodeAt(k) === 39 || text.charCodeAt(k) === 34) {
@@ -907,7 +913,7 @@ const lex_bash_heredoc_start = (
 	// queued order (first redirect → first body) is preserved
 	if (!contiguous || frame.pending.length > 0) {
 		l.leaf(T_HEREDOC_DELIMITER, i, delim_token_end);
-		frame.pending.push({delim, quoted});
+		frame.pending.push({delim, quoted, dash});
 		return delim_token_end;
 	}
 
@@ -917,34 +923,29 @@ const lex_bash_heredoc_start = (
 		return delim_token_end;
 	}
 	const body_start = after + 1; // past the newline
-	const close = find_heredoc_close(text, body_start, to, delim);
-	l.open(T_HEREDOC, i);
-	l.leaf(T_HEREDOC_DELIMITER, i, delim_token_end);
-	const body_end = close ? close.line_start : to;
 	// the window resumes at the closing delimiter's end; the rest of its line
 	// (the newline) scans normally
-	const resume = close ? close.delim_end : to;
-	if (!quoted) {
-		const r = scan_heredoc_body(l, body_start, body_end);
-		if (r < 0) {
-			// the body contains a substitution — suspend mid-body; the submode
-			// resume finishes it
-			frame.sub = S_HEREDOC;
-			frame.sub_to = body_end;
-			frame.hd_delim_start = close ? close.delim_start : -1;
-			frame.hd_delim_end = close ? close.delim_end : 0;
-			frame.hd_resume = resume;
-			mac_push_dollar_paren(mac, ~r, body_end);
-			return -2;
-		}
+	l.open(T_HEREDOC, i);
+	l.leaf(T_HEREDOC_DELIMITER, i, delim_token_end);
+	frame.hd_delim = delim;
+	frame.hd_quoted = quoted;
+	frame.hd_inline = true;
+	frame.hd_dash = dash;
+	const r = scan_heredoc_body(l, frame, body_start);
+	if (r < 0) {
+		// the body hit a substitution — suspend mid-body; the submode resume
+		// finishes it
+		frame.sub = S_HEREDOC;
+		mac_push_dollar_paren(mac, ~r, to);
+		return -2;
 	}
-	if (close) {
-		l.leaf(T_HEREDOC_DELIMITER, close.delim_start, close.delim_end);
-		l.close(close.delim_end);
-	} else {
+	if (frame.hd_delim_start === -1) {
 		l.close(to);
+	} else {
+		l.leaf(T_HEREDOC_DELIMITER, frame.hd_delim_start, frame.hd_delim_end);
+		l.close(frame.hd_delim_end);
 	}
-	return resume;
+	return frame.hd_resume;
 };
 
 /**

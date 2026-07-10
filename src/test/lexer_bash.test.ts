@@ -221,6 +221,24 @@ describe('lexer_bash heredocs', () => {
 		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'bash')), []);
 	});
 
+	test('plain << requires the closing delimiter at column 0', () => {
+		// the indented `\tEOF` is body; the column-0 `EOF` closes
+		const text = 'cat <<EOF\n\tEOF\nbody\nEOF\n';
+		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'bash')), []);
+		assert.ok(
+			tokens_of(text).some(([type, t]) => type === 'heredoc' && t === '<<EOF\n\tEOF\nbody\nEOF'),
+		);
+	});
+
+	test('a closing delimiter with trailing whitespace does not close', () => {
+		// `EOF ` (trailing space) is body; the exact `EOF` closes
+		const text = 'cat <<EOF\nEOF \nbody\nEOF\n';
+		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'bash')), []);
+		assert.ok(
+			tokens_of(text).some(([type, t]) => type === 'heredoc' && t === '<<EOF\nEOF \nbody\nEOF'),
+		);
+	});
+
 	test('unterminated heredoc extends to the window end without throwing', () => {
 		const lexed = syntax_styler_global.lex('cat <<EOF\nbody with no close\n', 'bash');
 		assert.deepEqual(validate_syntax_events(lexed), []);
