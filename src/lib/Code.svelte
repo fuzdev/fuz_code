@@ -4,13 +4,12 @@
 	import type {SvelteHTMLElements} from 'svelte/elements';
 
 	import {syntax_styler_global} from './syntax_styler_global.ts';
-	import type {SyntaxStyler, SyntaxGrammar} from './syntax_styler.ts';
+	import type {SyntaxStyler} from './syntax_styler.ts';
 
 	const {
 		content,
 		dangerous_raw_html,
 		lang = 'svelte',
-		grammar,
 		inline = false,
 		wrap = false,
 		nomargin = false,
@@ -40,37 +39,16 @@
 			 * Language identifier (e.g., 'ts', 'css', 'html', 'json', 'svelte', 'md').
 			 *
 			 * **Purpose:**
-			 * - When `grammar` is not provided, used to look up the grammar via `syntax_styler.get_lang(lang)`
-			 * - Used for metadata: sets the `data-lang` attribute and determines `language_supported`
+			 * - Selects the registered lexer used to highlight `content`
+			 * - Sets the `data-lang` attribute and determines `language_supported`
 			 *
 			 * **Special values:**
 			 * - `null` - Explicitly disables syntax highlighting (content rendered as plain text)
 			 * - `undefined` - Falls back to default ('svelte')
 			 *
-			 * **Relationship with `grammar`:**
-			 * - If both `lang` and `grammar` are provided, `grammar` takes precedence for tokenization
-			 * - However, `lang` is still used for the `data-lang` attribute and language detection
-			 *
 			 * @default 'svelte'
 			 */
 			lang?: string | null;
-			/**
-			 * Optional custom `SyntaxGrammar` object for syntax tokenization.
-			 *
-			 * **When to use:**
-			 * - To provide a custom language definition not registered in `syntax_styler.langs`
-			 * - To use a modified/extended version of an existing grammar
-			 * - For one-off grammar variations without registering globally
-			 *
-			 * **Behavior:**
-			 * - When provided, this grammar is used for tokenization instead of looking up via `lang`
-			 * - Enables highlighting even if `lang` is not in the registry (useful for custom languages)
-			 * - The `lang` parameter is still used for metadata (data-lang attribute)
-			 * - When undefined, the grammar is automatically looked up via `syntax_styler.get_lang(lang)`
-			 *
-			 * @default undefined (uses grammar from `syntax_styler.langs[lang]`)
-			 */
-			grammar?: SyntaxGrammar | undefined;
 			/**
 			 * Whether to render as inline code or block code.
 			 * Controls display via CSS classes.
@@ -101,7 +79,7 @@
 			nomargin?: boolean;
 			/**
 			 * Custom `SyntaxStyler` instance to use for highlighting.
-			 * Allows using a different styler with custom grammars or configuration.
+			 * Allows using a different styler with custom languages or configuration.
 			 *
 			 * @default syntax_styler_global
 			 */
@@ -113,20 +91,20 @@
 			children?: Snippet<[markup: string]>;
 		} = $props();
 
-	const language_supported = $derived(lang !== null && !!syntax_styler.langs[lang]);
+	const language_supported = $derived(lang !== null && syntax_styler.has_lang(lang));
 
-	const highlighting_disabled = $derived(lang === null || (!language_supported && !grammar));
+	const highlighting_disabled = $derived(lang === null || !language_supported);
 
 	// DEV-only validation warnings
 	if (DEV) {
 		$effect(() => {
 			if (dangerous_raw_html != null) return;
 
-			if (lang && !language_supported && !grammar) {
-				const langs = Object.keys(syntax_styler.langs).join(', ');
+			if (lang && !language_supported) {
+				const langs = [...syntax_styler.langs.keys()].join(', ');
 				// eslint-disable-next-line no-console
 				console.error(
-					`[Code] Language "${lang}" is not supported and no custom grammar provided. ` +
+					`[Code] Language "${lang}" is not supported. ` +
 						`Highlighting disabled. Supported: ${langs}`,
 				);
 			}
@@ -137,7 +115,7 @@
 	const html_content = $derived.by(() => {
 		if (dangerous_raw_html != null) return dangerous_raw_html;
 		if (!content || highlighting_disabled) return '';
-		return syntax_styler.stylize(content, lang!, grammar); // ! is safe bc of the `highlighting_disabled` calculation
+		return syntax_styler.stylize(content, lang!); // ! is safe bc of the `highlighting_disabled` calculation
 	});
 </script>
 

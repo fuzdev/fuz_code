@@ -1,34 +1,31 @@
 === STATS ===
 Sample length: 2799 characters
-Total tokens: 527
+Total tokens: 525
 
-Token types (60 unique):
-  punctuation: 225
+Token types (51 unique):
+  punctuation: 223
   tag: 56
-  code_fence: 35
+  code_fence: 34
   heading: 23
   operator: 20
-  keyword: 13
+  fenced_code: 17
+  keyword: 12
   list: 9
+  bold: 7
+  italic: 7
   inline_code: 7
   content: 7
   lang_ts: 7
   builtin: 7
   number: 7
   attr_name: 7
-  bold: 6
-  italic: 6
+  property: 6
+  attr_value: 6
   string: 5
-  attr_value: 5
   function: 4
-  property: 4
   blockquote: 3
-  fenced_code_ts: 3
-  fenced_code_js: 3
-  lang_js: 3
   lang_css: 3
   selector: 3
-  fenced_code_html: 3
   lang_markup: 3
   strikethrough: 2
   link: 2
@@ -37,32 +34,26 @@ Token types (60 unique):
   url_wrapper: 2
   url: 2
   special_keyword: 2
-  capitalized_identifier: 2
   type_annotation: 2
   :: 2
   type: 2
-  string_property: 2
+  lang_js: 2
   boolean: 2
   svelte_expression: 2
   style: 2
-  fenced_code: 2
   lang_md: 2
   class_name: 1
-  parameter: 1
-  fenced_code_css: 1
+  type_name: 1
   doctype: 1
   comment: 1
-  fenced_code_svelte: 1
+  lang_json: 1
+  null: 1
   lang_svelte: 1
   script: 1
   function_variable: 1
-  fenced_code_bash: 1
   lang_bash: 1
   variable: 1
   command_substitution: 1
-  fenced_code_5tick_md: 1
-  fenced_code_4tick_md: 1
-  fenced_code_4tick_ts: 1
 
 === TOKENS ===
    0-11    heading                   # Heading 1
@@ -109,24 +100,24 @@ Token types (60 unique):
  344-345   punctuation               )
  356-364   heading                   ## Lists
  356-358   punctuation               ##
- 364-379   list                      \n\n- list item 1
- 364-367   punctuation               \n\n-
- 379-393   list                      \n- list item 2
- 379-381   punctuation               \n-
- 393-407   list                      \n- list item 3
- 393-395   punctuation               \n-
- 407-434   list                      \n\n* alternative list item 1
- 407-410   punctuation               \n\n*
- 434-460   list                      \n* alternative list item 2
- 434-436   punctuation               \n*
- 460-485   list                      \n  - indented list item 1
- 460-464   punctuation               \n  -
- 485-510   list                      \n  - indented list item 2
- 485-489   punctuation               \n  -
- 510-535   list                      \n    - Deeply nested item
- 510-516   punctuation               \n    -
- 535-556   list                      \n\n  - after a newline
- 535-540   punctuation               \n\n  -
+ 366-379   list                      - list item 1
+ 366-367   punctuation               -
+ 380-393   list                      - list item 2
+ 380-381   punctuation               -
+ 394-407   list                      - list item 3
+ 394-395   punctuation               -
+ 409-434   list                      * alternative list item 1
+ 409-410   punctuation               *
+ 435-460   list                      * alternative list item 2
+ 435-436   punctuation               *
+ 461-485   list                        - indented list item 1
+ 461-464   punctuation                 -
+ 486-510   list                        - indented list item 2
+ 486-489   punctuation                 -
+ 511-535   list                          - Deeply nested item
+ 511-516   punctuation                   -
+ 537-556   list                        - after a newline
+ 537-540   punctuation                 -
  558-572   heading                   ## Blockquotes
  558-560   punctuation               ##
  574-597   blockquote                > This is a blockquote.
@@ -135,11 +126,17 @@ Token types (60 unique):
  598-599   punctuation               >
  629-677   blockquote                > Another blockquote with **bold** and _italic_.
  629-630   punctuation               >
+ 655-663   bold                      **bold**
+ 655-657   punctuation               **
+ 661-663   punctuation               **
+ 668-676   italic                    _italic_
+ 668-669   punctuation               _
+ 675-676   punctuation               _
  679-700   heading                   ## Fenced Code Blocks
  679-681   punctuation               ##
  702-716   heading                   ### TypeScript
  702-705   punctuation               ###
- 718-789   fenced_code_ts            ```ts\nfunction add(a: number, b: number): number {\n\treturn a + b;\n}\n```
+ 718-789   fenced_code               ```ts\nfunction add(a: number, b: number): number {\n\treturn a + b;\n}\n```
  718-723   code_fence                ```ts
  723-786   lang_ts                   \nfunction add(a: number, b: number): number {\n\treturn a + b;\n}\n
  724-732   keyword                   function
@@ -161,12 +158,11 @@ Token types (60 unique):
  786-789   code_fence                ```
  791-830   heading                   #### TypeScript with alias 'typescript'
  791-795   punctuation               ####
- 832-943   fenced_code_ts            ```typescript\ninterface User {\n\tname: string;\n\tage: number;\n}\n\nconst user: User = {name: 'Alice', age: 30};\n```
+ 832-943   fenced_code               ```typescript\ninterface User {\n\tname: string;\n\tage: number;\n}\n\nconst user: User = {name: 'Alice', age: 30};\n```
  832-845   code_fence                ```typescript
  845-940   lang_ts                   \ninterface User {\n\tname: string;\n\tage: number;\n}\n\nconst user: User = {name: 'Alice', age: 30};\n
  846-855   keyword                   interface
  856-860   class_name                User
- 856-860   capitalized_identifier    User
  861-862   punctuation               {
  868-869   operator                  :
  870-876   builtin                   string
@@ -176,10 +172,10 @@ Token types (60 unique):
  890-891   punctuation               ;
  892-893   punctuation               }
  895-900   keyword                   const
- 905-912   type_annotation           : User 
+ 905-911   type_annotation           : User
  905-906   :                         :
- 906-912   type                       User 
- 907-911   capitalized_identifier    User
+ 907-911   type                      User
+ 907-911   type_name                 User
  912-913   operator                  =
  914-915   punctuation               {
  919-920   operator                  :
@@ -187,18 +183,16 @@ Token types (60 unique):
  928-929   punctuation               ,
  933-934   operator                  :
  935-937   number                    30
- 937-938   punctuation               }
- 938-939   punctuation               ;
+ 937-939   punctuation               };
  940-943   code_fence                ```
  945-951   heading                   ### JS
  945-948   punctuation               ###
- 953-1000  fenced_code_js            ```js\nfunction add(a, b) {\n\treturn a + b;\n}\n```
+ 953-1000  fenced_code               ```js\nfunction add(a, b) {\n\treturn a + b;\n}\n```
  953-958   code_fence                ```js
  958-997   lang_js                   \nfunction add(a, b) {\n\treturn a + b;\n}\n
  959-967   keyword                   function
  968-971   function                  add
  971-972   punctuation               (
- 972-976   parameter                 a, b
  973-974   punctuation               ,
  976-977   punctuation               )
  978-979   punctuation               {
@@ -209,7 +203,7 @@ Token types (60 unique):
  997-1000  code_fence                ```
 1002-1033  heading                   #### JS with alias 'javascript'
 1002-1006  punctuation               ####
-1035-1084  fenced_code_js            ```javascript\nconst fifteen = multiply(5, 3);\n```
+1035-1084  fenced_code               ```javascript\nconst fifteen = multiply(5, 3);\n```
 1035-1048  code_fence                ```javascript
 1048-1081  lang_js                   \nconst fifteen = multiply(5, 3);\n
 1049-1054  keyword                   const
@@ -219,12 +213,11 @@ Token types (60 unique):
 1074-1075  number                    5
 1075-1076  punctuation               ,
 1077-1078  number                    3
-1078-1079  punctuation               )
-1079-1080  punctuation               ;
+1078-1080  punctuation               );
 1081-1084  code_fence                ```
 1086-1093  heading                   ### CSS
 1086-1089  punctuation               ###
-1095-1154  fenced_code_css           ```css\n.container {\n\tdisplay: flex;\n\tfont-size: 14px;\n}\n```
+1095-1154  fenced_code               ```css\n.container {\n\tdisplay: flex;\n\tfont-size: 14px;\n}\n```
 1095-1101  code_fence                ```css
 1101-1151  lang_css                  \n.container {\n\tdisplay: flex;\n\tfont-size: 14px;\n}\n
 1102-1112  selector                  .container
@@ -239,7 +232,7 @@ Token types (60 unique):
 1151-1154  code_fence                ```
 1156-1164  heading                   ### HTML
 1156-1159  punctuation               ###
-1166-1308  fenced_code_html          ```html\n<!doctype html>\n<div class="test">\n\t<p>hello world!</p>\n</div>\n\n<button type="button" disabled>click me</button>\n\n<!-- comment -->\n```
+1166-1308  fenced_code               ```html\n<!doctype html>\n<div class="test">\n\t<p>hello world!</p>\n</div>\n\n<button type="button" disabled>click me</button>\n\n<!-- comment -->\n```
 1166-1173  code_fence                ```html
 1173-1305  lang_markup               \n<!doctype html>\n<div class="test">\n\t<p>hello world!</p>\n</div>\n\n<button type="button" disabled>click me</button>\n\n<!-- comment -->\n
 1174-1189  doctype                   <!doctype html>
@@ -282,7 +275,7 @@ Token types (60 unique):
 1305-1308  code_fence                ```
 1310-1339  heading                   #### HTML with alias 'markup'
 1310-1314  punctuation               ####
-1341-1389  fenced_code_html          ```markup\n<ul>\n\t<li>a</li>\n\t<li>b</li>\n</ul>\n```
+1341-1389  fenced_code               ```markup\n<ul>\n\t<li>a</li>\n\t<li>b</li>\n</ul>\n```
 1341-1350  code_fence                ```markup
 1350-1386  lang_markup               \n<ul>\n\t<li>a</li>\n\t<li>b</li>\n</ul>\n
 1351-1355  tag                       <ul>
@@ -312,15 +305,15 @@ Token types (60 unique):
 1386-1389  code_fence                ```
 1391-1399  heading                   ### JSON
 1391-1394  punctuation               ###
-1401-1472  fenced_code_js            ```json\n{\n\t"key": "value",\n\t"array": [1, 2, 3, true, false, null]\n}\n```
+1401-1472  fenced_code               ```json\n{\n\t"key": "value",\n\t"array": [1, 2, 3, true, false, null]\n}\n```
 1401-1408  code_fence                ```json
-1408-1469  lang_js                   \n{\n\t"key": "value",\n\t"array": [1, 2, 3, true, false, null]\n}\n
+1408-1469  lang_json                 \n{\n\t"key": "value",\n\t"array": [1, 2, 3, true, false, null]\n}\n
 1409-1410  punctuation               {
-1412-1417  string_property           "key"
+1412-1417  property                  "key"
 1417-1418  operator                  :
 1419-1426  string                    "value"
 1426-1427  punctuation               ,
-1429-1436  string_property           "array"
+1429-1436  property                  "array"
 1436-1437  operator                  :
 1438-1439  punctuation               [
 1439-1440  number                    1
@@ -333,13 +326,13 @@ Token types (60 unique):
 1452-1453  punctuation               ,
 1454-1459  boolean                   false
 1459-1460  punctuation               ,
-1461-1465  keyword                   null
+1461-1465  null                      null
 1465-1466  punctuation               ]
 1467-1468  punctuation               }
 1469-1472  code_fence                ```
 1474-1484  heading                   ### Svelte
 1474-1477  punctuation               ###
-1486-1716  fenced_code_svelte        ```svelte\n<script lang="ts">\n\tlet count: number = $state(0);\n\tconst increment = () => count++;\n</script>\n\n<button type="button" onclick={increment}>\n\tCount: {count}\n</button>\n\n<style>\n\tbutton {\n\t\tpadding: 8px 16px;\n\t}\n</style>\n```
+1486-1716  fenced_code               ```svelte\n<script lang="ts">\n\tlet count: number = $state(0);\n\tconst increment = () => count++;\n</script>\n\n<button type="button" onclick={increment}>\n\tCount: {count}\n</button>\n\n<style>\n\tbutton {\n\t\tpadding: 8px 16px;\n\t}\n</style>\n```
 1486-1495  code_fence                ```svelte
 1495-1713  lang_svelte               \n<script lang="ts">\n\tlet count: number = $state(0);\n\tconst increment = () => count++;\n</script>\n\n<button type="button" onclick={increment}>\n\tCount: {count}\n</button>\n\n<style>\n\tbutton {\n\t\tpadding: 8px 16px;\n\t}\n</style>\n
 1496-1514  tag                       <script lang="ts">
@@ -354,21 +347,19 @@ Token types (60 unique):
 1514-1581  script                    \n\tlet count: number = $state(0);\n\tconst increment = () => count++;\n
 1514-1581  lang_ts                   \n\tlet count: number = $state(0);\n\tconst increment = () => count++;\n
 1516-1519  keyword                   let
-1525-1534  type_annotation           : number 
+1525-1533  type_annotation           : number
 1525-1526  :                         :
-1526-1534  type                       number 
+1527-1533  type                      number
 1527-1533  builtin                   number
 1534-1535  operator                  =
 1536-1542  function                  $state
 1542-1543  punctuation               (
 1543-1544  number                    0
-1544-1545  punctuation               )
-1545-1546  punctuation               ;
+1544-1546  punctuation               );
 1548-1553  keyword                   const
 1554-1563  function_variable         increment
 1564-1565  operator                  =
-1566-1567  punctuation               (
-1567-1568  punctuation               )
+1566-1568  punctuation               ()
 1569-1571  operator                  =>
 1577-1579  operator                  ++
 1579-1580  punctuation               ;
@@ -384,7 +375,9 @@ Token types (60 unique):
 1604-1605  punctuation               =
 1605-1606  punctuation               "
 1612-1613  punctuation               "
-1614-1622  attr_name                 onclick=
+1614-1621  attr_name                 onclick
+1621-1633  attr_value                ={increment}
+1621-1622  punctuation               =
 1622-1633  svelte_expression         {increment}
 1622-1623  punctuation               {
 1623-1632  lang_ts                   increment
@@ -417,19 +410,16 @@ Token types (60 unique):
 1713-1716  code_fence                ```
 1718-1726  heading                   ### Bash
 1718-1721  punctuation               ###
-1728-1799  fenced_code_bash          ```bash\nif [[ $name =~ ^[a-z]+$ ]]; then\n\techo "hello $(whoami)"\nfi\n```
+1728-1799  fenced_code               ```bash\nif [[ $name =~ ^[a-z]+$ ]]; then\n\techo "hello $(whoami)"\nfi\n```
 1728-1735  code_fence                ```bash
 1735-1796  lang_bash                 \nif [[ $name =~ ^[a-z]+$ ]]; then\n\techo "hello $(whoami)"\nfi\n
 1736-1738  keyword                   if
-1739-1740  punctuation               [
-1740-1741  punctuation               [
+1739-1741  punctuation               [[
 1742-1747  variable                  $name
 1748-1750  operator                  =~
 1752-1753  punctuation               [
 1756-1757  punctuation               ]
-1760-1761  punctuation               ]
-1761-1762  punctuation               ]
-1762-1763  punctuation               ;
+1760-1763  punctuation               ]];
 1764-1768  keyword                   then
 1770-1774  builtin                   echo
 1775-1792  string                    "hello $(whoami)"
@@ -487,23 +477,22 @@ Token types (60 unique):
 2111-2112  punctuation               )
 2244-2340  fenced_code               ```\n\nEmpty fence above.\n\n```unknownlang\nPlain text for unknown language.\nconst variable = 2;\n```
 2244-2247  code_fence                ```
-2269-2283  code_fence                ```unknownlang
 2337-2340  code_fence                ```
-2367-2551  fenced_code_5tick_md      `````md\nwith `five` fences\n````md\nwith `four` fences\n```html\n<style>\n\tbody { color: red; }\n</style>\n```\nending `four`\n````\nanother `four`\n````ts\nconst a = '5';\n````\nending `five`\n`````
+2367-2551  fenced_code               `````md\nwith `five` fences\n````md\nwith `four` fences\n```html\n<style>\n\tbody { color: red; }\n</style>\n```\nending `four`\n````\nanother `four`\n````ts\nconst a = '5';\n````\nending `five`\n`````
 2367-2374  code_fence                `````md
 2374-2546  lang_md                   \nwith `five` fences\n````md\nwith `four` fences\n```html\n<style>\n\tbody { color: red; }\n</style>\n```\nending `four`\n````\nanother `four`\n````ts\nconst a = '5';\n````\nending `five`\n
 2380-2386  inline_code               `five`
 2380-2381  punctuation               `
 2381-2385  content                   five
 2385-2386  punctuation               `
-2394-2489  fenced_code_4tick_md      ````md\nwith `four` fences\n```html\n<style>\n\tbody { color: red; }\n</style>\n```\nending `four`\n````
+2394-2489  fenced_code               ````md\nwith `four` fences\n```html\n<style>\n\tbody { color: red; }\n</style>\n```\nending `four`\n````
 2394-2400  code_fence                ````md
 2400-2485  lang_md                   \nwith `four` fences\n```html\n<style>\n\tbody { color: red; }\n</style>\n```\nending `four`\n
 2406-2412  inline_code               `four`
 2406-2407  punctuation               `
 2407-2411  content                   four
 2411-2412  punctuation               `
-2420-2470  fenced_code_html          ```html\n<style>\n\tbody { color: red; }\n</style>\n```
+2420-2470  fenced_code               ```html\n<style>\n\tbody { color: red; }\n</style>\n```
 2420-2427  code_fence                ```html
 2427-2467  lang_markup               \n<style>\n\tbody { color: red; }\n</style>\n
 2428-2435  tag                       <style>
@@ -532,7 +521,7 @@ Token types (60 unique):
 2498-2499  punctuation               `
 2499-2503  content                   four
 2503-2504  punctuation               `
-2505-2531  fenced_code_4tick_ts      ````ts\nconst a = '5';\n````
+2505-2531  fenced_code               ````ts\nconst a = '5';\n````
 2505-2511  code_fence                ````ts
 2511-2527  lang_ts                   \nconst a = '5';\n
 2512-2517  keyword                   const
@@ -580,7 +569,7 @@ Token types (60 unique):
 2741-2745  tag                       <div
 2741-2742  punctuation               <
 2745-2746  punctuation               >
-2748-2790  fenced_code_ts            ```ts\nconst example = 'embedded code';\n```
+2748-2790  fenced_code               ```ts\nconst example = 'embedded code';\n```
 2748-2753  code_fence                ```ts
 2753-2787  lang_ts                   \nconst example = 'embedded code';\n
 2754-2759  keyword                   const

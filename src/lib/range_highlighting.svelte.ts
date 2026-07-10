@@ -1,7 +1,7 @@
 import {onDestroy} from 'svelte';
 import {DEV} from 'esm-env';
 
-import type {SyntaxStyler, SyntaxGrammar} from './syntax_styler.ts';
+import type {SyntaxStyler} from './syntax_styler.ts';
 import {HighlightManager, supports_css_highlight_api} from './highlight_manager.ts';
 
 /**
@@ -19,9 +19,7 @@ export interface RangeHighlightingOptions {
 	text: () => string;
 	/** Language id; `null` disables highlighting. */
 	lang: () => string | null;
-	/** Optional custom grammar; takes precedence over `lang` for tokenization. */
-	grammar: () => SyntaxGrammar | undefined;
-	/** The syntax styler whose registered grammars back `lang` lookups. */
+	/** The syntax styler whose registered languages back `lang` lookups. */
 	syntax_styler: () => SyntaxStyler;
 	/** Extra gate — ranges are only applied when this returns true. Defaults to always-on. */
 	enabled?: () => boolean;
@@ -47,43 +45,38 @@ export const create_range_highlighting = (options: RangeHighlightingOptions): Ra
 	const is_enabled = options.enabled ?? (() => true);
 
 	const language_supported = $derived(
-		options.lang() !== null && !!options.syntax_styler().langs[options.lang()!],
+		options.lang() !== null && options.syntax_styler().has_lang(options.lang()!),
 	);
-	const highlighting_disabled = $derived(
-		options.lang() === null || (!language_supported && !options.grammar()),
-	);
+	const highlighting_disabled = $derived(options.lang() === null || !language_supported);
 
-	// tokenize once per (text, grammar, lang) change -- memoized so unrelated
-	// reactivity doesn't trigger a full re-tokenization
-	const range_tokens = $derived.by(() => {
+	// lex once per (text, lang) change -- memoized so unrelated reactivity doesn't
+	// trigger a full re-lex (`! safe bc of `highlighting_disabled`)
+	const range_lexed = $derived.by(() => {
 		if (!manager || !is_enabled() || highlighting_disabled) return null;
 		const text = options.text();
 		if (!text) return null;
-		// route through the styler so `before_tokenize`/`after_tokenize` hooks run,
-		// matching `stylize`'s HTML path; `grammar` undefined falls back to the
-		// registered lang grammar (`! safe bc of `highlighting_disabled`)
-		return options.syntax_styler().tokenize(text, options.lang()!, options.grammar());
+		return options.syntax_styler().lex(text, options.lang()!);
 	});
 
 	if (manager) {
 		$effect(() => {
 			const element = options.element();
-			if (!element || !range_tokens) {
+			if (!element || !range_lexed) {
 				manager.clear_element_ranges();
 				return;
 			}
-			manager.highlight_from_syntax_tokens(element, range_tokens);
+			manager.highlight_from_lexed(element, range_lexed);
 		});
 	}
 
 	if (DEV) {
 		$effect(() => {
-			// a lang was requested but we can't highlight it (unknown id, no grammar)
+			// a lang was requested but we can't highlight it (unknown id)
 			if (options.lang() && highlighting_disabled) {
-				const langs = Object.keys(options.syntax_styler().langs).join(', ');
+				const langs = [...options.syntax_styler().langs.keys()].join(', ');
 				// eslint-disable-next-line no-console
 				console.error(
-					`[${options.dev_label}] Language "${options.lang()}" is not supported and no custom grammar provided. ` +
+					`[${options.dev_label}] Language "${options.lang()}" is not supported. ` +
 						`Highlighting disabled. Supported: ${langs}`,
 				);
 			}

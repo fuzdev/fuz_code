@@ -30,7 +30,6 @@ import nord from 'shiki/themes/nord.mjs';
 // Fuz Code imports
 import {samples as all_samples} from '../../src/routes/samples/all.ts';
 import {syntax_styler_global} from '../../src/lib/syntax_styler_global.ts';
-import {tokenize_syntax} from '../../src/lib/tokenize_syntax.ts';
 
 /* eslint-disable no-console */
 
@@ -115,7 +114,7 @@ export const run_comparison_benchmark = async (
 
 			// Tokenization benchmarks (fuz_code and Prism only)
 			bench.add(`fuz_code_tokenize_${lang}_${size_label}`, () => {
-				tokenize_syntax(content, syntax_styler_global.get_lang(fuz_lang));
+				syntax_styler_global.lex(content, fuz_lang);
 			});
 
 			if (Prism.languages[prism_lang]) {

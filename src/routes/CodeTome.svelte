@@ -23,11 +23,13 @@
 	<p>
 		The
 		<DeclarationLink name="Code" />
-		Svelte component supports syntax styling, originally based on
+		Svelte component supports syntax styling with hand-written per-language lexers. fuz_code originated
+		as a fork of
 		<a href="https://github.com/PrismJS/prism">Prism</a> (<a href="https://prismjs.com/"
 			>prismjs.com</a
 		>) by
-		<a href="https://lea.verou.me/">Lea Verou</a>.
+		<a href="https://lea.verou.me/">Lea Verou</a>
+		and keeps its <code>.token_*</code> class vocabulary.
 	</p>
 	<p>To use it, import the default theme or your own:</p>
 	<Code
@@ -152,7 +154,7 @@ export default {
 	<p>
 		fuz_code can be used directly from TypeScript without Svelte. Import <DeclarationLink
 			name="syntax_styler_global"
-		/> for a pre-configured instance with all built-in grammars:
+		/> for a pre-configured instance with all built-in languages:
 	</p>
 	<Code
 		lang="ts"
@@ -171,17 +173,17 @@ const html = syntax_styler_global.stylize('${programmatic_example}', 'ts');`}
 	</p>
 	<p>
 		For a custom configuration, create your own <DeclarationLink name="SyntaxStyler" /> and register only
-		the grammars you need:
+		the languages you need:
 	</p>
 	<Code
 		lang="ts"
 		content={`import {SyntaxStyler} from '@fuzdev/fuz_code/syntax_styler.js';
-import {add_grammar_css} from '@fuzdev/fuz_code/grammar_css.js';
-import {add_grammar_markup} from '@fuzdev/fuz_code/grammar_markup.js';
+import {lexer_markup} from '@fuzdev/fuz_code/lexer_markup.js';
+import {lexer_css} from '@fuzdev/fuz_code/lexer_css.js';
 
 const styler = new SyntaxStyler();
-add_grammar_markup(styler);
-add_grammar_css(styler);
+styler.add_lang(lexer_markup);
+styler.add_lang(lexer_css);
 
 const html = styler.stylize('<div class="example">hello</div>', 'html');`}
 	/>

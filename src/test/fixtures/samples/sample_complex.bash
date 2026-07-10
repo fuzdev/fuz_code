@@ -93,6 +93,7 @@ function cleanup {
 # Command substitution
 today=$(date +%Y-%m-%d)
 files=$(ls -la | grep "\.txt$")
+legacy=`echo "$today"`
 
 # Arithmetic expansion
 result=$(( 2 + 3 * 4 ))
