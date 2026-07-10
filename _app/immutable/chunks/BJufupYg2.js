@@ -1,0 +1,1 @@
+import{N as e,et as t,j as n,yt as r}from"./dl1uVvpj.js";import"./xihTtKlq.js";import{t as i}from"./CP8cz5dK.js";var a=e(`<section class="mb_xl5 box"><!></section>`);function o(e){var o=a();i(t(o),{}),r(o),n(e,o)}export{o as t};
