@@ -1,5 +1,17 @@
 # @fuzdev/fuz_code
 
+## 0.47.0
+
+### Minor Changes
+
+- perf: rewrite to lexer architecture dropping regexp grammars ([#39](https://github.com/fuzdev/fuz_code/pull/39))
+  - the regex-grammar engine is removed: `tokenize_syntax.ts`, the
+    `grammar_*.ts` modules, `SyntaxToken`, `tokenize()`, and the hooks system
+  - `SyntaxStyler` is now a lexer registry plus `lex`/`stylize` facade; `lex()`
+    returns the flat event stream (`LexedSyntax`); languages are `SyntaxLang`
+    lexers registered with `add_lang`
+  - `Code.svelte` no longer has a `grammar` prop
+
 ## 0.46.3
 
 ### Patch Changes
