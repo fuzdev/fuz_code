@@ -110,26 +110,29 @@ Deterministic DOM-cost proxies (not timed): spans rendered and utf8 HTML bytes p
 
 ## Browser Benchmark Results
 
-html 90.09ms avg time 22 ops/sec 1.4% CV
+html 50.01ms avg time 40 ops/sec 2.6% CV
 
-ranges 26.17ms avg time 48 ops/sec 4.8% CV +244.3% vs baseline
+ranges 7.25ms avg time 222 ops/sec 7.2% CV +590.2% vs baseline
 
-| Language | Implementation | Mean (ms) | Median (ms) | Std Dev | CV   | P75 (ms) | P90 (ms) | P95 (ms) | P99 (ms) | Ops/sec | Outliers | Failed | Stability |
-| -------- | -------------- | --------- | ----------- | ------- | ---- | -------- | -------- | -------- | -------- | ------- | -------- | ------ | --------- |
-| ts       | html           | 72.54     | 72.50       | 3.66    | 5.1% | 74.00    | 76.76    | 77.68    | 78.42    | 14      | 0/5      | 0      | 100%      |
-| ts       | ranges         | 37.82     | 37.70       | 2.15    | 5.7% | 39.70    | 40.24    | 40.42    | 40.56    | 26      | 0/5      | 0      | 100%      |
-| css      | html           | 13.73     | 13.70       | 0.05    | 0.3% | 13.75    | 13.78    | 13.79    | 13.80    | 73      | 2/5      | 0      | 100%      |
-| css      | ranges         | 13.80     | 13.80       | 0.00    | 0.0% | 13.80    | 13.80    | 13.80    | 13.80    | 72      | 2/5      | 0      | 100%      |
-| html     | html           | 112.80    | 112.60      | 0.53    | 0.5% | 112.88   | 113.37   | 113.54   | 113.67   | 9       | 1/5      | 0      | 100%      |
-| html     | ranges         | 15.48     | 15.00       | 1.43    | 9.2% | 15.90    | 17.16    | 17.58    | 17.92    | 65      | 0/5      | 0      | 100%      |
-| json     | html           | 188.20    | 188.20      | 0.49    | 0.3% | 188.50   | 188.68   | 188.74   | 188.79   | 5       | 2/5      | 0      | 100%      |
-| json     | ranges         | 13.72     | 13.75       | 0.08    | 0.6% | 13.80    | 13.80    | 13.80    | 13.80    | 73      | 1/5      | 0      | 100%      |
-| svelte   | html           | 98.42     | 97.80       | 1.66    | 1.7% | 98.87    | 100.27   | 100.73   | 101.11   | 10      | 1/5      | 0      | 100%      |
-| svelte   | ranges         | 38.94     | 39.80       | 2.28    | 5.9% | 40.80    | 41.10    | 41.20    | 41.28    | 26      | 0/5      | 0      | 100%      |
-| md       | html           | 54.86     | 55.00       | 0.45    | 0.8% | 55.10    | 55.34    | 55.42    | 55.48    | 18      | 0/5      | 0      | 100%      |
-| md       | ranges         | 37.24     | 35.90       | 2.79    | 7.5% | 39.30    | 40.68    | 41.14    | 41.51    | 27      | 0/5      | 0      | 100%      |
+| Language | Implementation | Mean (ms) | Paint (ms) | Median (ms) | Std Dev | CV    | P75 (ms) | P90 (ms) | P95 (ms) | P99 (ms) | Ops/sec | Outliers | Failed | Stability |
+| -------- | -------------- | --------- | ---------- | ----------- | ------- | ----- | -------- | -------- | -------- | -------- | ------- | -------- | ------ | --------- |
+| ts       | html           | 91.23     | 108.45     | 93.80       | 6.66    | 7.3%  | 94.30    | 95.02    | 95.26    | 95.45    | 11      | 1/5      | 0      | 100%      |
+| ts       | ranges         | 11.80     | 55.15      | 11.20       | 1.44    | 12.2% | 12.80    | 13.40    | 13.60    | 13.76    | 85      | 0/5      | 0      | 100%      |
+| css      | html           | 10.52     | 32.62      | 10.50       | 0.26    | 2.5%  | 10.60    | 10.78    | 10.84    | 10.89    | 95      | 0/5      | 0      | 100%      |
+| css      | ranges         | 2.58      | 32.42      | 2.60        | 0.11    | 4.2%  | 2.60     | 2.66     | 2.68     | 2.70     | 388     | 0/5      | 0      | 100%      |
+| html     | html           | 28.24     | 32.22      | 28.50       | 0.58    | 2.0%  | 28.60    | 28.72    | 28.76    | 28.79    | 35      | 0/5      | 0      | 100%      |
+| html     | ranges         | 3.96      | 32.54      | 3.90        | 0.42    | 10.5% | 4.10     | 4.40     | 4.50     | 4.58     | 253     | 0/5      | 0      | 100%      |
+| json     | html           | 10.60     | 33.10      | 10.60       | 0.39    | 3.7%  | 10.70    | 11.00    | 11.10    | 11.18    | 94      | 0/5      | 0      | 100%      |
+| json     | ranges         | 1.92      | 32.82      | 1.90        | 0.27    | 14.0% | 2.10     | 2.16     | 2.18     | 2.20     | 521     | 0/5      | 0      | 100%      |
+| svelte   | html           | 91.38     | 107.83     | 92.00       | 1.06    | 1.2%  | 92.50    | 108.40   | 113.70   | 117.94   | 11      | 1/5      | 0      | 100%      |
+| svelte   | ranges         | 12.52     | 78.36      | 12.80       | 0.88    | 7.0%  | 13.20    | 13.32    | 13.36    | 13.39    | 80      | 0/5      | 0      | 100%      |
+| md       | html           | 69.38     | 74.98      | 69.50       | 0.70    | 1.0%  | 70.30    | 75.94    | 77.82    | 79.32    | 14      | 1/5      | 0      | 100%      |
+| md       | ranges         | 9.78      | 32.20      | 9.70        | 0.20    | 2.1%  | 10.00    | 10.00    | 10.00    | 10.00    | 102     | 0/5      | 0      | 100%      |
+| sh       | html           | 48.70     | 53.70      | 48.70       | 0.37    | 0.8%  | 48.90    | 49.08    | 49.14    | 49.19    | 21      | 0/5      | 0      | 100%      |
+| sh       | ranges         | 8.16      | 32.54      | 8.20        | 0.05    | 0.7%  | 8.20     | 8.20     | 8.20     | 8.20     | 123     | 0/5      | 0      | 100%      |
 
-Legend CV: Coefficient of Variation (std_dev/mean) - lower is better, <15% is
-good P75/P90/P95/P99: Percentiles - X% of measurements were faster than this
-Ops/sec: Operations per second (throughput) Stability: Percentage of iterations
-with stable system metrics
+Legend Paint (ms): paint-settle time after commit, tracked separately from
+work time CV: Coefficient of Variation (std_dev/mean) - lower is better, <15%
+is good P75/P90/P95/P99: Percentiles - X% of measurements were faster than
+this Ops/sec: Operations per second (throughput) Stability: Percentage of
+iterations with stable system metrics

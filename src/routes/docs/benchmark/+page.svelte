@@ -29,13 +29,13 @@
 	// from one interactive-benchmark run on a single machine — illustrative, not a
 	// spec; run the tool for numbers on your own hardware
 	const browser_results: Array<{lang: string; html: number; ranges: number}> = [
-		{lang: 'ts', html: 56, ranges: 16},
-		{lang: 'css', html: 8, ranges: 3},
-		{lang: 'html', html: 18, ranges: 5},
-		{lang: 'json', html: 8, ranges: 2},
-		{lang: 'svelte', html: 63, ranges: 16},
-		{lang: 'md', html: 43, ranges: 14},
-		{lang: 'sh', html: 35, ranges: 12},
+		{lang: 'ts', html: 91, ranges: 12},
+		{lang: 'css', html: 11, ranges: 3},
+		{lang: 'html', html: 28, ranges: 4},
+		{lang: 'json', html: 11, ranges: 2},
+		{lang: 'svelte', html: 91, ranges: 13},
+		{lang: 'md', html: 69, ranges: 10},
+		{lang: 'sh', html: 49, ranges: 8},
 	];
 	// bars scale to the slowest single result so lengths compare across languages
 	const browser_max = Math.max(...browser_results.flatMap((r) => [r.html, r.ranges]));
@@ -92,7 +92,7 @@
 				>Representative <code>stylize</code> results on larger inputs from one machine; absolute
 				numbers vary by hardware. See the
 				<a href={RESULTS_URL}>committed comparison results</a> for the full matrix across engines and
-				sizes.</small
+				sizes, plus tokenize-only rows that compare the raw lexers without HTML generation.</small
 			>
 		</p>
 	</TomeSection>
@@ -100,11 +100,11 @@
 		<TomeSectionHeader text="In the browser" />
 		<p>
 			The <a href={resolve('/benchmark')}>interactive benchmark ⚡</a> runs live in your browser to
-			get messy real-life results. It times fuz_code's two renderers - the standard HTML path (<DeclarationLink
+			get messy real-life results. It times fuz_code's two renderers — the standard HTML path (<DeclarationLink
 				name="Code"
 			/>) and the experimental CSS Custom Highlight API path (<DeclarationLink
 				name="CodeHighlight"
-			/>, ranges) - across every supported language, reporting mean, median, percentiles,
+			/>, ranges) — across every supported language, reporting mean, median, percentiles,
 			coefficient of variation, and throughput per run, with system-stability gating between
 			samples.
 		</p>
