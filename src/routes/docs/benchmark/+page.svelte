@@ -24,18 +24,20 @@
 		{lang: 'svelte', factor: '~10× faster'},
 	];
 
-	// work time (stylize + DOM commit) per language for each renderer, rounded from
-	// one interactive-benchmark run on a single machine — illustrative, not a spec;
-	// run the tool for numbers on your own hardware
-	const browser_results: Array<{lang: string; html: string; ranges: string}> = [
-		{lang: 'ts', html: '56 ms', ranges: '16 ms'},
-		{lang: 'css', html: '8 ms', ranges: '3 ms'},
-		{lang: 'html', html: '18 ms', ranges: '5 ms'},
-		{lang: 'json', html: '8 ms', ranges: '2 ms'},
-		{lang: 'svelte', html: '63 ms', ranges: '16 ms'},
-		{lang: 'md', html: '43 ms', ranges: '14 ms'},
-		{lang: 'sh', html: '35 ms', ranges: '12 ms'},
+	// work time in ms (stylize + DOM commit) per language for each renderer, rounded
+	// from one interactive-benchmark run on a single machine — illustrative, not a
+	// spec; run the tool for numbers on your own hardware
+	const browser_results: Array<{lang: string; html: number; ranges: number}> = [
+		{lang: 'ts', html: 56, ranges: 16},
+		{lang: 'css', html: 8, ranges: 3},
+		{lang: 'html', html: 18, ranges: 5},
+		{lang: 'json', html: 8, ranges: 2},
+		{lang: 'svelte', html: 63, ranges: 16},
+		{lang: 'md', html: 43, ranges: 14},
+		{lang: 'sh', html: 35, ranges: 12},
 	];
+	// bars scale to the slowest single result so lengths compare across languages
+	const browser_max = Math.max(...browser_results.flatMap((r) => [r.html, r.ranges]));
 </script>
 
 <TomeContent {tome}>
@@ -52,7 +54,7 @@
 			targets build-time use and runs the
 			<a href="https://shiki.matsu.io/guide/regex-engines">Oniguruma regexp engine</a> that TextMate grammars
 			require, trading runtime speed for grammar and theme coverage. fuz_code trades that coverage for
-			a small, fast runtime path — so the two aren't substitutes; pick the one that fits the job.
+			a small, fast runtime path.
 		</p>
 	</section>
 	<TomeSection>
@@ -114,30 +116,37 @@
 			token; the experimental <DeclarationLink name="CodeHighlight" /> path skips that DOM, so it commits
 			less:
 		</p>
-		<div class="overflow-x:auto">
-			<table>
-				<thead>
-					<tr>
-						<th>language</th>
-						<th><code>Code</code> (html)</th>
-						<th><code>CodeHighlight</code> (ranges)</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each browser_results as { lang, html, ranges } (lang)}
-						<tr>
-							<td><code>{lang}</code></td>
-							<td>{html}</td>
-							<td>{ranges}</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
+		<div class="perf-legend">
+			<span><span class="perf-swatch perf-html"></span> <code>Code</code> (html)</span>
+			<span><span class="perf-swatch perf-ranges"></span> <code>CodeHighlight</code> (ranges)</span>
+		</div>
+		<div class="perf-bars">
+			{#each browser_results as { lang, html, ranges } (lang)}
+				<div class="perf-lang"><code>{lang}</code></div>
+				<div class="perf-set">
+					<div class="perf-row">
+						<div class="perf-track">
+							<div class="perf-fill perf-html" style:width="{(html / browser_max) * 100}%"></div>
+						</div>
+						<span class="perf-num">{html}<span class="unit"> ms</span></span>
+					</div>
+					<div class="perf-row">
+						<div class="perf-track">
+							<div
+								class="perf-fill perf-ranges"
+								style:width="{(ranges / browser_max) * 100}%"
+							></div>
+						</div>
+						<span class="perf-num">{ranges}<span class="unit"> ms</span></span>
+					</div>
+				</div>
+			{/each}
 		</div>
 		<p>
 			<small
-				>One run on a single machine, complex samples at the tool's default size — illustrative, not
-				a spec. The live tool also reports paint-settle time, percentiles, and throughput.</small
+				>Lower is better. The benchmark uses complex samples at the tool's default size, so this is
+				illustrative, not representative of most inputs. The live tool also reports paint-settle
+				time, percentiles, and throughput.</small
 			>
 		</p>
 	</TomeSection>
@@ -186,3 +195,68 @@
 		</p>
 	</TomeSection>
 </TomeContent>
+
+<style>
+	.perf-legend {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space_md);
+		margin-bottom: var(--space_md);
+		font-size: var(--font_size_sm);
+		color: var(--text_50);
+	}
+	.perf-swatch {
+		display: inline-block;
+		width: 0.8rem;
+		height: 0.8rem;
+		border-radius: var(--border_radius_xs);
+		vertical-align: middle;
+	}
+	.perf-bars {
+		display: grid;
+		grid-template-columns: 6rem 1fr;
+		align-items: center;
+		column-gap: var(--space_md);
+		row-gap: var(--space_md);
+		margin-bottom: var(--space_lg);
+	}
+	.perf-lang {
+		text-align: right;
+	}
+	.perf-set {
+		display: flex;
+		flex-direction: column;
+	}
+	.perf-row {
+		display: grid;
+		grid-template-columns: 1fr 3.5rem;
+		align-items: center;
+		gap: var(--space_sm);
+	}
+	.perf-track {
+		height: 0.4rem;
+		background: var(--fg_05);
+		border-radius: var(--border_radius_xs);
+		overflow: hidden;
+	}
+	.perf-fill {
+		height: 100%;
+		min-width: 2px;
+		border-radius: var(--border_radius_xs);
+		transition: width 0.3s ease;
+	}
+	.perf-html {
+		background: var(--color_j_50);
+	}
+	.perf-ranges {
+		background: var(--color_g_50);
+	}
+	.perf-num {
+		font-size: var(--font_size_sm);
+		text-align: right;
+		white-space: nowrap;
+	}
+	.unit {
+		color: var(--text_50);
+	}
+</style>
