@@ -18,8 +18,9 @@ import {
  * A single flat scan loop — Rust has no re-entrant interiors at the token
  * level (no template interpolations), so the constructs that nest are handled
  * with counters in one forward pass: block comments nest by depth, raw strings
- * close on a `"` followed by their opening hash count, and attributes balance
- * `[`/`]` while skipping strings.
+ * close on a `"` followed by their opening hash count, and attribute interiors
+ * lex inline (marker and leading path attribute-styled, arguments under the
+ * normal rules) with a `[`/`]` depth counter marking where the bracket closes.
  *
  * Disambiguation notes: `'` is a lifetime when ident-shaped text follows
  * without a closing quote (`'a`, `'static`, loop labels) and a char literal
@@ -28,7 +29,8 @@ import {
  * identifier scanning and fall through to it when no quote follows.
  *
  * Resilience: unterminated block comments, strings (which span lines in
- * Rust), raw strings, and attributes extend to the end of the window.
+ * Rust), and raw strings extend to the end of the window; an unterminated
+ * attribute simply lexes its interior to there.
  *
  * @module
  */
@@ -67,7 +69,7 @@ const WORDS: Map<string, number> = words_map(
 		'as async const crate dyn enum extern fn impl in let mod move mut pub ref self Self ' +
 			'static struct super trait type unsafe use where',
 	],
-	[K_SPECIAL, 'await break continue else for if loop match return while yield'],
+	[K_SPECIAL, 'await break continue else for if loop match return try while yield'],
 	[K_BOOLEAN, 'true false'],
 	[K_BUILTIN, 'bool char f32 f64 i8 i16 i32 i64 i128 isize str u8 u16 u32 u64 u128 usize'],
 	[K_UNION, 'union'],
@@ -190,32 +192,6 @@ const scan_rust_char = (text: string, from: number, end: number): number => {
 };
 
 /**
- * Scans an attribute from the `#` at `from` (`#[…]` or `#![…]`), balancing
- * brackets and skipping strings, returning the exclusive end. Unterminated
- * extends to the window end.
- */
-const scan_rust_attribute = (text: string, from: number, end: number): number => {
-	let i = text.charCodeAt(from + 1) === 33 ? from + 3 : from + 2;
-	let depth = 1;
-	while (i < end) {
-		const c = text.charCodeAt(i);
-		if (c === 91) {
-			depth++;
-			i++;
-		} else if (c === 93) {
-			depth--;
-			i++;
-			if (depth === 0) return i;
-		} else if (c === 34) {
-			i = scan_rust_string(text, i, end);
-		} else {
-			i++;
-		}
-	}
-	return end;
-};
-
-/**
  * Scans a numeric literal from the digit at `from`, returning the exclusive
  * end. Handles hex/octal/binary with `_` separators, decimal floats and
  * exponents, and literal suffixes (`1u8`, `2.5f32`) — any trailing ident run
@@ -305,6 +281,8 @@ const lex_rust = (l: Lexer): void => {
 	let i = l.pos;
 	let fn_ctx = false; // after `fn` / `macro_rules!` — the next identifier is a definition name
 	let class_ctx = false; // after `struct`/`enum`/… — the next identifier is a type name
+	let attr_depth = 0; // `[`/`]` depth inside a `#[…]`/`#![…]` attribute (0 = outside)
+	let attr_path = false; // the next identifier is part of the attribute's leading path
 
 	// shebang at the very start of the document (`#!` not opening `#![…]`)
 	if (
@@ -327,6 +305,17 @@ const lex_rust = (l: Lexer): void => {
 
 		// identifiers, keywords, and the r/b/c string prefixes
 		if (is_ident_start(c)) {
+			// the leading `::`-separated path of an attribute (`#[derive`, `#[serde`);
+			// the arguments after it lex with the normal rules below
+			if (attr_path) {
+				const path_start = i;
+				const path_end = scan_ident(text, i, end);
+				l.leaf(T_ATTRIBUTE, path_start, path_end);
+				i = path_end;
+				// stay in the path only across a `::` segment separator
+				attr_path = text.charCodeAt(path_end) === 58 && text.charCodeAt(path_end + 1) === 58;
+				continue;
+			}
 			// r"…" r#"…"# r#ident
 			if (c === 114) {
 				const raw_end = scan_rust_raw_prefixed(text, i + 1, end);
@@ -401,12 +390,15 @@ const lex_rust = (l: Lexer): void => {
 			if (kind !== undefined) {
 				if (kind === K_KEYWORD) {
 					l.leaf(T_KEYWORD, start, ident_end);
-					// `fn name` defines a function, but `fn(…)` is a pointer *type*
-					// with no name — only enter the naming context when an
-					// identifier actually follows, or it leaks onto the next value
+					// `fn name`/`struct Name` name the identifier that follows, but
+					// `fn(…)` is a pointer *type* and `impl<T>`/`struct;` have no name
+					// here — only enter the naming context when an identifier actually
+					// follows, or it leaks onto the next value
 					if (word === 'fn') {
 						fn_ctx = is_ident_start(text.charCodeAt(skip_space(text, ident_end, end)));
-					} else if (CLASS_CTX_WORDS.has(word)) class_ctx = true;
+					} else if (CLASS_CTX_WORDS.has(word)) {
+						class_ctx = is_ident_start(text.charCodeAt(skip_space(text, ident_end, end)));
+					}
 					continue;
 				}
 				if (kind === K_SPECIAL) {
@@ -566,13 +558,19 @@ const lex_rust = (l: Lexer): void => {
 			continue;
 		}
 
-		// `#` — attribute or stray
+		// `#` — attribute or stray. The interior lexes inline: the `#[`/`#![`
+		// marker and the leading path are attribute-styled, the arguments get the
+		// normal rules, and the `[`/`]` depth counter bookends the closing bracket
 		if (c === 35) {
 			const c1 = i + 1 < end ? text.charCodeAt(i + 1) : 0;
-			if (c1 === 91 || (c1 === 33 && text.charCodeAt(i + 2) === 91)) {
-				const attr_end = scan_rust_attribute(text, i, end);
-				l.leaf(T_ATTRIBUTE, i, attr_end);
-				i = attr_end;
+			// the whole marker must sit inside the window — a `#![` whose `[` is
+			// beyond an embed boundary stays a stray `#`, not a truncated attribute
+			if (c1 === 91 || (c1 === 33 && i + 2 < end && text.charCodeAt(i + 2) === 91)) {
+				const marker_end = c1 === 33 ? i + 3 : i + 2; // past `#[` or `#![`
+				l.leaf(T_ATTRIBUTE, i, marker_end);
+				i = marker_end;
+				attr_depth = 1;
+				attr_path = true;
 				continue;
 			}
 			i++;
@@ -600,6 +598,25 @@ const lex_rust = (l: Lexer): void => {
 				l.leaf(T_PUNCTUATION, i, i + 1);
 				i++;
 			}
+			continue;
+		}
+
+		// attribute brackets — depth-count so a nested `[` doesn't close the
+		// attribute early, and style the closing `]` to bookend the `#[` marker
+		if (attr_depth > 0 && (c === 91 || c === 93)) {
+			if (c === 91) {
+				attr_depth++;
+				l.leaf(T_PUNCTUATION, i, i + 1);
+			} else {
+				attr_depth--;
+				if (attr_depth === 0) {
+					l.leaf(T_ATTRIBUTE, i, i + 1);
+					attr_path = false;
+				} else {
+					l.leaf(T_PUNCTUATION, i, i + 1);
+				}
+			}
+			i++;
 			continue;
 		}
 

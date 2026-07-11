@@ -44,7 +44,7 @@ fuz_code is a **syntax highlighting library**:
 
 - Runtime HTML generation with CSS classes
 - Hand-written single-pass lexers (zero regex), one per language
-- 9 built-in languages (TS, JS, CSS, HTML, JSON, Svelte, Markdown, Bash, Rust)
+- 9 built-in languages (TS, JS, CSS, HTML, JSON, Svelte, Markdown, Shell, Rust)
 - Extensible by writing a lexer (`SyntaxLang`)
 - Optional Svelte component (`Code.svelte`)
 
@@ -69,7 +69,7 @@ src/
 │   ├── syntax_styler.ts        # SyntaxStyler class: registry + lex/stylize facade
 │   ├── syntax_styler_global.ts # pre-configured global instance
 │   ├── lexer.ts                # lexer substrate: Lexer, TokenTypeRegistry, flat events, HTML render
-│   ├── lexer_*.ts              # hand-written lexers (json, ts, css, bash, markup, svelte, md)
+│   ├── lexer_*.ts              # hand-written lexers (json, ts, css, bash, markup, svelte, md, rust)
 │   ├── Code.svelte             # main Svelte component
 │   ├── CodeHighlight.svelte    # experimental CSS Highlight API
 │   ├── CodeTextarea.svelte     # experimental live-highlighted textarea
@@ -142,9 +142,10 @@ One `SyntaxLang` lexer per language, registered via `add_lang`:
   with a per-block inline scan (emphasis, inline code, links, entities, raw
   markup via the markup scanner); fences embed their languages
 - `lexer_rust.ts` - Rust, registered as `rust` with `rs` as an alias: one
-  flat scan loop (nested block comments, raw strings, and attributes resolve
-  with counters — no frame machine), lifetime-vs-char `'` disambiguation,
-  `name!` macros, doc-vs-plain comment split, the r/b/c string prefixes
+  flat scan loop (nested block comments and raw strings resolve with counters;
+  attribute interiors lex inline under an `[`/`]` depth counter — no frame
+  machine), lifetime-vs-char `'` disambiguation, `name!` macros, doc-vs-plain
+  comment split, the r/b/c string prefixes
 
 Embedded languages resolve lazily by name through the registry (markdown
 fences → any language, markup `<script>`/`<style>`/`style=`/`on*=`, svelte

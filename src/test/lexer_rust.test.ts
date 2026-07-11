@@ -159,13 +159,67 @@ describe('lexer_rust', () => {
 		assert.deepEqual(tokens_of('/**/'), [['comment', '/**/']]);
 	});
 
-	test('attributes span balanced brackets and skip strings', () => {
+	test('attribute interiors lex inline; strings/chars/comments hide their brackets', () => {
+		// marker + leading path are attribute-styled; the arguments get normal rules
 		assert.deepEqual(tokens_of('#[derive(Debug, Clone)]'), [
-			['attribute', '#[derive(Debug, Clone)]'],
+			['attribute', '#[derive'],
+			['punctuation', '('],
+			['capitalized_identifier', 'Debug'],
+			['punctuation', ','],
+			['capitalized_identifier', 'Clone'],
+			['punctuation', ')'],
+			['attribute', ']'],
 		]);
-		assert.deepEqual(tokens_of('#![allow(dead_code)]'), [['attribute', '#![allow(dead_code)]']]);
-		assert.deepEqual(tokens_of('#[doc = "has ] bracket"] x'), [
-			['attribute', '#[doc = "has ] bracket"]'],
+		// a path-only attribute coalesces back to a single token
+		assert.deepEqual(tokens_of('#[inline]'), [['attribute', '#[inline]']]);
+		assert.deepEqual(tokens_of('#![allow(dead_code)]'), [
+			['attribute', '#![allow'],
+			['punctuation', '('],
+			['punctuation', ')'],
+			['attribute', ']'],
+		]);
+		// `::`-separated paths keep each segment attribute-styled
+		assert.deepEqual(tokens_of('#[a::b]'), [
+			['attribute', '#[a'],
+			['punctuation', '::'],
+			['attribute', 'b]'],
+		]);
+		// a `]` inside a string, char, or comment must not close the attribute early
+		assert.deepEqual(tokens_of('#[doc = "has ] bracket"]'), [
+			['attribute', '#[doc'],
+			['operator', '='],
+			['string', '"has ] bracket"'],
+			['attribute', ']'],
+		]);
+		assert.deepEqual(tokens_of("#[foo(']')]"), [
+			['attribute', '#[foo'],
+			['punctuation', '('],
+			['char', "']'"],
+			['punctuation', ')'],
+			['attribute', ']'],
+		]);
+		assert.deepEqual(tokens_of('#[foo(/* ] */)]'), [
+			['attribute', '#[foo'],
+			['punctuation', '('],
+			['comment', '/* ] */'],
+			['punctuation', ')'],
+			['attribute', ']'],
+		]);
+		// a nested `[…]` is depth-counted, not an early close
+		assert.deepEqual(tokens_of('#[foo[0]]'), [
+			['attribute', '#[foo'],
+			['punctuation', '['],
+			['number', '0'],
+			['punctuation', ']'],
+			['attribute', ']'],
+		]);
+		// an empty attribute stays contained — the naming context can't leak out
+		assert.deepEqual(tokens_of('#[]\nfn a() {}'), [
+			['attribute', '#[]'],
+			['keyword', 'fn'],
+			['function', 'a'],
+			['punctuation', '()'],
+			['punctuation', '{}'],
 		]);
 		assert.deepEqual(tokens_of('#[unterminated'), [['attribute', '#[unterminated']]);
 	});
@@ -221,6 +275,33 @@ describe('lexer_rust', () => {
 			['class_name', 'Display'],
 			['special_keyword', 'for'],
 			['capitalized_identifier', 'MyType'],
+		]);
+	});
+
+	test('a naming keyword without a following name does not leak the context', () => {
+		// `impl<T>` — the generic param is not a type name here, matching `fn id<T>`
+		assert.deepEqual(tokens_of('impl<T> Foo for Bar {}'), [
+			['keyword', 'impl'],
+			['operator', '<'],
+			['capitalized_identifier', 'T'],
+			['operator', '>'],
+			['capitalized_identifier', 'Foo'],
+			['special_keyword', 'for'],
+			['capitalized_identifier', 'Bar'],
+			['punctuation', '{}'],
+		]);
+		// a nameless `struct;` must not color the following identifier as a type
+		assert.deepEqual(tokens_of('struct; foo'), [
+			['keyword', 'struct'],
+			['punctuation', ';'],
+		]);
+	});
+
+	test('try is a control-flow keyword', () => {
+		assert.deepEqual(tokens_of('try { x }'), [
+			['special_keyword', 'try'],
+			['punctuation', '{'],
+			['punctuation', '}'],
 		]);
 	});
 
@@ -404,6 +485,11 @@ describe('lexer_rust embedding', () => {
 
 	test('a block-comment closer split across the window stays unterminated', () => {
 		assert.deepEqual(window_tokens('/* x */', 6), [['comment', 0, 6]]);
+	});
+
+	test('a `#![` marker whose `[` is beyond the window does not overrun', () => {
+		// only `#!` is in the window — it must not form an attribute across the edge
+		assert.deepEqual(window_tokens('#![x]', 2), [['operator', 1, 2]]);
 	});
 
 	test('a second `.` beyond the window cannot extend a range operator', () => {

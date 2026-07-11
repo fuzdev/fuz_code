@@ -1,12 +1,12 @@
 === STATS ===
 Sample length: 3012 characters
-Total tokens: 576
+Total tokens: 588
 
 Token types (18 unique):
-  punctuation: 239
+  punctuation: 245
   operator: 94
   keyword: 64
-  capitalized_identifier: 43
+  capitalized_identifier: 48
   function: 38
   number: 19
   builtin: 18
@@ -16,9 +16,9 @@ Token types (18 unique):
   macro: 7
   lifetime: 6
   constant: 4
-  class_name: 4
+  attribute: 4
   doc_comment: 3
-  attribute: 2
+  class_name: 3
   boolean: 2
   comment: 1
 
@@ -49,7 +49,15 @@ Token types (18 unique):
  214-215   operator                  =
  216-236   string                    "hello, \"world\"\n"
  236-237   punctuation               ;
- 239-273   attribute                 #[derive(Debug, Clone, PartialEq)]
+ 239-247   attribute                 #[derive
+ 247-248   punctuation               (
+ 248-253   capitalized_identifier    Debug
+ 253-254   punctuation               ,
+ 255-260   capitalized_identifier    Clone
+ 260-261   punctuation               ,
+ 262-271   capitalized_identifier    PartialEq
+ 271-272   punctuation               )
+ 272-273   attribute                 ]
  274-277   keyword                   pub
  278-282   keyword                   enum
  283-288   class_name                Event
@@ -75,7 +83,11 @@ Token types (18 unique):
  365-366   punctuation               ,
  367-368   punctuation               }
  370-454   comment                   /* a plain block comment\n   /* they nest in rust */\n   still inside the outer one */
- 456-474   attribute                 #[derive(Default)]
+ 456-464   attribute                 #[derive
+ 464-465   punctuation               (
+ 465-472   capitalized_identifier    Default
+ 472-473   punctuation               )
+ 473-474   attribute                 ]
  475-478   keyword                   pub
  479-485   keyword                   struct
  486-494   class_name                Registry
@@ -97,7 +109,7 @@ Token types (18 unique):
  548-549   punctuation               }
  551-555   keyword                   impl
  555-556   operator                  <
- 556-557   class_name                T
+ 556-557   capitalized_identifier    T
  557-558   punctuation               :
  562-564   punctuation               ::
  564-569   capitalized_identifier    Debug
