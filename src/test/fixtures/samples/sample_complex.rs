@@ -69,6 +69,19 @@ fn classify(byte: u8) -> char {
     }
 }
 
+fn first_word<I>(words: I) -> Option<String>
+where
+    I: IntoIterator<Item = String>,
+{
+    let mut it = words.into_iter();
+    let head = it.next()?;
+    Some(head.trim().to_string())
+}
+
+async fn warm(registry: &mut Registry<i64>) -> usize {
+    registry.drain().await.len()
+}
+
 pub fn main() {
     let mut registry: Registry<i64> = Registry::new();
     registry.insert("answer", 42);
@@ -95,7 +108,8 @@ pub fn main() {
     }
 
     assert_ne!(count!(1, 2, 3), 0);
-    let _ = (pattern, bytes, path, emoji, newline, quiet, classify(b'x'), GREETING);
+    let seed = first_word(vec![String::from("seed")]);
+    let _ = (pattern, bytes, path, emoji, newline, quiet, classify(b'x'), GREETING, seed, warm);
 
     unsafe {
         let raw: *const u64 = &registry.hits;

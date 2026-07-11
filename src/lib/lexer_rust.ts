@@ -149,7 +149,7 @@ const scan_rust_block_comment = (text: string, from: number, end: number): numbe
 			depth--;
 			i += 2;
 			if (depth === 0) return i;
-		} else if (c === 47 && text.charCodeAt(i + 1) === 42) {
+		} else if (c === 47 && i + 1 < end && text.charCodeAt(i + 1) === 42) {
 			depth++;
 			i += 2;
 		} else {
@@ -401,8 +401,12 @@ const lex_rust = (l: Lexer): void => {
 			if (kind !== undefined) {
 				if (kind === K_KEYWORD) {
 					l.leaf(T_KEYWORD, start, ident_end);
-					if (word === 'fn') fn_ctx = true;
-					else if (CLASS_CTX_WORDS.has(word)) class_ctx = true;
+					// `fn name` defines a function, but `fn(…)` is a pointer *type*
+					// with no name — only enter the naming context when an
+					// identifier actually follows, or it leaks onto the next value
+					if (word === 'fn') {
+						fn_ctx = is_ident_start(text.charCodeAt(skip_space(text, ident_end, end)));
+					} else if (CLASS_CTX_WORDS.has(word)) class_ctx = true;
 					continue;
 				}
 				if (kind === K_SPECIAL) {
@@ -536,20 +540,22 @@ const lex_rust = (l: Lexer): void => {
 			const c2 = i + 1 < end ? text.charCodeAt(i + 1) : 0;
 			if (c2 === 47) {
 				const line_end = scan_to_line_end(text, i, end);
-				const c3 = text.charCodeAt(i + 2);
+				// classify from window-internal chars only — a marker char beyond
+				// the window is host text, not part of this comment
+				const c3 = i + 2 < end ? text.charCodeAt(i + 2) : 0;
+				const c4 = i + 3 < end ? text.charCodeAt(i + 3) : 0;
 				// `///` (but not `////`) and `//!` are doc comments
-				const is_doc = (c3 === 47 && text.charCodeAt(i + 3) !== 47) || c3 === 33;
+				const is_doc = (c3 === 47 && c4 !== 47) || c3 === 33;
 				l.leaf(is_doc ? T_DOC_COMMENT : T_COMMENT, i, line_end);
 				i = line_end;
 				continue; // comments are transparent — contexts survive
 			}
 			if (c2 === 42) {
 				const comment_end = scan_rust_block_comment(text, i, end);
-				const c3 = text.charCodeAt(i + 2);
+				const c3 = i + 2 < end ? text.charCodeAt(i + 2) : 0;
+				const c4 = i + 3 < end ? text.charCodeAt(i + 3) : 0;
 				// `/**` (but not `/**/` or `/***`) and `/*!` are doc comments
-				const is_doc =
-					(c3 === 42 && text.charCodeAt(i + 3) !== 47 && text.charCodeAt(i + 3) !== 42) ||
-					c3 === 33;
+				const is_doc = (c3 === 42 && c4 !== 47 && c4 !== 42) || c3 === 33;
 				l.leaf(is_doc ? T_DOC_COMMENT : T_COMMENT, i, comment_end);
 				i = comment_end;
 				continue;
@@ -581,10 +587,12 @@ const lex_rust = (l: Lexer): void => {
 			continue;
 		}
 
-		// `.` — member access, or the `..`/`..=`/`...` range operators
+		// `.` — member access, or the `..`/`..=`/`...` range operators. The
+		// second `.` must sit inside the window so the span can't cross an embed
+		// boundary; a `.` at the window edge stays punctuation
 		if (c === 46) {
-			if (text.charCodeAt(i + 1) === 46) {
-				const c3 = text.charCodeAt(i + 2);
+			if (i + 1 < end && text.charCodeAt(i + 1) === 46) {
+				const c3 = i + 2 < end ? text.charCodeAt(i + 2) : 0;
 				const op_len = c3 === 61 || c3 === 46 ? 3 : 2;
 				l.leaf(T_OPERATOR, i, i + op_len);
 				i += op_len;

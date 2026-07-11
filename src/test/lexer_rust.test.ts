@@ -280,6 +280,51 @@ describe('lexer_rust', () => {
 		]);
 	});
 
+	test('the try operator is punctuation-adjacent operator, not a char', () => {
+		assert.deepEqual(tokens_of('let x = parse()?;'), [
+			['keyword', 'let'],
+			['operator', '='],
+			['function', 'parse'],
+			['punctuation', '()'],
+			['operator', '?'],
+			['punctuation', ';'],
+		]);
+		assert.deepEqual(tokens_of('value?.field'), [
+			['operator', '?'],
+			['punctuation', '.'],
+		]);
+	});
+
+	test('where clauses keep their keyword and type bounds', () => {
+		assert.deepEqual(tokens_of('where T: Clone + Send'), [
+			['keyword', 'where'],
+			['capitalized_identifier', 'T'],
+			['punctuation', ':'],
+			['capitalized_identifier', 'Clone'],
+			['operator', '+'],
+			['capitalized_identifier', 'Send'],
+		]);
+	});
+
+	test('fn-pointer types do not name the following value', () => {
+		// `fn()` is a type, not a definition — `foo` is a value, not a function
+		assert.deepEqual(tokens_of('let handler: fn() = foo;'), [
+			['keyword', 'let'],
+			['punctuation', ':'],
+			['keyword', 'fn'],
+			['punctuation', '()'],
+			['operator', '='],
+			['punctuation', ';'],
+		]);
+		// `fn name` still names the definition
+		assert.deepEqual(tokens_of('fn parse() {}'), [
+			['keyword', 'fn'],
+			['function', 'parse'],
+			['punctuation', '()'],
+			['punctuation', '{}'],
+		]);
+	});
+
 	test('postfix await is a keyword after a dot', () => {
 		assert.deepEqual(tokens_of('fut.await'), [
 			['punctuation', '.'],
@@ -359,6 +404,13 @@ describe('lexer_rust embedding', () => {
 
 	test('a block-comment closer split across the window stays unterminated', () => {
 		assert.deepEqual(window_tokens('/* x */', 6), [['comment', 0, 6]]);
+	});
+
+	test('a second `.` beyond the window cannot extend a range operator', () => {
+		// only the first `.` is in the window — it stays punctuation rather than
+		// consuming the host `..` past the boundary
+		assert.deepEqual(window_tokens('...', 1), [['punctuation', 0, 1]]);
+		assert.deepEqual(window_tokens('..=', 2), [['operator', 0, 2]]);
 	});
 });
 
