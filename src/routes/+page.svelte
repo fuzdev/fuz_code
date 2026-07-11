@@ -1,7 +1,8 @@
 <script lang="ts">
 	import DocsFooter from '@fuzdev/fuz_ui/DocsFooter.svelte';
 	import {site_context} from '@fuzdev/fuz_ui/site.svelte.ts';
-	import {FUZ_DEV_URL} from '@fuzdev/fuz_ui/constants.ts';
+	import {FUZ_DEV_URL, MAIN_HEADER_MARGIN_TOP} from '@fuzdev/fuz_ui/constants.ts';
+	import {DOCS_PATH} from '@fuzdev/fuz_ui/docs_helpers.svelte.ts';
 	import Card from '@fuzdev/fuz_ui/Card.svelte';
 	import Svg from '@fuzdev/fuz_ui/Svg.svelte';
 	import {logo_fuz_code} from '@fuzdev/fuz_ui/logos.ts';
@@ -11,65 +12,35 @@
 
 	const site = site_context.get();
 
-	const svelte_example = '<h1>hello {name}</h1>';
-	const ts_example = 'const x: number = 42;';
-	const css_example = '.card { color: var(--color_a); }';
+	const hero_example = '<h1>hello {name}</h1>';
 </script>
+
+<svelte:head>
+	<title>@fuzdev/fuz_code</title>
+</svelte:head>
 
 <main class="box width:100% mb_xl5" style:padding="var(--space_xl3) 0">
 	<div class="width_atmost_md">
-		<section class="box" style:padding-top="var(--docs_primary_nav_height, 60px)">
+		<section class="box" style:padding-top={MAIN_HEADER_MARGIN_TOP}>
 			<h1>fuz_code</h1>
 			<Svg data={logo_fuz_code} size="var(--icon_size_xl2)" />
 		</section>
-		<section class="box">
-			<Card href={resolve('/docs')}>docs{#snippet icon()}{site.glyph}{/snippet}</Card>
-		</section>
 		<section>
 			<p>
-				fuz_code is a library for syntax highlighting. It can output strings of HTML and Svelte
-				components, and it has a <a href={resolve('/docs/usage#Preprocessor' as any)}
-					>preprocessor</a
-				>
-				for static compilation. It runs one hand-written lexer per language with zero regular expressions;
-				it originated as a fork of
+				fuz_code is a syntax highlighting library. It runs one hand-written lexer per language
+				without regular expressions, outputs HTML strings or Svelte components, and can compile
+				static content at build time. It originated as a fork of
 				<a href="https://github.com/PrismJS/prism">Prism</a>
-				(<a href="https://prismjs.com/">prismjs.com</a>) by
-				<a href="https://lea.verou.me/">Lea Verou</a>
-				and keeps its <code>.token_*</code> class vocabulary. More at the
-				<a href={resolve('/docs')}>docs</a>.
-			</p>
-			<p>
-				To use fuz_css with Svelte, import the theme CSS file and <code>Code</code> component:
-			</p>
-			<Code
-				lang="ts"
-				content={`import '@fuzdev/fuz_code/theme.css';
-import Code from '@fuzdev/fuz_code/Code.svelte';`}
-			/>
-			<p>Svelte highlights by default:</p>
-			<Code content={`<Code content={'${svelte_example}'} />`} />
-			<Code content={svelte_example} />
-			<p>Set <code>lang</code> for other languages, like TypeScript:</p>
-			<Code content={`<Code lang="ts" content="${ts_example}" />`} />
-			<p>Renders:</p>
-			<Code lang="ts" content={ts_example} />
-			<p>Or CSS:</p>
-			<Code content={`<Code lang="css" content={"${css_example}"} />`} />
-			<p>Renders:</p>
-			<Code lang="css" content={css_example} />
-			<p>
-				See the <a href={resolve('/docs')}>docs</a> for more.
+				by <a href="https://lea.verou.me/">Lea Verou</a>.
 			</p>
 		</section>
-		<section class="box gap_xl3 font_size_xl2">
-			<div class="panel box p_lg gap_sm">
-				<!-- TODO large variants of the chip? using `--font_size`? -->
-				<a href={resolve('/samples')} class="chip px_xl py_sm">samples</a>
-				<a href={resolve('/textarea')} class="chip px_xl py_sm">textarea</a>
-				<a href={resolve('/benchmark')} class="chip px_xl py_sm">benchmark</a>
-				<a href={resolve('/about')} class="chip px_xl py_sm">about</a>
-			</div>
+		<section class="box width:100%">
+			<Code content={hero_example} />
+		</section>
+		<section class="box gap_md width:100%">
+			<Card href={DOCS_PATH}>docs{#snippet icon()}{/snippet}</Card>
+			<Card href={resolve('/docs/samples')}>samples{#snippet icon()}{/snippet}</Card>
+			<Card href={resolve('/docs/benchmark')}>benchmark{#snippet icon()}{/snippet}</Card>
 		</section>
 		<section>
 			<DocsFooter repo_url={site.repo_url} root_url={FUZ_DEV_URL} />

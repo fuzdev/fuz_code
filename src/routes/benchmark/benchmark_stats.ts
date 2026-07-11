@@ -18,11 +18,11 @@ import type {
  * Converts millisecond timings to nanoseconds for fuz_util's BenchmarkStats.
  */
 export const analyze_results = (data: MeasurementData): BrowserBenchmarkStats => {
-	// Convert milliseconds to nanoseconds for BenchmarkStats
-	const timings_ns = data.times_ms.map((ms) => ms * TIME_NS_PER_MS);
-
-	// Create core stats using fuz_util
-	const core = new BenchmarkStats(timings_ns);
+	// Convert milliseconds to nanoseconds for BenchmarkStats. `core` is the work
+	// time (the highlighter's compute cost); `paint` adds the frames until pixels
+	// settle. Both series are index-aligned, so failed iterations drop out of each.
+	const core = new BenchmarkStats(data.work_ms.map((ms) => ms * TIME_NS_PER_MS));
+	const paint = new BenchmarkStats(data.paint_ms.map((ms) => ms * TIME_NS_PER_MS));
 
 	// Calculate browser-specific stability metrics
 	const unstable_count = data.stability_checks.filter((s) => !s.is_stable).length;
@@ -31,6 +31,7 @@ export const analyze_results = (data: MeasurementData): BrowserBenchmarkStats =>
 
 	return {
 		core,
+		paint,
 		stability_ratio,
 		unstable_iterations: unstable_count,
 	};

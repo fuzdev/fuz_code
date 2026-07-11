@@ -1,6 +1,7 @@
 <script lang="ts">
 	/**
-	 * Uses the CSS Custom Highlight API when available --
+	 * Renders code with the CSS Custom Highlight API when available, falling
+	 * back to HTML generation —
 	 * https://developer.mozilla.org/en-US/docs/Web/API/CSS_Custom_Highlight_API
 	 *
 	 * Requires importing `theme_highlight.css` instead of `theme.css`.
@@ -27,57 +28,40 @@
 		/** The source code to syntax highlight. */
 		content: string;
 		/**
-		 * Language identifier (e.g., 'ts', 'css', 'html', 'json', 'svelte', 'md').
-		 *
-		 * **Purpose:**
-		 * - Selects the registered lexer used to highlight `content`
-		 * - Sets the `data-lang` attribute and determines `language_supported`
-		 *
-		 * **Special values:**
-		 * - `null` - Explicitly disables syntax highlighting (content rendered as plain text)
-		 * - `undefined` - Falls back to default ('svelte')
+		 * Language identifier (e.g. 'ts', 'css', 'html', 'json', 'svelte', 'md').
+		 * Selects the registered lexer and sets the `data-lang` attribute. `null`
+		 * disables highlighting (content renders as plain text); `undefined`
+		 * falls back to the default ('svelte').
 		 *
 		 * @default 'svelte'
 		 */
 		lang?: string | null;
 		/**
-		 * Highlighting mode for this component.
-		 *
-		 * **Options:**
-		 * - `'auto'` - Uses CSS Custom Highlight API if supported, falls back to HTML mode
-		 * - `'ranges'` - Forces CSS Custom Highlight API (requires browser support)
-		 * - `'html'` - Forces HTML generation with CSS classes
-		 *
-		 * **Note:** CSS Custom Highlight API has limitations and limited browser support.
-		 * Requires importing `theme_highlight.css` instead of `theme.css`.
+		 * Highlighting mode: `'auto'` uses the CSS Custom Highlight API when
+		 * supported and falls back to HTML, `'ranges'` forces the Highlight API
+		 * (requires browser support), `'html'` forces HTML generation with CSS
+		 * classes. The Highlight API has limited browser support and requires
+		 * `theme_highlight.css` instead of `theme.css`.
 		 *
 		 * @default 'auto'
 		 */
 		mode?: HighlightMode;
 		/**
-		 * Whether to render as inline code or block code.
-		 * Controls display via CSS classes.
+		 * Whether to render as inline code instead of a block.
 		 *
 		 * @default false
 		 */
 		inline?: boolean;
 		/**
-		 * Whether to wrap long lines in block code.
-		 * Sets `white-space: pre-wrap` instead of `white-space: pre`.
-		 *
-		 * **Behavior:**
-		 * - Wraps at whitespace (spaces, newlines)
-		 * - Long tokens without spaces (URLs, hashes) will still scroll horizontally
-		 * - Default `false` provides traditional code block behavior
-		 *
-		 * Only affects block code (ignored for inline mode).
+		 * Whether to wrap long lines in block code (`white-space: pre-wrap`
+		 * instead of `pre`). Wraps at whitespace — long unbroken tokens (URLs,
+		 * hashes) still scroll horizontally. Ignored for inline code.
 		 *
 		 * @default false
 		 */
 		wrap?: boolean;
 		/**
-		 * Custom `SyntaxStyler` instance to use for highlighting.
-		 * Allows using a different styler with custom languages or configuration.
+		 * Custom `SyntaxStyler` instance, e.g. with different languages registered.
 		 *
 		 * @default syntax_styler_global
 		 */

@@ -293,7 +293,7 @@ describe('lexer_bash comments', () => {
 });
 
 describe('lexer_bash sample', () => {
-	const content = readFileSync('src/test/fixtures/samples/sample_complex.bash', 'utf8');
+	const content = readFileSync('src/test/fixtures/samples/sample_complex.sh', 'utf8');
 
 	test('sample lexes with valid invariants', () => {
 		const lexed = syntax_styler_global.lex(content, 'bash');

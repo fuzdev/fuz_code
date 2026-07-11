@@ -30,8 +30,21 @@ export interface StabilityCheck {
 	jitter: number;
 }
 
+/**
+ * One iteration's two timings, both measured from the same start (props set):
+ * `work_ms` ends when the highlight work is committed and laid out; `paint_ms`
+ * ends once the browser has settled pixels (adds ~1-2 animation frames).
+ */
+export interface IterationTiming {
+	work_ms: number;
+	paint_ms: number;
+}
+
 export interface MeasurementData {
-	times_ms: Array<number>;
+	/** Per-iteration work time — stylize + DOM commit + forced layout (ms). */
+	work_ms: Array<number>;
+	/** Per-iteration paint-settled time — work plus the frames until pixels update (ms). */
+	paint_ms: Array<number>;
 	stability_checks: Array<StabilityCheck>;
 	timestamps: Array<number>;
 }
@@ -41,8 +54,10 @@ export interface MeasurementData {
  * Uses milliseconds for display (mean_ms, median_ms, etc.) while storing nanoseconds internally.
  */
 export interface BrowserBenchmarkStats {
-	/** Core stats from fuz_util (in nanoseconds) */
+	/** Work-time stats — stylize + DOM commit, the highlighter's compute cost (in nanoseconds). */
 	core: FuzBenchmarkStats;
+	/** Paint-settled stats — work plus the frames until pixels update (in nanoseconds). */
+	paint: FuzBenchmarkStats;
 	/** Browser-specific: ratio of stable iterations (0-1) */
 	stability_ratio: number;
 	/** Browser-specific: count of unstable iterations */
@@ -72,7 +87,7 @@ export interface BenchmarkHarnessController {
 	run_iteration: (
 		component: Component<BenchmarkComponentProps>,
 		props: BenchmarkComponentProps,
-	) => Promise<number>;
+	) => Promise<IterationTiming>;
 	cleanup: () => Promise<void>;
 }
 

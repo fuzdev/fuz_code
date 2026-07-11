@@ -42,11 +42,11 @@ import {
  * unquoted heredoc bodies) runs on an explicit pooled frame stack, so
  * arbitrarily deep input tokenizes fully without touching the JS call stack.
  *
- * Scope: the bash family — `sh`/`shell` alias this lexer. POSIX sh is a
- * syntactic subset of bash for highlighting purposes (everything sh scripts
- * use — `$(…)`, `$((…))`, backticks, heredocs, `${…}` — is shared syntax),
- * and bash-only forms don't occur in sh input. Shells with their own
- * syntax (fish, PowerShell) are out of scope.
+ * Scope: the bash family — registered as `sh`, with `bash`/`shell` as
+ * aliases. POSIX sh is a syntactic subset of bash for highlighting purposes
+ * (everything sh scripts use — `$(…)`, `$((…))`, backticks, heredocs, `${…}`
+ * — is shared syntax), and bash-only forms don't occur in sh input. Shells
+ * with their own syntax (fish, PowerShell) are out of scope.
  *
  * Resilience: unterminated single-line constructs stop at the line boundary;
  * unterminated strings, command substitutions, and heredocs extend to the
@@ -993,11 +993,11 @@ const lex_bash = (l: Lexer): void => {
 };
 
 /**
- * The Bash language registration for the lexer engine.
+ * The shell (bash-family) language registration for the lexer engine.
  *
- * `sh` and `shell` alias this lexer: POSIX sh is a syntactic subset of bash
- * for highlighting purposes, and the bash-only constructs this lexer
- * additionally recognizes don't occur in sh input, so running it on sh
+ * Registered as `sh`; `bash` and `shell` alias it: POSIX sh is a syntactic
+ * subset of bash for highlighting purposes, and the bash-only constructs this
+ * lexer additionally recognizes don't occur in sh input, so running it on sh
  * scripts is exact. There is no separate sh lexer.
  */
-export const lexer_bash: SyntaxLang = {id: 'bash', aliases: ['sh', 'shell'], lex: lex_bash};
+export const lexer_bash: SyntaxLang = {id: 'sh', aliases: ['bash', 'shell'], lex: lex_bash};

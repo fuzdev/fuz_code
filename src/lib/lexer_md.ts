@@ -94,7 +94,7 @@ add_fence_lang('css', 'css', T_LANG_CSS);
 add_fence_lang('html markup', 'markup', T_LANG_MARKUP);
 add_fence_lang('json', 'json', T_LANG_JSON);
 add_fence_lang('svelte', 'svelte', T_LANG_SVELTE);
-add_fence_lang('bash sh shell', 'bash', T_LANG_BASH);
+add_fence_lang('sh bash shell', 'sh', T_LANG_BASH);
 add_fence_lang('md markdown', 'md', T_LANG_MD);
 
 // line-internal whitespace — `is_space` from the toolkit includes newlines

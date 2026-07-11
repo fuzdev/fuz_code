@@ -4,16 +4,9 @@ import {discover_samples, process_sample, get_fixture_path} from './helpers.ts';
 import {sample_langs} from '$lib/code_sample.ts';
 
 /**
- * Test Architecture Overview
- * =========================
- *
- * This test suite verifies that our syntax highlighters produce consistent,
- * correct output by comparing runtime behavior against generated fixtures.
- *
- * Tests generated fixture files to ensure:
- * - HTML rendering matches generated fixtures
- * - Token ranges are properly nested (no invalid overlaps)
- * - All expected tokens are present
+ * Verifies runtime lexer output against the generated fixtures: HTML
+ * rendering matches, token ranges nest without invalid overlaps, and all
+ * expected tokens are present.
  */
 
 describe('generated fixtures match runtime', async () => {

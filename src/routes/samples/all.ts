@@ -9,7 +9,7 @@ export type SampleKey =
 	| 'html_complex'
 	| 'svelte_complex'
 	| 'md_complex'
-	| 'bash_complex';
+	| 'sh_complex';
 
 export const samples: Record<SampleKey, CodeSample> = {
 	json_complex: {
@@ -670,9 +670,9 @@ const example = 'embedded code';
 </div>
 `,
 	},
-	bash_complex: {
-		name: 'bash_complex',
-		lang: 'bash',
+	sh_complex: {
+		name: 'sh_complex',
+		lang: 'sh',
 		content: `#!/bin/bash
 
 # This is a comment
