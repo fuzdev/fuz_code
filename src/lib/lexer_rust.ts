@@ -3,6 +3,7 @@ import {
 	is_hex_digit,
 	is_ident_start,
 	is_space,
+	is_upper,
 	scan_ident,
 	scan_to_line_end,
 	skip_space,
@@ -86,8 +87,6 @@ const CLASS_CTX_WORDS: Set<string> = new Set([
 	'impl',
 	'dyn',
 ]);
-
-const is_upper = (c: number): boolean => c >= 65 && c <= 90;
 
 /**
  * Scans a `"` string from the quote at `from`, returning the exclusive end.
