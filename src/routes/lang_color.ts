@@ -1,9 +1,5 @@
 import type {SampleLang} from '$lib/code_sample.ts';
 
-// the color classes are applied dynamically (`{lang_colors[lang]}`), so hint
-// them for static extraction
-// @fuz-classes color_a color_b color_c color_d color_e color_f color_g color_h
-
 /**
  * A `color_*` utility class per demo language, chosen to evoke each language's
  * identity, for tinting the language buttons in the docs.
