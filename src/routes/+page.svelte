@@ -38,9 +38,9 @@
 			<Code content={hero_example} />
 		</section>
 		<section class="box gap_md width:100%">
-			<Card href={DOCS_PATH}>docs{#snippet icon()}{site.glyph}{/snippet}</Card>
-			<Card href={resolve('/docs/samples')}>samples{#snippet icon()}🎨{/snippet}</Card>
-			<Card href={resolve('/docs/benchmark')}>benchmark{#snippet icon()}⚡{/snippet}</Card>
+			<Card href={DOCS_PATH}>docs{#snippet icon()}{/snippet}</Card>
+			<Card href={resolve('/docs/samples')}>samples{#snippet icon()}{/snippet}</Card>
+			<Card href={resolve('/docs/benchmark')}>benchmark{#snippet icon()}{/snippet}</Card>
 		</section>
 		<section>
 			<DocsFooter repo_url={site.repo_url} root_url={FUZ_DEV_URL} />
