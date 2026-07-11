@@ -192,7 +192,7 @@ const html = styler.stylize('<div class="example">hello</div>', 'html');`}
 		<TomeSectionHeader text="Experimental highlighting API" />
 		<p>
 			The <DeclarationLink name="Code" /> component generates HTML with CSS classes for text highlighting.
-			It also includes experimental support for the CSS Custom Highlight API with
+			fuz_code also includes experimental support for the CSS Custom Highlight API with
 			<DeclarationLink name="CodeHighlight" />, see the
 			<TomeLink slug="samples" />
 			for more.

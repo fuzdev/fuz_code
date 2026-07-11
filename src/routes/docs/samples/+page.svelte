@@ -36,6 +36,9 @@
 	let show_html = $state(true);
 	let show_highlight = $state(false);
 
+	// each renderer takes half the row when both show, otherwise the full width
+	const column_width = $derived(show_html && show_highlight ? '50%' : '100%');
+
 	const shown_samples = $derived(
 		Object.values(samples).filter((sample) => shown_langs.has(sample.lang)),
 	);
@@ -80,7 +83,7 @@
 					class:selected={show_html}
 					onclick={() => (show_html = !show_html)}
 				>
-					html
+					html renderer
 				</button>
 				<button
 					type="button"
@@ -88,7 +91,7 @@
 					class:selected={show_highlight}
 					onclick={() => (show_highlight = !show_highlight)}
 				>
-					highlight
+					highlight renderer
 				</button>
 			</div>
 
@@ -108,14 +111,14 @@
 			{#each shown_samples as sample (sample.name)}
 				<section class="box mb_xl3">
 					<h3 class="panel p_md mb_xs width:100% box">{sample.lang}</h3>
-					<div class="display:flex gap_md align-items:flex-start overflow-x:auto width:100%">
+					<div class="renderers">
 						{#if show_html}
-							<div class="flex:none">
+							<div style:width={column_width}>
 								<Code content={sample.content} lang={sample.lang} />
 							</div>
 						{/if}
 						{#if show_highlight}
-							<div class="flex:none">
+							<div style:width={column_width}>
 								<CodeHighlight content={sample.content} lang={sample.lang} mode="ranges" />
 							</div>
 						{/if}
@@ -128,3 +131,17 @@
 		</section>
 	{/if}
 </TomeContent>
+
+<style>
+	.renderers {
+		max-width: 100%;
+		display: flex;
+		gap: var(--space_md);
+		align-items: flex-start;
+	}
+	/* width is set inline (50% when both renderers show, else 100%); min-width:0
+	   lets the column shrink to that width so the code scrolls internally */
+	.renderers > div {
+		min-width: 0;
+	}
+</style>
