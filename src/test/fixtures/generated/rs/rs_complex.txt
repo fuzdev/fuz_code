@@ -1,0 +1,518 @@
+=== STATS ===
+Sample length: 2665 characters
+Total tokens: 493
+
+Token types (18 unique):
+  punctuation: 207
+  operator: 78
+  keyword: 55
+  capitalized_identifier: 32
+  function: 28
+  number: 19
+  builtin: 16
+  string: 14
+  char: 10
+  lifetime: 6
+  special_keyword: 6
+  macro: 6
+  constant: 4
+  class_name: 4
+  doc_comment: 3
+  attribute: 2
+  boolean: 2
+  comment: 1
+
+=== TOKENS ===
+   0-60    doc_comment               //! A sample module exercising the Rust lexer's token paths.
+  62-65    keyword                   use
+  69-71    punctuation               ::
+  82-84    punctuation               ::
+  84-91    capitalized_identifier    HashMap
+  91-92    punctuation               ;
+  93-96    keyword                   use
+ 100-102   punctuation               ::
+ 105-106   punctuation               ;
+ 108-159   doc_comment               /// The maximum number of retries before giving up.
+ 160-163   keyword                   pub
+ 164-169   keyword                   const
+ 170-181   constant                  MAX_RETRIES
+ 181-182   punctuation               :
+ 183-186   builtin                   u32
+ 187-188   operator                  =
+ 189-190   number                    3
+ 190-191   punctuation               ;
+ 192-198   keyword                   static
+ 199-207   constant                  GREETING
+ 207-208   punctuation               :
+ 209-210   operator                  &
+ 210-213   builtin                   str
+ 214-215   operator                  =
+ 216-236   string                    "hello, \"world\"\n"
+ 236-237   punctuation               ;
+ 239-273   attribute                 #[derive(Debug, Clone, PartialEq)]
+ 274-277   keyword                   pub
+ 278-282   keyword                   enum
+ 283-288   class_name                Event
+ 288-289   operator                  <
+ 289-291   lifetime                  'a
+ 291-292   operator                  >
+ 293-294   punctuation               {
+ 299-303   capitalized_identifier    Push
+ 304-305   punctuation               {
+ 310-311   punctuation               :
+ 312-313   operator                  &
+ 313-315   lifetime                  'a
+ 316-319   builtin                   str
+ 319-320   punctuation               ,
+ 328-329   punctuation               :
+ 330-335   builtin                   usize
+ 336-338   punctuation               },
+ 343-346   capitalized_identifier    Tag
+ 346-347   punctuation               (
+ 347-353   capitalized_identifier    String
+ 353-355   punctuation               ),
+ 360-365   capitalized_identifier    Empty
+ 365-366   punctuation               ,
+ 367-368   punctuation               }
+ 370-454   comment                   /* a plain block comment\n   /* they nest in rust */\n   still inside the outer one */
+ 456-474   attribute                 #[derive(Default)]
+ 475-478   keyword                   pub
+ 479-485   keyword                   struct
+ 486-494   class_name                Registry
+ 494-495   operator                  <
+ 495-496   capitalized_identifier    T
+ 496-497   operator                  >
+ 498-499   punctuation               {
+ 511-512   punctuation               :
+ 513-520   capitalized_identifier    HashMap
+ 520-521   operator                  <
+ 521-527   capitalized_identifier    String
+ 527-528   punctuation               ,
+ 529-530   capitalized_identifier    T
+ 530-531   operator                  >
+ 531-532   punctuation               ,
+ 541-542   punctuation               :
+ 543-546   builtin                   u64
+ 546-547   punctuation               ,
+ 548-549   punctuation               }
+ 551-555   keyword                   impl
+ 555-556   operator                  <
+ 556-557   class_name                T
+ 557-558   punctuation               :
+ 562-564   punctuation               ::
+ 564-569   capitalized_identifier    Debug
+ 569-570   operator                  >
+ 571-579   capitalized_identifier    Registry
+ 579-580   operator                  <
+ 580-581   capitalized_identifier    T
+ 581-582   operator                  >
+ 583-584   punctuation               {
+ 589-592   keyword                   pub
+ 593-595   keyword                   fn
+ 596-599   function                  new
+ 599-601   punctuation               ()
+ 602-604   operator                  ->
+ 605-609   keyword                   Self
+ 610-611   punctuation               {
+ 620-624   keyword                   Self
+ 625-626   punctuation               {
+ 646-647   punctuation               :
+ 648-655   capitalized_identifier    HashMap
+ 655-657   punctuation               ::
+ 657-660   function                  new
+ 660-663   punctuation               (),
+ 680-681   punctuation               :
+ 682-687   number                    0_u64
+ 687-688   punctuation               ,
+ 697-698   punctuation               }
+ 703-704   punctuation               }
+ 710-775   doc_comment               /** Inserts an entry, returning the previous value if present. */
+ 780-783   keyword                   pub
+ 784-786   keyword                   fn
+ 787-793   function                  insert
+ 793-794   punctuation               (
+ 794-795   operator                  &
+ 795-798   keyword                   mut
+ 799-803   keyword                   self
+ 803-804   punctuation               ,
+ 808-809   punctuation               :
+ 810-811   operator                  &
+ 811-814   builtin                   str
+ 814-815   punctuation               ,
+ 821-822   punctuation               :
+ 823-824   capitalized_identifier    T
+ 824-825   punctuation               )
+ 826-828   operator                  ->
+ 829-835   capitalized_identifier    Option
+ 835-836   operator                  <
+ 836-837   capitalized_identifier    T
+ 837-838   operator                  >
+ 839-840   punctuation               {
+ 849-853   keyword                   self
+ 853-854   punctuation               .
+ 859-861   operator                  +=
+ 862-863   number                    1
+ 863-864   punctuation               ;
+ 873-877   keyword                   self
+ 877-878   punctuation               .
+ 885-886   punctuation               .
+ 886-892   function                  insert
+ 892-893   punctuation               (
+ 896-897   punctuation               .
+ 897-906   function                  to_string
+ 906-909   punctuation               (),
+ 915-916   punctuation               )
+ 921-922   punctuation               }
+ 928-931   keyword                   pub
+ 932-937   keyword                   async
+ 938-940   keyword                   fn
+ 941-946   function                  drain
+ 946-947   punctuation               (
+ 947-948   operator                  &
+ 948-951   keyword                   mut
+ 952-956   keyword                   self
+ 956-957   punctuation               )
+ 958-960   operator                  ->
+ 961-964   capitalized_identifier    Vec
+ 964-965   operator                  <
+ 965-966   capitalized_identifier    T
+ 966-967   operator                  >
+ 968-969   punctuation               {
+ 978-981   keyword                   let
+ 989-990   punctuation               :
+ 991-994   capitalized_identifier    Vec
+ 994-995   operator                  <
+ 995-996   capitalized_identifier    T
+ 996-997   operator                  >
+ 998-999   operator                  =
+1000-1004  keyword                   self
+1004-1005  punctuation               .
+1012-1013  punctuation               .
+1013-1018  function                  drain
+1018-1021  punctuation               ().
+1021-1024  function                  map
+1024-1025  punctuation               (
+1025-1026  operator                  |
+1026-1027  punctuation               (
+1028-1029  punctuation               ,
+1031-1032  punctuation               )
+1032-1033  operator                  |
+1035-1037  punctuation               ).
+1037-1044  function                  collect
+1044-1047  punctuation               ();
+1068-1069  punctuation               }
+1070-1071  punctuation               }
+1073-1077  keyword                   impl
+1081-1083  punctuation               ::
+1083-1090  class_name                Display
+1091-1094  special_keyword           for
+1095-1100  capitalized_identifier    Event
+1100-1101  operator                  <
+1101-1103  lifetime                  '_
+1103-1104  operator                  >
+1105-1106  punctuation               {
+1111-1113  keyword                   fn
+1114-1117  function                  fmt
+1117-1118  punctuation               (
+1118-1119  operator                  &
+1119-1123  keyword                   self
+1123-1124  punctuation               ,
+1126-1127  punctuation               :
+1128-1129  operator                  &
+1129-1132  keyword                   mut
+1136-1138  punctuation               ::
+1138-1147  capitalized_identifier    Formatter
+1147-1148  operator                  <
+1148-1150  lifetime                  '_
+1150-1151  operator                  >
+1151-1152  punctuation               )
+1153-1155  operator                  ->
+1159-1161  punctuation               ::
+1161-1167  capitalized_identifier    Result
+1168-1169  punctuation               {
+1178-1183  special_keyword           match
+1184-1188  keyword                   self
+1189-1190  punctuation               {
+1203-1208  capitalized_identifier    Event
+1208-1210  punctuation               ::
+1210-1214  capitalized_identifier    Push
+1215-1216  punctuation               {
+1221-1222  punctuation               ,
+1231-1232  punctuation               }
+1233-1235  operator                  =>
+1236-1242  macro                     write!
+1242-1243  punctuation               (
+1244-1245  punctuation               ,
+1246-1273  string                    "{repo}: {commits} commits"
+1273-1275  punctuation               ),
+1288-1293  capitalized_identifier    Event
+1293-1295  punctuation               ::
+1295-1298  capitalized_identifier    Tag
+1298-1299  punctuation               (
+1303-1304  punctuation               )
+1305-1307  operator                  =>
+1308-1314  macro                     write!
+1314-1315  punctuation               (
+1316-1317  punctuation               ,
+1318-1330  string                    "tag {name}"
+1330-1332  punctuation               ),
+1345-1350  capitalized_identifier    Event
+1350-1352  punctuation               ::
+1352-1357  capitalized_identifier    Empty
+1358-1360  operator                  =>
+1361-1363  capitalized_identifier    Ok
+1363-1368  punctuation               (()),
+1377-1378  punctuation               }
+1383-1384  punctuation               }
+1385-1386  punctuation               }
+1388-1400  keyword                   macro_rules!
+1401-1406  function                  count
+1407-1408  punctuation               {
+1413-1414  punctuation               (
+1414-1415  function                  $
+1415-1416  punctuation               (
+1418-1419  punctuation               :
+1423-1425  punctuation               ),
+1425-1426  operator                  *
+1426-1427  punctuation               )
+1428-1430  operator                  =>
+1431-1432  punctuation               {
+1441-1442  punctuation               [
+1442-1443  function                  $
+1443-1444  punctuation               (
+1446-1448  punctuation               ),
+1448-1449  operator                  *
+1449-1451  punctuation               ].
+1451-1454  function                  len
+1454-1456  punctuation               ()
+1461-1463  punctuation               };
+1464-1465  punctuation               }
+1467-1469  keyword                   fn
+1470-1478  function                  classify
+1478-1479  punctuation               (
+1483-1484  punctuation               :
+1485-1487  builtin                   u8
+1487-1488  punctuation               )
+1489-1491  operator                  ->
+1492-1496  builtin                   char
+1497-1498  punctuation               {
+1503-1508  special_keyword           match
+1514-1515  punctuation               {
+1524-1528  char                      b'a'
+1528-1531  operator                  ..=
+1531-1535  char                      b'z'
+1536-1538  operator                  =>
+1539-1542  char                      'l'
+1542-1543  punctuation               ,
+1552-1556  number                    0x30
+1556-1559  operator                  ..=
+1559-1563  number                    0x39
+1564-1566  operator                  =>
+1567-1570  char                      'd'
+1570-1571  punctuation               ,
+1580-1584  char                      b'_'
+1585-1587  operator                  =>
+1588-1591  char                      '_'
+1591-1592  punctuation               ,
+1603-1605  operator                  =>
+1606-1609  char                      '?'
+1609-1610  punctuation               ,
+1615-1616  punctuation               }
+1617-1618  punctuation               }
+1620-1623  keyword                   pub
+1624-1626  keyword                   fn
+1627-1631  function                  main
+1631-1633  punctuation               ()
+1634-1635  punctuation               {
+1640-1643  keyword                   let
+1644-1647  keyword                   mut
+1656-1657  punctuation               :
+1658-1666  capitalized_identifier    Registry
+1666-1667  operator                  <
+1667-1670  builtin                   i64
+1670-1671  operator                  >
+1672-1673  operator                  =
+1674-1682  capitalized_identifier    Registry
+1682-1684  punctuation               ::
+1684-1687  function                  new
+1687-1690  punctuation               ();
+1703-1704  punctuation               .
+1704-1710  function                  insert
+1710-1711  punctuation               (
+1711-1719  string                    "answer"
+1719-1720  punctuation               ,
+1721-1723  number                    42
+1723-1725  punctuation               );
+1738-1739  punctuation               .
+1739-1745  function                  insert
+1745-1746  punctuation               (
+1746-1752  string                    "mask"
+1752-1753  punctuation               ,
+1754-1765  number                    0b1010_0110
+1766-1768  keyword                   as
+1769-1772  builtin                   i64
+1772-1774  punctuation               );
+1787-1788  punctuation               .
+1788-1794  function                  insert
+1794-1795  punctuation               (
+1795-1803  string                    "offset"
+1803-1804  punctuation               ,
+1805-1810  number                    0o777
+1810-1812  punctuation               );
+1825-1826  punctuation               .
+1826-1832  function                  insert
+1832-1833  punctuation               (
+1833-1844  string                    "float-ish"
+1844-1845  punctuation               ,
+1846-1852  number                    2.5e-3
+1853-1855  keyword                   as
+1856-1859  builtin                   i64
+1859-1861  punctuation               );
+1867-1870  keyword                   let
+1879-1880  operator                  =
+1881-1918  string                    r#"a "raw" string with \ no escapes"#
+1918-1919  punctuation               ;
+1924-1927  keyword                   let
+1934-1935  operator                  =
+1936-1952  string                    b"raw bytes\x00"
+1952-1953  punctuation               ;
+1958-1961  keyword                   let
+1967-1968  operator                  =
+1969-1979  string                    r"C:\temp"
+1979-1980  punctuation               ;
+1985-1988  keyword                   let
+1995-1996  operator                  =
+1997-2008  char                      '\u{1F600}'
+2008-2009  punctuation               ;
+2014-2017  keyword                   let
+2026-2027  operator                  =
+2028-2032  char                      '\n'
+2032-2033  punctuation               ;
+2039-2042  keyword                   let
+2048-2049  punctuation               :
+2050-2055  builtin                   usize
+2056-2057  operator                  =
+2058-2059  punctuation               (
+2059-2060  number                    0
+2060-2062  operator                  ..
+2062-2073  constant                  MAX_RETRIES
+2074-2076  keyword                   as
+2077-2082  builtin                   usize
+2082-2084  punctuation               ).
+2084-2087  function                  map
+2087-2088  punctuation               (
+2088-2089  operator                  |
+2090-2091  operator                  |
+2094-2095  operator                  *
+2096-2097  number                    2
+2097-2099  punctuation               ).
+2099-2102  function                  sum
+2102-2105  punctuation               ();
+2110-2113  keyword                   let
+2121-2122  operator                  =
+2123-2127  string                    "17"
+2127-2128  punctuation               .
+2128-2133  function                  parse
+2133-2135  punctuation               ::
+2135-2136  operator                  <
+2136-2139  builtin                   u32
+2139-2140  operator                  >
+2140-2143  punctuation               ().
+2143-2152  function                  unwrap_or
+2152-2153  punctuation               (
+2153-2154  number                    0
+2154-2156  punctuation               );
+2161-2164  keyword                   let
+2173-2174  operator                  =
+2175-2179  boolean                   true
+2179-2180  punctuation               ;
+2185-2188  keyword                   let
+2194-2195  punctuation               :
+2196-2200  builtin                   bool
+2201-2202  operator                  =
+2203-2204  operator                  !
+2212-2214  operator                  &&
+2215-2220  boolean                   false
+2220-2221  punctuation               ;
+2227-2233  lifetime                  'outer
+2233-2234  punctuation               :
+2235-2238  special_keyword           for
+2239-2240  punctuation               (
+2243-2244  punctuation               ,
+2250-2251  punctuation               )
+2252-2254  keyword                   in
+2255-2257  punctuation               [(
+2257-2260  string                    "a"
+2260-2261  punctuation               ,
+2262-2263  number                    1
+2263-2265  punctuation               ),
+2266-2267  punctuation               (
+2267-2270  string                    "b"
+2270-2271  punctuation               ,
+2272-2273  number                    2
+2273-2275  punctuation               )]
+2276-2277  punctuation               {
+2286-2288  special_keyword           if
+2295-2296  operator                  >
+2297-2298  number                    1
+2299-2301  operator                  &&
+2302-2303  operator                  !
+2306-2307  punctuation               .
+2307-2315  function                  is_empty
+2315-2317  punctuation               ()
+2318-2319  punctuation               {
+2332-2340  macro                     println!
+2340-2341  punctuation               (
+2341-2391  string                    "{key} -> {value}, total={total}, parsed={parsed}"
+2391-2393  punctuation               );
+2406-2411  special_keyword           break
+2412-2418  lifetime                  'outer
+2418-2419  punctuation               ;
+2428-2429  punctuation               }
+2434-2435  punctuation               }
+2441-2451  macro                     assert_ne!
+2451-2452  punctuation               (
+2452-2458  macro                     count!
+2458-2459  punctuation               (
+2459-2460  number                    1
+2460-2461  punctuation               ,
+2462-2463  number                    2
+2463-2464  punctuation               ,
+2465-2466  number                    3
+2466-2468  punctuation               ),
+2469-2470  number                    0
+2470-2472  punctuation               );
+2477-2480  keyword                   let
+2483-2484  operator                  =
+2485-2486  punctuation               (
+2493-2494  punctuation               ,
+2500-2501  punctuation               ,
+2506-2507  punctuation               ,
+2513-2514  punctuation               ,
+2522-2523  punctuation               ,
+2529-2530  punctuation               ,
+2531-2539  function                  classify
+2539-2540  punctuation               (
+2540-2544  char                      b'x'
+2544-2546  punctuation               ),
+2547-2555  constant                  GREETING
+2555-2557  punctuation               );
+2563-2569  keyword                   unsafe
+2570-2571  punctuation               {
+2580-2583  keyword                   let
+2587-2588  punctuation               :
+2589-2590  operator                  *
+2590-2595  keyword                   const
+2596-2599  builtin                   u64
+2600-2601  operator                  =
+2602-2603  operator                  &
+2611-2612  punctuation               .
+2616-2617  punctuation               ;
+2626-2639  macro                     debug_assert!
+2639-2640  punctuation               (
+2640-2641  operator                  !
+2644-2645  punctuation               .
+2645-2652  function                  is_null
+2652-2656  punctuation               ());
+2661-2662  punctuation               }
+2663-2664  punctuation               }

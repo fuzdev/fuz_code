@@ -2,7 +2,7 @@ import type {SampleLang} from '$lib/code_sample.ts';
 
 // the color classes are applied dynamically (`{lang_colors[lang]}`), so hint
 // them for static extraction
-// @fuz-classes color_a color_b color_c color_d color_e color_f color_h
+// @fuz-classes color_a color_b color_c color_d color_e color_f color_g color_h
 
 /**
  * A `color_*` utility class per demo language, chosen to evoke each language's
@@ -12,6 +12,7 @@ export const lang_colors: Record<SampleLang, string> = {
 	json: 'color_e', // gold
 	css: 'color_d', // purple
 	ts: 'color_a', // blue
+	rs: 'color_g', // pink (rust's orange and brown are taken)
 	html: 'color_c', // red
 	svelte: 'color_h', // orange
 	md: 'color_f', // brown

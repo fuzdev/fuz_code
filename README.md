@@ -17,7 +17,7 @@ Highlights:
 - a minimal, explicit API to generate stylized HTML — `stylize(code, lang)`
 - stateless ES modules, instead of globals with side effects
 - written in TypeScript, with no runtime dependencies
-- eight built-in languages (see below), extensible by writing a lexer
+- nine built-in languages (see below), extensible by writing a lexer
 
 Two optional integrations:
 
@@ -112,6 +112,7 @@ Registered by default in `syntax_styler_global` — one hand-written lexer each:
 - [`css`](src/lib/lexer_css.ts)
 - [`json`](src/lib/lexer_json.ts) (with comments — jsonc)
 - [`sh`](src/lib/lexer_bash.ts) (POSIX/bash family — also serves `bash`/`shell`)
+- [`rust`](src/lib/lexer_rust.ts) (also serves `rs`)
 
 Add a language by writing a `SyntaxLang` lexer and registering it with
 `add_lang` — see the existing `lexer_*.ts` modules.

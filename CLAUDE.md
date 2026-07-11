@@ -44,7 +44,7 @@ fuz_code is a **syntax highlighting library**:
 
 - Runtime HTML generation with CSS classes
 - Hand-written single-pass lexers (zero regex), one per language
-- 8 built-in languages (TS, JS, CSS, HTML, JSON, Svelte, Markdown, Bash)
+- 9 built-in languages (TS, JS, CSS, HTML, JSON, Svelte, Markdown, Bash, Rust)
 - Extensible by writing a lexer (`SyntaxLang`)
 - Optional Svelte component (`Code.svelte`)
 
@@ -141,6 +141,10 @@ One `SyntaxLang` lexer per language, registered via `add_lang`:
   info matching and any-length closers, headings, blockquotes, lists, hr)
   with a per-block inline scan (emphasis, inline code, links, entities, raw
   markup via the markup scanner); fences embed their languages
+- `lexer_rust.ts` - Rust, registered as `rust` with `rs` as an alias: one
+  flat scan loop (nested block comments, raw strings, and attributes resolve
+  with counters — no frame machine), lifetime-vs-char `'` disambiguation,
+  `name!` macros, doc-vs-plain comment split, the r/b/c string prefixes
 
 Embedded languages resolve lazily by name through the registry (markdown
 fences → any language, markup `<script>`/`<style>`/`style=`/`on*=`, svelte
@@ -174,7 +178,7 @@ can't overflow the call stack; past the cap a region stays plain text.
 
 ## Supported languages
 
-`ts`, `js`, `css`, `html`, `json`, `svelte`, `md`, `sh`
+`ts`, `js`, `css`, `html`, `json`, `svelte`, `md`, `sh`, `rust`/`rs`
 
 ## Testing
 
@@ -296,7 +300,7 @@ Theme uses CSS variables from fuz_css:
 3. **Progress discipline** - every scan loop advances position or emits+advances
 4. **Nesting discipline** - no JS-call-stack recursion that scales with input
    nesting. Flat single-pass loops wherever the grammar allows (css, markup,
-   svelte, json, and md need no stacks at all); an explicit pooled frame
+   svelte, json, md, and rust need no stacks at all); an explicit pooled frame
    machine only where a construct's interior re-enters the same grammar
    (`lexer_ts.ts` templates/generics/annotations, `lexer_bash.ts`
    substitutions — use these as the template, including their inline fast
