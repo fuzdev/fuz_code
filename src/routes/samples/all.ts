@@ -333,11 +333,20 @@ export const complex_regex = /^(?:\\/\\*.*?\\*\\/|\\/\\/.*|[^/])+$/;
 
 {#each thing_keys as [k, { t, u }] (f(k))}
 	{@const v = Math.round(t[k + f(u)])}
+	{const doubled = v * 2}
+	{let label = \`\${k}: \${doubled}\`}
 	{f(v)}
+	{label}
 {/each}
 
 {#if f(c)}
-	<Thing string_prop="a {f('s')} b" number_prop={f(1)} />
+	<Thing
+		string_prop="a {f('s')} b"
+		// interpolated string prop
+		/* number prop is
+			computed at runtime */
+		number_prop={f(1)}
+	/>
 {:else if f(a > 0)}
 	bigger
 {:else}
@@ -349,7 +358,7 @@ export const complex_regex = /^(?:\\/\\*.*?\\*\\/|\\/\\/.*|[^/])+$/;
 <!-- eslint-disable-next-line svelte/no-at-html-tags -->
 {@html '<strong>raw html</strong>'}
 
-<input bind:value type="text" class:active={c} />
+<input bind:value type="text" /* two-way bound */ class:active={c} />
 
 <span {@attach attachment('param', f(42))}>...</span>
 

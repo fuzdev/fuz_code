@@ -15,12 +15,14 @@ import {lex_markup_window, type MarkupLexMode} from './lexer_markup.ts';
  * in svelte mode plus the `{…}` expression lexer.
  *
  * Emits markup's tag/attr/comment/entity structure (no `special_attr` —
- * svelte handles `style=`/`on*=` as ordinary attributes), `script`+`lang_ts`
+ * svelte handles `style=`/`on*=` as ordinary attributes; js-style line and
+ * block comments between attributes emit `comment` leaves), `script`+`lang_ts`
  * and `style`+`lang_css` regions (svelte scripts are always TypeScript), and
  * `svelte_expression` containers whose forms nest a same-span `block`
- * (`{#if}`/`{:else if}`/`{/each}`/…), `each` (`{#each list as item}`), or
- * `at_directive` (`{@render}`/`{@const}`/…) container with `special_keyword`/
- * `at_keyword`/`keyword` leaves and `lang_ts` interiors.
+ * (`{#if}`/`{:else if}`/`{/each}`/…), `each` (`{#each list as item}`),
+ * `at_directive` (`{@render}`/`{@const}`/…), or `declaration_tag`
+ * (`{const …}`/`{let …}`) container with `special_keyword`/`at_keyword`/
+ * `keyword` leaves and `lang_ts` interiors.
  *
  * Notable behavior: expression braces balance to any depth and skip
  * strings/templates/comments (`{'}'}` works); expression-valued attributes
@@ -38,6 +40,7 @@ import {lex_markup_window, type MarkupLexMode} from './lexer_markup.ts';
 
 const T_SVELTE_EXPRESSION = token_type('svelte_expression');
 const T_AT_DIRECTIVE = token_type('at_directive');
+const T_DECLARATION_TAG = token_type('declaration_tag');
 const T_BLOCK = token_type('block');
 const T_EACH = token_type('each');
 const T_AT_KEYWORD = token_type('at_keyword');
@@ -106,9 +109,20 @@ const find_top_level_word = (text: string, from: number, to: number, word: strin
 };
 
 /**
+ * Length of a `const`/`let` declaration-tag keyword at `i` (with an identifier
+ * boundary after it), or 0 — the `{const …}`/`{let …}` recognizer. These are
+ * sigil-less declaration tags, the modern replacement for `{@const …}`.
+ */
+const declaration_keyword_len = (text: string, i: number, end: number): number => {
+	if (i + 5 <= end && text.startsWith('const', i) && !is_ident(text.charCodeAt(i + 5))) return 5;
+	if (i + 3 <= end && text.startsWith('let', i) && !is_ident(text.charCodeAt(i + 3))) return 3;
+	return 0;
+};
+
+/**
  * Lexes a `{…}` expression at `from`, returning the position after it.
- * `full` enables the block/each forms (top level); tag and attribute
- * contexts pass false (at-directives like `{@attach …}` work in both).
+ * `full` enables the block/each and declaration-tag forms (top level); tag and
+ * attribute contexts pass false (at-directives like `{@attach …}` work in both).
  */
 const lex_svelte_expression = (l: Lexer, from: number, end: number, full: boolean): number => {
 	const {text} = l;
@@ -119,6 +133,9 @@ const lex_svelte_expression = (l: Lexer, from: number, end: number, full: boolea
 
 	l.open(T_SVELTE_EXPRESSION, from);
 	const sigil = from + 1 < end ? text.charCodeAt(from + 1) : 0;
+	// `{const …}`/`{let …}` — only at top level; never collides with the
+	// `@`/`#`/`:`/`/` sigil forms since those first chars can't spell a keyword
+	const decl_len = full ? declaration_keyword_len(text, from + 1, inner_end) : 0;
 	if (sigil === 64 && is_ident(text.charCodeAt(from + 2))) {
 		// {@word …}
 		let word_end = from + 2;
@@ -178,6 +195,15 @@ const lex_svelte_expression = (l: Lexer, from: number, end: number, full: boolea
 			if (closed) l.leaf(T_PUNCTUATION, close, expr_end);
 			l.close(expr_end);
 		}
+	} else if (decl_len !== 0) {
+		// {const …} / {let …} — the keyword leads, the rest is a ts interior
+		const kw_end = from + 1 + decl_len;
+		l.open(T_DECLARATION_TAG, from);
+		l.leaf(T_PUNCTUATION, from, from + 1);
+		l.leaf(T_KEYWORD, from + 1, kw_end);
+		lex_ts_interior(l, kw_end, inner_end);
+		if (closed) l.leaf(T_PUNCTUATION, close, expr_end);
+		l.close(expr_end);
 	} else {
 		lex_svelte_expression_plain(l, from, inner_end, close, expr_end, closed);
 	}
@@ -203,6 +229,7 @@ const SVELTE_MODE: MarkupLexMode = {
 	script_container: T_LANG_TS,
 	rcdata: false,
 	special_attrs: false,
+	attr_comments: true,
 	lex_expression: lex_svelte_expression,
 };
 

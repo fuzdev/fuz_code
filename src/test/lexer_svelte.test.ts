@@ -164,6 +164,89 @@ describe('lexer_svelte at-directives', () => {
 	});
 });
 
+describe('lexer_svelte declaration tags', () => {
+	test('`{const …}` and `{let …}` wrap a declaration_tag with a keyword lead', () => {
+		assert.deepEqual(tokens_of('{const area = w * h}').slice(0, 5), [
+			['svelte_expression', '{const area = w * h}'],
+			['declaration_tag', '{const area = w * h}'],
+			['punctuation', '{'],
+			['keyword', 'const'],
+			['lang_ts', 'area = w * h'],
+		]);
+		assert.deepEqual(picked('{let name = user.name}', ['declaration_tag', 'keyword']), [
+			['declaration_tag', '{let name = user.name}'],
+			['keyword', 'let'],
+		]);
+	});
+
+	test('a `const`/`let`-prefixed identifier is not a declaration tag', () => {
+		assert.deepEqual(picked('{const_value + 1}', ['declaration_tag']), []);
+		assert.deepEqual(tokens_of('{const_value + 1}')[0], ['svelte_expression', '{const_value + 1}']);
+	});
+
+	test('declaration tags are top-level only, not in attribute position', () => {
+		// `full` is false in tag/attribute context — the leading `const` stays a
+		// plain ts keyword with no declaration_tag container
+		assert.deepEqual(picked('<a b={const x}>', ['declaration_tag']), []);
+		assert.deepEqual(picked('<a b={const x}>', ['keyword']), [['keyword', 'const']]);
+	});
+
+	test('an unterminated declaration tag stays valid', () => {
+		const text = '{const x =';
+		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'svelte')), []);
+		assert.deepEqual(picked(text, ['declaration_tag', 'keyword']), [
+			['declaration_tag', '{const x ='],
+			['keyword', 'const'],
+		]);
+	});
+
+	test('the legacy `{@const}` stays an at_directive, not a declaration tag', () => {
+		assert.deepEqual(picked('{@const x = 1}', ['at_directive', 'declaration_tag', 'at_keyword']), [
+			['at_directive', '{@const x = 1}'],
+			['at_keyword', '@const'],
+		]);
+	});
+});
+
+describe('lexer_svelte attribute comments', () => {
+	test('line and block comments between attributes emit comment leaves', () => {
+		assert.deepEqual(picked('<div a="1" // note\n\t/* block */ b="2">', ['comment', 'attr_name']), [
+			['attr_name', 'a'],
+			['comment', '// note'],
+			['comment', '/* block */'],
+			['attr_name', 'b'],
+		]);
+	});
+
+	test('multiple inline block comments, and an unterminated one extends to the end', () => {
+		assert.deepEqual(picked('<span /* a */ /* b */ x>', ['comment']), [
+			['comment', '/* a */'],
+			['comment', '/* b */'],
+		]);
+		const text = '<div /* open';
+		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'svelte')), []);
+		assert.deepEqual(picked(text, ['comment']), [['comment', '/* open']]);
+	});
+
+	test('a line comment runs to the newline, swallowing a same-line `>`', () => {
+		// js line-comment semantics — the tag closes on the next line
+		assert.deepEqual(picked('<div // c >\n>', ['comment', 'punctuation']), [
+			['punctuation', '<'],
+			['comment', '// c >'],
+			['punctuation', '>'],
+		]);
+	});
+
+	test('a block comment is opaque — an inner `>` does not close the tag', () => {
+		const text = '<div /* a > b */ c="1">';
+		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'svelte')), []);
+		assert.deepEqual(picked(text, ['comment', 'attr_name']), [
+			['comment', '/* a > b */'],
+			['attr_name', 'c'],
+		]);
+	});
+});
+
 describe('lexer_svelte tags', () => {
 	test('an expression-valued attribute', () => {
 		assert.deepEqual(tokens_of('<a b={x}>').slice(3, 9), [
@@ -293,7 +376,15 @@ describe('lexer_svelte sample', () => {
 		const types = new Set(
 			syntax_events_to_tokens(syntax_styler_global.lex(content, 'svelte')).map((t) => t.type),
 		);
-		for (const t of ['tag', 'svelte_expression', 'lang_ts', 'attr_name', 'block', 'at_directive']) {
+		for (const t of [
+			'tag',
+			'svelte_expression',
+			'lang_ts',
+			'attr_name',
+			'block',
+			'at_directive',
+			'declaration_tag',
+		]) {
 			assert.ok(types.has(t), `expected a ${t} token in the sample`);
 		}
 	});

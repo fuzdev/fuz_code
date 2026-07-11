@@ -132,8 +132,9 @@ One `SyntaxLang` lexer per language, registered via `add_lang`:
   (`xml`/`ssml`/`atom`/`rss`: plain tag scanning), one shared scanner
   parameterized by `MarkupLexMode`
 - `lexer_svelte.ts` - Svelte: the markup scanner in svelte mode (script→ts,
-  no special attrs) plus the `{…}` expression lexer (blocks, each/await
-  splits, at-directives, directive modifiers)
+  no special attrs, js-style comments between attributes) plus the `{…}`
+  expression lexer (blocks, each/await splits, at-directives, directive
+  modifiers, `{const …}`/`{let …}` declaration tags)
 - `lexer_md.ts` - Markdown: line-oriented block scan (fences with exact-word
   info matching and any-length closers, headings, blockquotes, lists, hr)
   with a per-block inline scan (emphasis, inline code, links, entities, raw
