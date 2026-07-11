@@ -64,7 +64,7 @@
 	{:else}
 		<section>
 			<p>
-				Code samples in every supported language. Filter by language, and toggle the renderers:
+				Code samples in every supported language. Filter by language and toggle the renderers:
 				<DeclarationLink name="Code" /> (standard HTML with <code>.token_*</code> classes) and the
 				experimental <DeclarationLink name="CodeHighlight" /> (CSS Custom Highlight API, ranges). With
 				both on, each sample renders side by side.

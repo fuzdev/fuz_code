@@ -2,4 +2,4 @@
 '@fuzdev/fuz_code': minor
 ---
 
-refactor make `sh` the primary and `bash` the alias
+make `sh` the primary shell language id, with `bash` and `shell` as aliases

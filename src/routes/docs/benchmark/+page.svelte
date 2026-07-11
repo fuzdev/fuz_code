@@ -18,11 +18,11 @@
 	// Shiki's two engines (the conservative choice) — see `RESULTS_URL` for the
 	// full per-engine, per-size matrix
 	const speedups: Array<{lang: string; vs_prism: string; vs_shiki: string}> = [
-		{lang: 'ts', vs_prism: '~18× faster', vs_shiki: '~140× faster'},
-		{lang: 'css', vs_prism: '~8× faster', vs_shiki: '~90× faster'},
-		{lang: 'html', vs_prism: '~11× faster', vs_shiki: '~80× faster'},
-		{lang: 'json', vs_prism: '~17× faster', vs_shiki: '~95× faster'},
-		{lang: 'svelte', vs_prism: '~14× faster', vs_shiki: '~165× faster'},
+		{lang: 'ts', vs_prism: '~18×', vs_shiki: '~140×'},
+		{lang: 'css', vs_prism: '~8×', vs_shiki: '~90×'},
+		{lang: 'html', vs_prism: '~11×', vs_shiki: '~80×'},
+		{lang: 'json', vs_prism: '~17×', vs_shiki: '~95×'},
+		{lang: 'svelte', vs_prism: '~14×', vs_shiki: '~165×'},
 	];
 
 	// work time in ms (stylize + DOM commit) per language for each renderer, rounded
@@ -44,7 +44,7 @@
 <TomeContent {tome}>
 	<section>
 		<p>
-			fuz_code runs one hand-written single-pass lexer per language with zero regular expressions,
+			fuz_code runs one hand-written single-pass lexer per language without regular expressions,
 			emitting a flat token event stream that renders to HTML in one forward pass. There is no
 			grammar interpreter and no backtracking, so highlighting cost stays linear in the length of
 			the input, including partial or malformed source.
@@ -99,14 +99,12 @@
 	<TomeSection>
 		<TomeSectionHeader text="In the browser" />
 		<p>
-			The <a href={resolve('/benchmark')}>interactive benchmark ⚡</a> runs live in your browser to
-			get messy real-life results. It times fuz_code's two renderers — the standard HTML path (<DeclarationLink
-				name="Code"
-			/>) and the experimental CSS Custom Highlight API path (<DeclarationLink
-				name="CodeHighlight"
-			/>, ranges) — across every supported language, reporting mean, median, percentiles,
-			coefficient of variation, and throughput per run, with system-stability gating between
-			samples.
+			The <a href={resolve('/benchmark')}>interactive benchmark ⚡</a> runs in your browser,
+			measuring real DOM rendering rather than pure compute. It times fuz_code's two renderers — the
+			standard HTML path (<DeclarationLink name="Code" />) and the experimental CSS Custom Highlight
+			API path (<DeclarationLink name="CodeHighlight" />, ranges) — across every supported language,
+			reporting mean, median, percentiles, coefficient of variation, and throughput, with
+			system-stability gating between samples.
 		</p>
 		<p>
 			Set the iteration count, warmup runs, cooldown, and content multiplier, then run it on your
@@ -115,10 +113,9 @@
 			>) so the harness can settle the heap between samples.
 		</p>
 		<p>
-			A sample run, per language, of the work time — stylize plus DOM commit — for each renderer.
-			The default <DeclarationLink name="Code" /> path builds a <code>.token_*</code> span per
-			token; the experimental <DeclarationLink name="CodeHighlight" /> path skips that DOM, so it commits
-			less:
+			A sample run of work time — stylize plus DOM commit — per language for each renderer. The
+			default <DeclarationLink name="Code" /> path builds a <code>.token_*</code> span per token;
+			the experimental <DeclarationLink name="CodeHighlight" /> path skips that DOM, so it commits less:
 		</p>
 		<div class="perf-legend">
 			<span><span class="perf-swatch perf-html"></span> <code>Code</code> (html)</span>
@@ -168,17 +165,18 @@
 			</li>
 		</ul>
 		<p>
-			Both suites include a <code>pathological</code> group of adversarial inputs (deeply nested and degenerate
-			source) that pins the lexer's worst-case behavior to linear time; the same generators back the linearity
-			tests. The engine keeps no resumable state, so it re-lexes the whole document on every change rather
-			than tokenizing incrementally — whole-document lexing is already sub-frame at these speeds.
+			The internal suite includes a <code>pathological</code> group of adversarial inputs (deeply nested
+			and degenerate source) that pins the lexer's worst-case behavior to linear time; the same generators
+			back the linearity tests. The engine keeps no resumable state, so it re-lexes the whole document
+			on every change rather than tokenizing incrementally — whole-document lexing is already sub-frame
+			at these speeds.
 		</p>
 	</TomeSection>
 	<TomeSection>
 		<TomeSectionHeader text="Why it's fast" />
 		<ul>
 			<li>
-				Zero regular expressions — char-code scanning, native <code>indexOf</code>, keyword maps.
+				No regular expressions — char-code scanning, native <code>indexOf</code>, keyword maps.
 			</li>
 			<li>
 				One single-pass lexer per language emitting a flat <code>Int32Array</code> event stream, rendered
@@ -188,7 +186,7 @@
 				Linear-time by construction — every scan loop advances, so there is no catastrophic
 				backtracking on adversarial input.
 			</li>
-			<li>Zero runtime dependencies, so nothing heavier than the lexers ships to the browser.</li>
+			<li>No runtime dependencies — nothing heavier than the lexers ships to the browser.</li>
 		</ul>
 		<p>
 			The same entry points power all of it: <DeclarationLink name="syntax_styler_global" /> and the

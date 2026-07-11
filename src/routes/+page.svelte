@@ -27,9 +27,9 @@
 		</section>
 		<section>
 			<p>
-				fuz_code is a syntax highlighting library. It runs one hand-written lexer per language with
-				zero regular expressions, outputs HTML strings or Svelte components, and can compile static
-				content at build time. It originated as a fork of
+				fuz_code is a syntax highlighting library. It runs one hand-written lexer per language
+				without regular expressions, outputs HTML strings or Svelte components, and can compile
+				static content at build time. It originated as a fork of
 				<a href="https://github.com/PrismJS/prism">Prism</a>
 				by <a href="https://lea.verou.me/">Lea Verou</a>.
 			</p>

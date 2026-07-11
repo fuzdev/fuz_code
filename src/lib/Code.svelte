@@ -36,50 +36,37 @@
 			  }
 		) & {
 			/**
-			 * Language identifier (e.g., 'ts', 'css', 'html', 'json', 'svelte', 'md').
-			 *
-			 * **Purpose:**
-			 * - Selects the registered lexer used to highlight `content`
-			 * - Sets the `data-lang` attribute and determines `language_supported`
-			 *
-			 * **Special values:**
-			 * - `null` - Explicitly disables syntax highlighting (content rendered as plain text)
-			 * - `undefined` - Falls back to default ('svelte')
+			 * Language identifier (e.g. 'ts', 'css', 'html', 'json', 'svelte', 'md').
+			 * Selects the registered lexer and sets the `data-lang` attribute. `null`
+			 * disables highlighting (content renders as plain text); `undefined`
+			 * falls back to the default ('svelte').
 			 *
 			 * @default 'svelte'
 			 */
 			lang?: string | null;
 			/**
-			 * Whether to render as inline code or block code.
-			 * Controls display via CSS classes.
+			 * Whether to render as inline code instead of a block.
 			 *
 			 * @default false
 			 */
 			inline?: boolean;
 			/**
-			 * Whether to wrap long lines in block code.
-			 * Sets `white-space: pre-wrap` instead of `white-space: pre`.
-			 *
-			 * **Behavior:**
-			 * - Wraps at whitespace (spaces, newlines)
-			 * - Long tokens without spaces (URLs, hashes) will still scroll horizontally
-			 * - Default `false` provides traditional code block behavior
-			 *
-			 * Only affects block code (ignored for inline mode).
+			 * Whether to wrap long lines in block code (`white-space: pre-wrap`
+			 * instead of `pre`). Wraps at whitespace — long unbroken tokens (URLs,
+			 * hashes) still scroll horizontally. Ignored for inline code.
 			 *
 			 * @default false
 			 */
 			wrap?: boolean;
 			/**
-			 * Whether to disable the default margin-bottom on block code.
-			 * Block code has `margin-bottom: var(--space_lg)` by default when not `:last-child`.
+			 * Whether to disable the default margin-bottom on block code
+			 * (`var(--space_lg)` when not `:last-child`).
 			 *
 			 * @default false
 			 */
 			nomargin?: boolean;
 			/**
-			 * Custom `SyntaxStyler` instance to use for highlighting.
-			 * Allows using a different styler with custom languages or configuration.
+			 * Custom `SyntaxStyler` instance, e.g. with different languages registered.
 			 *
 			 * @default syntax_styler_global
 			 */

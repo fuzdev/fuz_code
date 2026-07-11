@@ -110,9 +110,8 @@ Deterministic DOM-cost proxies (not timed): spans rendered and utf8 HTML bytes p
 
 ## Browser Benchmark Results
 
-html 50.01ms avg time 40 ops/sec 2.6% CV
-
-ranges 7.25ms avg time 222 ops/sec 7.2% CV +590.2% vs baseline
+- html: 50.01ms avg, 40 ops/sec, 2.6% CV
+- ranges: 7.25ms avg, 222 ops/sec, 7.2% CV (+590.2% vs baseline)
 
 | Language | Implementation | Mean (ms) | Paint (ms) | Median (ms) | Std Dev | CV    | P75 (ms) | P90 (ms) | P95 (ms) | P99 (ms) | Ops/sec | Outliers | Failed | Stability |
 | -------- | -------------- | --------- | ---------- | ----------- | ------- | ----- | -------- | -------- | -------- | -------- | ------- | -------- | ------ | --------- |
@@ -131,8 +130,11 @@ ranges 7.25ms avg time 222 ops/sec 7.2% CV +590.2% vs baseline
 | sh       | html           | 48.70     | 53.70      | 48.70       | 0.37    | 0.8%  | 48.90    | 49.08    | 49.14    | 49.19    | 21      | 0/5      | 0      | 100%      |
 | sh       | ranges         | 8.16      | 32.54      | 8.20        | 0.05    | 0.7%  | 8.20     | 8.20     | 8.20     | 8.20     | 123     | 0/5      | 0      | 100%      |
 
-Legend Paint (ms): paint-settle time after commit, tracked separately from
-work time CV: Coefficient of Variation (std_dev/mean) - lower is better, <15%
-is good P75/P90/P95/P99: Percentiles - X% of measurements were faster than
-this Ops/sec: Operations per second (throughput) Stability: Percentage of
-iterations with stable system metrics
+Legend:
+
+- Mean/Median/percentiles: work time — stylize + DOM commit + layout
+- Paint (ms): paint-settle time after commit, tracked separately from work time
+- CV: Coefficient of Variation (std_dev/mean) — lower is better, <15% is good
+- P75/P90/P95/P99: percentiles — X% of measurements were faster than this
+- Ops/sec: operations per second (throughput)
+- Stability: percentage of iterations with stable system metrics

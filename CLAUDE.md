@@ -5,7 +5,7 @@
 fuz_code (`@fuzdev/fuz_code`) is a runtime syntax highlighting library optimized
 for HTML generation with CSS classes. It originated as a PrismJS fork, but the
 tokenizer is a full rewrite — one hand-written single-pass lexer per language
-emitting a flat token event stream, with zero regular expressions.
+emitting a flat token event stream, without regular expressions.
 
 For coding conventions, see Skill(fuz-stack).
 
@@ -72,7 +72,9 @@ src/
 │   ├── lexer_*.ts              # hand-written lexers (json, ts, css, bash, markup, svelte, md)
 │   ├── Code.svelte             # main Svelte component
 │   ├── CodeHighlight.svelte    # experimental CSS Highlight API
+│   ├── CodeTextarea.svelte     # experimental live-highlighted textarea
 │   ├── highlight_manager.ts    # CSS Highlight API manager
+│   ├── range_highlighting.svelte.ts # shared range-highlighting helper
 │   ├── highlight_priorities.ts # generated token priorities
 │   ├── theme.css               # token CSS classes
 │   ├── theme_variables.css     # CSS variable fallbacks
@@ -88,9 +90,9 @@ src/
 │       ├── check.test.ts       # fixture validation
 │       └── update.task.ts      # fixture regeneration task
 └── routes/                     # demo/docs site
-    ├── samples/                # language samples showcase
+    ├── samples/                # shared sample data (all.gen.ts)
     ├── benchmark/              # interactive benchmark UI
-    └── docs/                   # API documentation
+    └── docs/                   # tomes: usage, samples, textarea, benchmark, api
 ```
 
 ### Core system
@@ -162,11 +164,13 @@ can't overflow the call stack; past the cap a region stays plain text.
 
 **Code.svelte props:**
 
-- `content` (required) - source code to highlight
-- `lang` - language identifier (default: 'svelte')
+- `content` - source code to highlight (or pass `dangerous_raw_html` from the
+  preprocessor instead)
+- `lang` - language identifier (default: 'svelte'; `null` disables highlighting)
 - `inline` - boolean for inline vs block
 - `wrap` - boolean for text wrapping
 - `nomargin` - boolean for margin control
+- `syntax_styler` - custom `SyntaxStyler` (default: `syntax_styler_global`)
 
 ## Supported languages
 
@@ -214,23 +218,14 @@ engines).
 ### Updating committed result snapshots
 
 `benchmark/compare/results.md` is linked from `README.md` as evidence for
-the "vastly faster than Shiki" claim — it's load-bearing for the public
-narrative, not just incidental output. `benchmark/results.md` is referenced
+the "about two orders of magnitude faster" claim vs Shiki — it's load-bearing
+for the public narrative, not just incidental output. `benchmark/results.md` is referenced
 locally as a perf baseline. `benchmark/baseline.json` is the machine-readable
 counterpart used by `benchmark_baseline_compare` for regression detection.
 It's **gitignored** (per the fuz_util/fuz_ui convention) — perf numbers
 vary across machines, so the baseline is a per-developer local tracker,
 re-seeded on each machine that runs benchmarks. PR review still relies on
 the committed `results.md`.
-
-Workflow:
-
-```bash
-npm run benchmark             # check current perf against your local baseline
-npm run benchmark:save        # accept the change: rewrites results.md + baseline.json
-npm run benchmark:clean       # nuke the local baseline (re-seed on next --save)
-npm run benchmark:vs:write    # full overwrite of benchmark/compare/results.md
-```
 
 `--save` is a single switch by design — accepting a perf change should
 update both the doc artifact and the local regression baseline atomically,
@@ -269,6 +264,7 @@ If the baseline schema version in `@fuzdev/fuz_util` advances, a stale
 highlighting. Limited browser support - use `Code.svelte` for production.
 
 - `mode` prop: 'auto', 'ranges', or 'html'
+- `CodeTextarea.svelte` - editable `<textarea>` with live range highlighting
 - `HighlightManager` class manages highlights per element
 - `theme_highlight.css` provides both `.token_*` classes and `::highlight()`
   pseudo-elements
@@ -335,8 +331,8 @@ New languages are written as lexers:
 
 ## Demo pages
 
-- `/samples` - code samples in all supported languages
-- `/benchmark` - interactive performance testing
+- `/docs` - tomes: usage, samples, textarea, benchmark, api
+- `/benchmark` - interactive browser benchmark (work vs paint timing)
 
 ## Project standards
 

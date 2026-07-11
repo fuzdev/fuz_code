@@ -22,14 +22,9 @@
 <TomeContent {tome}>
 	<section>
 		<p>
-			The
-			<DeclarationLink name="Code" />
-			Svelte component supports syntax styling with hand-written per-language lexers. fuz_code originated
-			as a fork of
-			<a href="https://github.com/PrismJS/prism">Prism</a> (<a href="https://prismjs.com/"
-				>prismjs.com</a
-			>) by
-			<a href="https://lea.verou.me/">Lea Verou</a>.
+			fuz_code highlights code with one hand-written lexer per language, generating HTML with
+			<code>.token_*</code> classes that a theme styles. The <DeclarationLink name="Code" /> Svelte component
+			is the typical entry point.
 		</p>
 		<p>To use it, import the default theme or your own:</p>
 		<Code
@@ -49,7 +44,7 @@ import '@fuzdev/fuz_code/theme.css'; // add this"
 		<TomeSectionHeader text="Dependencies" />
 		<p>
 			By default fuz_code depends on <a href="https://css.fuz.dev">fuz_css</a> to provide
-			color-schema-aware color variables. If you're not using it, import
+			color-scheme-aware color variables. If you're not using it, import
 			<code>theme_variables.css</code> or bring your own:
 		</p>
 		<Code
@@ -99,7 +94,7 @@ export default {
 			<Code
 				content={'<' +
 					`script lang="ts">
-	import Card from '@fuz.dev/fuz-library/Card.svelte';
+	import Card from '@fuzdev/fuz_ui/Card.svelte';
 	console.log('hello Card', Card);
 </script>
 
@@ -131,7 +126,7 @@ export default {
 		</div>
 	</TomeSection>
 	<TomeSection>
-		<TomeSectionHeader text="Fallback to no styling" />
+		<TomeSectionHeader text="Disabling styling" />
 		<p>
 			Passing <code>lang={'{'}null}</code> disables syntax styling:
 		</p>
@@ -191,11 +186,9 @@ const html = styler.stylize('<div class="example">hello</div>', 'html');`}
 	<TomeSection>
 		<TomeSectionHeader text="Experimental highlighting API" />
 		<p>
-			The <DeclarationLink name="Code" /> component generates HTML with CSS classes for text highlighting.
-			fuz_code also includes experimental support for the CSS Custom Highlight API with
-			<DeclarationLink name="CodeHighlight" />, see the
-			<TomeLink slug="samples" />
-			for more.
+			fuz_code also has experimental support for the CSS Custom Highlight API with
+			<DeclarationLink name="CodeHighlight" /> — see the <TomeLink slug="samples" /> and
+			<TomeLink slug="textarea" />.
 		</p>
 	</TomeSection>
 </TomeContent>

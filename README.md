@@ -10,32 +10,33 @@
 `.token_*` CSS classes, and knows nothing about the DOM. It originated as a fork
 of [Prism](https://github.com/PrismJS/prism) ([prismjs.com](https://prismjs.com/)),
 but the tokenizer is now a full rewrite — one hand-written single-pass lexer per
-language emitting a flat token event stream, with zero regular expressions.
+language emitting a flat token event stream, without regular expressions.
 
 Highlights:
 
 - a minimal, explicit API to generate stylized HTML — `stylize(code, lang)`
 - stateless ES modules, instead of globals with side effects
-- written in TypeScript, with zero runtime dependencies
+- written in TypeScript, with no runtime dependencies
 - eight built-in languages (see below), extensible by writing a lexer
 
 Two optional integrations:
 
-- optional builtin [Svelte](https://svelte.dev/) support with a
+- builtin [Svelte](https://svelte.dev/) support with a
   [Svelte lexer](src/lib/lexer_svelte.ts) and a
-  [Svelte component](src/lib/Code.svelte) for convenient usage.
-- The [default theme](src/lib/theme.css) integrates
-  with my CSS library [fuz_css](https://github.com/fuzdev/fuz_css) for colors that adapt to the user's runtime `color-scheme` preference.
-  Non-fuz_css users should import [theme_variables.css](src/lib/theme_variables.css)
-  or otherwise define those variables.
+  [Svelte component](src/lib/Code.svelte)
+- the [default theme](src/lib/theme.css) integrates with
+  [fuz_css](https://github.com/fuzdev/fuz_css) for colors that adapt to the
+  user's runtime `color-scheme` preference — without fuz_css, import
+  [theme_variables.css](src/lib/theme_variables.css) or otherwise define those
+  variables
 
-Compared to [Shiki](https://github.com/shikijs/shiki), fuz_code is much lighter
-and [vastly faster](./benchmark/compare/results.md) for runtime usage: it runs
-hand-written single-pass lexers rather than the
+Compared to [Shiki](https://github.com/shikijs/shiki), fuz_code is smaller and
+[about two orders of magnitude faster](./benchmark/compare/results.md) for
+runtime usage: it runs hand-written single-pass lexers rather than the
 [Oniguruma regexp engine](https://shiki.matsu.io/guide/regex-engines) that
-TextMate grammars require, and has zero runtime dependencies instead of 38. Shiki
+TextMate grammars require, and has no runtime dependencies instead of 38. Shiki
 targets build-time use and supports far more languages and themes — pick the
-tool that fits; fuz_code is optimized for small, fast, runtime highlighting.
+tool that fits; fuz_code is optimized for small, fast runtime highlighting.
 
 ## Usage
 
@@ -73,8 +74,8 @@ With SvelteKit:
 import '@fuzdev/fuz_code/theme.css';
 ```
 
-The primary themes (currently just [one](src/lib/theme.css)) have a dependency
-on my CSS library [fuz_css](https://github.com/fuzdev/fuz_css)
+The primary themes (currently just [one](src/lib/theme.css)) depend on
+[fuz_css](https://github.com/fuzdev/fuz_css)
 for [color-scheme](https://css.fuz.dev/docs/themes) awareness.
 See the [fuz_css docs](https://css.fuz.dev/) for its usage.
 
@@ -97,7 +98,7 @@ import '@fuzdev/fuz_code/theme_variables.css';
 - [@fuzdev/fuz_code/Code.svelte](src/lib/Code.svelte) -
   Svelte component for syntax highlighting with HTML generation
 
-I encourage you to poke around [`src/lib`](src/lib) if you're interested in using fuz_code.
+See [`src/lib`](src/lib) for the full set of modules.
 
 ### Languages
 
@@ -126,7 +127,7 @@ Docs are a work in progress:
   (also see the [sample files](src/test/fixtures/samples/))
 - [tests](src/test/)
 
-Please open issues if you need any help.
+Issues and questions are welcome.
 
 ## Experimental highlight support
 
@@ -135,11 +136,10 @@ For browsers that support the
 fuz_code provides an experimental component that can use native browser highlighting
 as an alternative to HTML generation.
 
-This feature is experimental, browser support is limited,
-and there can be subtle differences because some CSS like bold/italics are not supported.
-(nor are font sizes and other layout-affecting styles, in case your theme uses those)
-The standard `Code.svelte` component
-using HTML generation is recommended for most use cases.
+Browser support is limited, and the API can't apply layout-affecting styles —
+bold, italics, font sizes — so themes that use them render differently.
+The standard [Code.svelte](src/lib/Code.svelte) component using HTML generation
+is recommended for most use cases.
 
 ```svelte
 <script lang="ts">
