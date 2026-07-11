@@ -96,6 +96,13 @@
 			<h3>Legend</h3>
 			<ul>
 				<li>
+					<strong>Mean / Median / percentiles</strong>: work time — stylize + DOM commit + layout,
+					the highlighter's compute cost
+				</li>
+				<li>
+					<strong>Paint</strong>: mean time until pixels settle (work plus ~1–2 animation frames)
+				</li>
+				<li>
 					<strong>CV</strong>: Coefficient of Variation (std_dev/mean) - lower is better, &lt;15% is
 					good
 				</li>

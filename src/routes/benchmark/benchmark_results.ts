@@ -36,6 +36,10 @@ export const RESULT_COLUMNS: Array<ResultColumn> = [
 		get_value: (r) => fmt(ns_to_ms(r.stats.core.mean_ns)),
 	},
 	{
+		header: 'Paint (ms)',
+		get_value: (r) => fmt(ns_to_ms(r.stats.paint.mean_ns)),
+	},
+	{
 		header: 'Median (ms)',
 		get_value: (r) => fmt(ns_to_ms(r.stats.core.p50_ns)),
 	},
