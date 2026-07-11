@@ -50,12 +50,13 @@
 			the input, including partial or malformed source.
 		</p>
 		<p>
-			It is optimized for <em>runtime</em> highlighting.
+			It is optimized for <em>runtime</em> highlighting, including streaming use cases.
 			<a href="https://github.com/shikijs/shiki">Shiki</a>
 			targets build-time use and runs the
 			<a href="https://shiki.matsu.io/guide/regex-engines">Oniguruma regexp engine</a> that TextMate grammars
 			require, trading runtime speed for grammar and theme coverage. fuz_code trades that coverage for
-			a small, fast runtime path.
+			a small, fast runtime path — it also provides tools for pre-compilation, and you can bring your
+			own lexers for languages it doesn't support.
 		</p>
 	</section>
 	<TomeSection>
