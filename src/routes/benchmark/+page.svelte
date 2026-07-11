@@ -1,4 +1,6 @@
 <script lang="ts">
+	import {resolve} from '$app/paths';
+
 	import {samples as all_samples} from '$routes/samples/all.ts';
 	import BenchmarkResults from './BenchmarkResults.svelte';
 	import BenchmarkHarness from './BenchmarkHarness.svelte';
@@ -83,6 +85,7 @@
 
 <div class="box width_atmost_lg mx_auto">
 	<h1 class="mt_xl5">benchmark</h1>
+	<p><a href={resolve('/docs/benchmark')}>← benchmark docs</a></p>
 	<p>
 		<code class="font-weight:400 font_size_sm">chromium --js-flags="--expose-gc"</code>
 	</p>

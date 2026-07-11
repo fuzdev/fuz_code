@@ -23,6 +23,19 @@
 		{lang: 'json', factor: '~11× faster'},
 		{lang: 'svelte', factor: '~10× faster'},
 	];
+
+	// work time (stylize + DOM commit) per language for each renderer, rounded from
+	// one interactive-benchmark run on a single machine — illustrative, not a spec;
+	// run the tool for numbers on your own hardware
+	const browser_results: Array<{lang: string; html: string; ranges: string}> = [
+		{lang: 'ts', html: '56 ms', ranges: '16 ms'},
+		{lang: 'css', html: '8 ms', ranges: '3 ms'},
+		{lang: 'html', html: '18 ms', ranges: '5 ms'},
+		{lang: 'json', html: '8 ms', ranges: '2 ms'},
+		{lang: 'svelte', html: '63 ms', ranges: '16 ms'},
+		{lang: 'md', html: '43 ms', ranges: '14 ms'},
+		{lang: 'sh', html: '35 ms', ranges: '12 ms'},
+	];
 </script>
 
 <TomeContent {tome}>
@@ -31,7 +44,7 @@
 			fuz_code runs one hand-written single-pass lexer per language with zero regular expressions,
 			emitting a flat token event stream that renders to HTML in one forward pass. There is no
 			grammar interpreter and no backtracking, so highlighting cost stays linear in the length of
-			the input — mid-keystroke or malformed source included.
+			the input, including partial or malformed source.
 		</p>
 		<p>
 			It is optimized for <em>runtime</em> highlighting.
@@ -94,6 +107,38 @@
 			own hardware. For the steadiest numbers, launch Chromium with garbage collection exposed (<code
 				>chromium --js-flags="--expose-gc"</code
 			>) so the harness can settle the heap between samples.
+		</p>
+		<p>
+			A sample run, per language, of the work time — stylize plus DOM commit — for each renderer.
+			The default <DeclarationLink name="Code" /> path builds a <code>.token_*</code> span per
+			token; the experimental <DeclarationLink name="CodeHighlight" /> path skips that DOM, so it commits
+			less:
+		</p>
+		<div class="overflow-x:auto">
+			<table>
+				<thead>
+					<tr>
+						<th>language</th>
+						<th><code>Code</code> (html)</th>
+						<th><code>CodeHighlight</code> (ranges)</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each browser_results as { lang, html, ranges } (lang)}
+						<tr>
+							<td><code>{lang}</code></td>
+							<td>{html}</td>
+							<td>{ranges}</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+		<p>
+			<small
+				>One run on a single machine, complex samples at the tool's default size — illustrative, not
+				a spec. The live tool also reports paint-settle time, percentiles, and throughput.</small
+			>
 		</p>
 	</TomeSection>
 	<TomeSection>

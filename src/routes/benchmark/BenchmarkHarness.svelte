@@ -111,12 +111,32 @@
 </script>
 
 {#if current_component && current_props}
-	{#key iteration_key}
-		<BenchmarkInstance
-			BenchmarkedComponent={current_component}
-			props={current_props}
-			on_commit={handle_commit}
-			on_paint={handle_paint}
-		/>
-	{/key}
+	<!-- Render the measured content in a visible on-screen region so the browser
+	     actually rasterizes it each iteration. An off-screen render settles the
+	     paint promise on the rAF floor (~2 idle frames) without painting real
+	     pixels, which flattens the paint numbers. Fixed to the right edge, clipped
+	     to the viewport, and non-interactive so the running UI stays usable. -->
+	<div class="benchmark-stage" aria-hidden="true">
+		{#key iteration_key}
+			<BenchmarkInstance
+				BenchmarkedComponent={current_component}
+				props={current_props}
+				on_commit={handle_commit}
+				on_paint={handle_paint}
+			/>
+		{/key}
+	</div>
 {/if}
+
+<style>
+	.benchmark-stage {
+		position: fixed;
+		inset-block: 0;
+		right: 0;
+		width: min(50vw, 600px);
+		overflow: hidden;
+		pointer-events: none;
+		z-index: 100;
+		background-color: var(--fg_05);
+	}
+</style>

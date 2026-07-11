@@ -30,6 +30,13 @@
 		else shown_langs.add(lang);
 	};
 
+	// `all` flips the whole row between every language and none
+	const all_shown = $derived(shown_langs.size === sample_langs.length);
+	const toggle_all = (): void => {
+		if (all_shown) shown_langs.clear();
+		else for (const lang of sample_langs) shown_langs.add(lang);
+	};
+
 	// renderer toggles — HTML (`Code`) on by default, the experimental CSS
 	// Custom Highlight API (`CodeHighlight` ranges) off by default; with both
 	// on, each sample renders side by side
@@ -74,6 +81,14 @@
 						{lang}
 					</button>
 				{/each}
+				<button
+					type="button"
+					class="sm deselectable"
+					class:selected={all_shown}
+					onclick={toggle_all}
+				>
+					all
+				</button>
 			</div>
 
 			<div class="row gap_xs flex-wrap:wrap mb_lg">
