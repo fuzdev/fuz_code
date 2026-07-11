@@ -91,6 +91,14 @@ describe('lexer_markup tags', () => {
 		assert.deepEqual(tokens[0], ['tag', text]);
 		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'html')), []);
 	});
+
+	test('js-style comments in tags stay bogus attributes (svelte-only feature)', () => {
+		// `//` and `/* */` between attributes are comments in svelte, but in
+		// html/xml they are ordinary bogus attribute text
+		assert.deepEqual(picked('<div a="1" // x\n/* y */ b="2">', ['comment']), []);
+		assert.deepEqual(picked('<div // x>', ['attr_name']), [['attr_name', 'x']]);
+		assert.deepEqual(picked('<div /* y */ z>', ['comment'], 'xml'), []);
+	});
 });
 
 describe('lexer_markup entities', () => {
