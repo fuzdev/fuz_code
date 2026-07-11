@@ -8,10 +8,9 @@
 
 `fuz_code` is a runtime syntax highlighter: it turns source code into HTML with
 `.token_*` CSS classes, and knows nothing about the DOM. It originated as a fork
-of [Prism](https://github.com/PrismJS/prism) ([prismjs.com](https://prismjs.com/))
-and keeps its `.token_*` class vocabulary, but the tokenizer is now a full
-rewrite — one hand-written single-pass lexer per language emitting a flat token
-event stream, with zero regular expressions.
+of [Prism](https://github.com/PrismJS/prism) ([prismjs.com](https://prismjs.com/)),
+but the tokenizer is now a full rewrite — one hand-written single-pass lexer per
+language emitting a flat token event stream, with zero regular expressions.
 
 Highlights:
 
@@ -111,7 +110,7 @@ Registered by default in `syntax_styler_global` — one hand-written lexer each:
 - [`ts`](src/lib/lexer_ts.ts) (TypeScript — also serves `js`/`javascript`, a syntactic subset)
 - [`css`](src/lib/lexer_css.ts)
 - [`json`](src/lib/lexer_json.ts) (with comments — jsonc)
-- [`bash`](src/lib/lexer_bash.ts) (`sh`/`shell`)
+- [`sh`](src/lib/lexer_bash.ts) (POSIX/bash family — also serves `bash`/`shell`)
 
 Add a language by writing a `SyntaxLang` lexer and registering it with
 `add_lang` — see the existing `lexer_*.ts` modules.
@@ -123,7 +122,7 @@ Docs are a work in progress:
 - this readme has basic usage instructions
 - [CLAUDE.md](./CLAUDE.md) has more high-level docs including benchmarks
 - [code.fuz.dev](https://code.fuz.dev/) has usage examples with the Svelte component
-- [samples](https://code.fuz.dev/samples) on the website
+- [samples](https://code.fuz.dev/docs/samples) on the website
   (also see the [sample files](src/test/fixtures/samples/))
 - [tests](src/test/)
 
@@ -179,7 +178,6 @@ originally forked from [Prism](https://github.com/PrismJS/prism)
 with the Svelte support originally based on
 [`prism-svelte`](https://github.com/pngwn/prism-svelte) by
 [@pngwn](https://github.com/pngwn). The tokenizer has since been rewritten as
-hand-written lexers, but the `.token_*` class vocabulary and the fork's lineage
-remain.
+hand-written lexers, but the fork's lineage remains.
 
 [MIT](LICENSE)

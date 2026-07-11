@@ -195,7 +195,7 @@ export const PATHOLOGICAL_CASES: Array<PathologicalCase> = [
 	{
 		// command substitutions NESTING_DEPTH deep
 		name: 'bash_deep_command_sub',
-		lang: 'bash',
+		lang: 'sh',
 		generate: (size) =>
 			repeat_to_size(
 				'echo $('.repeat(NESTING_DEPTH) + 'ls' + ')'.repeat(NESTING_DEPTH) + '\n',
@@ -215,7 +215,7 @@ export const PATHOLOGICAL_CASES: Array<PathologicalCase> = [
 	{
 		// one command-substitution nest as deep as the input allows
 		name: 'bash_cmdsub_full_depth',
-		lang: 'bash',
+		lang: 'sh',
 		generate: (size: number): string => {
 			const depth = Math.max(1, Math.floor(size / 3));
 			return '$('.repeat(depth) + 'x' + ')'.repeat(depth);
@@ -227,7 +227,7 @@ export const PATHOLOGICAL_CASES: Array<PathologicalCase> = [
 		// delimiter must be discovered in the same forward pass (a per-heredoc
 		// close-prescan would be O(depth²), the bug this case guards against)
 		name: 'bash_heredoc_sub_full_depth',
-		lang: 'bash',
+		lang: 'sh',
 		generate: (size: number): string => {
 			const depth = Math.max(1, Math.floor(size / 12));
 			return '$(cat <<EOF\n'.repeat(depth) + 'x';
@@ -237,7 +237,7 @@ export const PATHOLOGICAL_CASES: Array<PathologicalCase> = [
 		// many sequential heredocs with expanded, substitution-bearing bodies —
 		// exercises the line-walk close scan and the suspend/resume drain at scale
 		name: 'bash_heredoc_dense',
-		lang: 'bash',
+		lang: 'sh',
 		generate: (size) => repeat_to_size('cat <<EOF\nx $y $(z)\nEOF\n', size),
 	},
 	{

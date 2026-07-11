@@ -3,10 +3,9 @@
 > Syntax highlighting - hand-written single-pass lexers
 
 fuz_code (`@fuzdev/fuz_code`) is a runtime syntax highlighting library optimized
-for HTML generation with CSS classes. It originated as a PrismJS fork and keeps
-its `.token_*` class vocabulary, but the tokenizer is a full rewrite — one
-hand-written single-pass lexer per language emitting a flat token event stream,
-with zero regular expressions.
+for HTML generation with CSS classes. It originated as a PrismJS fork, but the
+tokenizer is a full rewrite — one hand-written single-pass lexer per language
+emitting a flat token event stream, with zero regular expressions.
 
 For coding conventions, see Skill(fuz-stack).
 
@@ -125,8 +124,9 @@ One `SyntaxLang` lexer per language, registered via `add_lang`:
 - `lexer_ts.ts` - TypeScript; also registers the `js`/`javascript` aliases
   (TS is a syntactic superset — there is no separate JS lexer)
 - `lexer_css.ts` - CSS (including native nesting)
-- `lexer_bash.ts` - Bash; also registers the `sh`/`shell` aliases (POSIX sh
-  is a syntactic subset for highlighting — bash-family only, no fish etc.)
+- `lexer_bash.ts` - the bash-family shell lexer, registered as `sh` with
+  `bash`/`shell` as aliases (POSIX sh is a syntactic subset for highlighting —
+  bash-family only, no fish etc.)
 - `lexer_markup.ts` - HTML (`markup`/`html`/`mathml`/`svg`: rawtext
   script/style/textarea/title, `style=`/`on*=` attribute embedding) and XML
   (`xml`/`ssml`/`atom`/`rss`: plain tag scanning), one shared scanner
@@ -170,7 +170,7 @@ can't overflow the call stack; past the cap a region stays plain text.
 
 ## Supported languages
 
-`ts`, `js`, `css`, `html`, `json`, `svelte`, `md`, `bash`
+`ts`, `js`, `css`, `html`, `json`, `svelte`, `md`, `sh`
 
 ## Testing
 
