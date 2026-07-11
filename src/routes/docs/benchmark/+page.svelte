@@ -64,7 +64,7 @@
 			where you can bring your own lexers for languages it doesn't support.
 		</p>
 		<p>
-			For end-to-end <code>stylize</code> — lexing plus HTML generation, the realistic runtime path —
+			For end-to-end <code>stylize</code> calls turning a string of code into a string of stylized HTML,
 			fuz_code is about an order of magnitude faster than Prism and about two orders of magnitude faster
 			than Shiki:
 		</p>
