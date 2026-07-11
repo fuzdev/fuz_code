@@ -480,6 +480,8 @@ export const matches_ci = (text: string, from: number, word: string): boolean =>
 
 export const is_digit = (c: number): boolean => c >= 48 && c <= 57;
 
+export const is_upper = (c: number): boolean => c >= 65 && c <= 90;
+
 export const is_ascii_alnum = (c: number): boolean =>
 	(c >= 48 && c <= 57) || ((c | 0x20) >= 97 && (c | 0x20) <= 122);
 

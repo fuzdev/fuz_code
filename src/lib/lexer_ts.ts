@@ -4,6 +4,7 @@ import {
 	is_ident,
 	is_ident_start,
 	is_space,
+	is_upper,
 	scan_ident,
 	scan_to_line_end,
 	skip_quoted,
@@ -168,8 +169,6 @@ const create_ts_scan_cache = (): TsScanCache => ({
 	next_gt: -1,
 	next_rparen: -1,
 });
-
-const is_upper = (c: number): boolean => c >= 65 && c <= 90;
 
 /**
  * Scans a `'` or `"` string from `i`, returning the exclusive end.

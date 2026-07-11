@@ -247,4 +247,31 @@ export const PATHOLOGICAL_CASES: Array<PathologicalCase> = [
 		lang: 'md',
 		generate: (size) => repeat_to_size('```md\n', size),
 	},
+	{
+		// every `'` triggers the lifetime-vs-char ident scan
+		name: 'rust_lifetime_dense',
+		lang: 'rust',
+		generate: (size) => repeat_to_size("'a ", size),
+	},
+	{
+		// one attribute per few chars — each pays the balanced-bracket scan
+		name: 'rust_attr_dense',
+		lang: 'rust',
+		generate: (size) => repeat_to_size('#[a]', size),
+	},
+	{
+		// one block comment nested as deep as the input allows — the nesting
+		// depth counter must resolve it in a single forward pass
+		name: 'rust_comment_full_depth',
+		lang: 'rust',
+		generate: (size: number): string => '/*'.repeat(Math.max(1, Math.floor(size / 2))),
+	},
+	{
+		// a raw string dense in `"` that never carries enough hashes to close —
+		// each quote probe must advance rather than rescan
+		name: 'rust_raw_hash_dense',
+		lang: 'rust',
+		generate: (size: number): string =>
+			'r##"' + '"#'.repeat(Math.max(1, Math.floor((size - 7) / 2))) + '"##',
+	},
 ];

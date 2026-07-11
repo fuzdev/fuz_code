@@ -53,6 +53,7 @@ const T_LANG_JSON = token_type('lang_json');
 const T_LANG_SVELTE = token_type('lang_svelte');
 const T_LANG_BASH = token_type('lang_bash');
 const T_LANG_MD = token_type('lang_md');
+const T_LANG_RUST = token_type('lang_rust');
 const T_HEADING = token_type('heading');
 const T_HEADING_PUNCTUATION = token_type('punctuation', 'heading_punctuation');
 const T_BLOCKQUOTE = token_type('blockquote');
@@ -96,6 +97,7 @@ add_fence_lang('json', 'json', T_LANG_JSON);
 add_fence_lang('svelte', 'svelte', T_LANG_SVELTE);
 add_fence_lang('sh bash shell', 'sh', T_LANG_BASH);
 add_fence_lang('md markdown', 'md', T_LANG_MD);
+add_fence_lang('rust rs', 'rust', T_LANG_RUST);
 
 // line-internal whitespace — `is_space` from the toolkit includes newlines
 const is_line_space = (c: number): boolean => c === 32 || c === 9;
