@@ -61,7 +61,7 @@
 			reimplementation in JS). Shiki targets build-time use and works with TextMate grammars, trading
 			runtime speed for capability and compatibility with its large ecosystem of grammars and themes.
 			fuz_code trades that coverage for an efficient runtime path (and also provides tools for pre-compilation),
-			where you can bring your own lexers for languages it doesn't suppose.
+			where you can bring your own lexers for languages it doesn't support.
 		</p>
 		<p>
 			For end-to-end <code>stylize</code> — lexing plus HTML generation, the realistic runtime path —
