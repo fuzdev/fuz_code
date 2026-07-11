@@ -13,15 +13,16 @@
 
 	const RESULTS_URL = 'https://github.com/fuzdev/fuz_code/blob/main/benchmark/compare/results.md';
 
-	// representative end-to-end `stylize` speedups vs Shiki on larger inputs,
-	// rounded from the committed comparison results — see `RESULTS_URL` for the
+	// representative end-to-end `stylize` speedups on larger (100×) inputs, rounded
+	// from the committed comparison results and measured against the faster of
+	// Shiki's two engines (the conservative choice) — see `RESULTS_URL` for the
 	// full per-engine, per-size matrix
-	const shiki_speedups: Array<{lang: string; factor: string}> = [
-		{lang: 'ts', factor: '~10× faster'},
-		{lang: 'css', factor: '~13× faster'},
-		{lang: 'html', factor: '~7× faster'},
-		{lang: 'json', factor: '~11× faster'},
-		{lang: 'svelte', factor: '~10× faster'},
+	const speedups: Array<{lang: string; vs_prism: string; vs_shiki: string}> = [
+		{lang: 'ts', vs_prism: '~18× faster', vs_shiki: '~140× faster'},
+		{lang: 'css', vs_prism: '~8× faster', vs_shiki: '~90× faster'},
+		{lang: 'html', vs_prism: '~11× faster', vs_shiki: '~80× faster'},
+		{lang: 'json', vs_prism: '~17× faster', vs_shiki: '~95× faster'},
+		{lang: 'svelte', vs_prism: '~14× faster', vs_shiki: '~165× faster'},
 	];
 
 	// work time in ms (stylize + DOM commit) per language for each renderer, rounded
@@ -63,21 +64,24 @@
 			The cross-implementation benchmark measures fuz_code against
 			<a href="https://github.com/PrismJS/prism">Prism</a> and Shiki (both the JavaScript and
 			Oniguruma engines). For end-to-end <code>stylize</code> — lexing plus HTML generation, the realistic
-			runtime path — fuz_code lands roughly on par with Prism and vastly faster than Shiki:
+			runtime path — fuz_code runs roughly an order of magnitude faster than Prism and about two orders
+			of magnitude faster than Shiki:
 		</p>
 		<div class="overflow-x:auto">
 			<table>
 				<thead>
 					<tr>
 						<th>language</th>
+						<th>fuz_code vs Prism</th>
 						<th>fuz_code vs Shiki</th>
 					</tr>
 				</thead>
 				<tbody>
-					{#each shiki_speedups as { lang, factor } (lang)}
+					{#each speedups as { lang, vs_prism, vs_shiki } (lang)}
 						<tr>
 							<td><code>{lang}</code></td>
-							<td>{factor}</td>
+							<td>{vs_prism}</td>
+							<td>{vs_shiki}</td>
 						</tr>
 					{/each}
 				</tbody>
