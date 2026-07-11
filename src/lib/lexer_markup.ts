@@ -5,6 +5,7 @@ import {
 	is_hex_digit,
 	is_space,
 	matches_ci,
+	scan_to_line_end,
 	skip_space,
 	token_type,
 	type Lexer,
@@ -92,6 +93,12 @@ export interface MarkupLexMode {
 	 */
 	special_attrs: boolean;
 	/**
+	 * JS-style line and block comments between attributes emit `comment` leaves
+	 * (svelte only — in html/xml a `//` inside a tag is ordinary bogus attribute
+	 * text, not a comment).
+	 */
+	attr_comments: boolean;
+	/**
 	 * Lexes a `{…}` expression at `from`, returning the position after it —
 	 * the svelte hook, null for html/xml. `full` enables block/each forms
 	 * (top level); tag and attribute contexts get the simple form.
@@ -108,6 +115,7 @@ export const MARKUP_MODE_HTML: MarkupLexMode = {
 	script_container: T_LANG_JS,
 	rcdata: true,
 	special_attrs: true,
+	attr_comments: false,
 	lex_expression: null,
 };
 
@@ -116,6 +124,7 @@ const MODE_XML: MarkupLexMode = {
 	script_container: 0,
 	rcdata: false,
 	special_attrs: false,
+	attr_comments: false,
 	lex_expression: null,
 };
 
@@ -365,6 +374,25 @@ const lex_markup_tag = (
 			l.leaf(T_TAG_PUNCTUATION, j, j + 2);
 			tag_end = j + 2;
 			break;
+		}
+		if (mode.attr_comments && c === 47 && j + 1 < end) {
+			// js-style comment between attributes (svelte); a `//` line comment
+			// runs to the newline, a block comment to its closer, and either
+			// extends to the window end when unterminated (editor-style)
+			const c1 = text.charCodeAt(j + 1);
+			if (c1 === 47) {
+				const line_end = scan_to_line_end(text, j, end);
+				l.leaf(T_COMMENT, j, line_end);
+				j = line_end;
+				continue;
+			}
+			if (c1 === 42) {
+				const close = text.indexOf('*/', j + 2);
+				const comment_end = close === -1 || close + 2 > end ? end : close + 2;
+				l.leaf(T_COMMENT, j, comment_end);
+				j = comment_end;
+				continue;
+			}
 		}
 		if (c === 47 || c === 61) {
 			// stray `/` or `=` — plain text inside the tag

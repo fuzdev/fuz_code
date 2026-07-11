@@ -27,6 +27,9 @@ const MIN_VALID_TIMING_MS = 0.01;
 const MAX_VALID_TIMING_MS = 60000;
 const SUSPICIOUS_MEAN_MS = 0.1;
 const HIGH_OUTLIER_RATIO = 0.2;
+// Cap the rolling jitter window so it can't grow unbounded across a long suite;
+// `calculate_timing_jitter` only reads the last handful of entries anyway.
+const MAX_RECENT_TIMINGS = 50;
 
 // Warmup phase using harness with large content
 export const warmup_phase = async (
@@ -60,7 +63,8 @@ export const measurement_phase = async (
 	on_progress?: () => void,
 	should_stop?: () => boolean,
 ): Promise<MeasurementData> => {
-	const times_ms: Array<number> = [];
+	const work_ms: Array<number> = [];
+	const paint_ms: Array<number> = [];
 	const stability_checks = [];
 	const timestamps = [];
 
@@ -93,35 +97,46 @@ export const measurement_phase = async (
 		console.log(`[Measurement] Running iteration ${i + 1}...`);
 
 		try {
-			const elapsed = await harness.run_iteration(impl.component, props);
+			const {work_ms: work, paint_ms: paint} = await harness.run_iteration(impl.component, props);
 
-			// Validate the timing
-			if (elapsed <= 0) {
-				console.warn(`[Measurement] Suspicious timing (${elapsed}ms) - marking as failed`);
-				times_ms.push(NaN);
+			// Validate against the work time — the highlighter's compute cost — and
+			// keep the two series index-aligned (a failed iteration is NaN in both).
+			if (work <= 0) {
+				console.warn(`[Measurement] Suspicious timing (${work}ms) - marking as failed`);
+				work_ms.push(NaN);
+				paint_ms.push(NaN);
 				timestamps.push(Date.now());
-			} else if (elapsed < MIN_VALID_TIMING_MS) {
-				console.warn(
-					`[Measurement] Suspiciously fast timing (${elapsed}ms) - possible no-op render`,
-				);
-				times_ms.push(elapsed);
+			} else if (work < MIN_VALID_TIMING_MS) {
+				console.warn(`[Measurement] Suspiciously fast timing (${work}ms) - possible no-op render`);
+				work_ms.push(work);
+				paint_ms.push(paint);
 				timestamps.push(Date.now());
-				recent_timings.push(elapsed);
-			} else if (elapsed > MAX_VALID_TIMING_MS) {
-				console.warn(`[Measurement] Extremely slow timing (${elapsed}ms) - possible hang`);
-				times_ms.push(NaN);
+				recent_timings.push(work);
+			} else if (work > MAX_VALID_TIMING_MS) {
+				console.warn(`[Measurement] Extremely slow timing (${work}ms) - possible hang`);
+				work_ms.push(NaN);
+				paint_ms.push(NaN);
 				timestamps.push(Date.now());
 			} else {
-				console.log(`[Measurement] Iteration ${i + 1} complete: ${elapsed.toFixed(2)}ms`);
-				times_ms.push(elapsed);
+				console.log(
+					`[Measurement] Iteration ${i + 1} complete: ${work.toFixed(2)}ms work / ${paint.toFixed(2)}ms paint`,
+				);
+				work_ms.push(work);
+				paint_ms.push(paint);
 				timestamps.push(Date.now());
-				recent_timings.push(elapsed);
+				recent_timings.push(work);
+			}
+
+			// Bound the rolling jitter window (see `MAX_RECENT_TIMINGS`).
+			if (recent_timings.length > MAX_RECENT_TIMINGS) {
+				recent_timings.splice(0, recent_timings.length - MAX_RECENT_TIMINGS);
 			}
 		} catch (error) {
 			console.error(`[Measurement] Iteration ${i + 1} failed:`, error);
 			// Continue with next iteration instead of failing entire test
 			// Record a null/NaN to indicate failure
-			times_ms.push(NaN);
+			work_ms.push(NaN);
+			paint_ms.push(NaN);
 			timestamps.push(Date.now());
 		}
 
@@ -134,7 +149,7 @@ export const measurement_phase = async (
 		}
 	}
 
-	return {times_ms, stability_checks, timestamps};
+	return {work_ms, paint_ms, stability_checks, timestamps};
 };
 
 // Run complete benchmark suite

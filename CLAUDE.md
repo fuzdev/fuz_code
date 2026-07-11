@@ -3,10 +3,9 @@
 > Syntax highlighting - hand-written single-pass lexers
 
 fuz_code (`@fuzdev/fuz_code`) is a runtime syntax highlighting library optimized
-for HTML generation with CSS classes. It originated as a PrismJS fork and keeps
-its `.token_*` class vocabulary, but the tokenizer is a full rewrite — one
-hand-written single-pass lexer per language emitting a flat token event stream,
-with zero regular expressions.
+for HTML generation with CSS classes. It originated as a PrismJS fork, but the
+tokenizer is a full rewrite — one hand-written single-pass lexer per language
+emitting a flat token event stream, without regular expressions.
 
 For coding conventions, see Skill(fuz-stack).
 
@@ -45,7 +44,7 @@ fuz_code is a **syntax highlighting library**:
 
 - Runtime HTML generation with CSS classes
 - Hand-written single-pass lexers (zero regex), one per language
-- 8 built-in languages (TS, JS, CSS, HTML, JSON, Svelte, Markdown, Bash)
+- 9 built-in languages (TS, JS, CSS, HTML, JSON, Svelte, Markdown, Shell, Rust)
 - Extensible by writing a lexer (`SyntaxLang`)
 - Optional Svelte component (`Code.svelte`)
 
@@ -70,10 +69,12 @@ src/
 │   ├── syntax_styler.ts        # SyntaxStyler class: registry + lex/stylize facade
 │   ├── syntax_styler_global.ts # pre-configured global instance
 │   ├── lexer.ts                # lexer substrate: Lexer, TokenTypeRegistry, flat events, HTML render
-│   ├── lexer_*.ts              # hand-written lexers (json, ts, css, bash, markup, svelte, md)
+│   ├── lexer_*.ts              # hand-written lexers (json, ts, css, bash, markup, svelte, md, rust)
 │   ├── Code.svelte             # main Svelte component
 │   ├── CodeHighlight.svelte    # experimental CSS Highlight API
+│   ├── CodeTextarea.svelte     # experimental live-highlighted textarea
 │   ├── highlight_manager.ts    # CSS Highlight API manager
+│   ├── range_highlighting.svelte.ts # shared range-highlighting helper
 │   ├── highlight_priorities.ts # generated token priorities
 │   ├── theme.css               # token CSS classes
 │   ├── theme_variables.css     # CSS variable fallbacks
@@ -89,9 +90,9 @@ src/
 │       ├── check.test.ts       # fixture validation
 │       └── update.task.ts      # fixture regeneration task
 └── routes/                     # demo/docs site
-    ├── samples/                # language samples showcase
+    ├── samples/                # shared sample data (all.gen.ts)
     ├── benchmark/              # interactive benchmark UI
-    └── docs/                   # API documentation
+    └── docs/                   # tomes: usage, samples, textarea, benchmark, api
 ```
 
 ### Core system
@@ -125,19 +126,26 @@ One `SyntaxLang` lexer per language, registered via `add_lang`:
 - `lexer_ts.ts` - TypeScript; also registers the `js`/`javascript` aliases
   (TS is a syntactic superset — there is no separate JS lexer)
 - `lexer_css.ts` - CSS (including native nesting)
-- `lexer_bash.ts` - Bash; also registers the `sh`/`shell` aliases (POSIX sh
-  is a syntactic subset for highlighting — bash-family only, no fish etc.)
+- `lexer_bash.ts` - the bash-family shell lexer, registered as `sh` with
+  `bash`/`shell` as aliases (POSIX sh is a syntactic subset for highlighting —
+  bash-family only, no fish etc.)
 - `lexer_markup.ts` - HTML (`markup`/`html`/`mathml`/`svg`: rawtext
   script/style/textarea/title, `style=`/`on*=` attribute embedding) and XML
   (`xml`/`ssml`/`atom`/`rss`: plain tag scanning), one shared scanner
   parameterized by `MarkupLexMode`
 - `lexer_svelte.ts` - Svelte: the markup scanner in svelte mode (script→ts,
-  no special attrs) plus the `{…}` expression lexer (blocks, each/await
-  splits, at-directives, directive modifiers)
+  no special attrs, js-style comments between attributes) plus the `{…}`
+  expression lexer (blocks, each/await splits, at-directives, directive
+  modifiers, `{const …}`/`{let …}` declaration tags)
 - `lexer_md.ts` - Markdown: line-oriented block scan (fences with exact-word
   info matching and any-length closers, headings, blockquotes, lists, hr)
   with a per-block inline scan (emphasis, inline code, links, entities, raw
   markup via the markup scanner); fences embed their languages
+- `lexer_rust.ts` - Rust, registered as `rust` with `rs` as an alias: one
+  flat scan loop (nested block comments and raw strings resolve with counters;
+  attribute interiors lex inline under an `[`/`]` depth counter — no frame
+  machine), lifetime-vs-char `'` disambiguation, `name!` macros, doc-vs-plain
+  comment split, the r/b/c string prefixes
 
 Embedded languages resolve lazily by name through the registry (markdown
 fences → any language, markup `<script>`/`<style>`/`style=`/`on*=`, svelte
@@ -161,15 +169,17 @@ can't overflow the call stack; past the cap a region stays plain text.
 
 **Code.svelte props:**
 
-- `content` (required) - source code to highlight
-- `lang` - language identifier (default: 'svelte')
+- `content` - source code to highlight (or pass `dangerous_raw_html` from the
+  preprocessor instead)
+- `lang` - language identifier (default: 'svelte'; `null` disables highlighting)
 - `inline` - boolean for inline vs block
 - `wrap` - boolean for text wrapping
 - `nomargin` - boolean for margin control
+- `syntax_styler` - custom `SyntaxStyler` (default: `syntax_styler_global`)
 
 ## Supported languages
 
-`ts`, `js`, `css`, `html`, `json`, `svelte`, `md`, `bash`
+`ts`, `js`, `css`, `html`, `json`, `svelte`, `md`, `sh`, `rust`/`rs`
 
 ## Testing
 
@@ -213,23 +223,14 @@ engines).
 ### Updating committed result snapshots
 
 `benchmark/compare/results.md` is linked from `README.md` as evidence for
-the "vastly faster than Shiki" claim — it's load-bearing for the public
-narrative, not just incidental output. `benchmark/results.md` is referenced
+the "about two orders of magnitude faster" claim vs Shiki — it's load-bearing
+for the public narrative, not just incidental output. `benchmark/results.md` is referenced
 locally as a perf baseline. `benchmark/baseline.json` is the machine-readable
 counterpart used by `benchmark_baseline_compare` for regression detection.
 It's **gitignored** (per the fuz_util/fuz_ui convention) — perf numbers
 vary across machines, so the baseline is a per-developer local tracker,
 re-seeded on each machine that runs benchmarks. PR review still relies on
 the committed `results.md`.
-
-Workflow:
-
-```bash
-npm run benchmark             # check current perf against your local baseline
-npm run benchmark:save        # accept the change: rewrites results.md + baseline.json
-npm run benchmark:clean       # nuke the local baseline (re-seed on next --save)
-npm run benchmark:vs:write    # full overwrite of benchmark/compare/results.md
-```
 
 `--save` is a single switch by design — accepting a perf change should
 update both the doc artifact and the local regression baseline atomically,
@@ -268,6 +269,7 @@ If the baseline schema version in `@fuzdev/fuz_util` advances, a stale
 highlighting. Limited browser support - use `Code.svelte` for production.
 
 - `mode` prop: 'auto', 'ranges', or 'html'
+- `CodeTextarea.svelte` - editable `<textarea>` with live range highlighting
 - `HighlightManager` class manages highlights per element
 - `theme_highlight.css` provides both `.token_*` classes and `::highlight()`
   pseudo-elements
@@ -299,7 +301,7 @@ Theme uses CSS variables from fuz_css (palette stops like `--palette_a_50`):
 3. **Progress discipline** - every scan loop advances position or emits+advances
 4. **Nesting discipline** - no JS-call-stack recursion that scales with input
    nesting. Flat single-pass loops wherever the grammar allows (css, markup,
-   svelte, json, and md need no stacks at all); an explicit pooled frame
+   svelte, json, md, and rust need no stacks at all); an explicit pooled frame
    machine only where a construct's interior re-enters the same grammar
    (`lexer_ts.ts` templates/generics/annotations, `lexer_bash.ts`
    substitutions — use these as the template, including their inline fast
@@ -334,8 +336,8 @@ New languages are written as lexers:
 
 ## Demo pages
 
-- `/samples` - code samples in all supported languages
-- `/benchmark` - interactive performance testing
+- `/docs` - tomes: usage, samples, textarea, benchmark, api
+- `/benchmark` - interactive browser benchmark (work vs paint timing)
 
 ## Project standards
 

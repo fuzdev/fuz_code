@@ -112,7 +112,12 @@ export const run_comparison_benchmark = async (
 			const content = getSampleContent(lang, large);
 			const size_label = large ? 'large' : 'small';
 
-			// Tokenization benchmarks (fuz_code and Prism only)
+			// Tokenization benchmarks — raw tokenizer, no HTML rendering, so the
+			// output-shape difference (CSS classes vs Shiki's inlined theme colors)
+			// drops out and this is the cleanest apples-to-apples view. Shiki's
+			// `codeToTokensBase` is its lowest-level public tokenizer (single theme);
+			// it resolves per-token colors but the grammar walk dominates, so it's a
+			// fair analog to fuz_code's `lex` and Prism's `tokenize`.
 			bench.add(`fuz_code_tokenize_${lang}_${size_label}`, () => {
 				syntax_styler_global.lex(content, fuz_lang);
 			});
@@ -122,6 +127,14 @@ export const run_comparison_benchmark = async (
 					Prism.tokenize(content, Prism.languages[prism_lang]);
 				});
 			}
+
+			bench.add(`shiki_js_tokenize_${lang}_${size_label}`, () => {
+				shiki_js.codeToTokensBase(content, {lang: shiki_lang, theme: 'nord'});
+			});
+
+			bench.add(`shiki_oniguruma_tokenize_${lang}_${size_label}`, () => {
+				shiki_oniguruma.codeToTokensBase(content, {lang: shiki_lang, theme: 'nord'});
+			});
 
 			// Stylization benchmarks (all implementations)
 			bench.add(`fuz_code_stylize_${lang}_${size_label}`, () => {
@@ -159,10 +172,11 @@ export const run_comparison_benchmark = async (
  * column headers like `vs fuz_code_stylize_ts_large`).
  *
  * Each filter narrows by name suffix (`_${lang}_${size}$`) plus an operation
- * substring so e.g. the "ts tokenize small" group catches only
- * `fuz_code_tokenize_ts_small` and `prism_tokenize_ts_small`, not the stylize
- * variants. The trailing `$` matters — without it, "ts_small" would also match
- * "ts_small_*" if such a name ever existed.
+ * substring so e.g. the "ts tokenize small" group catches
+ * `fuz_code_tokenize_ts_small`, `prism_tokenize_ts_small`, and the two
+ * `shiki_*_tokenize_ts_small` variants, not the stylize ones. The trailing `$`
+ * matters — without it, "ts_small" would also match "ts_small_*" if such a name
+ * ever existed.
  */
 const build_groups = (languages: ReadonlyArray<SupportedLanguage>): Array<BenchmarkGroup> => {
 	const groups: Array<BenchmarkGroup> = [];
@@ -191,6 +205,14 @@ export const format_comparison_results = (results: Array<BenchmarkResult>): stri
 		'# Syntax Highlighting Performance Comparison',
 		'',
 		'Comparing fuz_code vs Prism vs Shiki across multiple languages and content sizes.',
+		'',
+		'`tokenize` rows compare raw tokenizers with no HTML rendering — the',
+		'shape-neutral, apples-to-apples view. `stylize` rows compare the HTML each',
+		'library actually ships: fuz_code and Prism emit CSS-class spans',
+		'(`<span class="token_x">`) styled by a static stylesheet, while Shiki has no',
+		'native class output and inlines resolved theme colors on every span plus a',
+		'`<pre>` wrapper — so its `stylize` cost includes per-token color work the',
+		'class-based libraries offload to CSS.',
 		'',
 		'## Results',
 		'',

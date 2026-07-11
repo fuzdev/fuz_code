@@ -6,6 +6,7 @@ import {lexer_bash} from './lexer_bash.ts';
 import {lexer_markup, lexer_xml} from './lexer_markup.ts';
 import {lexer_svelte} from './lexer_svelte.ts';
 import {lexer_md} from './lexer_md.ts';
+import {lexer_rust} from './lexer_rust.ts';
 
 /**
  * Pre-configured `SyntaxStyler` instance with all built-in languages registered.
@@ -27,3 +28,4 @@ syntax_styler_global.add_lang(lexer_markup);
 syntax_styler_global.add_lang(lexer_xml);
 syntax_styler_global.add_lang(lexer_svelte);
 syntax_styler_global.add_lang(lexer_md);
+syntax_styler_global.add_lang(lexer_rust);

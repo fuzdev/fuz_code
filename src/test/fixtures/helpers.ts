@@ -22,7 +22,7 @@ export interface GeneratedOutput {
  */
 export const discover_samples = async (): Promise<Array<SampleSpec>> => {
 	const sample_files = await fs_search('src/test/fixtures/samples', {
-		file_filter: (path) => /sample_[^/]+\.(ts|css|html|json|svelte|md|bash)$/.test(path),
+		file_filter: (path) => /sample_[^/]+\.(ts|rs|css|html|json|svelte|md|sh)$/.test(path),
 	});
 
 	const samples: Array<SampleSpec> = [];

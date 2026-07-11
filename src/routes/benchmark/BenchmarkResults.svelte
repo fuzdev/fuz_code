@@ -1,4 +1,5 @@
 <script lang="ts">
+	import {scale} from 'svelte/transition';
 	import CopyToClipboard from '@fuzdev/fuz_ui/CopyToClipboard.svelte';
 
 	import {fmt} from './benchmark_stats.ts';
@@ -88,13 +89,28 @@
 
 		<div class="mt_md">
 			<CopyToClipboard text={results_to_markdown(results)}>
-				copy results as markdown
+				{#snippet children(copied, failed)}
+					{#if copied}
+						<span in:scale={{duration: 200}}>copied ✓</span>
+					{:else if failed}
+						<span>copy failed</span>
+					{:else}
+						copy results as markdown
+					{/if}
+				{/snippet}
 			</CopyToClipboard>
 		</div>
 
 		<div>
 			<h3>Legend</h3>
 			<ul>
+				<li>
+					<strong>Mean / Median / percentiles</strong>: work time — stylize + DOM commit + layout,
+					the highlighter's compute cost
+				</li>
+				<li>
+					<strong>Paint</strong>: mean time until pixels settle (work plus ~1–2 animation frames)
+				</li>
 				<li>
 					<strong>CV</strong>: Coefficient of Variation (std_dev/mean) - lower is better, &lt;15% is
 					good
