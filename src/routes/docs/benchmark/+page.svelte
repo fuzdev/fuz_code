@@ -44,28 +44,29 @@
 <TomeContent {tome}>
 	<section>
 		<p>
-			fuz_code runs one hand-written single-pass lexer per language without regular expressions,
-			emitting a flat token event stream that renders to HTML in one forward pass. There is no
-			grammar interpreter and no backtracking, so highlighting cost stays linear in the length of
-			the input, including partial or malformed source.
-		</p>
-		<p>
-			It is optimized for <em>runtime</em> highlighting.
-			<a href="https://github.com/shikijs/shiki">Shiki</a>
-			targets build-time use and runs the
-			<a href="https://shiki.matsu.io/guide/regex-engines">Oniguruma regexp engine</a> that TextMate grammars
-			require, trading runtime speed for grammar and theme coverage. fuz_code trades that coverage for
-			a small, fast runtime path.
+			fuz_code is optimized for runtime highlighting, including streaming usecases. It runs one
+			hand-written single-pass lexer per language without regular expressions, emitting a flat token
+			event stream that renders to HTML in one forward pass. There is no grammar interpreter and no
+			backtracking, so highlighting cost stays linear in the length of the input, including partial
+			or malformed source.
 		</p>
 	</section>
 	<TomeSection>
 		<TomeSectionHeader text="Compared to Shiki and Prism" />
 		<p>
 			The cross-implementation benchmark measures fuz_code against
-			<a href="https://github.com/PrismJS/prism">Prism</a> and Shiki (both the JavaScript and
-			Oniguruma engines). For end-to-end <code>stylize</code> — lexing plus HTML generation, the realistic
-			runtime path — fuz_code runs roughly an order of magnitude faster than Prism and about two orders
-			of magnitude faster than Shiki:
+			<a href="https://github.com/PrismJS/prism">Prism</a> and
+			<a href="https://github.com/shikijs/shiki">Shiki</a>
+			(both its <a href="https://shiki.matsu.io/guide/regex-engines">Oniguruma regexp engine</a> and its
+			reimplementation in JS). Shiki targets build-time use and works with TextMate grammars, trading
+			runtime speed for capability and compatibility with its large ecosystem of grammars and themes.
+			fuz_code trades that coverage for an efficient runtime path (and also provides tools for pre-compilation),
+			where you can bring your own lexers for languages it doesn't suppose.
+		</p>
+		<p>
+			For end-to-end <code>stylize</code> — lexing plus HTML generation, the realistic runtime path —
+			fuz_code is about an order of magnitude faster than Prism and about two orders of magnitude faster
+			than Shiki:
 		</p>
 		<div class="overflow-x:auto">
 			<table>
