@@ -100,7 +100,7 @@
 	<TomeSection>
 		<TomeSectionHeader text="In the browser" />
 		<p>
-			The <a href={resolve('/benchmark')}>interactive benchmark ⚡</a> runs in your browser,
+			The interactive <a href={resolve('/benchmark')}>in-browser benchmark</a> runs in your browser,
 			measuring real DOM rendering rather than pure compute. It times fuz_code's two renderers — the
 			standard HTML path (<DeclarationLink name="Code" />) and the experimental CSS Custom Highlight
 			API path (<DeclarationLink name="CodeHighlight" />, ranges) — across every supported language,
