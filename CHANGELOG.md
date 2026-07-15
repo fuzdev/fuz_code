@@ -1,5 +1,16 @@
 # @fuzdev/fuz_code
 
+## 0.48.0
+
+### Minor Changes
+
+- feat: add rust lexer ([#42](https://github.com/fuzdev/fuz_code/pull/42))
+- refactor: make `sh` the primary shell lang, with `bash` and `shell` as aliases ([#41](https://github.com/fuzdev/fuz_code/pull/41))
+
+### Patch Changes
+
+- feat: support svelte syntax for attr comments and `{let/const` (#40) ([80008d4](https://github.com/fuzdev/fuz_code/commit/80008d4))
+
 ## 0.47.0
 
 ### Minor Changes
