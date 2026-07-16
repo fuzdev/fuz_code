@@ -278,17 +278,17 @@ Limitations: no font-weight/font-style support in range mode.
 
 ## Color variables
 
-Theme uses CSS variables from fuz_css:
+Theme uses CSS variables from fuz_css (palette stops like `--palette_a_50`):
 
-- `--color_a` - keywords, tags
-- `--color_b` - strings, selectors
-- `--color_c` - types (TypeScript)
-- `--color_d` - functions, classes
-- `--color_e` - numbers, regex
-- `--color_f` - operators
-- `--color_g` - attributes
-- `--color_h` - properties
-- `--color_i` - booleans, comments
+- `--palette_a_*` - keywords, tags
+- `--palette_b_*` - strings, selectors
+- `--palette_c_*` - types (TypeScript)
+- `--palette_d_*` - functions, classes
+- `--palette_e_*` - numbers, regex
+- `--palette_f_*` - operators
+- `--palette_g_*` - attributes
+- `--palette_h_*` - properties
+- `--palette_i_*` - booleans, comments
 
 ## Development guidelines
 

@@ -55,7 +55,7 @@
 				>. Type below to see it re-highlight. Requires <code>theme_highlight.css</code>.
 			</p>
 			{#if !supported}
-				<p class="color_e_50">
+				<p class="palette_e_50">
 					⚠️ This browser does not support the CSS Custom Highlight API — the textarea still works,
 					but text is shown without highlighting.
 				</p>

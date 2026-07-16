@@ -139,7 +139,7 @@
 						{/if}
 					</div>
 					{#if !show_html && !show_highlight}
-						<p class="color_e_50">Select a renderer above.</p>
+						<p class="palette_e_50">Select a renderer above.</p>
 					{/if}
 				</section>
 			{/each}
