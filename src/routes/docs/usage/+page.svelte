@@ -22,7 +22,8 @@
 <TomeContent {tome}>
 	<section>
 		<p>
-			fuz_code highlights code with one hand-written lexer per language, generating HTML with
+			fuz_code highlights code with one lexer per language without regular expressions, generating
+			HTML with
 			<code>.token_*</code> classes that a theme styles. The <DeclarationLink name="Code" /> Svelte component
 			is the typical entry point.
 		</p>
