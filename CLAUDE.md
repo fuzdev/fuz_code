@@ -350,6 +350,6 @@ New languages are written as lexers:
 
 ## Related projects
 
-- [`fuz_css`](../fuz_css/CLAUDE.md) - CSS framework (provides color variables)
+- [`fuz_css`](../fuz_css/CLAUDE.md) - semantic-first CSS framework (provides color variables)
 - [`fuz_ui`](../fuz_ui/CLAUDE.md) - UI components
 - [`fuz_template`](../fuz_template/CLAUDE.md) - starter template using fuz_code
