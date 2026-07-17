@@ -52,7 +52,8 @@ import '@fuzdev/fuz_code/theme.css'; // add this"
 			lang="ts"
 			content="// +layout.svelte
 import '@fuzdev/fuz_code/theme.css';
-import '@fuzdev/fuz_code/theme_variables.css'; // also this if not using fuz_css"
+// if not using fuz_css, add this too:
+import '@fuzdev/fuz_code/theme_variables.css';"
 		/>
 	</TomeSection>
 	<TomeSection>
