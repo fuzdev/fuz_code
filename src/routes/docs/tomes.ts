@@ -1,6 +1,7 @@
 import type {Tome} from '@fuzdev/fuz_ui/tome.ts';
 import UsagePage from './usage/+page.svelte';
 import SamplesPage from './samples/+page.svelte';
+import DiffPage from './diff/+page.svelte';
 import TextareaPage from './textarea/+page.svelte';
 import BenchmarkPage from './benchmark/+page.svelte';
 import ApiPage from './api/+page.svelte';
@@ -10,7 +11,7 @@ export const tomes: Array<Tome> = [
 		slug: 'usage',
 		category: 'guide',
 		Component: UsagePage,
-		related_tomes: ['samples', 'textarea', 'benchmark'],
+		related_tomes: ['samples', 'diff', 'textarea', 'benchmark'],
 		related_modules: [
 			'syntax_styler.ts',
 			'syntax_styler_global.ts',
@@ -25,6 +26,14 @@ export const tomes: Array<Tome> = [
 		related_tomes: ['usage', 'textarea', 'benchmark'],
 		related_modules: [],
 		related_declarations: ['Code', 'CodeHighlight'],
+	},
+	{
+		slug: 'diff',
+		category: 'explore',
+		Component: DiffPage,
+		related_tomes: ['usage', 'samples'],
+		related_modules: ['diff_html.ts'],
+		related_declarations: ['CodeDiff', 'CodeDiffSplit'],
 	},
 	{
 		slug: 'textarea',

@@ -186,6 +186,15 @@ const html = styler.stylize('<div class="example">hello</div>', 'html');`}
 		/>
 	</TomeSection>
 	<TomeSection>
+		<TomeSectionHeader text="Diff viewer" />
+		<p>
+			<DeclarationLink name="CodeDiff" /> and <DeclarationLink name="CodeDiffSplit" /> render syntax-highlighted
+			diffs of two versions of a source text — unified and side-by-side — keeping the normal token styling
+			and overlaying the diff information. Import
+			<code>theme_diff.css</code> alongside the main theme. See <TomeLink slug="diff" />.
+		</p>
+	</TomeSection>
+	<TomeSection>
 		<TomeSectionHeader text="Experimental highlighting API" />
 		<p>
 			fuz_code also has experimental support for the CSS Custom Highlight API with

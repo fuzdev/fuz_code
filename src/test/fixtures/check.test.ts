@@ -1,6 +1,13 @@
 import {test, assert, describe} from 'vitest';
 import {readFileSync, existsSync} from 'node:fs';
-import {discover_samples, process_sample, get_fixture_path} from './helpers.ts';
+import {
+	discover_samples,
+	process_sample,
+	get_fixture_path,
+	discover_diff_cases,
+	process_diff_case,
+	get_diff_fixture_path,
+} from './helpers.ts';
 import {sample_langs} from '$lib/code_sample.ts';
 
 /**
@@ -120,6 +127,51 @@ describe('generated fixtures match runtime', async () => {
 					runtime_output2.tokens,
 					`Token data not deterministic for ${sample.lang}_${sample.variant}`,
 				);
+			});
+		});
+	}
+});
+
+describe('generated diff fixtures match runtime', async () => {
+	const diff_cases = await discover_diff_cases();
+
+	test('diff cases were discovered', () => {
+		assert.isAbove(diff_cases.length, 0);
+	});
+
+	for (const diff_case of diff_cases) {
+		describe(diff_case.name, () => {
+			const html_path = get_diff_fixture_path(diff_case.name, 'html');
+			const split_path = get_diff_fixture_path(diff_case.name, 'split.html');
+
+			test('fixture files exist', () => {
+				for (const path of [html_path, split_path]) {
+					assert.ok(
+						existsSync(path),
+						`Fixture file missing: ${path}. Run 'gro src/test/fixtures/update' to generate.`,
+					);
+				}
+			});
+
+			test('diff renderer output matches fixtures', () => {
+				const output = process_diff_case(diff_case);
+				assert.strictEqual(
+					output.unified_html,
+					readFileSync(html_path, 'utf-8'),
+					`Unified diff HTML mismatch for ${diff_case.name}`,
+				);
+				assert.strictEqual(
+					output.split_html,
+					readFileSync(split_path, 'utf-8'),
+					`Split diff HTML mismatch for ${diff_case.name}`,
+				);
+			});
+
+			test('diff output is deterministic', () => {
+				const output1 = process_diff_case(diff_case);
+				const output2 = process_diff_case(diff_case);
+				assert.strictEqual(output1.unified_html, output2.unified_html);
+				assert.strictEqual(output1.split_html, output2.split_html);
 			});
 		});
 	}

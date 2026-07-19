@@ -6,6 +6,10 @@ import {
 	process_sample,
 	generate_debug_text,
 	get_fixture_path,
+	discover_diff_cases,
+	process_diff_case,
+	generate_diff_debug_text,
+	get_diff_fixture_path,
 } from './helpers.ts';
 
 export const task: Task = {
@@ -53,6 +57,33 @@ export const task: Task = {
 			console.log(`  → ${txt_path}`); // eslint-disable-line no-console
 		}
 
-		console.log(`\n✓ Updated ${samples.length} samples`); // eslint-disable-line no-console
+		// Process diff cases
+		const diff_cases = await discover_diff_cases();
+		const diff_dir = join(generated_fixtures_dir, 'diff');
+		if (existsSync(diff_dir)) {
+			rmSync(diff_dir, {recursive: true, force: true});
+			console.log(`Removed existing directory: ${diff_dir}`); // eslint-disable-line no-console
+		}
+		mkdirSync(diff_dir, {recursive: true});
+
+		for (const diff_case of diff_cases) {
+			console.log(`Processing diff ${diff_case.name}...`); // eslint-disable-line no-console
+			const output = process_diff_case(diff_case);
+
+			const html_path = get_diff_fixture_path(diff_case.name, 'html');
+			writeFileSync(html_path, output.unified_html);
+			console.log(`  → ${html_path}`); // eslint-disable-line no-console
+
+			const split_path = get_diff_fixture_path(diff_case.name, 'split.html');
+			writeFileSync(split_path, output.split_html);
+			console.log(`  → ${split_path}`); // eslint-disable-line no-console
+
+			const txt_path = get_diff_fixture_path(diff_case.name, 'txt');
+			writeFileSync(txt_path, generate_diff_debug_text(diff_case));
+			console.log(`  → ${txt_path}`); // eslint-disable-line no-console
+		}
+
+		// eslint-disable-next-line no-console
+		console.log(`\n✓ Updated ${samples.length} samples and ${diff_cases.length} diff cases`);
 	},
 };
