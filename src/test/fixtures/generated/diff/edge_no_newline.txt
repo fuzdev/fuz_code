@@ -1,0 +1,11 @@
+=== STATS ===
+a: 26 chars, b: 26 chars
+lines: 2 (2 changed), hunks: 1
+
+=== DIFF ===
+--- a.ts
++++ b.ts
+@@ -1,1 +1,1 @@
+-export const done = false;
+\ No newline at end of file
++export const done = true;

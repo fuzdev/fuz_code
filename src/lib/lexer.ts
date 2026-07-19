@@ -345,6 +345,151 @@ export const render_syntax_html = (lexed: LexedSyntax): string => {
 };
 
 /**
+ * An absolute `[start, end)` text range wrapped with mark tags by
+ * `render_syntax_html_lines` — e.g. diff intra-line emphasis.
+ */
+export interface SyntaxHtmlMark {
+	start: number;
+	end: number;
+}
+
+/**
+ * Options for `render_syntax_html_lines`.
+ */
+export interface RenderSyntaxHtmlLinesOptions {
+	/**
+	 * Sorted, non-empty, non-overlapping `[start, end)` ranges to wrap with
+	 * the mark tags. Marks wrap text runs only — a mark crossing token or
+	 * line boundaries is emitted as adjacent mark spans, cut at each
+	 * boundary, so nesting always stays valid.
+	 */
+	marks?: Array<SyntaxHtmlMark>;
+	/**
+	 * @default '<mark>'
+	 */
+	mark_open_tag?: string;
+	/**
+	 * @default '</mark>'
+	 */
+	mark_close_tag?: string;
+}
+
+/**
+ * Renders a lexed event stream to one HTML fragment per source line — the
+ * same single forward pass as `render_syntax_html`, but token spans left open
+ * at a newline are closed there and reopened on the next line (splitting
+ * leaves that span newlines), so every fragment is balanced HTML. Fragment
+ * `i` is line `i + 1` (1-based); newlines are not included, and a text
+ * ending in `\n` yields one final empty fragment. Optional `marks` wrap text
+ * ranges with mark tags.
+ */
+export const render_syntax_html_lines = (
+	lexed: LexedSyntax,
+	options?: RenderSyntaxHtmlLinesOptions,
+): Array<string> => {
+	const {text, events, events_len} = lexed;
+	const {infos} = lexed.types;
+	const marks = options?.marks;
+	const mark_open = options?.mark_open_tag ?? '<mark>';
+	const mark_close = options?.mark_close_tag ?? '</mark>';
+
+	const lines: Array<string> = [];
+	let cur = '';
+	// open container type ids, for reopening after a line break
+	const stack: Array<number> = [];
+	// open tag of the in-progress leaf, '' when none
+	let leaf_tag = '';
+	let mi = 0;
+	let nl_probe = -1;
+
+	const close_spans = (): void => {
+		if (leaf_tag !== '') cur += '</span>';
+		for (let s = 0; s < stack.length; s++) cur += '</span>';
+	};
+	const reopen_spans = (): void => {
+		for (let s = 0; s < stack.length; s++) cur += infos[stack[s]!]!.open_tag;
+		if (leaf_tag !== '') cur += leaf_tag;
+	};
+
+	// emits text[from, to) into the current line, splitting at newlines and
+	// mark boundaries; marks never wrap tags, so they open and close within
+	// one uninterrupted text run
+	const emit_text = (from: number, to: number): void => {
+		let i = from;
+		let in_mark = false;
+		while (i < to) {
+			nl_probe = advance_probe(text, nl_probe, i, '\n');
+			if (i === nl_probe) {
+				close_spans();
+				lines.push(cur);
+				cur = '';
+				reopen_spans();
+				i++;
+				continue;
+			}
+			if (marks) {
+				while (mi < marks.length && marks[mi]!.end <= i) mi++;
+				if (!in_mark && mi < marks.length && marks[mi]!.start <= i) {
+					cur += mark_open;
+					in_mark = true;
+				}
+			}
+			let boundary = to;
+			if (nl_probe < boundary) boundary = nl_probe;
+			if (marks && mi < marks.length) {
+				const m = marks[mi]!;
+				if (in_mark) {
+					if (m.end < boundary) boundary = m.end;
+				} else if (m.start > i && m.start < boundary) {
+					boundary = m.start;
+				}
+			}
+			cur += escape_html_slice(text, i, boundary);
+			i = boundary;
+			if (in_mark && (i >= to || i === nl_probe || marks![mi]!.end <= i)) {
+				cur += mark_close;
+				in_mark = false;
+			}
+		}
+	};
+
+	let pos = 0;
+	let i = 0;
+	while (i < events_len) {
+		const tag = events[i]!;
+		if (tag > 0) {
+			const start = events[i + 1]!;
+			const end = events[i + 2]!;
+			if (start > pos) emit_text(pos, start);
+			leaf_tag = infos[tag]!.open_tag;
+			cur += leaf_tag;
+			emit_text(start, end);
+			cur += '</span>';
+			leaf_tag = '';
+			pos = end;
+			i += 3;
+		} else if (tag < 0) {
+			const start = events[i + 1]!;
+			if (start > pos) emit_text(pos, start);
+			cur += infos[-tag]!.open_tag;
+			stack.push(-tag);
+			pos = start;
+			i += 2;
+		} else {
+			const end = events[i + 1]!;
+			if (end > pos) emit_text(pos, end);
+			cur += '</span>';
+			stack.pop();
+			pos = end;
+			i += 2;
+		}
+	}
+	if (pos < text.length) emit_text(pos, text.length);
+	lines.push(cur);
+	return lines;
+};
+
+/**
  * A flattened token span, in document order with containers before their
  * children. Used by fixtures, tests, and range building.
  */

@@ -1,8 +1,10 @@
 import {readFileSync} from 'node:fs';
 import {fs_search} from '@fuzdev/fuz_util/fs.ts';
-import {basename, join, relative} from 'node:path';
+import {diff_lines, diff_hunks, format_diff} from '@fuzdev/fuz_util/diff.ts';
+import {basename, dirname, join, relative} from 'node:path';
 import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
 import {syntax_events_to_tokens} from '$lib/lexer.ts';
+import {render_diff_unified_html, render_diff_split_html} from '$lib/diff_html.ts';
 
 export interface SampleSpec {
 	lang: string;
@@ -83,6 +85,98 @@ export const process_sample = (sample: SampleSpec): GeneratedOutput => {
 		tokens,
 		html,
 	};
+};
+
+/**
+ * A discovered diff fixture case: an `a`/`b` source pair sharing one
+ * language, from `src/test/fixtures/diff/{name}/`.
+ */
+export interface DiffCaseSpec {
+	name: string;
+	lang: string;
+	a: string;
+	b: string;
+}
+
+/**
+ * Discovers diff fixture cases in `src/test/fixtures/diff` — each case dir
+ * holds an `a.{ext}` + `b.{ext}` pair whose extension is the language.
+ * Throws on unpaired or extension-mismatched cases.
+ */
+export const discover_diff_cases = async (): Promise<Array<DiffCaseSpec>> => {
+	const files = await fs_search('src/test/fixtures/diff', {
+		file_filter: (path) => /\/[ab]\.[^./]+$/.test(path),
+	});
+
+	const by_case: Map<string, {a?: string; b?: string; a_ext?: string; b_ext?: string}> = new Map();
+	for (const file of files) {
+		const name = basename(dirname(file.id));
+		const filename = basename(file.id);
+		const side = filename[0] as 'a' | 'b';
+		const ext = filename.slice(2);
+		let entry = by_case.get(name);
+		if (!entry) {
+			entry = {};
+			by_case.set(name, entry);
+		}
+		entry[side] = readFileSync(file.id, 'utf-8');
+		entry[side === 'a' ? 'a_ext' : 'b_ext'] = ext;
+	}
+
+	const cases: Array<DiffCaseSpec> = [];
+	for (const [name, entry] of [...by_case].sort(([x], [y]) => (x < y ? -1 : 1))) {
+		if (entry.a === undefined || entry.b === undefined) {
+			throw Error(`Diff case "${name}" is missing its ${entry.a === undefined ? 'a' : 'b'} file`);
+		}
+		if (entry.a_ext !== entry.b_ext) {
+			throw Error(
+				`Diff case "${name}" has mismatched extensions: ${entry.a_ext} vs ${entry.b_ext}`,
+			);
+		}
+		cases.push({name, lang: entry.a_ext!, a: entry.a, b: entry.b});
+	}
+	return cases;
+};
+
+/**
+ * Get the generated fixture path for a diff case.
+ */
+export const get_diff_fixture_path = (name: string, ext: 'html' | 'split.html' | 'txt'): string =>
+	join('src/test/fixtures/generated/diff', `${name}.${ext}`);
+
+export interface DiffGeneratedOutput {
+	spec: DiffCaseSpec;
+	unified_html: string;
+	split_html: string;
+}
+
+/**
+ * Process a diff case to generate both views' HTML.
+ */
+export const process_diff_case = (spec: DiffCaseSpec): DiffGeneratedOutput => ({
+	spec,
+	unified_html: render_diff_unified_html(spec.a, spec.b, {lang: spec.lang}),
+	split_html: render_diff_split_html(spec.a, spec.b, {lang: spec.lang}),
+});
+
+/**
+ * Generate debug text output for a diff case — stats plus the plain
+ * unified-diff text (the `st` seam is unconfigured here, so no ANSI).
+ */
+export const generate_diff_debug_text = (spec: DiffCaseSpec): string => {
+	const lines = diff_lines(spec.a, spec.b);
+	const hunks = diff_hunks(lines);
+	let changed = 0;
+	for (const line of lines) {
+		if (line.type !== 'same') changed++;
+	}
+	let debug = '=== STATS ===\n';
+	debug += `a: ${spec.a.length} chars, b: ${spec.b.length} chars\n`;
+	debug += `lines: ${lines.length} (${changed} changed), hunks: ${hunks.length}\n`;
+	debug += '\n=== DIFF ===\n';
+	debug += format_diff(hunks, `a.${spec.lang}`, `b.${spec.lang}`, {max_lines: 0});
+	debug += '\n';
+	return debug;
 };
 
 /**

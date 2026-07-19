@@ -1,0 +1,7 @@
+=== STATS ===
+a: 20 chars, b: 20 chars
+lines: 3 (0 changed), hunks: 0
+
+=== DIFF ===
+--- a.css
++++ b.css
