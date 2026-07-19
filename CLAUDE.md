@@ -3,9 +3,9 @@
 > Syntax highlighting - hand-written single-pass lexers
 
 fuz_code (`@fuzdev/fuz_code`) is a runtime syntax highlighting library optimized
-for HTML generation with CSS classes. It originated as a PrismJS fork, but the
-tokenizer is a full rewrite — one hand-written single-pass lexer per language
-emitting a flat token event stream, without regular expressions.
+for HTML generation with CSS classes. It originated as a fork and by-hand rewrite of PrismJS, 
+with a redesigned tokenizer that replaces regular expressions with lexers per
+language emitting a flat token event stream
 
 For coding conventions, see Skill(fuz-stack).
 

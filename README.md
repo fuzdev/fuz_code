@@ -7,10 +7,11 @@
 **[code.fuz.dev](https://code.fuz.dev/)**
 
 `fuz_code` is a runtime syntax highlighter: it turns source code into HTML with
-`.token_*` CSS classes, and knows nothing about the DOM. It originated as a fork
+token CSS classes, and knows nothing about the DOM.
+It originated as a fork and by-hand rewrite
 of [Prism](https://github.com/PrismJS/prism) ([prismjs.com](https://prismjs.com/)),
-but the tokenizer is now a full rewrite — one hand-written single-pass lexer per
-language emitting a flat token event stream, without regular expressions.
+with a redesigned tokenizer that replaces regular expressions with lexers per
+language emitting a flat token event stream.
 
 Highlights:
 
@@ -179,6 +180,6 @@ originally forked from [Prism](https://github.com/PrismJS/prism)
 with the Svelte support originally based on
 [`prism-svelte`](https://github.com/pngwn/prism-svelte) by
 [@pngwn](https://github.com/pngwn). The tokenizer has since been rewritten as
-hand-written lexers, but the fork's lineage remains.
+lexers, but the fork's lineage remains.
 
 [MIT](LICENSE)
