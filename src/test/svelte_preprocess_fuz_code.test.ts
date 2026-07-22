@@ -1,13 +1,13 @@
-import {test, assert, describe} from 'vitest';
-import {assert_rejects} from '@fuzdev/fuz_util/testing.ts';
-import {preprocess, parse} from 'svelte/compiler';
+import { test, assert, describe } from 'vitest';
+import { assert_rejects } from '@fuzdev/fuz_util/testing.ts';
+import { preprocess, parse } from 'svelte/compiler';
 
-import {svelte_preprocess_fuz_code} from '$lib/svelte_preprocess_fuz_code.ts';
-import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
+import { svelte_preprocess_fuz_code } from '$lib/svelte_preprocess_fuz_code.ts';
+import { syntax_styler_global } from '$lib/syntax_styler_global.ts';
 
 const run = async (input: string): Promise<string> => {
 	const result = await preprocess(input, [svelte_preprocess_fuz_code()], {
-		filename: 'Test.svelte',
+		filename: 'Test.svelte'
 	});
 	return result.code;
 };
@@ -91,7 +91,7 @@ describe('svelte_preprocess_fuz_code', () => {
 			const raw_html = extract_raw_html(result);
 			assert.strictEqual(
 				raw_html,
-				syntax_styler_global.stylize('<button>Click</button>', 'svelte'),
+				syntax_styler_global.stylize('<button>Click</button>', 'svelte')
 			);
 		});
 
@@ -123,7 +123,7 @@ const y = 2;" lang="ts" />`;
 			const raw_html = extract_raw_html(result);
 			assert.strictEqual(
 				raw_html,
-				syntax_styler_global.stylize('const x = 1;\nconst y = 2;', 'ts'),
+				syntax_styler_global.stylize('const x = 1;\nconst y = 2;', 'ts')
 			);
 		});
 
@@ -264,7 +264,7 @@ const y = 2;" lang="ts" />`;
 <Code content={show ? 'const x = 1;' : 'let y = 2;'} lang="ts" />`;
 			const result = await run(input);
 
-			const ast = parse(result, {filename: 'Test.svelte', modern: true});
+			const ast = parse(result, { filename: 'Test.svelte', modern: true });
 			assert.isAbove(ast.fragment.nodes.length, 0);
 		});
 
@@ -297,7 +297,7 @@ const y = 2;" lang="ts" />`;
 			// Extract the nested ternary expression from: dangerous_raw_html={a ? '...' : b ? '...' : '...'}
 			const match =
 				/dangerous_raw_html=\{(\w+) \? '((?:[^'\\]|\\.)*)' : (\w+) \? '((?:[^'\\]|\\.)*)' : '((?:[^'\\]|\\.)*)'\}/.exec(
-					result,
+					result
 				);
 			assert.ok(match);
 			assert.strictEqual(match[1], 'a');
@@ -335,7 +335,7 @@ const y = 2;" lang="ts" />`;
 <Code content={a ? 'const x = 1;' : b ? 'let y = 2;' : 'var z = 3;'} lang="ts" />`;
 			const result = await run(input);
 
-			const ast = parse(result, {filename: 'Test.svelte', modern: true});
+			const ast = parse(result, { filename: 'Test.svelte', modern: true });
 			assert.isAbove(ast.fragment.nodes.length, 0);
 		});
 
@@ -356,7 +356,7 @@ const y = 2;" lang="ts" />`;
 			assert.include(result, 'c ?');
 			assert.include(result, 'token_keyword');
 
-			const ast = parse(result, {filename: 'Test.svelte', modern: true});
+			const ast = parse(result, { filename: 'Test.svelte', modern: true });
 			assert.isAbove(ast.fragment.nodes.length, 0);
 		});
 	});
@@ -661,10 +661,10 @@ const y = 2;" lang="ts" />`;
 				input,
 				[
 					svelte_preprocess_fuz_code({
-						component_imports: ['$lib/MyCode.svelte'],
-					}),
+						component_imports: ['$lib/MyCode.svelte']
+					})
 				],
-				{filename: 'Test.svelte'},
+				{ filename: 'Test.svelte' }
 			);
 
 			assert.include(result.code, 'dangerous_raw_html=');
@@ -680,10 +680,10 @@ const y = 2;" lang="ts" />`;
 				input,
 				[
 					svelte_preprocess_fuz_code({
-						component_imports: ['$lib/Highlighter.svelte'],
-					}),
+						component_imports: ['$lib/Highlighter.svelte']
+					})
 				],
-				{filename: 'Test.svelte'},
+				{ filename: 'Test.svelte' }
 			);
 
 			const raw_html = extract_raw_html(result.code);
@@ -837,7 +837,7 @@ const y = 2;" lang="ts" />`;
 			const result = await run(input);
 
 			// Should not throw
-			const ast = parse(result, {filename: 'Test.svelte', modern: true});
+			const ast = parse(result, { filename: 'Test.svelte', modern: true });
 			assert.isAbove(ast.fragment.nodes.length, 0);
 		});
 
@@ -864,11 +864,11 @@ const y = 2;" lang="ts" />`;
 
 <Code content="const x = 1;" lang="ts" />`;
 			const result = await preprocess(input, [svelte_preprocess_fuz_code()], {
-				filename: 'Test.svelte',
+				filename: 'Test.svelte'
 			});
 
 			assert.isDefined(result.map);
-			const map = result.map as {sources: Array<string>};
+			const map = result.map as { sources: Array<string> };
 			assert.include(map.sources, 'Test.svelte');
 		});
 	});
@@ -882,8 +882,8 @@ const y = 2;" lang="ts" />`;
 <Code content="const x = 1;" lang="ts" />`;
 			const result = await preprocess(
 				input,
-				[svelte_preprocess_fuz_code({exclude: [/Test\.svelte$/]})],
-				{filename: 'Test.svelte'},
+				[svelte_preprocess_fuz_code({ exclude: [/Test\.svelte$/] })],
+				{ filename: 'Test.svelte' }
 			);
 
 			assert.include(result.code, 'content="const x = 1;"');
@@ -898,8 +898,8 @@ const y = 2;" lang="ts" />`;
 <Code content="const x = 1;" lang="ts" />`;
 			const result = await preprocess(
 				input,
-				[svelte_preprocess_fuz_code({exclude: ['fixtures/']})],
-				{filename: 'src/test/fixtures/Test.svelte'},
+				[svelte_preprocess_fuz_code({ exclude: ['fixtures/'] })],
+				{ filename: 'src/test/fixtures/Test.svelte' }
 			);
 
 			assert.notInclude(result.code, 'dangerous_raw_html');
@@ -911,8 +911,8 @@ const y = 2;" lang="ts" />`;
 </script>
 
 <Code content="const x = 1;" lang="ts" />`;
-			const result = await preprocess(input, [svelte_preprocess_fuz_code({cache: false})], {
-				filename: 'Test.svelte',
+			const result = await preprocess(input, [svelte_preprocess_fuz_code({ cache: false })], {
+				filename: 'Test.svelte'
 			});
 
 			// Should still transform correctly without caching
@@ -926,7 +926,7 @@ const y = 2;" lang="ts" />`;
 				has_lang: () => true,
 				stylize() {
 					throw new Error('test error');
-				},
+				}
 			} as any;
 
 			const input = `<script lang="ts">
@@ -938,9 +938,9 @@ const y = 2;" lang="ts" />`;
 			const error = await assert_rejects(() =>
 				preprocess(
 					input,
-					[svelte_preprocess_fuz_code({syntax_styler: bad_styler, on_error: 'throw'})],
-					{filename: 'Test.svelte'},
-				),
+					[svelte_preprocess_fuz_code({ syntax_styler: bad_styler, on_error: 'throw' })],
+					{ filename: 'Test.svelte' }
+				)
 			);
 			assert.ok(error.message.includes('test error'));
 		});
@@ -950,7 +950,7 @@ const y = 2;" lang="ts" />`;
 				has_lang: () => true,
 				stylize() {
 					throw new Error('test error');
-				},
+				}
 			} as any;
 
 			const input = `<script lang="ts">
@@ -960,8 +960,8 @@ const y = 2;" lang="ts" />`;
 <Code content="const x = 1;" lang="ts" />`;
 			const result = await preprocess(
 				input,
-				[svelte_preprocess_fuz_code({syntax_styler: bad_styler, on_error: 'log'})],
-				{filename: 'Test.svelte'},
+				[svelte_preprocess_fuz_code({ syntax_styler: bad_styler, on_error: 'log' })],
+				{ filename: 'Test.svelte' }
 			);
 
 			// Should remain unchanged when error is logged

@@ -1,16 +1,16 @@
 <script lang="ts">
-	import {scale} from 'svelte/transition';
+	import { scale } from 'svelte/transition';
 	import CopyToClipboard from '@fuzdev/fuz_ui/CopyToClipboard.svelte';
 
-	import {fmt} from './benchmark_stats.ts';
-	import {RESULT_COLUMNS, results_to_markdown} from './benchmark_results.ts';
-	import type {BenchmarkResult, SummaryStats} from './benchmark_types.ts';
-	import type {ImplementationName} from './benchmark_fixtures.ts';
+	import { fmt } from './benchmark_stats.ts';
+	import { RESULT_COLUMNS, results_to_markdown } from './benchmark_results.ts';
+	import type { BenchmarkResult, SummaryStats } from './benchmark_types.ts';
+	import type { ImplementationName } from './benchmark_fixtures.ts';
 
 	const {
 		results = [],
 		summary = null,
-		warnings = [],
+		warnings = []
 	}: {
 		results: Array<BenchmarkResult>;
 		summary: Record<ImplementationName, SummaryStats> | null;
@@ -91,7 +91,7 @@
 			<CopyToClipboard text={results_to_markdown(results)}>
 				{#snippet children(copied, failed)}
 					{#if copied}
-						<span in:scale={{duration: 200}}>copied ✓</span>
+						<span in:scale={{ duration: 200 }}>copied ✓</span>
 					{:else if failed}
 						<span>copy failed</span>
 					{:else}

@@ -1,4 +1,4 @@
-import {TIME_NS_PER_MS} from '@fuzdev/fuz_util/time.ts';
+import { TIME_NS_PER_MS } from '@fuzdev/fuz_util/time.ts';
 
 import type {
 	BenchmarkedImplementation,
@@ -8,17 +8,17 @@ import type {
 	ProgressCallbacks,
 	BenchmarkState,
 	BenchmarkHarnessController,
-	BenchmarkComponentProps,
+	BenchmarkComponentProps
 } from './benchmark_types.ts';
-import type {CodeSample} from '$lib/code_sample.ts';
-import {inter_test_cooldown} from './benchmark_dom.ts';
+import type { CodeSample } from '$lib/code_sample.ts';
+import { inter_test_cooldown } from './benchmark_dom.ts';
 import {
 	check_system_stability,
 	get_instability_reason,
-	extended_cooldown,
+	extended_cooldown
 } from './benchmark_stability.ts';
-import {implementations, languages, pre_generate_large_contents} from './benchmark_fixtures.ts';
-import {analyze_results, calculate_summary, check_high_variance} from './benchmark_stats.ts';
+import { implementations, languages, pre_generate_large_contents } from './benchmark_fixtures.ts';
+import { analyze_results, calculate_summary, check_high_variance } from './benchmark_stats.ts';
 
 /* eslint-disable no-console */
 
@@ -38,10 +38,10 @@ export const warmup_phase = async (
 	lang: string,
 	warmup_count: number,
 	cooldown_ms: number,
-	harness: BenchmarkHarnessController,
+	harness: BenchmarkHarnessController
 ): Promise<void> => {
 	for (let i = 0; i < warmup_count; i++) {
-		const props: BenchmarkComponentProps = {content, lang};
+		const props: BenchmarkComponentProps = { content, lang };
 		if (impl.mode !== null) {
 			props.mode = impl.mode;
 		}
@@ -61,7 +61,7 @@ export const measurement_phase = async (
 	recent_timings: Array<number>,
 	harness: BenchmarkHarnessController,
 	on_progress?: () => void,
-	should_stop?: () => boolean,
+	should_stop?: () => boolean
 ): Promise<MeasurementData> => {
 	const work_ms: Array<number> = [];
 	const paint_ms: Array<number> = [];
@@ -89,7 +89,7 @@ export const measurement_phase = async (
 			await extended_cooldown(reason);
 		}
 
-		const props: BenchmarkComponentProps = {content, lang};
+		const props: BenchmarkComponentProps = { content, lang };
 		if (impl.mode !== null) {
 			props.mode = impl.mode;
 		}
@@ -97,7 +97,7 @@ export const measurement_phase = async (
 		console.log(`[Measurement] Running iteration ${i + 1}...`);
 
 		try {
-			const {work_ms: work, paint_ms: paint} = await harness.run_iteration(impl.component, props);
+			const { work_ms: work, paint_ms: paint } = await harness.run_iteration(impl.component, props);
 
 			// Validate against the work time — the highlighter's compute cost — and
 			// keep the two series index-aligned (a failed iteration is NaN in both).
@@ -119,7 +119,7 @@ export const measurement_phase = async (
 				timestamps.push(Date.now());
 			} else {
 				console.log(
-					`[Measurement] Iteration ${i + 1} complete: ${work.toFixed(2)}ms work / ${paint.toFixed(2)}ms paint`,
+					`[Measurement] Iteration ${i + 1} complete: ${work.toFixed(2)}ms work / ${paint.toFixed(2)}ms paint`
 				);
 				work_ms.push(work);
 				paint_ms.push(paint);
@@ -149,7 +149,7 @@ export const measurement_phase = async (
 		}
 	}
 
-	return {work_ms, paint_ms, stability_checks, timestamps};
+	return { work_ms, paint_ms, stability_checks, timestamps };
 };
 
 // Run complete benchmark suite
@@ -159,7 +159,7 @@ export const run_all_benchmarks = async (
 	harness: BenchmarkHarnessController,
 	callbacks?: ProgressCallbacks,
 	custom_implementations?: Array<BenchmarkedImplementation>,
-	custom_languages?: Array<string>,
+	custom_languages?: Array<string>
 ): Promise<BenchmarkState> => {
 	const impls = custom_implementations || implementations;
 	const langs = custom_languages || languages;
@@ -222,14 +222,14 @@ export const run_all_benchmarks = async (
 							callbacks.on_progress(current_progress, total_iterations);
 						}
 					},
-					callbacks?.should_stop,
+					callbacks?.should_stop
 				);
 
 				// Analysis
 				const stats = analyze_results(measurement_data);
 				const mean_ms = stats.core.mean_ns / TIME_NS_PER_MS;
 				console.log(
-					`[Runner] ${test_name} complete - mean: ${mean_ms.toFixed(2)}ms, ops/sec: ${stats.core.ops_per_second.toFixed(2)}`,
+					`[Runner] ${test_name} complete - mean: ${mean_ms.toFixed(2)}ms, ops/sec: ${stats.core.ops_per_second.toFixed(2)}`
 				);
 
 				// Check for suspicious results
@@ -241,14 +241,14 @@ export const run_all_benchmarks = async (
 				}
 				if (stats.core.outlier_ratio > HIGH_OUTLIER_RATIO) {
 					warnings.push(
-						`${test_name}: High outlier ratio (${(stats.core.outlier_ratio * 100).toFixed(1)}%)`,
+						`${test_name}: High outlier ratio (${(stats.core.outlier_ratio * 100).toFixed(1)}%)`
 					);
 				}
 
 				results.push({
 					implementation: impl.name,
 					language: lang,
-					stats,
+					stats
 				});
 
 				if (callbacks?.on_test_complete) {
@@ -276,5 +276,5 @@ export const run_all_benchmarks = async (
 	// Clean up harness
 	await harness.cleanup();
 
-	return {results, warnings, summary};
+	return { results, warnings, summary };
 };

@@ -1,8 +1,8 @@
-import {readFileSync} from 'node:fs';
-import {fs_search} from '@fuzdev/fuz_util/fs.ts';
-import {basename, join, relative} from 'node:path';
-import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
-import {syntax_events_to_tokens} from '$lib/lexer.ts';
+import { readFileSync } from 'node:fs';
+import { fs_search } from '@fuzdev/fuz_util/fs.ts';
+import { basename, join, relative } from 'node:path';
+import { syntax_styler_global } from '$lib/syntax_styler_global.ts';
+import { syntax_events_to_tokens } from '$lib/lexer.ts';
 
 export interface SampleSpec {
 	lang: string;
@@ -22,7 +22,7 @@ export interface GeneratedOutput {
  */
 export const discover_samples = async (): Promise<Array<SampleSpec>> => {
 	const sample_files = await fs_search('src/test/fixtures/samples', {
-		file_filter: (path) => /sample_[^/]+\.(ts|rs|css|html|json|svelte|md|sh)$/.test(path),
+		file_filter: (path) => /sample_[^/]+\.(ts|rs|css|html|json|svelte|md|sh)$/.test(path)
 	});
 
 	const samples: Array<SampleSpec> = [];
@@ -40,7 +40,7 @@ export const discover_samples = async (): Promise<Array<SampleSpec>> => {
 			lang,
 			variant,
 			content,
-			filepath: relative(process.cwd(), file.id),
+			filepath: relative(process.cwd(), file.id)
 		});
 	}
 
@@ -53,7 +53,7 @@ export const discover_samples = async (): Promise<Array<SampleSpec>> => {
 export const get_fixture_path = (
 	lang: string,
 	variant: string,
-	ext: 'json' | 'txt' | 'html',
+	ext: 'json' | 'txt' | 'html'
 ): string => {
 	return join('src/test/fixtures/generated', lang, `${lang}_${variant}.${ext}`);
 };
@@ -81,7 +81,7 @@ export const process_sample = (sample: SampleSpec): GeneratedOutput => {
 	return {
 		sample,
 		tokens,
-		html,
+		html
 	};
 };
 
@@ -89,7 +89,7 @@ export const process_sample = (sample: SampleSpec): GeneratedOutput => {
  * Generate debug text output for a sample
  */
 export const generate_debug_text = (output: GeneratedOutput): string => {
-	const {sample, tokens} = output;
+	const { sample, tokens } = output;
 
 	let debug = '=== STATS ===\n';
 	debug += `Sample length: ${sample.content.length} characters\n`;
@@ -98,7 +98,7 @@ export const generate_debug_text = (output: GeneratedOutput): string => {
 	// Count token types
 	const tokenTypes: Record<string, number> = {};
 	for (const token of tokens) {
-		const {type} = token;
+		const { type } = token;
 		tokenTypes[type] = (tokenTypes[type] || 0) + 1;
 	}
 	debug += `\nToken types (${Object.keys(tokenTypes).length} unique):\n`;

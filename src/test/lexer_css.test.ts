@@ -1,13 +1,13 @@
-import {describe, test, assert} from 'vitest';
-import {readFileSync} from 'node:fs';
+import { describe, test, assert } from 'vitest';
+import { readFileSync } from 'node:fs';
 
-import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
-import {syntax_events_to_tokens, validate_syntax_events} from '$lib/lexer.ts';
+import { syntax_styler_global } from '$lib/syntax_styler_global.ts';
+import { syntax_events_to_tokens, validate_syntax_events } from '$lib/lexer.ts';
 
 const tokens_of = (text: string): Array<[string, string]> =>
 	syntax_events_to_tokens(syntax_styler_global.lex(text, 'css')).map((t) => [
 		t.type,
-		text.slice(t.start, t.end),
+		text.slice(t.start, t.end)
 	]);
 
 const picked = (text: string, types: Array<string>): Array<[string, string]> =>
@@ -21,16 +21,16 @@ describe('lexer_css structure', () => {
 			['property', 'color'],
 			['punctuation', ':'],
 			['punctuation', ';'],
-			['punctuation', '}'],
+			['punctuation', '}']
 		]);
 	});
 
 	test('selectors are a single leaf, including pseudo and attribute parts', () => {
 		assert.deepEqual(picked('.content::before { x: 1 }', ['selector']), [
-			['selector', '.content::before'],
+			['selector', '.content::before']
 		]);
 		assert.deepEqual(picked("a[title='Click: here'] { x: 1 }", ['selector']), [
-			['selector', "a[title='Click: here']"],
+			['selector', "a[title='Click: here']"]
 		]);
 		assert.deepEqual(picked('div > p { x: 1 }', ['selector']), [['selector', 'div > p']]);
 	});
@@ -40,7 +40,7 @@ describe('lexer_css structure', () => {
 			['selector', '.a'],
 			['property', 'color'],
 			['selector', '.b'],
-			['property', 'color'],
+			['property', 'color']
 		]);
 	});
 });
@@ -49,13 +49,13 @@ describe('lexer_css comments and strings', () => {
 	test('comments win over their contents', () => {
 		assert.deepEqual(picked('/* .a { x: 1 } */ .b {}', ['comment', 'selector']), [
 			['comment', '/* .a { x: 1 } */'],
-			['selector', '.b'],
+			['selector', '.b']
 		]);
 	});
 
 	test('a string is not broken by an inner comment sequence', () => {
 		assert.deepEqual(picked('.a { content: "/* x */"; }', ['string', 'comment']), [
-			['string', '"/* x */"'],
+			['string', '"/* x */"']
 		]);
 	});
 
@@ -76,27 +76,27 @@ describe('lexer_css values', () => {
 			['string', '"x.png"'],
 			['punctuation', ')'],
 			['punctuation', ';'],
-			['punctuation', '}'],
+			['punctuation', '}']
 		]);
 	});
 
 	test('function calls in values', () => {
 		assert.deepEqual(picked('.a { color: rgba(0, 0, 0, 0.1); }', ['function', 'property']), [
 			['property', 'color'],
-			['function', 'rgba'],
+			['function', 'rgba']
 		]);
 	});
 
 	test('!important', () => {
 		assert.deepEqual(picked('.a { color: red !important; }', ['important']), [
-			['important', '!important'],
+			['important', '!important']
 		]);
 	});
 
 	test('numbers and bare identifiers in values stay plain (parity)', () => {
 		assert.deepEqual(picked('.a { margin: 10px; color: red; }', ['number', 'property']), [
 			['property', 'margin'],
-			['property', 'color'],
+			['property', 'color']
 		]);
 	});
 });
@@ -110,14 +110,14 @@ describe('lexer_css at-rules', () => {
 			['punctuation', '('],
 			['property', 'max-width'],
 			['punctuation', ':'],
-			['punctuation', ')'],
+			['punctuation', ')']
 		]);
 	});
 
 	test('at-rule prelude keywords', () => {
 		assert.deepEqual(picked('@media screen and (min-width: 1px) {}', ['keyword', 'rule']), [
 			['rule', '@media'],
-			['keyword', 'and'],
+			['keyword', 'and']
 		]);
 	});
 });
@@ -132,7 +132,7 @@ describe('lexer_css sample', () => {
 
 	test('sample produces its characteristic token types', () => {
 		const types = new Set(
-			syntax_events_to_tokens(syntax_styler_global.lex(content, 'css')).map((t) => t.type),
+			syntax_events_to_tokens(syntax_styler_global.lex(content, 'css')).map((t) => t.type)
 		);
 		for (const t of ['selector', 'property', 'function', 'comment', 'string', 'atrule']) {
 			assert.ok(types.has(t), `expected a ${t} token in the sample`);

@@ -1,8 +1,8 @@
-import {parse, type PreprocessorGroup, type AST} from 'svelte/compiler';
+import { parse, type PreprocessorGroup, type AST } from 'svelte/compiler';
 import MagicString from 'magic-string';
-import {walk} from 'zimmerframe';
-import {should_exclude_path} from '@fuzdev/fuz_util/path.ts';
-import {escape_js_string} from '@fuzdev/fuz_util/string.ts';
+import { walk } from 'zimmerframe';
+import { should_exclude_path } from '@fuzdev/fuz_util/path.ts';
+import { escape_js_string } from '@fuzdev/fuz_util/string.ts';
 import {
 	find_attribute,
 	extract_static_string,
@@ -10,11 +10,11 @@ import {
 	build_static_bindings,
 	resolve_component_names,
 	handle_preprocess_error,
-	type ResolvedComponentImport,
+	type ResolvedComponentImport
 } from '@fuzdev/fuz_util/svelte_preprocess_helpers.ts';
 
-import {syntax_styler_global} from './syntax_styler_global.ts';
-import type {SyntaxStyler} from './syntax_styler.ts';
+import { syntax_styler_global } from './syntax_styler_global.ts';
+import type { SyntaxStyler } from './syntax_styler.ts';
 
 /**
  * Options for `svelte_preprocess_fuz_code`.
@@ -62,14 +62,14 @@ export interface PreprocessFuzCodeOptions {
  * ```
  */
 export const svelte_preprocess_fuz_code = (
-	options: PreprocessFuzCodeOptions = {},
+	options: PreprocessFuzCodeOptions = {}
 ): PreprocessorGroup => {
 	const {
 		exclude = [],
 		syntax_styler = syntax_styler_global,
 		cache = true,
 		component_imports = ['@fuzdev/fuz_code/Code.svelte'],
-		on_error = process.env.CI === 'true' ? 'throw' : 'log',
+		on_error = process.env.CI === 'true' ? 'throw' : 'log'
 	} = options;
 
 	// In-memory cache: content+lang hash → highlighted HTML
@@ -78,24 +78,24 @@ export const svelte_preprocess_fuz_code = (
 	return {
 		name: 'fuz-code',
 
-		markup: ({content, filename}) => {
+		markup: ({ content, filename }) => {
 			// Skip excluded files
 			if (should_exclude_path(filename, exclude)) {
-				return {code: content};
+				return { code: content };
 			}
 
 			// Quick check: does file import from a known Code component source?
 			if (!component_imports.some((source) => content.includes(source))) {
-				return {code: content};
+				return { code: content };
 			}
 
 			const s = new MagicString(content);
-			const ast = parse(content, {filename, modern: true});
+			const ast = parse(content, { filename, modern: true });
 
 			// Resolve which local names map to the Code component
 			const code_names = resolve_component_names(ast, component_imports);
 			if (code_names.size === 0) {
-				return {code: content};
+				return { code: content };
 			}
 
 			const bindings = build_static_bindings(ast);
@@ -106,11 +106,11 @@ export const svelte_preprocess_fuz_code = (
 				on_error,
 				filename,
 				source: content,
-				bindings,
+				bindings
 			});
 
 			if (transformations.length === 0) {
-				return {code: content};
+				return { code: content };
 			}
 
 			// Apply transformations
@@ -120,9 +120,9 @@ export const svelte_preprocess_fuz_code = (
 
 			return {
 				code: s.toString(),
-				map: s.generateMap({hires: true}),
+				map: s.generateMap({ hires: true })
 			};
-		},
+		}
 	};
 };
 
@@ -148,7 +148,7 @@ const try_highlight = (
 	text: string,
 	lang: string,
 	syntax_styler: SyntaxStyler,
-	options: FindCodeUsagesOptions,
+	options: FindCodeUsagesOptions
 ): string | null => {
 	const cache_key = `${lang}:${text}`;
 	let html = options.cache?.get(cache_key);
@@ -172,12 +172,12 @@ const find_code_usages = (
 	ast: AST.Root,
 	syntax_styler: SyntaxStyler,
 	code_names: Map<string, ResolvedComponentImport>,
-	options: FindCodeUsagesOptions,
+	options: FindCodeUsagesOptions
 ): Array<Transformation> => {
 	const transformations: Array<Transformation> = [];
 
 	walk(ast.fragment as any, null, {
-		Component(node: AST.Component, context: {next: () => void}) {
+		Component(node: AST.Component, context: { next: () => void }) {
 			// Always recurse into children - without this, Code components
 			// nested inside other components would be missed, because zimmerframe
 			// does not auto-recurse when a visitor is defined for a node type.
@@ -212,7 +212,7 @@ const find_code_usages = (
 				transformations.push({
 					start: content_attr.start,
 					end: content_attr.end,
-					replacement: `dangerous_raw_html={'${escape_js_string(html)}'}`,
+					replacement: `dangerous_raw_html={'${escape_js_string(html)}'}`
 				});
 				return;
 			}
@@ -221,17 +221,17 @@ const find_code_usages = (
 			const chain = try_extract_conditional_chain(
 				content_attr.value,
 				options.source,
-				options.bindings,
+				options.bindings
 			);
 			if (chain) {
 				// Highlight all branches
-				const highlighted: Array<{html: string; original: string}> = [];
+				const highlighted: Array<{ html: string; original: string }> = [];
 				let any_changed = false;
 				for (const branch of chain) {
 					const html = try_highlight(branch.value, lang_value, syntax_styler, options);
 					if (html === null) return;
 					if (html !== branch.value) any_changed = true;
-					highlighted.push({html, original: branch.value});
+					highlighted.push({ html, original: branch.value });
 				}
 				if (!any_changed) return;
 
@@ -252,10 +252,10 @@ const find_code_usages = (
 				transformations.push({
 					start: content_attr.start,
 					end: content_attr.end,
-					replacement: `dangerous_raw_html={${expr}}`,
+					replacement: `dangerous_raw_html={${expr}}`
 				});
 			}
-		},
+		}
 	});
 
 	return transformations;

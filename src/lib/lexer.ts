@@ -45,7 +45,7 @@ export class TokenTypeRegistry {
 	 */
 	readonly infos: Array<TokenTypeInfo> = [
 		// id 0 is reserved — it's the close-event tag
-		{id: 0, name: '', aliases: [], classes: '', open_tag: ''},
+		{ id: 0, name: '', aliases: [], classes: '', open_tag: '' }
 	];
 	#ids: Map<string, number> = new Map();
 
@@ -63,7 +63,7 @@ export class TokenTypeRegistry {
 		let classes = 'token_' + name;
 		for (const a of aliases) classes += ' token_' + a;
 		const id = this.infos.length;
-		this.infos.push({id, name, aliases, classes, open_tag: '<span class="' + classes + '">'});
+		this.infos.push({ id, name, aliases, classes, open_tag: '<span class="' + classes + '">' });
 		this.#ids.set(key, id);
 		return id;
 	}
@@ -194,7 +194,7 @@ export class Lexer {
 	leaf(type_id: number, start: number, end: number): void {
 		if (start >= end) return;
 		const i = this.#last_leaf;
-		const {events} = this;
+		const { events } = this;
 		if (i !== -1 && events[i] === type_id && events[i + 2] === start) {
 			events[i + 2] = end;
 			return;
@@ -271,7 +271,7 @@ export const lex_syntax = (
 	text: string,
 	lang: SyntaxLang,
 	langs?: Map<string, SyntaxLang>,
-	types: TokenTypeRegistry = token_types_global,
+	types: TokenTypeRegistry = token_types_global
 ): LexedSyntax => {
 	// capacity heuristic: dense token streams run ~1 int per source char
 	const lexer = new Lexer(text.length);
@@ -280,7 +280,7 @@ export const lex_syntax = (
 	lexer.end = text.length;
 	lexer.langs = langs ?? null;
 	lang.lex(lexer);
-	return {text, events: lexer.events, events_len: lexer.events_len, types};
+	return { text, events: lexer.events, events_len: lexer.events_len, types };
 };
 
 /**
@@ -312,8 +312,8 @@ const escape_html_slice = (text: string, from: number, to: number): string => {
  * Gap text is copy-escaped; token spans use the precomputed open tags.
  */
 export const render_syntax_html = (lexed: LexedSyntax): string => {
-	const {text, events, events_len} = lexed;
-	const {infos} = lexed.types;
+	const { text, events, events_len } = lexed;
+	const { infos } = lexed.types;
 	let out = '';
 	let pos = 0;
 	let i = 0;
@@ -359,18 +359,18 @@ export interface SyntaxEventToken {
  * (containers precede their children).
  */
 export const syntax_events_to_tokens = (lexed: LexedSyntax): Array<SyntaxEventToken> => {
-	const {events, events_len} = lexed;
-	const {infos} = lexed.types;
+	const { events, events_len } = lexed;
+	const { infos } = lexed.types;
 	const tokens: Array<SyntaxEventToken> = [];
 	const stack: Array<SyntaxEventToken> = [];
 	let i = 0;
 	while (i < events_len) {
 		const tag = events[i]!;
 		if (tag > 0) {
-			tokens.push({type: infos[tag]!.name, start: events[i + 1]!, end: events[i + 2]!});
+			tokens.push({ type: infos[tag]!.name, start: events[i + 1]!, end: events[i + 2]! });
 			i += 3;
 		} else if (tag < 0) {
-			const t: SyntaxEventToken = {type: infos[-tag]!.name, start: events[i + 1]!, end: -1};
+			const t: SyntaxEventToken = { type: infos[-tag]!.name, start: events[i + 1]!, end: -1 };
 			tokens.push(t);
 			stack.push(t);
 			i += 2;
@@ -389,8 +389,8 @@ export const syntax_events_to_tokens = (lexed: LexedSyntax): Array<SyntaxEventTo
  * monotonic and in-bounds, containers balanced.
  */
 export const validate_syntax_events = (lexed: LexedSyntax): Array<string> => {
-	const {text, events, events_len} = lexed;
-	const {infos} = lexed.types;
+	const { text, events, events_len } = lexed;
+	const { infos } = lexed.types;
 	const issues: Array<string> = [];
 	const stack: Array<number> = [];
 	let cursor = 0;

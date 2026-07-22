@@ -1,14 +1,14 @@
 <script lang="ts">
-	import {onMount, type Component} from 'svelte';
+	import { onMount, type Component } from 'svelte';
 
-	import type {BenchmarkComponentProps} from './benchmark_types.ts';
-	import {ensure_paint} from './benchmark_dom.ts';
+	import type { BenchmarkComponentProps } from './benchmark_types.ts';
+	import { ensure_paint } from './benchmark_dom.ts';
 
 	const {
 		BenchmarkedComponent = null,
 		props = null,
 		on_commit = () => {},
-		on_paint = () => {},
+		on_paint = () => {}
 	}: {
 		BenchmarkedComponent: Component<BenchmarkComponentProps> | null;
 		props: BenchmarkComponentProps | null;

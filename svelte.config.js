@@ -1,37 +1,39 @@
-import {vitePreprocess} from '@sveltejs/vite-plugin-svelte';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import adapter from '@sveltejs/adapter-static';
-import {create_csp_directives} from '@fuzdev/fuz_ui/csp.js';
-import {csp_directives_of_fuzdev} from '@fuzdev/fuz_ui/csp_of_fuzdev.js';
-import {svelte_preprocess_mdz} from '@fuzdev/mdz/svelte_preprocess_mdz.js';
-import {execSync} from 'node:child_process';
+import { create_csp_directives } from '@fuzdev/fuz_ui/csp.js';
+import { csp_directives_of_fuzdev } from '@fuzdev/fuz_ui/csp_of_fuzdev.js';
+import { svelte_preprocess_mdz } from '@fuzdev/mdz/svelte_preprocess_mdz.js';
+import { execSync } from 'node:child_process';
 
 // Self-referencing import from dist — unavailable on first build after clean checkout,
 // but subsequent builds use the preprocessor for static Code compilation.
 /** @type {Array<import('svelte/compiler').PreprocessorGroup>} */
 let fuz_code_preprocessors = [];
 try {
-	const {svelte_preprocess_fuz_code} =
+	const { svelte_preprocess_fuz_code } =
 		await import('@fuzdev/fuz_code/svelte_preprocess_fuz_code.js');
-	fuz_code_preprocessors = [svelte_preprocess_fuz_code({component_imports: ['$lib/Code.svelte']})];
+	fuz_code_preprocessors = [
+		svelte_preprocess_fuz_code({ component_imports: ['$lib/Code.svelte'] })
+	];
 } catch {}
 
 /** @type {import('@sveltejs/kit').Config} */
 export default {
 	preprocess: [svelte_preprocess_mdz(), ...fuz_code_preprocessors, vitePreprocess()],
-	compilerOptions: {runes: true},
-	vitePlugin: {inspector: true},
+	compilerOptions: { runes: true },
+	vitePlugin: { inspector: true },
 	kit: {
 		adapter: adapter(),
-		paths: {relative: false}, // use root-absolute paths for SSR path comparison: https://svelte.dev/docs/kit/configuration#paths
+		paths: { relative: false }, // use root-absolute paths for SSR path comparison: https://svelte.dev/docs/kit/configuration#paths
 		alias: {
 			$routes: 'src/routes',
-			'@fuzdev/fuz_code': 'src/lib',
+			'@fuzdev/fuz_code': 'src/lib'
 		},
 		csp: {
 			directives: create_csp_directives({
-				extend: [csp_directives_of_fuzdev],
-			}),
+				extend: [csp_directives_of_fuzdev]
+			})
 		},
-		version: {name: execSync('git rev-parse HEAD').toString().trim()},
-	},
+		version: { name: execSync('git rev-parse HEAD').toString().trim() }
+	}
 };

@@ -1,19 +1,19 @@
-import type {Gen} from '@fuzdev/gro';
-import {readFileSync} from 'node:fs';
-import {fs_search} from '@fuzdev/fuz_util/fs.ts';
-import {basename} from 'node:path';
+import type { Gen } from '@fuzdev/gro';
+import { readFileSync } from 'node:fs';
+import { fs_search } from '@fuzdev/fuz_util/fs.ts';
+import { basename } from 'node:path';
 
-import {sample_langs} from '$lib/code_sample.ts';
+import { sample_langs } from '$lib/code_sample.ts';
 
 /** @nodocs */
-export const gen: Gen = async ({origin_path}) => {
+export const gen: Gen = async ({ origin_path }) => {
 	// Discover all sample files dynamically
 	const sample_files = await fs_search('src/test/fixtures/samples', {
-		file_filter: (path) => /sample_[^/]+\.(ts|rs|css|html|json|svelte|md|sh)$/.test(path),
+		file_filter: (path) => /sample_[^/]+\.(ts|rs|css|html|json|svelte|md|sh)$/.test(path)
 	});
 
 	// Create flat structure with lang_variant keys
-	const samples: Array<{key: string; name: string; lang: string; content: string}> = [];
+	const samples: Array<{ key: string; name: string; lang: string; content: string }> = [];
 
 	for (const file of sample_files) {
 		// Parse filename: sample_complex.ts → {variant: 'complex', lang: 'ts'}
@@ -28,7 +28,7 @@ export const gen: Gen = async ({origin_path}) => {
 			key: `${lang}_${variant}`,
 			name: `${lang}_${variant}`,
 			lang: lang!,
-			content: escape_string(content),
+			content: escape_string(content)
 		});
 	}
 
@@ -47,7 +47,7 @@ export const gen: Gen = async ({origin_path}) => {
 
 	// Generate the single export object with all samples
 	const sample_entries = samples
-		.map(({key, name, lang, content}) => {
+		.map(({ key, name, lang, content }) => {
 			return `\t${key}: {
 		name: '${name}',
 		lang: '${lang}',

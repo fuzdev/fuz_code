@@ -7,13 +7,13 @@
 	 * Requires importing `theme_highlight.css` instead of `theme.css`.
 	 */
 
-	import type {Snippet} from 'svelte';
-	import type {SvelteHTMLElements} from 'svelte/elements';
+	import type { Snippet } from 'svelte';
+	import type { SvelteHTMLElements } from 'svelte/elements';
 
-	import {syntax_styler_global} from './syntax_styler_global.ts';
-	import type {SyntaxStyler} from './syntax_styler.ts';
-	import {supports_css_highlight_api, type HighlightMode} from './highlight_manager.ts';
-	import {create_range_highlighting} from './range_highlighting.svelte.ts';
+	import { syntax_styler_global } from './syntax_styler_global.ts';
+	import type { SyntaxStyler } from './syntax_styler.ts';
+	import { supports_css_highlight_api, type HighlightMode } from './highlight_manager.ts';
+	import { create_range_highlighting } from './range_highlighting.svelte.ts';
 
 	const {
 		content,
@@ -86,7 +86,7 @@
 		enabled: () => use_ranges,
 		lang: () => lang,
 		syntax_styler: () => syntax_styler,
-		dev_label: 'CodeHighlight',
+		dev_label: 'CodeHighlight'
 	});
 
 	// Generate HTML markup for syntax highlighting in non-range mode
@@ -106,9 +106,9 @@
 
 <code {...rest} class:inline class:wrap data-lang={lang} bind:this={code_element}
 	>{#if use_ranges && children}{@render children(
-			content,
+			content
 		)}{:else if use_ranges || rh.highlighting_disabled}{content}{:else if children}{@render children(
-			html_content,
+			html_content
 		)}{:else}{@html html_content}{/if}</code
 >
 

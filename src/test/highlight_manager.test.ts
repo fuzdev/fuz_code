@@ -1,12 +1,12 @@
-import {test, assert, describe, beforeEach, afterEach} from 'vitest';
-import {HighlightManager, supports_css_highlight_api} from '$lib/highlight_manager.ts';
-import {TokenTypeRegistry, type LexedSyntax} from '$lib/lexer.ts';
+import { test, assert, describe, beforeEach, afterEach } from 'vitest';
+import { HighlightManager, supports_css_highlight_api } from '$lib/highlight_manager.ts';
+import { TokenTypeRegistry, type LexedSyntax } from '$lib/lexer.ts';
 import {
 	setup_mock_highlight_api,
 	restore_globals,
 	create_code_element,
 	create_code_element_with_comment,
-	type SavedGlobals,
+	type SavedGlobals
 } from './highlight_test_helpers.ts';
 
 /**
@@ -40,7 +40,7 @@ const build_lexed = (text: string, specs: Array<TokenSpec>): LexedSyntax => {
 		}
 	};
 	for (const spec of specs) emit(spec);
-	return {text, events: Int32Array.from(events), events_len: events.length, types};
+	return { text, events: Int32Array.from(events), events_len: events.length, types };
 };
 
 let saved_globals: SavedGlobals;
@@ -97,7 +97,7 @@ describe('initialization', () => {
 describe('DOM element handling', () => {
 	test('no-op when no text node and no events', () => {
 		const manager = new HighlightManager();
-		const element = {childNodes: []} as unknown as Element;
+		const element = { childNodes: [] } as unknown as Element;
 		assert.doesNotThrow(() => manager.highlight_from_lexed(element, build_lexed('', [])));
 		assert.equal(manager.element_ranges.size, 0);
 	});
@@ -105,7 +105,7 @@ describe('DOM element handling', () => {
 	test('finds the text node past leading comment nodes', () => {
 		const manager = new HighlightManager();
 		const element = create_code_element_with_comment('const x = 1;');
-		const lexed = build_lexed('const x = 1;', [{type: 'keyword', start: 0, end: 5}]);
+		const lexed = build_lexed('const x = 1;', [{ type: 'keyword', start: 0, end: 5 }]);
 		assert.doesNotThrow(() => manager.highlight_from_lexed(element, lexed));
 		assert.ok(manager.element_ranges.has('token_keyword'));
 	});
@@ -123,9 +123,9 @@ describe('range creation', () => {
 		const manager = new HighlightManager();
 		const element = create_code_element('const x = 1;');
 		const lexed = build_lexed('const x = 1;', [
-			{type: 'keyword', start: 0, end: 5},
-			{type: 'variable', start: 6, end: 7},
-			{type: 'number', start: 10, end: 11},
+			{ type: 'keyword', start: 0, end: 5 },
+			{ type: 'variable', start: 6, end: 7 },
+			{ type: 'number', start: 10, end: 11 }
 		]);
 
 		manager.highlight_from_lexed(element, lexed);
@@ -141,7 +141,7 @@ describe('range creation', () => {
 		const element = create_code_element('keyword');
 		manager.highlight_from_lexed(
 			element,
-			build_lexed('keyword', [{type: 'keyword', start: 0, end: 7}]),
+			build_lexed('keyword', [{ type: 'keyword', start: 0, end: 7 }])
 		);
 
 		const ranges = manager.element_ranges.get('token_keyword')!;
@@ -160,20 +160,20 @@ describe('range creation', () => {
 				start: 0,
 				end: 15,
 				children: [
-					{type: 'punctuation', start: 0, end: 1},
+					{ type: 'punctuation', start: 0, end: 1 },
 					{
 						type: 'interpolation',
 						start: 7,
 						end: 14,
 						children: [
-							{type: 'punctuation', start: 7, end: 9},
-							{type: 'variable', start: 9, end: 13},
-							{type: 'punctuation', start: 13, end: 14},
-						],
+							{ type: 'punctuation', start: 7, end: 9 },
+							{ type: 'variable', start: 9, end: 13 },
+							{ type: 'punctuation', start: 13, end: 14 }
+						]
 					},
-					{type: 'punctuation', start: 14, end: 15},
-				],
-			},
+					{ type: 'punctuation', start: 14, end: 15 }
+				]
+			}
 		]);
 
 		manager.highlight_from_lexed(element, lexed);
@@ -206,12 +206,12 @@ describe('range creation', () => {
 								type: 'level3',
 								start: 0,
 								end: 4,
-								children: [{type: 'level4', start: 0, end: 1}],
-							},
-						],
-					},
-				],
-			},
+								children: [{ type: 'level4', start: 0, end: 1 }]
+							}
+						]
+					}
+				]
+			}
 		]);
 
 		manager.highlight_from_lexed(element, lexed);
@@ -230,9 +230,9 @@ describe('range creation', () => {
 		const manager = new HighlightManager();
 		const element = create_code_element('a-b-c');
 		const lexed = build_lexed('a-b-c', [
-			{type: 'part1', start: 0, end: 1},
-			{type: 'part2', start: 2, end: 3},
-			{type: 'part3', start: 4, end: 5},
+			{ type: 'part1', start: 0, end: 1 },
+			{ type: 'part2', start: 2, end: 3 },
+			{ type: 'part3', start: 4, end: 5 }
 		]);
 
 		manager.highlight_from_lexed(element, lexed);
@@ -249,7 +249,7 @@ describe('range creation', () => {
 		const manager = new HighlightManager();
 		const element = create_code_element('function');
 		const lexed = build_lexed('function', [
-			{type: 'keyword', start: 0, end: 8, alias: ['reserved', 'special_keyword']},
+			{ type: 'keyword', start: 0, end: 8, alias: ['reserved', 'special_keyword'] }
 		]);
 
 		manager.highlight_from_lexed(element, lexed);
@@ -276,7 +276,7 @@ describe('range creation', () => {
 			const element = create_code_element('const');
 			manager.highlight_from_lexed(
 				element,
-				build_lexed('const', [{type: 'keyword', start: 0, end: 5}]),
+				build_lexed('const', [{ type: 'keyword', start: 0, end: 5 }])
 			);
 
 			const ranges = manager.element_ranges.get('token_keyword')!;
@@ -303,7 +303,7 @@ describe('range creation', () => {
 		try {
 			const manager = new HighlightManager();
 			const element = create_code_element('const');
-			const lexed = build_lexed('const', [{type: 'keyword', start: 0, end: 5}]);
+			const lexed = build_lexed('const', [{ type: 'keyword', start: 0, end: 5 }]);
 
 			assert.doesNotThrow(() => manager.highlight_from_lexed(element, lexed));
 
@@ -330,7 +330,7 @@ describe('range creation', () => {
 
 		manager.highlight_from_lexed(
 			element,
-			build_lexed('const', [{type: 'keyword', start: 0, end: 5}]),
+			build_lexed('const', [{ type: 'keyword', start: 0, end: 5 }])
 		);
 
 		assert.ok(CSS.highlights.has('token_keyword'));
@@ -342,7 +342,7 @@ describe('range creation', () => {
 		const element = create_code_element('test');
 		manager.highlight_from_lexed(
 			element,
-			build_lexed('test', [{type: 'mytype', start: 0, end: 4}]),
+			build_lexed('test', [{ type: 'mytype', start: 0, end: 4 }])
 		);
 
 		assert.equal(CSS.highlights.has('mytype'), false);
@@ -354,7 +354,7 @@ describe('range creation', () => {
 		const element = create_code_element('const');
 		manager.highlight_from_lexed(
 			element,
-			build_lexed('const', [{type: 'keyword', start: 0, end: 5}]),
+			build_lexed('const', [{ type: 'keyword', start: 0, end: 5 }])
 		);
 
 		// keyword has priority 2 according to highlight_priorities
@@ -367,7 +367,7 @@ describe('bounds and multi-byte handling', () => {
 		const manager = new HighlightManager();
 		const element = create_code_element('abc'); // 3 chars
 		// a DOM/source mismatch: the lexed text is longer than the element's text node
-		const lexed = build_lexed('abcd', [{type: 'bad', start: 0, end: 4}]);
+		const lexed = build_lexed('abcd', [{ type: 'bad', start: 0, end: 4 }]);
 
 		assert.doesNotThrow(() => manager.highlight_from_lexed(element, lexed));
 
@@ -379,7 +379,7 @@ describe('bounds and multi-byte handling', () => {
 	test('skips a token that starts at or past the text node length', () => {
 		const manager = new HighlightManager();
 		const element = create_code_element('abc'); // 3 chars
-		const lexed = build_lexed('abcdef', [{type: 'past', start: 4, end: 6}]);
+		const lexed = build_lexed('abcdef', [{ type: 'past', start: 4, end: 6 }]);
 
 		manager.highlight_from_lexed(element, lexed);
 		// clamped end (3) <= start (4) -> no range
@@ -393,8 +393,8 @@ describe('bounds and multi-byte handling', () => {
 		const text = `${emoji} = 1;`;
 		const element = create_code_element(text);
 		const lexed = build_lexed(text, [
-			{type: 'variable', start: 0, end: 2},
-			{type: 'number', start: 5, end: 6},
+			{ type: 'variable', start: 0, end: 2 },
+			{ type: 'number', start: 5, end: 6 }
 		]);
 
 		manager.highlight_from_lexed(element, lexed);
@@ -409,7 +409,7 @@ describe('bounds and multi-byte handling', () => {
 });
 
 describe('lifecycle management', () => {
-	const const_lexed = () => build_lexed('const', [{type: 'keyword', start: 0, end: 5}]);
+	const const_lexed = () => build_lexed('const', [{ type: 'keyword', start: 0, end: 5 }]);
 
 	test('clear_element_ranges removes ranges from CSS.highlights', () => {
 		const manager = new HighlightManager();
@@ -481,7 +481,7 @@ describe('lifecycle management', () => {
 
 		manager.highlight_from_lexed(
 			element,
-			build_lexed('const', [{type: 'variable', start: 0, end: 5}]),
+			build_lexed('const', [{ type: 'variable', start: 0, end: 5 }])
 		);
 		assert.equal(manager.element_ranges.has('token_keyword'), false);
 		assert.ok(manager.element_ranges.has('token_variable'));
@@ -496,11 +496,11 @@ describe('multiple managers', () => {
 
 		manager1.highlight_from_lexed(
 			create_code_element('const'),
-			build_lexed('const', [{type: 'keyword', start: 0, end: 5}]),
+			build_lexed('const', [{ type: 'keyword', start: 0, end: 5 }])
 		);
 		manager2.highlight_from_lexed(
 			create_code_element('let'),
-			build_lexed('let', [{type: 'keyword', start: 0, end: 3}]),
+			build_lexed('let', [{ type: 'keyword', start: 0, end: 3 }])
 		);
 
 		assert.equal(CSS.highlights.get('token_keyword')!.size, 2);
@@ -512,18 +512,18 @@ describe('multiple managers', () => {
 
 		manager1.highlight_from_lexed(
 			create_code_element('const'),
-			build_lexed('const', [{type: 'keyword', start: 0, end: 5}]),
+			build_lexed('const', [{ type: 'keyword', start: 0, end: 5 }])
 		);
 		manager2.highlight_from_lexed(
 			create_code_element('let'),
-			build_lexed('let', [{type: 'keyword', start: 0, end: 3}]),
+			build_lexed('let', [{ type: 'keyword', start: 0, end: 3 }])
 		);
 
 		assert.equal(manager1.element_ranges.get('token_keyword')!.length, 1);
 		assert.equal(manager2.element_ranges.get('token_keyword')!.length, 1);
 		assert.notEqual(
 			manager1.element_ranges.get('token_keyword')![0],
-			manager2.element_ranges.get('token_keyword')![0],
+			manager2.element_ranges.get('token_keyword')![0]
 		);
 	});
 });

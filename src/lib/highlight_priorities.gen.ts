@@ -1,12 +1,12 @@
-import type {Gen} from '@fuzdev/gro';
-import {readFileSync} from 'node:fs';
+import type { Gen } from '@fuzdev/gro';
+import { readFileSync } from 'node:fs';
 
 const theme_css_path = 'src/lib/theme_highlight.css';
 
 /** @nodocs */
 export const gen: Gen = {
-	dependencies: {files: [theme_css_path]},
-	generate: ({origin_path}) => {
+	dependencies: { files: [theme_css_path] },
+	generate: ({ origin_path }) => {
 		// Read the theme_highlight.css file
 		let css_content = readFileSync(theme_css_path, 'utf-8');
 
@@ -67,5 +67,5 @@ export const gen: Gen = {
 
 			${banner}
 		`;
-	},
+	}
 };

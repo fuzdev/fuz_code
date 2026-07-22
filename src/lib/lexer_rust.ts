@@ -10,7 +10,7 @@ import {
 	token_type,
 	words_map,
 	type Lexer,
-	type SyntaxLang,
+	type SyntaxLang
 } from './lexer.ts';
 
 /**
@@ -68,13 +68,13 @@ const WORDS: Map<string, number> = words_map(
 	[
 		K_KEYWORD,
 		'as async const crate dyn enum extern fn impl in let mod move mut pub ref self Self ' +
-			'static struct super trait type unsafe use where',
+			'static struct super trait type unsafe use where'
 	],
 	[K_SPECIAL, 'await break continue else for if loop match return try while yield'],
 	[K_BOOLEAN, 'true false'],
 	[K_BUILTIN, 'bool char f32 f64 i8 i16 i32 i64 i128 isize str u8 u16 u32 u64 u128 usize'],
 	[K_UNION, 'union'],
-	[K_MACRO_RULES, 'macro_rules'],
+	[K_MACRO_RULES, 'macro_rules']
 );
 
 // keywords that put the lexer in a type-name context for the next identifier
@@ -85,7 +85,7 @@ const CLASS_CTX_WORDS: Set<string> = new Set([
 	'union',
 	'type',
 	'impl',
-	'dyn',
+	'dyn'
 ]);
 
 /**
@@ -276,7 +276,7 @@ const scan_rust_operator = (text: string, i: number, end: number): number => {
 };
 
 const lex_rust = (l: Lexer): void => {
-	const {text, end} = l;
+	const { text, end } = l;
 	let i = l.pos;
 	let fn_ctx = false; // after `fn` / `macro_rules!` — the next identifier is a definition name
 	let class_ctx = false; // after `struct`/`enum`/… — the next identifier is a type name
@@ -670,5 +670,5 @@ const lex_rust = (l: Lexer): void => {
 export const lexer_rust: SyntaxLang = {
 	id: 'rust',
 	aliases: ['rs'],
-	lex: lex_rust,
+	lex: lex_rust
 };

@@ -88,12 +88,12 @@ export function setup_mock_highlight_api(): SavedGlobals {
 		highlight: (globalThis as any).Highlight,
 		range: (globalThis as any).Range,
 		static_range: (globalThis as any).StaticRange,
-		node: (globalThis as any).Node,
+		node: (globalThis as any).Node
 	};
 
 	// Mock CSS Highlight API
 	(globalThis as any).CSS = {
-		highlights: new Map<string, MockHighlight>(),
+		highlights: new Map<string, MockHighlight>()
 	};
 	(globalThis as any).Highlight = MockHighlight;
 	(globalThis as any).Range = MockRange;
@@ -103,7 +103,7 @@ export function setup_mock_highlight_api(): SavedGlobals {
 	(globalThis as any).Node = {
 		TEXT_NODE: 3,
 		ELEMENT_NODE: 1,
-		COMMENT_NODE: 8,
+		COMMENT_NODE: 8
 	};
 
 	return saved;
@@ -126,11 +126,11 @@ export function restore_globals(saved: SavedGlobals): void {
 export function create_code_element(text_content: string): Element {
 	const text_node = {
 		nodeType: 3, // TEXT_NODE
-		textContent: text_content,
+		textContent: text_content
 	} as unknown as Text;
 
 	const element = {
-		childNodes: [text_node],
+		childNodes: [text_node]
 	} as unknown as Element;
 
 	return element;
@@ -141,19 +141,19 @@ export function create_code_element(text_content: string): Element {
  */
 export function create_code_element_with_comment(
 	text_content: string,
-	_comment: string = 'svelte-check-ignore',
+	_comment: string = 'svelte-check-ignore'
 ): Element {
 	const comment_node = {
-		nodeType: 8, // COMMENT_NODE
+		nodeType: 8 // COMMENT_NODE
 	} as unknown as Comment;
 
 	const text_node = {
 		nodeType: 3, // TEXT_NODE
-		textContent: text_content,
+		textContent: text_content
 	} as unknown as Text;
 
 	const element = {
-		childNodes: [comment_node, text_node],
+		childNodes: [comment_node, text_node]
 	} as unknown as Element;
 
 	return element;

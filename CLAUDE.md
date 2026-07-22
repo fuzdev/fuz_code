@@ -3,7 +3,7 @@
 > Syntax highlighting - hand-written single-pass lexers
 
 fuz_code (`@fuzdev/fuz_code`) is a runtime syntax highlighting library optimized
-for HTML generation with CSS classes. It originated as a fork and by-hand rewrite of PrismJS, 
+for HTML generation with CSS classes. It originated as a fork and by-hand rewrite of PrismJS,
 with a redesigned tokenizer that replaces regular expressions with lexers per
 language emitting a flat token event stream
 
@@ -250,7 +250,7 @@ How the writers differ:
      error with a recovery hint rather than guess where to put the content.
   2. `benchmark/baseline.json` — a JSON snapshot of the same run, used by
      `benchmark_baseline_compare` (10% regression threshold, 30-day
-     staleness warning). The baseline compare runs *before* the save, so
+     staleness warning). The baseline compare runs _before_ the save, so
      the run still reports what changed against the prior baseline.
 
 Update the browser section manually after running the browser benchmark

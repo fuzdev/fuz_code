@@ -9,7 +9,7 @@ import {
 	skip_space,
 	token_type,
 	type Lexer,
-	type SyntaxLang,
+	type SyntaxLang
 } from './lexer.ts';
 
 /**
@@ -116,7 +116,7 @@ export const MARKUP_MODE_HTML: MarkupLexMode = {
 	rcdata: true,
 	special_attrs: true,
 	attr_comments: false,
-	lex_expression: null,
+	lex_expression: null
 };
 
 const MODE_XML: MarkupLexMode = {
@@ -125,7 +125,7 @@ const MODE_XML: MarkupLexMode = {
 	rcdata: false,
 	special_attrs: false,
 	attr_comments: false,
-	lex_expression: null,
+	lex_expression: null
 };
 
 // a tag-name char — anything except whitespace, `>`, `/`, `=`, `$`, `<`, `%`
@@ -156,7 +156,7 @@ export interface MarkupProbeCache {
 	amp: number;
 }
 
-export const create_markup_probe_cache = (): MarkupProbeCache => ({lt: -1, brace: -1, amp: -1});
+export const create_markup_probe_cache = (): MarkupProbeCache => ({ lt: -1, brace: -1, amp: -1 });
 
 /**
  * Scans an entity reference at the `&` at `i`, returning its exclusive end or
@@ -183,7 +183,7 @@ export const scan_entity_end = (text: string, i: number, end: number): number =>
  * runs over plain text runs, RCDATA regions, and attribute-value contents.
  */
 const lex_markup_entities = (l: Lexer, from: number, to: number, cache: MarkupProbeCache): void => {
-	const {text} = l;
+	const { text } = l;
 	let i = from;
 	while (i < to) {
 		cache.amp = advance_probe(text, cache.amp, i, '&');
@@ -226,14 +226,14 @@ const lex_markup_value_content = (
 	from: number,
 	to: number,
 	mode: MarkupLexMode,
-	cache: MarkupProbeCache,
+	cache: MarkupProbeCache
 ): void => {
-	const {lex_expression} = mode;
+	const { lex_expression } = mode;
 	if (lex_expression === null) {
 		lex_markup_entities(l, from, to, cache);
 		return;
 	}
-	const {text} = l;
+	const { text } = l;
 	let i = from;
 	while (i < to) {
 		cache.brace = advance_probe(text, cache.brace, i, '{');
@@ -262,7 +262,7 @@ const lex_markup_attr_value = (
 	closed: boolean,
 	embed_lang: string | null,
 	mode: MarkupLexMode,
-	cache: MarkupProbeCache,
+	cache: MarkupProbeCache
 ): void => {
 	l.open(T_ATTR_VALUE, eq);
 	l.leaf(T_ATTR_EQUALS, eq, eq + 1);
@@ -284,7 +284,7 @@ const lex_markup_attr_value = (
  * (`punctuation` leaves, e.g. `transition:fade|global`).
  */
 const lex_markup_attr_name = (l: Lexer, from: number, to: number, mode: MarkupLexMode): void => {
-	const {text} = l;
+	const { text } = l;
 	const ns_end = scan_namespace_end(text, from, to);
 	// directive-modifier pipes come *after* any `ns:` prefix — a `|` inside the
 	// namespace span (malformed input like `a|b:c`) is part of the namespace,
@@ -336,9 +336,9 @@ const lex_markup_tag = (
 	i: number,
 	end: number,
 	mode: MarkupLexMode,
-	cache: MarkupProbeCache,
+	cache: MarkupProbeCache
 ): number => {
-	const {text} = l;
+	const { text } = l;
 	const closing = text.charCodeAt(i + 1) === 47;
 	const name_start = i + (closing ? 2 : 1);
 	if (name_start >= end) return i + 1;
@@ -471,7 +471,7 @@ const lex_markup_tag = (
 				closed,
 				special_lang,
 				mode,
-				cache,
+				cache
 			);
 			l.close(value_end);
 		} else {
@@ -486,7 +486,7 @@ const lex_markup_tag = (
 				closed,
 				null,
 				mode,
-				cache,
+				cache
 			);
 		}
 		j = value_end;
@@ -514,7 +514,7 @@ const rawtext_name_at = (
 	text: string,
 	name_start: number,
 	end: number,
-	rcdata: boolean,
+	rcdata: boolean
 ): string | null => {
 	const c = text.charCodeAt(name_start) | 0x20;
 	if (c === 115) {
@@ -551,9 +551,9 @@ const lex_markup_rawtext = (
 	from: number,
 	end: number,
 	mode: MarkupLexMode,
-	cache: MarkupProbeCache,
+	cache: MarkupProbeCache
 ): number => {
-	const {text} = l;
+	const { text } = l;
 	let content_end = end;
 	let search = from;
 	while (true) {
@@ -597,9 +597,9 @@ export const lex_markup_construct = (
 	i: number,
 	end: number,
 	mode: MarkupLexMode,
-	cache: MarkupProbeCache,
+	cache: MarkupProbeCache
 ): number => {
-	const {text} = l;
+	const { text } = l;
 	const c1 = i + 1 < end ? text.charCodeAt(i + 1) : 0;
 	if (c1 === 33) {
 		// <!
@@ -661,8 +661,8 @@ export const lex_markup_construct = (
  * The entry point for the html/xml registrations here and for `lexer_svelte`.
  */
 export const lex_markup_window = (l: Lexer, mode: MarkupLexMode): void => {
-	const {text, end} = l;
-	const {lex_expression} = mode;
+	const { text, end } = l;
+	const { lex_expression } = mode;
 	const cache = create_markup_probe_cache();
 	let i = l.pos;
 	while (i < end) {
@@ -696,7 +696,7 @@ const lex_markup_xml = (l: Lexer): void => {
 export const lexer_markup: SyntaxLang = {
 	id: 'markup',
 	aliases: ['html', 'mathml', 'svg'],
-	lex: lex_markup_html,
+	lex: lex_markup_html
 };
 
 /**
@@ -706,5 +706,5 @@ export const lexer_markup: SyntaxLang = {
 export const lexer_xml: SyntaxLang = {
 	id: 'xml',
 	aliases: ['ssml', 'atom', 'rss'],
-	lex: lex_markup_xml,
+	lex: lex_markup_xml
 };

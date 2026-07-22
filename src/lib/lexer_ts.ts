@@ -13,7 +13,7 @@ import {
 	trim_space_end,
 	words_map,
 	type Lexer,
-	type SyntaxLang,
+	type SyntaxLang
 } from './lexer.ts';
 
 /**
@@ -92,12 +92,12 @@ const WORDS: Map<string, number> = words_map(
 	[
 		K_KEYWORD,
 		'class const debugger delete enum extends function implements in instanceof interface let ' +
-			'new null of package private protected public static super this typeof undefined var void with',
+			'new null of package private protected public static super this typeof undefined var void with'
 	],
 	[
 		K_SPECIAL,
 		'as await break case catch continue default do else export finally for from if import ' +
-			'return switch throw try while yield',
+			'return switch throw try while yield'
 	],
 	[K_TS, 'abstract declare is keyof readonly require satisfies'],
 	[K_TS_COND, 'asserts infer module namespace'],
@@ -106,7 +106,7 @@ const WORDS: Map<string, number> = words_map(
 	[K_ASSERT, 'assert'],
 	[K_TYPE_WORD, 'type'],
 	[K_BOOLEAN, 'true false'],
-	[K_NUMBER_WORD, 'NaN Infinity'],
+	[K_NUMBER_WORD, 'NaN Infinity']
 );
 
 // keywords that put the lexer in a class-name context for the next identifier
@@ -117,7 +117,7 @@ const CLASS_CTX_WORDS: Set<string> = new Set([
 	'instanceof',
 	'interface',
 	'new',
-	'type',
+	'type'
 ]);
 // keywords after which the next identifier is a type assertion
 const AS_WORDS: Set<string> = new Set(['as', 'satisfies']);
@@ -138,7 +138,7 @@ const BUILTIN_WORDS: Set<string> = new Set([
 	'number',
 	'string',
 	'symbol',
-	'unknown',
+	'unknown'
 ]);
 
 // previous-significant-token categories, for regex-vs-division and contexts
@@ -167,7 +167,7 @@ interface TsScanCache {
 const create_ts_scan_cache = (): TsScanCache => ({
 	next_eq: -1,
 	next_gt: -1,
-	next_rparen: -1,
+	next_rparen: -1
 });
 
 /**
@@ -349,7 +349,7 @@ const is_function_variable = (
 	text: string,
 	after: number,
 	end: number,
-	cache: TsScanCache,
+	cache: TsScanCache
 ): boolean => {
 	const c = text.charCodeAt(after);
 	if (c === 61) {
@@ -584,7 +584,7 @@ const create_ts_frame = (): TsFrame => ({
 	depth: 0,
 	ret: R_ROOT,
 	ret_a: 0,
-	ret_b: 0,
+	ret_b: 0
 });
 
 /**
@@ -602,9 +602,9 @@ const mac_push_window = (
 	ret_a: number,
 	ret_b: number,
 	term: number,
-	depth: number,
+	depth: number
 ): void => {
-	const {stack, sp} = mac;
+	const { stack, sp } = mac;
 	let f = stack[sp];
 	if (f === undefined) {
 		f = create_ts_frame();
@@ -634,7 +634,7 @@ const mac_push_window = (
  * finalizes by advancing the window beneath it past the literal.
  */
 const mac_push_template = (mac: TsMachine, from: number, chunk_start: number, to: number): void => {
-	const {stack, sp} = mac;
+	const { stack, sp } = mac;
 	let f = stack[sp];
 	if (f === undefined) {
 		f = create_ts_frame();
@@ -683,7 +683,7 @@ const scan_ts_template_body = (text: string, from: number, to: number): number =
  */
 const run_ts_template = (mac: TsMachine, frame: TsFrame): boolean => {
 	const l = mac.l;
-	const {text} = l;
+	const { text } = l;
 	const to = frame.to;
 	let j = frame.i;
 	const chunk_start = frame.chunk_start;
@@ -730,7 +730,7 @@ const run_ts_template = (mac: TsMachine, frame: TsFrame): boolean => {
 const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 	const l = mac.l;
 	const cache = mac.cache;
-	const {text} = l;
+	const { text } = l;
 	const to = frame.to;
 	const type_mode = frame.type_mode;
 	const term = frame.term;
@@ -792,7 +792,7 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 							angle_end + 1,
 							0,
 							0,
-							0,
+							0
 						);
 						return false;
 					}
@@ -937,7 +937,7 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 						angle_end + 1,
 						0,
 						0,
-						0,
+						0
 					);
 					return false;
 				}
@@ -1125,7 +1125,7 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 							type_end,
 							content_end,
 							0,
-							0,
+							0
 						);
 						return false;
 					}
@@ -1303,7 +1303,7 @@ const lex_ts = (l: Lexer): void => {
 		l.leaf(T_HASHBANG, 0, line_end);
 		i = line_end;
 	}
-	const mac: TsMachine = {l, cache: create_ts_scan_cache(), stack: [], sp: 0};
+	const mac: TsMachine = { l, cache: create_ts_scan_cache(), stack: [], sp: 0 };
 	mac_push_window(mac, i, l.end, false, R_ROOT, 0, 0, 0, 0);
 	run_ts(mac);
 	l.pos = l.end;
@@ -1321,5 +1321,5 @@ const lex_ts = (l: Lexer): void => {
 export const lexer_ts: SyntaxLang = {
 	id: 'ts',
 	aliases: ['typescript', 'js', 'javascript'],
-	lex: lex_ts,
+	lex: lex_ts
 };

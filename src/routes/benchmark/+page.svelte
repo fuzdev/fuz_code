@@ -1,12 +1,12 @@
 <script lang="ts">
-	import {resolve} from '$app/paths';
+	import { resolve } from '$app/paths';
 
-	import {samples as all_samples} from '$routes/samples/all.ts';
+	import { samples as all_samples } from '$routes/samples/all.ts';
 	import BenchmarkResults from './BenchmarkResults.svelte';
 	import BenchmarkHarness from './BenchmarkHarness.svelte';
-	import {run_all_benchmarks} from './benchmark_runner.ts';
-	import {implementations, languages} from './benchmark_fixtures.ts';
-	import type {BenchmarkConfig, BenchmarkState} from './benchmark_types.ts';
+	import { run_all_benchmarks } from './benchmark_runner.ts';
+	import { implementations, languages } from './benchmark_fixtures.ts';
+	import type { BenchmarkConfig, BenchmarkState } from './benchmark_types.ts';
 
 	/* eslint-disable no-console */
 
@@ -18,7 +18,7 @@
 		iterations: 5,
 		warmup_count: 2,
 		cooldown_ms: 50,
-		content_multiplier: 10,
+		content_multiplier: 10
 	});
 
 	// UI state
@@ -48,7 +48,7 @@
 		benchmark_state = {
 			results: [],
 			warnings: [],
-			summary: null,
+			summary: null
 		};
 
 		// Calculate total for progress bar
@@ -64,7 +64,7 @@
 				on_test_start: (test) => {
 					current_test = test;
 				},
-				should_stop: () => should_stop,
+				should_stop: () => should_stop
 			});
 
 			current_test = should_stop ? 'Stopped' : 'Complete';

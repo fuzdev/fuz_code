@@ -2,19 +2,19 @@
 	// the Highlight API rules live in theme_highlight.css (not theme.css)
 	import '$lib/theme_highlight.css';
 
-	import {page} from '$app/state';
-	import {SvelteSet} from 'svelte/reactivity';
-	import {DOCS_PATH} from '@fuzdev/fuz_ui/docs_helpers.svelte.ts';
-	import {tome_get_by_slug} from '@fuzdev/fuz_ui/tome.ts';
+	import { page } from '$app/state';
+	import { SvelteSet } from 'svelte/reactivity';
+	import { DOCS_PATH } from '@fuzdev/fuz_ui/docs_helpers.svelte.ts';
+	import { tome_get_by_slug } from '@fuzdev/fuz_ui/tome.ts';
 	import TomeContent from '@fuzdev/fuz_ui/TomeContent.svelte';
 	import TomeLink from '@fuzdev/fuz_ui/TomeLink.svelte';
 	import DeclarationLink from '@fuzdev/fuz_ui/DeclarationLink.svelte';
 
 	import Code from '$lib/Code.svelte';
 	import CodeHighlight from '$lib/CodeHighlight.svelte';
-	import {sample_langs} from '$lib/code_sample.ts';
-	import {samples} from '$routes/samples/all.ts';
-	import {lang_colors} from '$routes/lang_color.ts';
+	import { sample_langs } from '$lib/code_sample.ts';
+	import { samples } from '$routes/samples/all.ts';
+	import { lang_colors } from '$routes/lang_color.ts';
 
 	const TOME_SLUG = 'samples';
 	const tome = tome_get_by_slug(TOME_SLUG);
@@ -47,7 +47,7 @@
 	const column_width = $derived(show_html && show_highlight ? '50%' : '100%');
 
 	const shown_samples = $derived(
-		Object.values(samples).filter((sample) => shown_langs.has(sample.lang)),
+		Object.values(samples).filter((sample) => shown_langs.has(sample.lang))
 	);
 </script>
 

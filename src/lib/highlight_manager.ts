@@ -1,7 +1,7 @@
-import {DEV} from 'esm-env';
+import { DEV } from 'esm-env';
 
-import type {LexedSyntax, TokenTypeInfo} from './lexer.ts';
-import {highlight_priorities} from './highlight_priorities.ts';
+import type { LexedSyntax, TokenTypeInfo } from './lexer.ts';
+import { highlight_priorities } from './highlight_priorities.ts';
 
 export type HighlightMode = 'auto' | 'ranges' | 'html';
 
@@ -41,7 +41,7 @@ const find_text_node = (element: Element): Node | null => {
 const push_range = (
 	ranges_by_name: Map<string, Array<AbstractRange>>,
 	name: string,
-	range: AbstractRange,
+	range: AbstractRange
 ): void => {
 	const existing = ranges_by_name.get(name);
 	if (existing) {
@@ -201,7 +201,7 @@ export class HighlightManager {
 				startContainer: text_node,
 				startOffset: start,
 				endContainer: text_node,
-				endOffset: end,
+				endOffset: end
 			});
 		}
 		const range = new Range();
@@ -218,14 +218,14 @@ export class HighlightManager {
 	#collect_ranges(
 		lexed: LexedSyntax,
 		text_node: Node,
-		ranges_by_name: Map<string, Array<AbstractRange>>,
+		ranges_by_name: Map<string, Array<AbstractRange>>
 	): void {
-		const {events, events_len} = lexed;
-		const {infos} = lexed.types;
+		const { events, events_len } = lexed;
+		const { infos } = lexed.types;
 		const text_length = text_node.textContent?.length ?? 0;
 		// open containers awaiting their close, so a container's range spans
 		// `[open_start, close_end)`
-		const open_stack: Array<{id: number; start: number}> = [];
+		const open_stack: Array<{ id: number; start: number }> = [];
 		let i = 0;
 		while (i < events_len) {
 			const tag = events[i]!;
@@ -236,11 +236,11 @@ export class HighlightManager {
 					events[i + 2]!,
 					text_node,
 					ranges_by_name,
-					text_length,
+					text_length
 				);
 				i += 3;
 			} else if (tag < 0) {
-				open_stack.push({id: -tag, start: events[i + 1]!});
+				open_stack.push({ id: -tag, start: events[i + 1]! });
 				i += 2;
 			} else {
 				const open = open_stack.pop();
@@ -251,7 +251,7 @@ export class HighlightManager {
 						events[i + 1]!,
 						text_node,
 						ranges_by_name,
-						text_length,
+						text_length
 					);
 				}
 				i += 2;
@@ -272,7 +272,7 @@ export class HighlightManager {
 		end: number,
 		text_node: Node,
 		ranges_by_name: Map<string, Array<AbstractRange>>,
-		text_length: number,
+		text_length: number
 	): void {
 		const safe_end = end > text_length ? text_length : end;
 		if (safe_end <= start) return;

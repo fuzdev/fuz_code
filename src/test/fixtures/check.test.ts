@@ -1,7 +1,7 @@
-import {test, assert, describe} from 'vitest';
-import {readFileSync, existsSync} from 'node:fs';
-import {discover_samples, process_sample, get_fixture_path} from './helpers.ts';
-import {sample_langs} from '$lib/code_sample.ts';
+import { test, assert, describe } from 'vitest';
+import { readFileSync, existsSync } from 'node:fs';
+import { discover_samples, process_sample, get_fixture_path } from './helpers.ts';
+import { sample_langs } from '$lib/code_sample.ts';
 
 /**
  * Verifies runtime lexer output against the generated fixtures: HTML
@@ -22,7 +22,7 @@ describe('generated fixtures match runtime', async () => {
 				// Basic sanity check - fixtures must be generated before tests can run
 				assert.ok(
 					existsSync(html_fixture_path),
-					`Fixture file missing: ${html_fixture_path}. Run 'npm run task src/test/fixtures/update' to generate.`,
+					`Fixture file missing: ${html_fixture_path}. Run 'npm run task src/test/fixtures/update' to generate.`
 				);
 			});
 
@@ -48,7 +48,7 @@ describe('generated fixtures match runtime', async () => {
 				assert.strictEqual(
 					runtime_output.html,
 					fixture_html,
-					`HTML output mismatch for ${sample.lang}_${sample.variant}`,
+					`HTML output mismatch for ${sample.lang}_${sample.variant}`
 				);
 
 				// TODO: Additional assertions
@@ -70,7 +70,7 @@ describe('generated fixtures match runtime', async () => {
 
 				// Verify tokens are properly nested (overlapping is ok if fully contained)
 				const tokensByStart = [...runtime_output.tokens].sort((a, b) =>
-					a.start !== b.start ? a.start - b.start : b.end - a.end,
+					a.start !== b.start ? a.start - b.start : b.end - a.end
 				);
 
 				for (let i = 0; i < tokensByStart.length; i++) {
@@ -79,7 +79,7 @@ describe('generated fixtures match runtime', async () => {
 					// Check bounds
 					assert.ok(
 						token.start >= 0 && token.end <= sample.content.length,
-						`Token ${token.type} extends beyond content at position ${token.end} (content length: ${sample.content.length})`,
+						`Token ${token.type} extends beyond content at position ${token.end} (content length: ${sample.content.length})`
 					);
 
 					// Check that any overlapping tokens are properly nested
@@ -95,7 +95,7 @@ describe('generated fixtures match runtime', async () => {
 
 							assert.ok(
 								properlyNested,
-								`Invalid overlap: token ${token.type} [${token.start}-${token.end}] partially overlaps with ${other.type} [${other.start}-${other.end}]`,
+								`Invalid overlap: token ${token.type} [${token.start}-${token.end}] partially overlaps with ${other.type} [${other.start}-${other.end}]`
 							);
 						}
 					}
@@ -118,7 +118,7 @@ describe('generated fixtures match runtime', async () => {
 				assert.deepEqual(
 					runtime_output1.tokens,
 					runtime_output2.tokens,
-					`Token data not deterministic for ${sample.lang}_${sample.variant}`,
+					`Token data not deterministic for ${sample.lang}_${sample.variant}`
 				);
 			});
 		});

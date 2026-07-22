@@ -4,7 +4,7 @@ import {
 	token_types_global,
 	TokenTypeRegistry,
 	type LexedSyntax,
-	type SyntaxLang,
+	type SyntaxLang
 } from './lexer.ts';
 
 export interface SyntaxStylerOptions {
@@ -26,7 +26,7 @@ const lexer_plaintext: SyntaxLang = {
 	id: 'plaintext',
 	lex: (l) => {
 		l.pos = l.end;
-	},
+	}
 };
 
 /**

@@ -1,19 +1,19 @@
-import {describe, test, assert} from 'vitest';
-import {readFileSync} from 'node:fs';
+import { describe, test, assert } from 'vitest';
+import { readFileSync } from 'node:fs';
 
-import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
+import { syntax_styler_global } from '$lib/syntax_styler_global.ts';
 import {
 	Lexer,
 	syntax_events_to_tokens,
 	token_types_global,
-	validate_syntax_events,
+	validate_syntax_events
 } from '$lib/lexer.ts';
-import {lexer_rust} from '$lib/lexer_rust.ts';
+import { lexer_rust } from '$lib/lexer_rust.ts';
 
 const tokens_of = (text: string): Array<[string, string]> =>
 	syntax_events_to_tokens(syntax_styler_global.lex(text, 'rust')).map((t) => [
 		t.type,
-		text.slice(t.start, t.end),
+		text.slice(t.start, t.end)
 	]);
 
 describe('lexer_rust', () => {
@@ -35,7 +35,7 @@ describe('lexer_rust', () => {
 			['punctuation', '{'],
 			['special_keyword', 'return'],
 			['punctuation', ';'],
-			['punctuation', '}'],
+			['punctuation', '}']
 		]);
 	});
 
@@ -43,13 +43,13 @@ describe('lexer_rust', () => {
 		assert.deepEqual(tokens_of("&'a str"), [
 			['operator', '&'],
 			['lifetime', "'a"],
-			['builtin', 'str'],
+			['builtin', 'str']
 		]);
 		assert.deepEqual(tokens_of("'y'"), [['char', "'y'"]]);
 		assert.deepEqual(tokens_of("&'static str"), [
 			['operator', '&'],
 			['lifetime', "'static"],
-			['builtin', 'str'],
+			['builtin', 'str']
 		]);
 	});
 
@@ -62,7 +62,7 @@ describe('lexer_rust', () => {
 			['special_keyword', 'break'],
 			['lifetime', "'outer"],
 			['punctuation', ';'],
-			['punctuation', '}'],
+			['punctuation', '}']
 		]);
 	});
 
@@ -76,14 +76,14 @@ describe('lexer_rust', () => {
 	test('a stray quote stays plain text', () => {
 		assert.deepEqual(tokens_of("' + 1"), [
 			['operator', '+'],
-			['number', '1'],
+			['number', '1']
 		]);
 	});
 
 	test('lifetime renders with the symbol alias class', () => {
 		assert.include(
 			syntax_styler_global.stylize("'a", 'rust'),
-			'<span class="token_lifetime token_symbol">',
+			'<span class="token_lifetime token_symbol">'
 		);
 	});
 
@@ -95,7 +95,7 @@ describe('lexer_rust', () => {
 
 	test('raw strings close on their hash count', () => {
 		assert.deepEqual(tokens_of('r#"has "quotes" inside"#'), [
-			['string', 'r#"has "quotes" inside"#'],
+			['string', 'r#"has "quotes" inside"#']
 		]);
 		assert.deepEqual(tokens_of('r"plain\\raw"'), [['string', 'r"plain\\raw"']]);
 		assert.deepEqual(tokens_of('r##"needs "# more"## x'), [['string', 'r##"needs "# more"##']]);
@@ -115,7 +115,7 @@ describe('lexer_rust', () => {
 			['keyword', 'let'],
 			['operator', '='],
 			['number', '1'],
-			['punctuation', ';'],
+			['punctuation', ';']
 		]);
 	});
 
@@ -124,7 +124,7 @@ describe('lexer_rust', () => {
 			['macro', 'println!'],
 			['punctuation', '('],
 			['string', '"hi"'],
-			['punctuation', ')'],
+			['punctuation', ')']
 		]);
 		assert.deepEqual(tokens_of('a != b'), [['operator', '!=']]);
 	});
@@ -132,7 +132,7 @@ describe('lexer_rust', () => {
 	test('macro renders with the function alias class', () => {
 		assert.include(
 			syntax_styler_global.stylize('vec![]', 'rust'),
-			'<span class="token_macro token_function">vec!</span>',
+			'<span class="token_macro token_function">vec!</span>'
 		);
 	});
 
@@ -146,10 +146,10 @@ describe('lexer_rust', () => {
 	test('block comments nest', () => {
 		assert.deepEqual(tokens_of('/* a /* nested */ b */ 1'), [
 			['comment', '/* a /* nested */ b */'],
-			['number', '1'],
+			['number', '1']
 		]);
 		assert.deepEqual(tokens_of('/* unterminated /* still'), [
-			['comment', '/* unterminated /* still'],
+			['comment', '/* unterminated /* still']
 		]);
 	});
 
@@ -168,7 +168,7 @@ describe('lexer_rust', () => {
 			['punctuation', ','],
 			['capitalized_identifier', 'Clone'],
 			['punctuation', ')'],
-			['attribute', ']'],
+			['attribute', ']']
 		]);
 		// a path-only attribute coalesces back to a single token
 		assert.deepEqual(tokens_of('#[inline]'), [['attribute', '#[inline]']]);
@@ -176,34 +176,34 @@ describe('lexer_rust', () => {
 			['attribute', '#![allow'],
 			['punctuation', '('],
 			['punctuation', ')'],
-			['attribute', ']'],
+			['attribute', ']']
 		]);
 		// `::`-separated paths keep each segment attribute-styled
 		assert.deepEqual(tokens_of('#[a::b]'), [
 			['attribute', '#[a'],
 			['punctuation', '::'],
-			['attribute', 'b]'],
+			['attribute', 'b]']
 		]);
 		// a `]` inside a string, char, or comment must not close the attribute early
 		assert.deepEqual(tokens_of('#[doc = "has ] bracket"]'), [
 			['attribute', '#[doc'],
 			['operator', '='],
 			['string', '"has ] bracket"'],
-			['attribute', ']'],
+			['attribute', ']']
 		]);
 		assert.deepEqual(tokens_of("#[foo(']')]"), [
 			['attribute', '#[foo'],
 			['punctuation', '('],
 			['char', "']'"],
 			['punctuation', ')'],
-			['attribute', ']'],
+			['attribute', ']']
 		]);
 		assert.deepEqual(tokens_of('#[foo(/* ] */)]'), [
 			['attribute', '#[foo'],
 			['punctuation', '('],
 			['comment', '/* ] */'],
 			['punctuation', ')'],
-			['attribute', ']'],
+			['attribute', ']']
 		]);
 		// a nested `[…]` is depth-counted, not an early close
 		assert.deepEqual(tokens_of('#[foo[0]]'), [
@@ -211,7 +211,7 @@ describe('lexer_rust', () => {
 			['punctuation', '['],
 			['number', '0'],
 			['punctuation', ']'],
-			['attribute', ']'],
+			['attribute', ']']
 		]);
 		// an empty attribute stays contained — the naming context can't leak out
 		assert.deepEqual(tokens_of('#[]\nfn a() {}'), [
@@ -219,7 +219,7 @@ describe('lexer_rust', () => {
 			['keyword', 'fn'],
 			['function', 'a'],
 			['punctuation', '()'],
-			['punctuation', '{}'],
+			['punctuation', '{}']
 		]);
 		assert.deepEqual(tokens_of('#[unterminated'), [['attribute', '#[unterminated']]);
 	});
@@ -236,16 +236,16 @@ describe('lexer_rust', () => {
 		assert.deepEqual(tokens_of('0..10'), [
 			['number', '0'],
 			['operator', '..'],
-			['number', '10'],
+			['number', '10']
 		]);
 		assert.deepEqual(tokens_of('1..=5'), [
 			['number', '1'],
 			['operator', '..='],
-			['number', '5'],
+			['number', '5']
 		]);
 		assert.deepEqual(tokens_of('x.0'), [
 			['punctuation', '.'],
-			['number', '0'],
+			['number', '0']
 		]);
 	});
 
@@ -259,7 +259,7 @@ describe('lexer_rust', () => {
 			['operator', '<'],
 			['builtin', 'u8'],
 			['operator', '>>'],
-			['punctuation', '()'],
+			['punctuation', '()']
 		]);
 	});
 
@@ -267,14 +267,14 @@ describe('lexer_rust', () => {
 		assert.deepEqual(tokens_of('struct point;'), [
 			['keyword', 'struct'],
 			['class_name', 'point'],
-			['punctuation', ';'],
+			['punctuation', ';']
 		]);
 		assert.deepEqual(tokens_of('impl fmt::Display for MyType'), [
 			['keyword', 'impl'],
 			['punctuation', '::'],
 			['class_name', 'Display'],
 			['special_keyword', 'for'],
-			['capitalized_identifier', 'MyType'],
+			['capitalized_identifier', 'MyType']
 		]);
 	});
 
@@ -288,12 +288,12 @@ describe('lexer_rust', () => {
 			['capitalized_identifier', 'Foo'],
 			['special_keyword', 'for'],
 			['capitalized_identifier', 'Bar'],
-			['punctuation', '{}'],
+			['punctuation', '{}']
 		]);
 		// a nameless `struct;` must not color the following identifier as a type
 		assert.deepEqual(tokens_of('struct; foo'), [
 			['keyword', 'struct'],
-			['punctuation', ';'],
+			['punctuation', ';']
 		]);
 	});
 
@@ -301,20 +301,20 @@ describe('lexer_rust', () => {
 		assert.deepEqual(tokens_of('try { x }'), [
 			['special_keyword', 'try'],
 			['punctuation', '{'],
-			['punctuation', '}'],
+			['punctuation', '}']
 		]);
 	});
 
 	test('union is a weak keyword', () => {
 		assert.deepEqual(tokens_of('union MyUnion'), [
 			['keyword', 'union'],
-			['class_name', 'MyUnion'],
+			['class_name', 'MyUnion']
 		]);
 		assert.deepEqual(tokens_of('foo.union(x)'), [
 			['punctuation', '.'],
 			['function', 'union'],
 			['punctuation', '('],
-			['punctuation', ')'],
+			['punctuation', ')']
 		]);
 	});
 
@@ -322,7 +322,7 @@ describe('lexer_rust', () => {
 		assert.deepEqual(tokens_of('macro_rules! vec2 {}'), [
 			['keyword', 'macro_rules!'],
 			['function', 'vec2'],
-			['punctuation', '{}'],
+			['punctuation', '{}']
 		]);
 	});
 
@@ -334,7 +334,7 @@ describe('lexer_rust', () => {
 			['builtin', 'usize'],
 			['operator', '='],
 			['number', '10'],
-			['punctuation', ';'],
+			['punctuation', ';']
 		]);
 		assert.deepEqual(tokens_of('fn id<T>(x: T) -> T'), [
 			['keyword', 'fn'],
@@ -347,7 +347,7 @@ describe('lexer_rust', () => {
 			['capitalized_identifier', 'T'],
 			['punctuation', ')'],
 			['operator', '->'],
-			['capitalized_identifier', 'T'],
+			['capitalized_identifier', 'T']
 		]);
 	});
 
@@ -357,7 +357,7 @@ describe('lexer_rust', () => {
 			['keyword', 'fn'],
 			['function', 'main'],
 			['punctuation', '()'],
-			['punctuation', '{}'],
+			['punctuation', '{}']
 		]);
 	});
 
@@ -368,11 +368,11 @@ describe('lexer_rust', () => {
 			['function', 'parse'],
 			['punctuation', '()'],
 			['operator', '?'],
-			['punctuation', ';'],
+			['punctuation', ';']
 		]);
 		assert.deepEqual(tokens_of('value?.field'), [
 			['operator', '?'],
-			['punctuation', '.'],
+			['punctuation', '.']
 		]);
 	});
 
@@ -383,7 +383,7 @@ describe('lexer_rust', () => {
 			['punctuation', ':'],
 			['capitalized_identifier', 'Clone'],
 			['operator', '+'],
-			['capitalized_identifier', 'Send'],
+			['capitalized_identifier', 'Send']
 		]);
 	});
 
@@ -395,21 +395,21 @@ describe('lexer_rust', () => {
 			['keyword', 'fn'],
 			['punctuation', '()'],
 			['operator', '='],
-			['punctuation', ';'],
+			['punctuation', ';']
 		]);
 		// `fn name` still names the definition
 		assert.deepEqual(tokens_of('fn parse() {}'), [
 			['keyword', 'fn'],
 			['function', 'parse'],
 			['punctuation', '()'],
-			['punctuation', '{}'],
+			['punctuation', '{}']
 		]);
 	});
 
 	test('postfix await is a keyword after a dot', () => {
 		assert.deepEqual(tokens_of('fut.await'), [
 			['punctuation', '.'],
-			['special_keyword', 'await'],
+			['special_keyword', 'await']
 		]);
 	});
 
@@ -421,20 +421,20 @@ describe('lexer_rust', () => {
 			['operator', '=>'],
 			['punctuation', ','],
 			['operator', '=>'],
-			['punctuation', '}'],
+			['punctuation', '}']
 		]);
 		assert.deepEqual(tokens_of('|a| a + 1'), [
 			['operator', '|'],
 			['operator', '|'],
 			['operator', '+'],
-			['number', '1'],
+			['number', '1']
 		]);
 	});
 
 	test('capitalized identifiers get the class_name alias', () => {
 		assert.include(
 			syntax_styler_global.stylize('Some(1)', 'rust'),
-			'<span class="token_capitalized_identifier token_class_name">Some</span>',
+			'<span class="token_capitalized_identifier token_class_name">Some</span>'
 		);
 	});
 });
@@ -443,7 +443,7 @@ describe('lexer_rust embedding', () => {
 	test('markdown fences embed rust', () => {
 		const text = '```rust\nfn main() { println!("hi"); }\n```\n';
 		const types = new Set(
-			syntax_events_to_tokens(syntax_styler_global.lex(text, 'md')).map((t) => t.type),
+			syntax_events_to_tokens(syntax_styler_global.lex(text, 'md')).map((t) => t.type)
 		);
 		assert.ok(types.has('lang_rust'), 'expected the fence lang container');
 		assert.ok(types.has('keyword'), 'expected the embedded fn keyword');
@@ -463,7 +463,7 @@ describe('lexer_rust embedding', () => {
 			text,
 			events: lexer.events,
 			events_len: lexer.events_len,
-			types: token_types_global,
+			types: token_types_global
 		});
 		for (const t of tokens) {
 			assert.isAtMost(t.end, window_end, `token ${t.type} extends past the window`);
@@ -510,7 +510,7 @@ describe('lexer_rust sample', () => {
 
 	test('sample produces its characteristic token types', () => {
 		const types = new Set(
-			syntax_events_to_tokens(syntax_styler_global.lex(content, 'rust')).map((t) => t.type),
+			syntax_events_to_tokens(syntax_styler_global.lex(content, 'rust')).map((t) => t.type)
 		);
 		for (const t of [
 			'keyword',
@@ -530,7 +530,7 @@ describe('lexer_rust sample', () => {
 			'number',
 			'boolean',
 			'operator',
-			'punctuation',
+			'punctuation'
 		]) {
 			assert.ok(types.has(t), `expected a ${t} token in the sample`);
 		}

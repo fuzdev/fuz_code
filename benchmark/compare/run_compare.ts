@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import {run_and_print_comparison, run_and_save_comparison} from './compare.ts';
+import { run_and_print_comparison, run_and_save_comparison } from './compare.ts';
 
 // Parse argv: --write persists to ./benchmark/compare/results.md (full
 // overwrite). Any non-flag positional is the filter. Order-independent.

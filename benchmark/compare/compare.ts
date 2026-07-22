@@ -2,10 +2,10 @@
 // This allows CI to pass without running `npm install` for the benchmarks.
 // @ts-nocheck
 
-import {writeFile} from 'node:fs/promises';
-import {Benchmark} from '@fuzdev/fuz_util/benchmark.ts';
-import {benchmark_format_markdown_grouped} from '@fuzdev/fuz_util/benchmark_format.ts';
-import type {BenchmarkGroup, BenchmarkResult} from '@fuzdev/fuz_util/benchmark_types.ts';
+import { writeFile } from 'node:fs/promises';
+import { Benchmark } from '@fuzdev/fuz_util/benchmark.ts';
+import { benchmark_format_markdown_grouped } from '@fuzdev/fuz_util/benchmark_format.ts';
+import type { BenchmarkGroup, BenchmarkResult } from '@fuzdev/fuz_util/benchmark_types.ts';
 
 // Prism imports
 import Prism from 'prismjs';
@@ -16,9 +16,9 @@ import 'prismjs/components/prism-json.js';
 import 'prism-svelte';
 
 // Shiki imports
-import {createHighlighterCoreSync} from 'shiki/core';
-import {createJavaScriptRegexEngine} from 'shiki/engine/javascript';
-import {createOnigurumaEngine} from 'shiki/engine/oniguruma';
+import { createHighlighterCoreSync } from 'shiki/core';
+import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
+import { createOnigurumaEngine } from 'shiki/engine/oniguruma';
 import typescript from 'shiki/langs/typescript.mjs';
 import javascript from 'shiki/langs/javascript.mjs';
 import css from 'shiki/langs/css.mjs';
@@ -28,8 +28,8 @@ import svelte from 'shiki/langs/svelte.mjs';
 import nord from 'shiki/themes/nord.mjs';
 
 // Fuz Code imports
-import {samples as all_samples} from '../../src/routes/samples/all.ts';
-import {syntax_styler_global} from '../../src/lib/syntax_styler_global.ts';
+import { samples as all_samples } from '../../src/routes/samples/all.ts';
+import { syntax_styler_global } from '../../src/lib/syntax_styler_global.ts';
 
 /* eslint-disable no-console */
 
@@ -39,12 +39,12 @@ const LARGE_CONTENT_MULTIPLIER = 100;
 const MIN_ITERATIONS = 3; // Tiny minimum samples because of Shiki's pathological cases with TS
 
 const LANGUAGE_MAP = {
-	ts: {prism: 'typescript', shiki: 'typescript', fuz: 'ts'},
-	js: {prism: 'javascript', shiki: 'javascript', fuz: 'js'},
-	css: {prism: 'css', shiki: 'css', fuz: 'css'},
-	html: {prism: 'markup', shiki: 'html', fuz: 'html'},
-	json: {prism: 'json', shiki: 'json', fuz: 'json'},
-	svelte: {prism: 'svelte', shiki: 'svelte', fuz: 'svelte'},
+	ts: { prism: 'typescript', shiki: 'typescript', fuz: 'ts' },
+	js: { prism: 'javascript', shiki: 'javascript', fuz: 'js' },
+	css: { prism: 'css', shiki: 'css', fuz: 'css' },
+	html: { prism: 'markup', shiki: 'html', fuz: 'html' },
+	json: { prism: 'json', shiki: 'json', fuz: 'json' },
+	svelte: { prism: 'svelte', shiki: 'svelte', fuz: 'svelte' }
 } as const;
 
 type SupportedLanguage = keyof typeof LANGUAGE_MAP;
@@ -61,16 +61,16 @@ const setupShiki = async () => {
 	const shiki_js = createHighlighterCoreSync({
 		themes: [nord],
 		langs,
-		engine: createJavaScriptRegexEngine(),
+		engine: createJavaScriptRegexEngine()
 	});
 
 	const shiki_oniguruma = createHighlighterCoreSync({
 		themes: [nord],
 		langs,
-		engine: await createOnigurumaEngine(import('shiki/wasm')),
+		engine: await createOnigurumaEngine(import('shiki/wasm'))
 	});
 
-	return {shiki_js, shiki_oniguruma};
+	return { shiki_js, shiki_oniguruma };
 };
 
 const getSampleContent = (lang: SupportedLanguage, large = false) => {
@@ -82,17 +82,17 @@ const getSampleContent = (lang: SupportedLanguage, large = false) => {
 };
 
 export const run_comparison_benchmark = async (
-	filter?: string,
+	filter?: string
 ): Promise<Array<BenchmarkResult>> => {
 	const bench = new Benchmark({
 		duration_ms: BENCHMARK_TIME,
 		warmup_iterations: WARMUP_ITERATIONS,
-		min_iterations: MIN_ITERATIONS,
+		min_iterations: MIN_ITERATIONS
 	});
 
 	// Setup Shiki
 	console.log('Setting up Shiki highlighters...');
-	const {shiki_js, shiki_oniguruma} = await setupShiki();
+	const { shiki_js, shiki_oniguruma } = await setupShiki();
 	console.log('Shiki setup complete');
 
 	// Determine languages to test
@@ -129,11 +129,11 @@ export const run_comparison_benchmark = async (
 			}
 
 			bench.add(`shiki_js_tokenize_${lang}_${size_label}`, () => {
-				shiki_js.codeToTokensBase(content, {lang: shiki_lang, theme: 'nord'});
+				shiki_js.codeToTokensBase(content, { lang: shiki_lang, theme: 'nord' });
 			});
 
 			bench.add(`shiki_oniguruma_tokenize_${lang}_${size_label}`, () => {
-				shiki_oniguruma.codeToTokensBase(content, {lang: shiki_lang, theme: 'nord'});
+				shiki_oniguruma.codeToTokensBase(content, { lang: shiki_lang, theme: 'nord' });
 			});
 
 			// Stylization benchmarks (all implementations)
@@ -150,11 +150,11 @@ export const run_comparison_benchmark = async (
 			}
 
 			bench.add(`shiki_js_stylize_${lang}_${size_label}`, () => {
-				shiki_js.codeToHtml(content, {lang: shiki_lang, theme: 'nord'});
+				shiki_js.codeToHtml(content, { lang: shiki_lang, theme: 'nord' });
 			});
 
 			bench.add(`shiki_oniguruma_stylize_${lang}_${size_label}`, () => {
-				shiki_oniguruma.codeToHtml(content, {lang: shiki_lang, theme: 'nord'});
+				shiki_oniguruma.codeToHtml(content, { lang: shiki_lang, theme: 'nord' });
 			});
 		}
 	}
@@ -186,7 +186,7 @@ const build_groups = (languages: ReadonlyArray<SupportedLanguage>): Array<Benchm
 				const suffix = `_${op}_${lang}_${size}`;
 				groups.push({
 					name: `${lang} ${op} (${size})`,
-					filter: (r) => r.name.endsWith(suffix),
+					filter: (r) => r.name.endsWith(suffix)
 				});
 			}
 		}
@@ -216,7 +216,7 @@ export const format_comparison_results = (results: Array<BenchmarkResult>): stri
 		'',
 		'## Results',
 		'',
-		benchmark_format_markdown_grouped(results, groups),
+		benchmark_format_markdown_grouped(results, groups)
 	];
 
 	return lines.join('\n');
@@ -248,7 +248,7 @@ export const run_and_print_comparison = async (filter?: string): Promise<void> =
  */
 export const run_and_save_comparison = async (
 	filter: string | undefined,
-	results_path: string,
+	results_path: string
 ): Promise<void> => {
 	console.log('Starting comparison benchmark...\n');
 

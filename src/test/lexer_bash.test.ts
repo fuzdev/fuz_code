@@ -1,13 +1,13 @@
-import {describe, test, assert} from 'vitest';
-import {readFileSync} from 'node:fs';
+import { describe, test, assert } from 'vitest';
+import { readFileSync } from 'node:fs';
 
-import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
-import {syntax_events_to_tokens, validate_syntax_events} from '$lib/lexer.ts';
+import { syntax_styler_global } from '$lib/syntax_styler_global.ts';
+import { syntax_events_to_tokens, validate_syntax_events } from '$lib/lexer.ts';
 
 const tokens_of = (text: string): Array<[string, string]> =>
 	syntax_events_to_tokens(syntax_styler_global.lex(text, 'bash')).map((t) => [
 		t.type,
-		text.slice(t.start, t.end),
+		text.slice(t.start, t.end)
 	]);
 
 const picked = (text: string, types: Array<string>): Array<[string, string]> =>
@@ -20,7 +20,7 @@ describe('lexer_bash words', () => {
 			['boolean', 'true'],
 			['keyword', 'then'],
 			['builtin', 'echo'],
-			['keyword', 'fi'],
+			['keyword', 'fi']
 		]);
 	});
 
@@ -33,7 +33,7 @@ describe('lexer_bash words', () => {
 		assert.deepEqual(picked('greet() { :; }', ['function']), [['function', 'greet']]);
 		assert.deepEqual(picked('function cleanup { :; }', ['keyword', 'function']), [
 			['keyword', 'function'],
-			['function', 'cleanup'],
+			['function', 'cleanup']
 		]);
 	});
 });
@@ -45,7 +45,7 @@ describe('lexer_bash variables and expansions', () => {
 			['variable', '$@'],
 			['variable', '${name}'],
 			['variable', '${arr[0]}'],
-			['variable', '$HOME'],
+			['variable', '$HOME']
 		]);
 	});
 
@@ -54,7 +54,7 @@ describe('lexer_bash variables and expansions', () => {
 			['command_substitution', '$(echo hi)'],
 			['punctuation', '$('],
 			['builtin', 'echo'],
-			['punctuation', ')'],
+			['punctuation', ')']
 		]);
 	});
 
@@ -63,7 +63,7 @@ describe('lexer_bash variables and expansions', () => {
 			['command_substitution', '`echo hi`'],
 			['punctuation', '`'],
 			['builtin', 'echo'],
-			['punctuation', '`'],
+			['punctuation', '`']
 		]);
 	});
 
@@ -91,7 +91,7 @@ describe('lexer_bash variables and expansions', () => {
 		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'bash')), []);
 		assert.deepEqual(picked(text, ['command_substitution', 'comment']), [
 			['command_substitution', text],
-			['comment', '# not done)'],
+			['comment', '# not done)']
 		]);
 	});
 
@@ -108,7 +108,7 @@ describe('lexer_bash variables and expansions', () => {
 		assert.deepEqual(picked('"$a" \'$a\'', ['string', 'variable']), [
 			['string', '"$a"'],
 			['variable', '$a'],
-			['string', "'$a'"],
+			['string', "'$a'"]
 		]);
 	});
 
@@ -120,7 +120,7 @@ describe('lexer_bash variables and expansions', () => {
 		assert.deepEqual(picked('echo ${a:-${b}} ${c%"}"} "${d:-${e}}"', ['variable']), [
 			['variable', '${a:-${b}}'],
 			['variable', '${c%"}"}'],
-			['variable', '${d:-${e}}'],
+			['variable', '${d:-${e}}']
 		]);
 	});
 
@@ -138,13 +138,13 @@ describe('lexer_bash arithmetic', () => {
 			['punctuation', '$(('],
 			['number', '2'],
 			['number', '3'],
-			['punctuation', '))'],
+			['punctuation', '))']
 		]);
 	});
 
 	test('$(…) command substitution still parses', () => {
 		assert.deepEqual(picked('$(date)', ['command_substitution']), [
-			['command_substitution', '$(date)'],
+			['command_substitution', '$(date)']
 		]);
 	});
 
@@ -154,7 +154,7 @@ describe('lexer_bash arithmetic', () => {
 		assert.deepEqual(picked(text, ['punctuation']), [
 			['punctuation', '$(('],
 			['punctuation', ')'],
-			['punctuation', ')'],
+			['punctuation', ')']
 		]);
 	});
 });
@@ -165,7 +165,7 @@ describe('lexer_bash numbers, operators, descriptors', () => {
 			['number', '0xFF'],
 			['number', '077'],
 			['number', '2#1010'],
-			['number', '42'],
+			['number', '42']
 		]);
 	});
 
@@ -174,7 +174,7 @@ describe('lexer_bash numbers, operators, descriptors', () => {
 			['operator', '||'],
 			['operator', '&&'],
 			['operator', '|'],
-			['operator', '<<<'],
+			['operator', '<<<']
 		]);
 	});
 
@@ -182,14 +182,14 @@ describe('lexer_bash numbers, operators, descriptors', () => {
 		assert.deepEqual(picked('cmd 2>&1', ['file_descriptor', 'operator']), [
 			['file_descriptor', '2'],
 			['operator', '>'],
-			['file_descriptor', '&1'],
+			['file_descriptor', '&1']
 		]);
 	});
 
 	test('bare = is plain, but == and =~ are operators', () => {
 		assert.deepEqual(picked('x=1; [[ $x == 1 ]]; [[ $x =~ a ]]', ['operator']), [
 			['operator', '=='],
-			['operator', '=~'],
+			['operator', '=~']
 		]);
 	});
 });
@@ -202,7 +202,7 @@ describe('lexer_bash heredocs', () => {
 			['heredoc', '<<EOF\nhi ${name}\nEOF'],
 			['heredoc_delimiter', '<<EOF'],
 			['variable', '${name}'],
-			['heredoc_delimiter', 'EOF'],
+			['heredoc_delimiter', 'EOF']
 		]);
 	});
 
@@ -210,7 +210,7 @@ describe('lexer_bash heredocs', () => {
 		const text = "cat <<'END'\nno $expansion\nEND\n";
 		assert.deepEqual(picked(text, ['variable', 'heredoc_delimiter']), [
 			['heredoc_delimiter', "<<'END'"],
-			['heredoc_delimiter', 'END'],
+			['heredoc_delimiter', 'END']
 		]);
 	});
 
@@ -226,7 +226,7 @@ describe('lexer_bash heredocs', () => {
 		const text = 'cat <<EOF\n\tEOF\nbody\nEOF\n';
 		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'bash')), []);
 		assert.ok(
-			tokens_of(text).some(([type, t]) => type === 'heredoc' && t === '<<EOF\n\tEOF\nbody\nEOF'),
+			tokens_of(text).some(([type, t]) => type === 'heredoc' && t === '<<EOF\n\tEOF\nbody\nEOF')
 		);
 	});
 
@@ -235,7 +235,7 @@ describe('lexer_bash heredocs', () => {
 		const text = 'cat <<EOF\nEOF \nbody\nEOF\n';
 		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'bash')), []);
 		assert.ok(
-			tokens_of(text).some(([type, t]) => type === 'heredoc' && t === '<<EOF\nEOF \nbody\nEOF'),
+			tokens_of(text).some(([type, t]) => type === 'heredoc' && t === '<<EOF\nEOF \nbody\nEOF')
 		);
 	});
 
@@ -255,7 +255,7 @@ describe('lexer_bash heredocs', () => {
 		const subs = tokens.filter((t) => t.type === 'command_substitution');
 		assert.deepEqual(
 			subs.map((t) => text.slice(t.start, t.end)),
-			['$(y)'],
+			['$(y)']
 		);
 	});
 
@@ -273,7 +273,7 @@ describe('lexer_bash heredocs', () => {
 		const tokens = syntax_events_to_tokens(lexed);
 		// the closing delimiter is found (not swallowed into a runaway body)
 		assert.ok(
-			tokens.some((t) => t.type === 'heredoc_delimiter' && text.slice(t.start, t.end) === 'EOF'),
+			tokens.some((t) => t.type === 'heredoc_delimiter' && text.slice(t.start, t.end) === 'EOF')
 		);
 		assert.ok(tokens.some((t) => t.type === 'variable'));
 	});
@@ -283,7 +283,7 @@ describe('lexer_bash comments', () => {
 	test('comments require a preceding boundary; $# is a variable', () => {
 		assert.deepEqual(picked('echo $# # trailing', ['comment', 'variable']), [
 			['variable', '$#'],
-			['comment', '# trailing'],
+			['comment', '# trailing']
 		]);
 	});
 
@@ -302,7 +302,7 @@ describe('lexer_bash sample', () => {
 
 	test('sample produces its characteristic token types', () => {
 		const types = new Set(
-			syntax_events_to_tokens(syntax_styler_global.lex(content, 'bash')).map((t) => t.type),
+			syntax_events_to_tokens(syntax_styler_global.lex(content, 'bash')).map((t) => t.type)
 		);
 		for (const t of [
 			'builtin',
@@ -310,7 +310,7 @@ describe('lexer_bash sample', () => {
 			'string',
 			'variable',
 			'command_substitution',
-			'comment',
+			'comment'
 		]) {
 			assert.ok(types.has(t), `expected a ${t} token in the sample`);
 		}

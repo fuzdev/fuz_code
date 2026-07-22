@@ -1,12 +1,12 @@
 <script lang="ts">
-	import {resolve} from '$app/paths';
+	import { resolve } from '$app/paths';
 	import TomeContent from '@fuzdev/fuz_ui/TomeContent.svelte';
 	import TomeSection from '@fuzdev/fuz_ui/TomeSection.svelte';
 	import TomeSectionHeader from '@fuzdev/fuz_ui/TomeSectionHeader.svelte';
 	import TomeLink from '@fuzdev/fuz_ui/TomeLink.svelte';
 	import DeclarationLink from '@fuzdev/fuz_ui/DeclarationLink.svelte';
 	import ModuleLink from '@fuzdev/fuz_ui/ModuleLink.svelte';
-	import {tome_get_by_slug} from '@fuzdev/fuz_ui/tome.ts';
+	import { tome_get_by_slug } from '@fuzdev/fuz_ui/tome.ts';
 
 	const TOME_SLUG = 'benchmark';
 	const tome = tome_get_by_slug(TOME_SLUG);
@@ -17,25 +17,25 @@
 	// from the committed comparison results and measured against the faster of
 	// Shiki's two engines (the conservative choice) — see `RESULTS_URL` for the
 	// full per-engine, per-size matrix
-	const speedups: Array<{lang: string; vs_prism: string; vs_shiki: string}> = [
-		{lang: 'ts', vs_prism: '~18×', vs_shiki: '~140×'},
-		{lang: 'css', vs_prism: '~8×', vs_shiki: '~90×'},
-		{lang: 'html', vs_prism: '~11×', vs_shiki: '~80×'},
-		{lang: 'json', vs_prism: '~17×', vs_shiki: '~95×'},
-		{lang: 'svelte', vs_prism: '~14×', vs_shiki: '~165×'},
+	const speedups: Array<{ lang: string; vs_prism: string; vs_shiki: string }> = [
+		{ lang: 'ts', vs_prism: '~18×', vs_shiki: '~140×' },
+		{ lang: 'css', vs_prism: '~8×', vs_shiki: '~90×' },
+		{ lang: 'html', vs_prism: '~11×', vs_shiki: '~80×' },
+		{ lang: 'json', vs_prism: '~17×', vs_shiki: '~95×' },
+		{ lang: 'svelte', vs_prism: '~14×', vs_shiki: '~165×' }
 	];
 
 	// work time in ms (stylize + DOM commit) per language for each renderer, rounded
 	// from one interactive-benchmark run on a single machine — illustrative, not a
 	// spec; run the tool for numbers on your own hardware
-	const browser_results: Array<{lang: string; html: number; ranges: number}> = [
-		{lang: 'ts', html: 91, ranges: 12},
-		{lang: 'css', html: 11, ranges: 3},
-		{lang: 'html', html: 28, ranges: 4},
-		{lang: 'json', html: 11, ranges: 2},
-		{lang: 'svelte', html: 91, ranges: 13},
-		{lang: 'md', html: 69, ranges: 10},
-		{lang: 'sh', html: 49, ranges: 8},
+	const browser_results: Array<{ lang: string; html: number; ranges: number }> = [
+		{ lang: 'ts', html: 91, ranges: 12 },
+		{ lang: 'css', html: 11, ranges: 3 },
+		{ lang: 'html', html: 28, ranges: 4 },
+		{ lang: 'json', html: 11, ranges: 2 },
+		{ lang: 'svelte', html: 91, ranges: 13 },
+		{ lang: 'md', html: 69, ranges: 10 },
+		{ lang: 'sh', html: 49, ranges: 8 }
 	];
 	// bars scale to the slowest single result so lengths compare across languages
 	const browser_max = Math.max(...browser_results.flatMap((r) => [r.html, r.ranges]));

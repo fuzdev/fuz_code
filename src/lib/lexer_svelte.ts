@@ -6,9 +6,9 @@ import {
 	token_type,
 	trim_space_end,
 	type Lexer,
-	type SyntaxLang,
+	type SyntaxLang
 } from './lexer.ts';
-import {lex_markup_window, type MarkupLexMode} from './lexer_markup.ts';
+import { lex_markup_window, type MarkupLexMode } from './lexer_markup.ts';
 
 /**
  * Hand-written Svelte lexer — the shared markup scanner (`lexer_markup.ts`)
@@ -59,7 +59,7 @@ const BLOCK_WORDS: Set<string> = new Set([
 	'each',
 	'html',
 	'debug',
-	'snippet',
+	'snippet'
 ]);
 
 /**
@@ -67,7 +67,7 @@ const BLOCK_WORDS: Set<string> = new Set([
  * lexer in it. Empty/whitespace-only spans emit nothing.
  */
 const lex_ts_interior = (l: Lexer, from: number, to: number): void => {
-	const {text} = l;
+	const { text } = l;
 	const start = skip_space(text, from, to);
 	const content_end = trim_space_end(text, start, to);
 	if (content_end <= start) return;
@@ -125,7 +125,7 @@ const declaration_keyword_len = (text: string, i: number, end: number): number =
  * attribute contexts pass false (at-directives like `{@attach …}` work in both).
  */
 const lex_svelte_expression = (l: Lexer, from: number, end: number, full: boolean): number => {
-	const {text} = l;
+	const { text } = l;
 	const close = scan_balanced_braces(text, from, end);
 	const closed = close !== -1;
 	const inner_end = closed ? close : end;
@@ -217,7 +217,7 @@ const lex_svelte_expression_plain = (
 	inner_end: number,
 	close: number,
 	expr_end: number,
-	closed: boolean,
+	closed: boolean
 ): void => {
 	l.leaf(T_PUNCTUATION, from, from + 1);
 	lex_ts_interior(l, from + 1, inner_end);
@@ -230,7 +230,7 @@ const SVELTE_MODE: MarkupLexMode = {
 	rcdata: false,
 	special_attrs: false,
 	attr_comments: true,
-	lex_expression: lex_svelte_expression,
+	lex_expression: lex_svelte_expression
 };
 
 const lex_svelte = (l: Lexer): void => {
@@ -240,4 +240,4 @@ const lex_svelte = (l: Lexer): void => {
 /**
  * The Svelte language registration for the lexer engine.
  */
-export const lexer_svelte: SyntaxLang = {id: 'svelte', lex: lex_svelte};
+export const lexer_svelte: SyntaxLang = { id: 'svelte', lex: lex_svelte };
