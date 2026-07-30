@@ -1,4 +1,4 @@
-import type {Tome} from '@fuzdev/fuz_ui/tome.ts';
+import type { Tome } from '@fuzdev/fuz_ui/tome.ts';
 import UsagePage from './usage/+page.svelte';
 import SamplesPage from './samples/+page.svelte';
 import DiffPage from './diff/+page.svelte';
@@ -15,9 +15,9 @@ export const tomes: Array<Tome> = [
 		related_modules: [
 			'syntax_styler.ts',
 			'syntax_styler_global.ts',
-			'svelte_preprocess_fuz_code.ts',
+			'svelte_preprocess_fuz_code.ts'
 		],
-		related_declarations: ['Code', 'SyntaxStyler', 'syntax_styler_global'],
+		related_declarations: ['Code', 'SyntaxStyler', 'syntax_styler_global']
 	},
 	{
 		slug: 'samples',
@@ -25,7 +25,7 @@ export const tomes: Array<Tome> = [
 		Component: SamplesPage,
 		related_tomes: ['usage', 'textarea', 'benchmark'],
 		related_modules: [],
-		related_declarations: ['Code', 'CodeHighlight'],
+		related_declarations: ['Code', 'CodeHighlight']
 	},
 	{
 		slug: 'diff',
@@ -33,7 +33,7 @@ export const tomes: Array<Tome> = [
 		Component: DiffPage,
 		related_tomes: ['usage', 'samples'],
 		related_modules: ['diff_html.ts'],
-		related_declarations: ['CodeDiff', 'CodeDiffSplit'],
+		related_declarations: ['CodeDiff', 'CodeDiffSplit']
 	},
 	{
 		slug: 'textarea',
@@ -41,7 +41,7 @@ export const tomes: Array<Tome> = [
 		Component: TextareaPage,
 		related_tomes: ['usage', 'samples'],
 		related_modules: [],
-		related_declarations: ['CodeTextarea', 'CodeHighlight'],
+		related_declarations: ['CodeTextarea', 'CodeHighlight']
 	},
 	{
 		slug: 'benchmark',
@@ -49,7 +49,7 @@ export const tomes: Array<Tome> = [
 		Component: BenchmarkPage,
 		related_tomes: ['usage', 'samples'],
 		related_modules: ['syntax_styler.ts', 'syntax_styler_global.ts'],
-		related_declarations: ['syntax_styler_global', 'SyntaxStyler', 'Code'],
+		related_declarations: ['syntax_styler_global', 'SyntaxStyler', 'Code']
 	},
 	{
 		slug: 'api',
@@ -57,6 +57,6 @@ export const tomes: Array<Tome> = [
 		Component: ApiPage,
 		related_tomes: ['usage'],
 		related_modules: [],
-		related_declarations: [],
-	},
+		related_declarations: []
+	}
 ];

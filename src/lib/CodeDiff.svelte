@@ -1,11 +1,11 @@
 <script lang="ts">
-	import type {Snippet} from 'svelte';
-	import {DEV} from 'esm-env';
-	import type {SvelteHTMLElements} from 'svelte/elements';
+	import type { Snippet } from 'svelte';
+	import { DEV } from 'esm-env';
+	import type { SvelteHTMLElements } from 'svelte/elements';
 
-	import {syntax_styler_global} from './syntax_styler_global.ts';
-	import type {SyntaxStyler} from './syntax_styler.ts';
-	import {render_diff_unified_html, type RenderDiffOptions} from './diff_html.ts';
+	import { syntax_styler_global } from './syntax_styler_global.ts';
+	import type { SyntaxStyler } from './syntax_styler.ts';
+	import { render_diff_unified_html, type RenderDiffOptions } from './diff_html.ts';
 
 	const {
 		a,
@@ -108,7 +108,7 @@
 				// eslint-disable-next-line no-console
 				console.error(
 					`[CodeDiff] Language "${lang}" is not supported. ` +
-						`Rows render as plain text. Supported: ${langs}`,
+						`Rows render as plain text. Supported: ${langs}`
 				);
 			}
 		});
@@ -122,7 +122,7 @@
 			context_lines,
 			elide,
 			intraline,
-			line_numbers,
+			line_numbers
 		});
 	});
 </script>

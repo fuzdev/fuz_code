@@ -1,10 +1,10 @@
-import {describe, test, assert} from 'vitest';
-import {readFileSync} from 'node:fs';
+import { describe, test, assert } from 'vitest';
+import { readFileSync } from 'node:fs';
 
-import {render_syntax_html_lines, type SyntaxHtmlMark} from '$lib/lexer.ts';
-import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
-import {sample_langs} from '$lib/code_sample.ts';
-import {strip_tags, assert_balanced} from './html_test_helpers.ts';
+import { render_syntax_html_lines, type SyntaxHtmlMark } from '$lib/lexer.ts';
+import { syntax_styler_global } from '$lib/syntax_styler_global.ts';
+import { sample_langs } from '$lib/code_sample.ts';
+import { strip_tags, assert_balanced } from './html_test_helpers.ts';
 
 const lex = (text: string, lang: string) => syntax_styler_global.lex(text, lang);
 
@@ -47,7 +47,7 @@ describe('render_syntax_html_lines', () => {
 		const text = 'const a = 1;\nconst b = 2;\n';
 		assert.deepEqual(
 			render_syntax_html_lines(lex(text, 'ts')),
-			render_syntax_html_lines(lex(text, 'ts')),
+			render_syntax_html_lines(lex(text, 'ts'))
 		);
 	});
 
@@ -67,7 +67,7 @@ describe('render_syntax_html_lines', () => {
 	describe('marks', () => {
 		test('wraps a range in plain text', () => {
 			const fragments = render_syntax_html_lines(lex('abcdef', 'plaintext'), {
-				marks: [{start: 2, end: 5}],
+				marks: [{ start: 2, end: 5 }]
 			});
 			assert.deepEqual(fragments, ['ab<mark>cde</mark>f']);
 		});
@@ -75,16 +75,16 @@ describe('render_syntax_html_lines', () => {
 		test('multiple ranges on one line', () => {
 			const fragments = render_syntax_html_lines(lex('abcdef', 'plaintext'), {
 				marks: [
-					{start: 0, end: 2},
-					{start: 4, end: 6},
-				],
+					{ start: 0, end: 2 },
+					{ start: 4, end: 6 }
+				]
 			});
 			assert.deepEqual(fragments, ['<mark>ab</mark>cd<mark>ef</mark>']);
 		});
 
 		test('a mark crossing a newline closes and reopens', () => {
 			const fragments = render_syntax_html_lines(lex('ab\ncdef', 'plaintext'), {
-				marks: [{start: 1, end: 5}],
+				marks: [{ start: 1, end: 5 }]
 			});
 			assert.deepEqual(fragments, ['a<mark>b</mark>', '<mark>cd</mark>ef']);
 		});
@@ -92,7 +92,7 @@ describe('render_syntax_html_lines', () => {
 		test('a mark crossing token boundaries splits into adjacent marks', () => {
 			const text = '{"a": 1}';
 			const fragments = render_syntax_html_lines(lex(text, 'json'), {
-				marks: [{start: 1, end: 7}],
+				marks: [{ start: 1, end: 7 }]
 			});
 			assert.lengthOf(fragments, 1);
 			assert_balanced(fragments[0]!);
@@ -103,17 +103,17 @@ describe('render_syntax_html_lines', () => {
 
 		test('custom mark tags', () => {
 			const fragments = render_syntax_html_lines(lex('abc', 'plaintext'), {
-				marks: [{start: 1, end: 2}],
+				marks: [{ start: 1, end: 2 }],
 				mark_open_tag: '<span class="emph">',
-				mark_close_tag: '</span>',
+				mark_close_tag: '</span>'
 			});
 			assert.deepEqual(fragments, ['a<span class="emph">b</span>c']);
 		});
 
 		test('marks compose with multi-line tokens', () => {
 			const text = '/* one\ntwo */';
-			const marks: Array<SyntaxHtmlMark> = [{start: 3, end: 10}];
-			const fragments = render_syntax_html_lines(lex(text, 'css'), {marks});
+			const marks: Array<SyntaxHtmlMark> = [{ start: 3, end: 10 }];
+			const fragments = render_syntax_html_lines(lex(text, 'css'), { marks });
 			assert.lengthOf(fragments, 2);
 			for (const fragment of fragments) assert_balanced(fragment);
 			assert.deepEqual(fragments.map(strip_tags), text.split('\n'));
@@ -123,7 +123,7 @@ describe('render_syntax_html_lines', () => {
 
 		test('marks at text boundaries', () => {
 			const fragments = render_syntax_html_lines(lex('abc', 'plaintext'), {
-				marks: [{start: 0, end: 3}],
+				marks: [{ start: 0, end: 3 }]
 			});
 			assert.deepEqual(fragments, ['<mark>abc</mark>']);
 		});

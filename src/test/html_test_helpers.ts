@@ -1,4 +1,4 @@
-import {assert} from 'vitest';
+import { assert } from 'vitest';
 
 /**
  * Strips tags and unescapes the entities `escape_html_slice` produces,

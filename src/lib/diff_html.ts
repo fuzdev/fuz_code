@@ -8,11 +8,11 @@
  * @module
  */
 
-import {diff_lines, diff_hunks, diff_segments, type DiffLine} from '@fuzdev/fuz_util/diff.ts';
+import { diff_lines, diff_hunks, diff_segments, type DiffLine } from '@fuzdev/fuz_util/diff.ts';
 
-import {render_syntax_html_lines, type SyntaxHtmlMark} from './lexer.ts';
-import {syntax_styler_global} from './syntax_styler_global.ts';
-import type {SyntaxStyler} from './syntax_styler.ts';
+import { render_syntax_html_lines, type SyntaxHtmlMark } from './lexer.ts';
+import { syntax_styler_global } from './syntax_styler_global.ts';
+import type { SyntaxStyler } from './syntax_styler.ts';
 
 /**
  * Options for `render_diff_unified_html`.
@@ -84,8 +84,8 @@ const line_starts = (text: string): Array<number> => {
 const collect_marks = (
 	lines: Array<DiffLine>,
 	a_starts: Array<number>,
-	b_starts: Array<number>,
-): {a_marks: Array<SyntaxHtmlMark>; b_marks: Array<SyntaxHtmlMark>} => {
+	b_starts: Array<number>
+): { a_marks: Array<SyntaxHtmlMark>; b_marks: Array<SyntaxHtmlMark> } => {
 	const a_marks: Array<SyntaxHtmlMark> = [];
 	const b_marks: Array<SyntaxHtmlMark> = [];
 	let i = 0;
@@ -106,15 +106,15 @@ const collect_marks = (
 			if (!segments) continue;
 			const a_offset = a_starts[removed.a_line! - 1]!;
 			for (const [start, end] of segments.a_ranges) {
-				a_marks.push({start: a_offset + start, end: a_offset + end});
+				a_marks.push({ start: a_offset + start, end: a_offset + end });
 			}
 			const b_offset = b_starts[added.b_line! - 1]!;
 			for (const [start, end] of segments.b_ranges) {
-				b_marks.push({start: b_offset + start, end: b_offset + end});
+				b_marks.push({ start: b_offset + start, end: b_offset + end });
 			}
 		}
 	}
-	return {a_marks, b_marks};
+	return { a_marks, b_marks };
 };
 
 // shared per-render state for the unified and split emitters
@@ -140,20 +140,20 @@ const prepare_diff = (a: string, b: string, options: RenderDiffOptions): DiffRen
 		elide = 'details',
 		intraline = true,
 		line_numbers = true,
-		max_cost,
+		max_cost
 	} = options;
 
-	const lines = diff_lines(a, b, {max_cost});
+	const lines = diff_lines(a, b, { max_cost });
 	const hunks = diff_hunks(lines, context_lines);
 
 	const marks = intraline ? collect_marks(lines, line_starts(a), line_starts(b)) : null;
 
 	const effective_lang = lang !== null && syntax_styler.has_lang(lang) ? lang : 'plaintext';
 	const a_fragments = render_syntax_html_lines(syntax_styler.lex(a, effective_lang), {
-		marks: marks?.a_marks,
+		marks: marks?.a_marks
 	});
 	const b_fragments = render_syntax_html_lines(syntax_styler.lex(b, effective_lang), {
-		marks: marks?.b_marks,
+		marks: marks?.b_marks
 	});
 
 	let a_total = 0;
@@ -172,7 +172,7 @@ const prepare_diff = (a: string, b: string, options: RenderDiffOptions): DiffRen
 		line_numbers,
 		elide,
 		width,
-		pad: ''.padStart(width),
+		pad: ''.padStart(width)
 	};
 };
 
@@ -183,9 +183,9 @@ const prepare_diff = (a: string, b: string, options: RenderDiffOptions): DiffRen
 const walk_hunks = (
 	data: DiffRenderData,
 	on_elided: (elided: Array<DiffLine>) => void,
-	on_lines: (lines: Array<DiffLine>) => void,
+	on_lines: (lines: Array<DiffLine>) => void
 ): void => {
-	const {lines, hunks} = data;
+	const { lines, hunks } = data;
 	let cursor = 0;
 	for (const hunk of hunks) {
 		const start = lines.indexOf(hunk.lines[0]!, cursor);
@@ -214,10 +214,10 @@ const elided_count = (elided: Array<DiffLine>): string =>
 export const render_diff_unified_html = (
 	a: string,
 	b: string,
-	options: RenderDiffOptions = {},
+	options: RenderDiffOptions = {}
 ): string => {
 	const data = prepare_diff(a, b, options);
-	const {a_fragments, b_fragments, line_numbers, elide, width, pad} = data;
+	const { a_fragments, b_fragments, line_numbers, elide, width, pad } = data;
 
 	const render_row = (line: DiffLine): string => {
 		let gutter = '';
@@ -255,7 +255,7 @@ export const render_diff_unified_html = (
 		},
 		(hunk_lines) => {
 			for (const line of hunk_lines) out.push(render_row(line));
-		},
+		}
 	);
 	return out.join('');
 };
@@ -273,10 +273,10 @@ export const render_diff_unified_html = (
 export const render_diff_split_html = (
 	a: string,
 	b: string,
-	options: RenderDiffOptions = {},
+	options: RenderDiffOptions = {}
 ): string => {
 	const data = prepare_diff(a, b, options);
-	const {a_fragments, b_fragments, line_numbers, elide, width, pad} = data;
+	const { a_fragments, b_fragments, line_numbers, elide, width, pad } = data;
 
 	const render_cell = (line: DiffLine | null, side: 'a' | 'b'): string => {
 		if (line === null) return '<span class="diff_cell diff_spacer"></span>';
@@ -314,7 +314,7 @@ export const render_diff_split_html = (
 			for (let k = 0; k < Math.max(remove_count, add_count); k++) {
 				out.push(
 					render_cell(k < remove_count ? row_lines[removes_start + k]! : null, 'a'),
-					render_cell(k < add_count ? row_lines[adds_start + k]! : null, 'b'),
+					render_cell(k < add_count ? row_lines[adds_start + k]! : null, 'b')
 				);
 			}
 		}
@@ -337,7 +337,7 @@ export const render_diff_split_html = (
 		},
 		(hunk_lines) => {
 			render_rows(hunk_lines, out);
-		},
+		}
 	);
 	return out.join('');
 };

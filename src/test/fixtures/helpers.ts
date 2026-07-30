@@ -1,10 +1,10 @@
-import {readFileSync} from 'node:fs';
-import {fs_search} from '@fuzdev/fuz_util/fs.ts';
-import {diff_lines, diff_hunks, format_diff} from '@fuzdev/fuz_util/diff.ts';
-import {basename, dirname, join, relative} from 'node:path';
-import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
-import {syntax_events_to_tokens} from '$lib/lexer.ts';
-import {render_diff_unified_html, render_diff_split_html} from '$lib/diff_html.ts';
+import { readFileSync } from 'node:fs';
+import { fs_search } from '@fuzdev/fuz_util/fs.ts';
+import { diff_lines, diff_hunks, format_diff } from '@fuzdev/fuz_util/diff.ts';
+import { basename, dirname, join, relative } from 'node:path';
+import { syntax_styler_global } from '$lib/syntax_styler_global.ts';
+import { syntax_events_to_tokens } from '$lib/lexer.ts';
+import { render_diff_unified_html, render_diff_split_html } from '$lib/diff_html.ts';
 
 export interface SampleSpec {
 	lang: string;
@@ -24,7 +24,7 @@ export interface GeneratedOutput {
  */
 export const discover_samples = async (): Promise<Array<SampleSpec>> => {
 	const sample_files = await fs_search('src/test/fixtures/samples', {
-		file_filter: (path) => /sample_[^/]+\.(ts|rs|css|html|json|svelte|md|sh)$/.test(path),
+		file_filter: (path) => /sample_[^/]+\.(ts|rs|css|html|json|svelte|md|sh)$/.test(path)
 	});
 
 	const samples: Array<SampleSpec> = [];
@@ -42,7 +42,7 @@ export const discover_samples = async (): Promise<Array<SampleSpec>> => {
 			lang,
 			variant,
 			content,
-			filepath: relative(process.cwd(), file.id),
+			filepath: relative(process.cwd(), file.id)
 		});
 	}
 
@@ -55,7 +55,7 @@ export const discover_samples = async (): Promise<Array<SampleSpec>> => {
 export const get_fixture_path = (
 	lang: string,
 	variant: string,
-	ext: 'json' | 'txt' | 'html',
+	ext: 'json' | 'txt' | 'html'
 ): string => {
 	return join('src/test/fixtures/generated', lang, `${lang}_${variant}.${ext}`);
 };
@@ -83,7 +83,7 @@ export const process_sample = (sample: SampleSpec): GeneratedOutput => {
 	return {
 		sample,
 		tokens,
-		html,
+		html
 	};
 };
 
@@ -105,10 +105,11 @@ export interface DiffCaseSpec {
  */
 export const discover_diff_cases = async (): Promise<Array<DiffCaseSpec>> => {
 	const files = await fs_search('src/test/fixtures/diff', {
-		file_filter: (path) => /\/[ab]\.[^./]+$/.test(path),
+		file_filter: (path) => /\/[ab]\.[^./]+$/.test(path)
 	});
 
-	const by_case: Map<string, {a?: string; b?: string; a_ext?: string; b_ext?: string}> = new Map();
+	const by_case: Map<string, { a?: string; b?: string; a_ext?: string; b_ext?: string }> =
+		new Map();
 	for (const file of files) {
 		const name = basename(dirname(file.id));
 		const filename = basename(file.id);
@@ -130,10 +131,10 @@ export const discover_diff_cases = async (): Promise<Array<DiffCaseSpec>> => {
 		}
 		if (entry.a_ext !== entry.b_ext) {
 			throw Error(
-				`Diff case "${name}" has mismatched extensions: ${entry.a_ext} vs ${entry.b_ext}`,
+				`Diff case "${name}" has mismatched extensions: ${entry.a_ext} vs ${entry.b_ext}`
 			);
 		}
-		cases.push({name, lang: entry.a_ext!, a: entry.a, b: entry.b});
+		cases.push({ name, lang: entry.a_ext!, a: entry.a, b: entry.b });
 	}
 	return cases;
 };
@@ -155,8 +156,8 @@ export interface DiffGeneratedOutput {
  */
 export const process_diff_case = (spec: DiffCaseSpec): DiffGeneratedOutput => ({
 	spec,
-	unified_html: render_diff_unified_html(spec.a, spec.b, {lang: spec.lang}),
-	split_html: render_diff_split_html(spec.a, spec.b, {lang: spec.lang}),
+	unified_html: render_diff_unified_html(spec.a, spec.b, { lang: spec.lang }),
+	split_html: render_diff_split_html(spec.a, spec.b, { lang: spec.lang })
 });
 
 /**
@@ -174,7 +175,7 @@ export const generate_diff_debug_text = (spec: DiffCaseSpec): string => {
 	debug += `a: ${spec.a.length} chars, b: ${spec.b.length} chars\n`;
 	debug += `lines: ${lines.length} (${changed} changed), hunks: ${hunks.length}\n`;
 	debug += '\n=== DIFF ===\n';
-	debug += format_diff(hunks, `a.${spec.lang}`, `b.${spec.lang}`, {max_lines: 0});
+	debug += format_diff(hunks, `a.${spec.lang}`, `b.${spec.lang}`, { max_lines: 0 });
 	debug += '\n';
 	return debug;
 };
@@ -183,7 +184,7 @@ export const generate_diff_debug_text = (spec: DiffCaseSpec): string => {
  * Generate debug text output for a sample
  */
 export const generate_debug_text = (output: GeneratedOutput): string => {
-	const {sample, tokens} = output;
+	const { sample, tokens } = output;
 
 	let debug = '=== STATS ===\n';
 	debug += `Sample length: ${sample.content.length} characters\n`;
@@ -192,7 +193,7 @@ export const generate_debug_text = (output: GeneratedOutput): string => {
 	// Count token types
 	const tokenTypes: Record<string, number> = {};
 	for (const token of tokens) {
-		const {type} = token;
+		const { type } = token;
 		tokenTypes[type] = (tokenTypes[type] || 0) + 1;
 	}
 	debug += `\nToken types (${Object.keys(tokenTypes).length} unique):\n`;

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import {run_and_print_benchmark, run_and_save_benchmark} from './benchmarks.ts';
+import { run_and_print_benchmark, run_and_save_benchmark } from './benchmarks.ts';
 
 // Parse argv: --save persists results.md + baseline.json; any remaining
 // positional is the filter. Order-independent.

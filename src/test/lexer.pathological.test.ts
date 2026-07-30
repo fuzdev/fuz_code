@@ -1,8 +1,8 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
-import {validate_syntax_events} from '$lib/lexer.ts';
-import {PATHOLOGICAL_CASES} from './pathological.ts';
+import { syntax_styler_global } from '$lib/syntax_styler_global.ts';
+import { validate_syntax_events } from '$lib/lexer.ts';
+import { PATHOLOGICAL_CASES } from './pathological.ts';
 
 // Pathological workloads (see `pathological.ts`) — enforces the lexer design's
 // linearity rule: no rescans, work O(n) per language layer. Realistic samples
@@ -41,7 +41,7 @@ const time_lex = (text: string, lang: string): number => {
 	return best;
 };
 
-for (const {name, lang, generate} of PATHOLOGICAL_CASES) {
+for (const { name, lang, generate } of PATHOLOGICAL_CASES) {
 	describe(`pathological: ${name}`, () => {
 		test('produces a valid event stream at both sizes', () => {
 			for (const size of [SMALL_SIZE, SMALL_SIZE * SCALE]) {
@@ -58,7 +58,7 @@ for (const {name, lang, generate} of PATHOLOGICAL_CASES) {
 				ratio,
 				MAX_RATIO,
 				`${name}: ${SCALE}x input took ${ratio.toFixed(1)}x time ` +
-					`(${(t_small * 1000).toFixed(0)}μs → ${(t_large * 1000).toFixed(0)}μs) — superlinear scaling`,
+					`(${(t_small * 1000).toFixed(0)}μs → ${(t_large * 1000).toFixed(0)}μs) — superlinear scaling`
 			);
 		});
 	});

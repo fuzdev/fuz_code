@@ -57,7 +57,7 @@ npm i -D @fuzdev/fuz_code
 ```
 
 ```ts
-import {syntax_styler_global} from '@fuzdev/fuz_code/syntax_styler_global.ts';
+import { syntax_styler_global } from '@fuzdev/fuz_code/syntax_styler_global.ts';
 
 // Generate HTML with syntax highlighting
 const html = syntax_styler_global.stylize(code, 'ts');

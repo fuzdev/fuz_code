@@ -1,15 +1,15 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {SyntaxStyler} from '$lib/syntax_styler.ts';
-import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
-import {syntax_events_to_tokens, validate_syntax_events, type SyntaxLang} from '$lib/lexer.ts';
+import { SyntaxStyler } from '$lib/syntax_styler.ts';
+import { syntax_styler_global } from '$lib/syntax_styler_global.ts';
+import { syntax_events_to_tokens, validate_syntax_events, type SyntaxLang } from '$lib/lexer.ts';
 
 describe('SyntaxStyler registry', () => {
 	test('has_lang reflects registration and aliases', () => {
 		const styler = new SyntaxStyler();
 		assert.ok(styler.has_lang('plaintext')); // registered by default
 		assert.ok(!styler.has_lang('ts'));
-		const lang: SyntaxLang = {id: 'foo', aliases: ['bar'], lex: (l) => (l.pos = l.end)};
+		const lang: SyntaxLang = { id: 'foo', aliases: ['bar'], lex: (l) => (l.pos = l.end) };
 		styler.add_lang(lang);
 		assert.ok(styler.has_lang('foo'));
 		assert.ok(styler.has_lang('bar'));
@@ -43,7 +43,7 @@ describe('syntax_styler_global aliases', () => {
 		['xml', '<a></a>'],
 		['ssml', '<speak></speak>'],
 		['atom', '<feed></feed>'],
-		['rss', '<rss></rss>'],
+		['rss', '<rss></rss>']
 	];
 	for (const [alias, src] of cases) {
 		test(`alias "${alias}" is registered and lexes`, () => {

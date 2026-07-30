@@ -1,13 +1,13 @@
-import {describe, test, assert} from 'vitest';
-import {readFileSync} from 'node:fs';
+import { describe, test, assert } from 'vitest';
+import { readFileSync } from 'node:fs';
 
-import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
-import {syntax_events_to_tokens, validate_syntax_events} from '$lib/lexer.ts';
+import { syntax_styler_global } from '$lib/syntax_styler_global.ts';
+import { syntax_events_to_tokens, validate_syntax_events } from '$lib/lexer.ts';
 
 const tokens_of = (text: string): Array<[string, string]> =>
 	syntax_events_to_tokens(syntax_styler_global.lex(text, 'md')).map((t) => [
 		t.type,
-		text.slice(t.start, t.end),
+		text.slice(t.start, t.end)
 	]);
 
 const picked = (text: string, types: Array<string>): Array<[string, string]> =>
@@ -21,7 +21,7 @@ describe('lexer_md blocks', () => {
 			['inline_code', '`x`'],
 			['punctuation', '`'],
 			['content', 'x'],
-			['punctuation', '`'],
+			['punctuation', '`']
 		]);
 	});
 
@@ -37,7 +37,7 @@ describe('lexer_md blocks', () => {
 			['punctuation', '>'],
 			['bold', '**bold**'],
 			['punctuation', '**'],
-			['punctuation', '**'],
+			['punctuation', '**']
 		]);
 	});
 
@@ -47,7 +47,7 @@ describe('lexer_md blocks', () => {
 			['punctuation', '  -'],
 			['italic', '_em_'],
 			['punctuation', '_'],
-			['punctuation', '_'],
+			['punctuation', '_']
 		]);
 		assert.deepEqual(picked('* starred', ['list']), [['list', '* starred']]);
 	});
@@ -66,14 +66,14 @@ describe('lexer_md fences', () => {
 			['fenced_code', '```ts\nlet x = 1;\n```'],
 			['code_fence', '```ts'],
 			['lang_ts', '\nlet x = 1;\n'],
-			['keyword', 'let'],
+			['keyword', 'let']
 		]);
 	});
 
 	test('info words match exactly — json is json, tsx is unknown', () => {
 		assert.deepEqual(picked('```json\n{"a": 1}\n```', ['lang_json', 'property']), [
 			['lang_json', '\n{"a": 1}\n'],
-			['property', '"a"'],
+			['property', '"a"']
 		]);
 		assert.deepEqual(picked('```tsx\nlet x = 1;\n```', ['lang_ts', 'keyword']), []);
 	});
@@ -86,28 +86,28 @@ describe('lexer_md fences', () => {
 		assert.deepEqual(tokens_of('```python\nprint(1)\n```'), [
 			['fenced_code', '```python\nprint(1)\n```'],
 			['code_fence', '```python'],
-			['code_fence', '```'],
+			['code_fence', '```']
 		]);
 	});
 
 	test('a longer closing fence closes a shorter opener', () => {
 		assert.deepEqual(picked('```\nplain\n`````', ['code_fence']), [
 			['code_fence', '```'],
-			['code_fence', '`````'],
+			['code_fence', '`````']
 		]);
 	});
 
 	test('a shorter closing fence does not close a longer opener', () => {
 		assert.deepEqual(picked('````python\na\n```\nb\n````', ['code_fence']), [
 			['code_fence', '````python'],
-			['code_fence', '````'],
+			['code_fence', '````']
 		]);
 	});
 
 	test('markdown fences self-embed', () => {
 		assert.deepEqual(picked('````md\n# inner\n````', ['lang_md', 'heading']), [
 			['lang_md', '\n# inner\n'],
-			['heading', '# inner'],
+			['heading', '# inner']
 		]);
 	});
 
@@ -116,7 +116,7 @@ describe('lexer_md fences', () => {
 		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'md')), []);
 		assert.deepEqual(picked(text, ['fenced_code', 'keyword']), [
 			['fenced_code', text],
-			['keyword', 'let'],
+			['keyword', 'let']
 		]);
 	});
 
@@ -135,7 +135,7 @@ describe('lexer_md inline', () => {
 			['italic', '_c_'],
 			['italic', '*d*'],
 			['bold', '__e__'],
-			['strikethrough', '~~f~~'],
+			['strikethrough', '~~f~~']
 		]);
 	});
 
@@ -150,7 +150,7 @@ describe('lexer_md inline', () => {
 	test('inline code is line-bounded and non-empty', () => {
 		assert.deepEqual(picked('a `b` c', ['inline_code', 'content']), [
 			['inline_code', '`b`'],
-			['content', 'b'],
+			['content', 'b']
 		]);
 		assert.deepEqual(picked('not `` empty', ['inline_code']), []);
 		assert.deepEqual(picked('not `multi\nline`', ['inline_code']), []);
@@ -166,7 +166,7 @@ describe('lexer_md inline', () => {
 			['url_wrapper', '(url)'],
 			['punctuation', '('],
 			['url', 'url'],
-			['punctuation', ')'],
+			['punctuation', ')']
 		]);
 		assert.deepEqual(picked('[a[b]](c) and [d] (e)', ['link']), []);
 	});
@@ -182,7 +182,7 @@ describe('lexer_md inline', () => {
 	test('entities', () => {
 		assert.deepEqual(picked('a &amp; b &#38; c', ['entity']), [
 			['entity', '&amp;'],
-			['entity', '&#38;'],
+			['entity', '&#38;']
 		]);
 	});
 });
@@ -195,7 +195,7 @@ describe('lexer_md raw markup', () => {
 	test('multi-line comments span paragraph lines', () => {
 		assert.deepEqual(picked('before <!-- a\nb --> after **x**', ['comment', 'bold']), [
 			['comment', '<!-- a\nb -->'],
-			['bold', '**x**'],
+			['bold', '**x**']
 		]);
 	});
 
@@ -203,7 +203,7 @@ describe('lexer_md raw markup', () => {
 		assert.deepEqual(picked('<script>\nlet x = 1;\n</script>', ['script', 'lang_js', 'keyword']), [
 			['script', '\nlet x = 1;\n'],
 			['lang_js', '\nlet x = 1;\n'],
-			['keyword', 'let'],
+			['keyword', 'let']
 		]);
 	});
 
@@ -218,7 +218,7 @@ describe('lexer_md raw markup', () => {
 		// (`MdScanCache.markup`) — entity-less attribute values on earlier lines
 		// must not lose an entity in a later one
 		assert.deepEqual(picked('<b c="v">x</b>\n\n<i d="&amp;">y</i>', ['entity']), [
-			['entity', '&amp;'],
+			['entity', '&amp;']
 		]);
 	});
 });
@@ -232,7 +232,7 @@ describe('lexer_md sample', () => {
 
 	test('sample produces its characteristic token types', () => {
 		const types = new Set(
-			syntax_events_to_tokens(syntax_styler_global.lex(content, 'md')).map((t) => t.type),
+			syntax_events_to_tokens(syntax_styler_global.lex(content, 'md')).map((t) => t.type)
 		);
 		for (const t of ['heading', 'fenced_code', 'code_fence', 'list', 'bold', 'italic']) {
 			assert.ok(types.has(t), `expected a ${t} token in the sample`);

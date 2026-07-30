@@ -2,18 +2,18 @@
 	// the Highlight API rules live in theme_highlight.css (not theme.css)
 	import '$lib/theme_highlight.css';
 
-	import {page} from '$app/state';
-	import {DOCS_PATH} from '@fuzdev/fuz_ui/docs_helpers.svelte.ts';
-	import {tome_get_by_slug} from '@fuzdev/fuz_ui/tome.ts';
+	import { page } from '$app/state';
+	import { DOCS_PATH } from '@fuzdev/fuz_ui/docs_helpers.svelte.ts';
+	import { tome_get_by_slug } from '@fuzdev/fuz_ui/tome.ts';
 	import TomeContent from '@fuzdev/fuz_ui/TomeContent.svelte';
 	import TomeLink from '@fuzdev/fuz_ui/TomeLink.svelte';
 	import DeclarationLink from '@fuzdev/fuz_ui/DeclarationLink.svelte';
 
-	import {supports_css_highlight_api} from '$lib/highlight_manager.ts';
+	import { supports_css_highlight_api } from '$lib/highlight_manager.ts';
 	import CodeTextarea from '$lib/CodeTextarea.svelte';
-	import {sample_langs, type SampleLang} from '$lib/code_sample.ts';
-	import {samples} from '$routes/samples/all.ts';
-	import {lang_colors} from '$routes/lang_color.ts';
+	import { sample_langs, type SampleLang } from '$lib/code_sample.ts';
+	import { samples } from '$routes/samples/all.ts';
+	import { lang_colors } from '$routes/lang_color.ts';
 
 	const TOME_SLUG = 'textarea';
 	const tome = tome_get_by_slug(TOME_SLUG);

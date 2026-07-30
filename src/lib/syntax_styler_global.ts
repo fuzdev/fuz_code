@@ -1,12 +1,12 @@
-import {SyntaxStyler} from './syntax_styler.ts';
-import {lexer_json} from './lexer_json.ts';
-import {lexer_ts} from './lexer_ts.ts';
-import {lexer_css} from './lexer_css.ts';
-import {lexer_bash} from './lexer_bash.ts';
-import {lexer_markup, lexer_xml} from './lexer_markup.ts';
-import {lexer_svelte} from './lexer_svelte.ts';
-import {lexer_md} from './lexer_md.ts';
-import {lexer_rust} from './lexer_rust.ts';
+import { SyntaxStyler } from './syntax_styler.ts';
+import { lexer_json } from './lexer_json.ts';
+import { lexer_ts } from './lexer_ts.ts';
+import { lexer_css } from './lexer_css.ts';
+import { lexer_bash } from './lexer_bash.ts';
+import { lexer_markup, lexer_xml } from './lexer_markup.ts';
+import { lexer_svelte } from './lexer_svelte.ts';
+import { lexer_md } from './lexer_md.ts';
+import { lexer_rust } from './lexer_rust.ts';
 
 /**
  * Pre-configured `SyntaxStyler` instance with all built-in languages registered.

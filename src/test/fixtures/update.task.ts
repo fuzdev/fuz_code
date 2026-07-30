@@ -1,6 +1,6 @@
-import type {Task} from '@fuzdev/gro';
-import {writeFileSync, mkdirSync, rmSync, existsSync} from 'node:fs';
-import {join, resolve} from 'node:path';
+import type { Task } from '@fuzdev/gro';
+import { writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import {
 	discover_samples,
 	process_sample,
@@ -9,12 +9,12 @@ import {
 	discover_diff_cases,
 	process_diff_case,
 	generate_diff_debug_text,
-	get_diff_fixture_path,
+	get_diff_fixture_path
 } from './helpers.ts';
 
 export const task: Task = {
 	summary: 'update all test fixtures from sample files',
-	run: async ({invoke_task}) => {
+	run: async ({ invoke_task }) => {
 		await invoke_task('gen');
 
 		// Discover all sample files
@@ -29,7 +29,7 @@ export const task: Task = {
 		for (const lang of languages) {
 			const dir = join(generated_fixtures_dir, lang);
 			if (existsSync(dir)) {
-				rmSync(dir, {recursive: true, force: true});
+				rmSync(dir, { recursive: true, force: true });
 				console.log(`Removed existing directory: ${dir}`); // eslint-disable-line no-console
 			}
 		}
@@ -43,7 +43,7 @@ export const task: Task = {
 
 			// Ensure directory exists
 			const dir = join(generated_fixtures_dir, sample.lang);
-			mkdirSync(dir, {recursive: true});
+			mkdirSync(dir, { recursive: true });
 
 			// Write HTML file (no formatting needed, already formatted)
 			const html_path = get_fixture_path(sample.lang, sample.variant, 'html');
@@ -61,10 +61,10 @@ export const task: Task = {
 		const diff_cases = await discover_diff_cases();
 		const diff_dir = join(generated_fixtures_dir, 'diff');
 		if (existsSync(diff_dir)) {
-			rmSync(diff_dir, {recursive: true, force: true});
+			rmSync(diff_dir, { recursive: true, force: true });
 			console.log(`Removed existing directory: ${diff_dir}`); // eslint-disable-line no-console
 		}
-		mkdirSync(diff_dir, {recursive: true});
+		mkdirSync(diff_dir, { recursive: true });
 
 		for (const diff_case of diff_cases) {
 			console.log(`Processing diff ${diff_case.name}...`); // eslint-disable-line no-console
@@ -85,5 +85,5 @@ export const task: Task = {
 
 		// eslint-disable-next-line no-console
 		console.log(`\n✓ Updated ${samples.length} samples and ${diff_cases.length} diff cases`);
-	},
+	}
 };

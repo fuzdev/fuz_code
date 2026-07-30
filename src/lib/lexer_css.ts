@@ -5,7 +5,7 @@ import {
 	token_type,
 	trim_space_end,
 	type Lexer,
-	type SyntaxLang,
+	type SyntaxLang
 } from './lexer.ts';
 
 /**
@@ -126,7 +126,7 @@ const scan_to_terminator = (text: string, i: number, end: number): number => {
  * `and`/`not`/`only`/`or` keywords; everything else is plain text.
  */
 const lex_css_value = (l: Lexer, from: number, to: number, is_atrule: boolean): void => {
-	const {text} = l;
+	const { text } = l;
 	let i = from;
 	while (i < to) {
 		const c = text.charCodeAt(i);
@@ -204,7 +204,7 @@ const lex_css_value = (l: Lexer, from: number, to: number, is_atrule: boolean): 
  * unterminated).
  */
 const lex_css_url = (l: Lexer, i: number, word_end: number, to: number): number => {
-	const {text} = l;
+	const { text } = l;
 	l.open(T_URL, i);
 	l.leaf(T_FUNCTION, i, word_end);
 	l.leaf(T_PUNCTUATION, word_end, word_end + 1); // `(`
@@ -232,7 +232,7 @@ const lex_css_url = (l: Lexer, i: number, word_end: number, to: number): number 
  * bare value when there is no top-level `property:`.
  */
 const lex_css_declaration = (l: Lexer, from: number, to: number): void => {
-	const {text} = l;
+	const { text } = l;
 	let i = from;
 	while (i < to && is_space(text.charCodeAt(i))) i++;
 	if (i < to && is_css_ident_start(text.charCodeAt(i))) {
@@ -255,7 +255,7 @@ const lex_css_declaration = (l: Lexer, from: number, to: number): void => {
  * `atrule` container (`rule` + prelude), then the terminating `{` or `;`.
  */
 const lex_css_atrule = (l: Lexer, i: number, end: number): number => {
-	const {text} = l;
+	const { text } = l;
 	let rule_end = i + 1;
 	while (rule_end < end && is_css_ident(text.charCodeAt(rule_end))) rule_end++;
 	const term = scan_to_terminator(text, rule_end, end);
@@ -273,7 +273,7 @@ const lex_css_atrule = (l: Lexer, i: number, end: number): number => {
 };
 
 const lex_css = (l: Lexer): void => {
-	const {text, end} = l;
+	const { text, end } = l;
 	let i = l.pos;
 	while (i < end) {
 		const c = text.charCodeAt(i);
@@ -320,4 +320,4 @@ const lex_css = (l: Lexer): void => {
 /**
  * The CSS language registration for the lexer engine.
  */
-export const lexer_css: SyntaxLang = {id: 'css', lex: lex_css};
+export const lexer_css: SyntaxLang = { id: 'css', lex: lex_css };

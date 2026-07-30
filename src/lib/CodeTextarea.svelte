@@ -15,11 +15,11 @@
 	 * render font-weight/font-style. Requires importing `theme_highlight.css`.
 	 */
 
-	import type {SvelteHTMLElements} from 'svelte/elements';
+	import type { SvelteHTMLElements } from 'svelte/elements';
 
-	import {syntax_styler_global} from './syntax_styler_global.ts';
-	import type {SyntaxStyler} from './syntax_styler.ts';
-	import {create_range_highlighting} from './range_highlighting.svelte.ts';
+	import { syntax_styler_global } from './syntax_styler_global.ts';
+	import type { SyntaxStyler } from './syntax_styler.ts';
+	import { create_range_highlighting } from './range_highlighting.svelte.ts';
 
 	let {
 		value = $bindable(''),
@@ -64,7 +64,7 @@
 		text: () => display_text,
 		lang: () => lang,
 		syntax_styler: () => syntax_styler,
-		dev_label: 'CodeTextarea',
+		dev_label: 'CodeTextarea'
 	});
 
 	// keep the (overflow-hidden) backdrop aligned with the textarea's scroll position
@@ -85,8 +85,7 @@
 		onscroll={(e) => {
 			sync_scroll();
 			rest.onscroll?.(e); // preserve a consumer-supplied handler
-		}}
-	></textarea>
+		}}></textarea>
 </div>
 
 <style>

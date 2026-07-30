@@ -1,8 +1,8 @@
-import {onDestroy} from 'svelte';
-import {DEV} from 'esm-env';
+import { onDestroy } from 'svelte';
+import { DEV } from 'esm-env';
 
-import type {SyntaxStyler} from './syntax_styler.ts';
-import {HighlightManager, supports_css_highlight_api} from './highlight_manager.ts';
+import type { SyntaxStyler } from './syntax_styler.ts';
+import { HighlightManager, supports_css_highlight_api } from './highlight_manager.ts';
 
 /**
  * Reactive inputs for `create_range_highlighting`. All values are getters so the
@@ -45,7 +45,7 @@ export const create_range_highlighting = (options: RangeHighlightingOptions): Ra
 	const is_enabled = options.enabled ?? (() => true);
 
 	const language_supported = $derived(
-		options.lang() !== null && options.syntax_styler().has_lang(options.lang()!),
+		options.lang() !== null && options.syntax_styler().has_lang(options.lang()!)
 	);
 	const highlighting_disabled = $derived(options.lang() === null || !language_supported);
 
@@ -77,7 +77,7 @@ export const create_range_highlighting = (options: RangeHighlightingOptions): Ra
 				// eslint-disable-next-line no-console
 				console.error(
 					`[${options.dev_label}] Language "${options.lang()}" is not supported. ` +
-						`Highlighting disabled. Supported: ${langs}`,
+						`Highlighting disabled. Supported: ${langs}`
 				);
 			}
 		});
@@ -88,6 +88,6 @@ export const create_range_highlighting = (options: RangeHighlightingOptions): Ra
 	return {
 		get highlighting_disabled() {
 			return highlighting_disabled;
-		},
+		}
 	};
 };

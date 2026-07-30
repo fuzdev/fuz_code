@@ -5,10 +5,10 @@
 	import DeclarationLink from '@fuzdev/fuz_ui/DeclarationLink.svelte';
 	import TomeSection from '@fuzdev/fuz_ui/TomeSection.svelte';
 	import TomeSectionHeader from '@fuzdev/fuz_ui/TomeSectionHeader.svelte';
-	import {tome_get_by_slug} from '@fuzdev/fuz_ui/tome.ts';
+	import { tome_get_by_slug } from '@fuzdev/fuz_ui/tome.ts';
 
 	import Code from '$lib/Code.svelte';
-	import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
+	import { syntax_styler_global } from '$lib/syntax_styler_global.ts';
 
 	const TOME_SLUG = 'usage';
 	const tome = tome_get_by_slug(TOME_SLUG);

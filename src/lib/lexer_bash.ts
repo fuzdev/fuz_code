@@ -9,7 +9,7 @@ import {
 	token_type,
 	words_map,
 	type Lexer,
-	type SyntaxLang,
+	type SyntaxLang
 } from './lexer.ts';
 
 /**
@@ -84,14 +84,14 @@ const WORDS: Map<string, number> = words_map(
 	[
 		K_KEYWORD,
 		'if then else elif fi for while until do done case esac in select function return local ' +
-			'export declare typeset readonly unset set shift trap break continue coproc time',
+			'export declare typeset readonly unset set shift trap break continue coproc time'
 	],
 	[
 		K_BUILTIN,
 		'echo printf cd pwd read test source eval exec exit getopts hash type ulimit umask wait kill ' +
-			'jobs bg fg disown alias unalias command shopt',
+			'jobs bg fg disown alias unalias command shopt'
 	],
-	[K_BOOLEAN, 'true false'],
+	[K_BOOLEAN, 'true false']
 );
 
 // `$`-followed single-char special variables (`$@ $# $? $$ $! $* $-`); digits
@@ -174,7 +174,7 @@ const scan_ansi_c = (text: string, i: number, end: number): number => {
  * `i + 1` with no token).
  */
 const scan_dollar_var = (l: Lexer, i: number, to: number): number => {
-	const {text} = l;
+	const { text } = l;
 	const c1 = text.charCodeAt(i + 1);
 	if (c1 === 123) {
 		// `${…}` — balanced braces, so nested expansions (`${a:-${b}}`) span
@@ -318,7 +318,7 @@ const create_bash_frame = (): BashFrame => ({
 	term: 0,
 	depth: 0,
 	ret: R_ROOT,
-	ret_a: 0,
+	ret_a: 0
 });
 
 /**
@@ -334,9 +334,9 @@ const mac_push_window = (
 	ret: number,
 	ret_a: number,
 	term: number,
-	depth: number,
+	depth: number
 ): void => {
-	const {stack, sp} = mac;
+	const { stack, sp } = mac;
 	let f = stack[sp];
 	if (f === undefined) {
 		f = create_bash_frame();
@@ -366,7 +366,7 @@ const mac_push_window = (
  */
 const mac_push_dollar_paren = (mac: BashMachine, i: number, to: number): void => {
 	const l = mac.l;
-	const {text} = l;
+	const { text } = l;
 	if (i + 2 < to && text.charCodeAt(i + 2) === 40) {
 		// arithmetic expansion — `$((`/`))` are punctuation and the interior
 		// lexes as ordinary bash; the window starts inside both parens
@@ -389,7 +389,7 @@ const mac_push_dollar_paren = (mac: BashMachine, i: number, to: number): void =>
  */
 const mac_push_backtick = (mac: BashMachine, i: number, to: number): void => {
 	const l = mac.l;
-	const {text} = l;
+	const { text } = l;
 	let j = i + 1;
 	while (j < to) {
 		const c = text.charCodeAt(j);
@@ -415,7 +415,7 @@ const mac_push_backtick = (mac: BashMachine, i: number, to: number): void => {
  * substitutions complete without a frame.
  */
 const scan_dquote_body = (l: Lexer, j: number, to: number): number => {
-	const {text} = l;
+	const { text } = l;
 	let i = j;
 	while (i < to) {
 		const c = text.charCodeAt(i);
@@ -458,7 +458,7 @@ interface PendingHeredoc {
  * `hd_resume = frame.to`, and returns `frame.to`.
  */
 const scan_heredoc_body = (l: Lexer, frame: BashFrame, j: number): number => {
-	const {text} = l;
+	const { text } = l;
 	const to = frame.to;
 	const delim = frame.hd_delim;
 	const quoted = frame.hd_quoted;
@@ -515,7 +515,7 @@ const scan_heredoc_body = (l: Lexer, frame: BashFrame, j: number): number => {
 const drain_pending = (mac: BashMachine, frame: BashFrame): boolean => {
 	const l = mac.l;
 	const to = frame.to;
-	const {pending} = frame;
+	const { pending } = frame;
 	while (frame.pending_idx < pending.length) {
 		if (frame.i >= to) break;
 		const hd = pending[frame.pending_idx]!;
@@ -621,7 +621,7 @@ const run_bash_sub = (mac: BashMachine, frame: BashFrame): boolean => {
  */
 const run_bash_window = (mac: BashMachine, frame: BashFrame): boolean => {
 	const l = mac.l;
-	const {text} = l;
+	const { text } = l;
 	const to = frame.to;
 	const term = frame.term;
 
@@ -883,10 +883,10 @@ const lex_bash_heredoc_start = (
 	mac: BashMachine,
 	frame: BashFrame,
 	i: number,
-	to: number,
+	to: number
 ): number => {
 	const l = mac.l;
-	const {text} = l;
+	const { text } = l;
 	let k = i + 2;
 	const dash = text.charCodeAt(k) === 45;
 	if (dash) k++; // `<<-`
@@ -911,7 +911,7 @@ const lex_bash_heredoc_start = (
 	// queued order (first redirect → first body) is preserved
 	if (!contiguous || frame.pending.length > 0) {
 		l.leaf(T_HEREDOC_DELIMITER, i, delim_token_end);
-		frame.pending.push({delim, quoted, dash});
+		frame.pending.push({ delim, quoted, dash });
 		return delim_token_end;
 	}
 
@@ -986,7 +986,7 @@ const run_bash = (mac: BashMachine): void => {
 };
 
 const lex_bash = (l: Lexer): void => {
-	const mac: BashMachine = {l, stack: [], sp: 0};
+	const mac: BashMachine = { l, stack: [], sp: 0 };
 	mac_push_window(mac, l.pos, l.end, R_ROOT, 0, 0, 0);
 	run_bash(mac);
 	l.pos = l.end;
@@ -1000,4 +1000,4 @@ const lex_bash = (l: Lexer): void => {
  * lexer additionally recognizes don't occur in sh input, so running it on sh
  * scripts is exact. There is no separate sh lexer.
  */
-export const lexer_bash: SyntaxLang = {id: 'sh', aliases: ['bash', 'shell'], lex: lex_bash};
+export const lexer_bash: SyntaxLang = { id: 'sh', aliases: ['bash', 'shell'], lex: lex_bash };
