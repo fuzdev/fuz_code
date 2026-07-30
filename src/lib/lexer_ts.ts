@@ -17,7 +17,7 @@ import {
 } from './lexer.ts';
 
 /**
- * Hand-written TypeScript/JavaScript lexer.
+ * Hand-written TypeScript/JS lexer.
  *
  * Disambiguation rests on three rules: previous-token tracking separates a
  * regex literal from division, template literals nest their `${…}`
@@ -1312,7 +1312,7 @@ const lex_ts = (l: Lexer): void => {
 /**
  * The TypeScript language registration for the lexer engine.
  *
- * JavaScript reuses this lexer via the `js`/`javascript` aliases: TypeScript is
+ * JS reuses this lexer via the `js`/`javascript` aliases: TypeScript is
  * a syntactic superset, and the TS-only constructs the lexer recognizes (type
  * annotations, `as`, generics before a call) can't appear in valid JS, so
  * running the full TS lexer on JS is a no-op for those paths. There is no
