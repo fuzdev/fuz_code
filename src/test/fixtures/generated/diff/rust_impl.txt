@@ -1,0 +1,24 @@
+=== STATS ===
+a: 70 chars, b: 242 chars
+lines: 16 (14 changed), hunks: 1
+
+=== DIFF ===
+--- a.rs
++++ b.rs
+@@ -1,4 +1,14 @@
+-/// Adds two numbers.
++/// Adds two numbers, saturating on overflow.
+ pub fn add(a: i32, b: i32) -> i32 {
+-    a + b
++    a.saturating_add(b)
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn saturates() {
++        assert_eq!(add(i32::MAX, 1), i32::MAX);
++    }
+ }

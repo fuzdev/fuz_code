@@ -1,0 +1,19 @@
+=== STATS ===
+a: 152 chars, b: 213 chars
+lines: 11 (7 changed), hunks: 1
+
+=== DIFF ===
+--- a.ts
++++ b.ts
+@@ -1,7 +1,8 @@
+-export const greet = (name: string): string => {
++export const greet = (name: string, formal: boolean): string => {
+ 	const message = `Hello, ${name}!
+-Welcome to the app.`;
++Welcome to the application.`;
++	if (formal) return `Dear ${name}`;
+ 	return message;
+ };
+ 
+-export const VERSION = 1;
++export const VERSION = 2;

@@ -35,7 +35,8 @@ dev server.
 - esm-env - `DEV` flag (required peer)
 - magic-string, zimmerframe - build-time preprocessor helpers (`dependencies`;
   `svelte_preprocess_fuz_code` only)
-- fuz_util (@fuzdev/fuz_util) - preprocessor helper (required peer)
+- fuz_util (@fuzdev/fuz_util) - preprocessor helper + diff data for the diff
+  viewer (required peer)
 - fuz_ui (@fuzdev/fuz_ui) - docs system (dev only)
 
 ## Scope
@@ -50,6 +51,8 @@ fuz_code is a **syntax highlighting library**:
 - Optional Svelte component (`Code.svelte`) and a build-time Svelte
   preprocessor (`svelte_preprocess_fuz_code`) that pre-renders static `Code`
   content
+- Syntax-highlighted diff rendering, unified and side-by-side
+  (`CodeDiff.svelte`/`CodeDiffSplit.svelte` over `diff_html.ts`)
 
 ### What fuz_code does NOT include
 
@@ -76,7 +79,10 @@ src/
 │   ├── syntax_styler_global.ts # pre-configured global instance
 │   ├── lexer.ts                # lexer substrate: Lexer, TokenTypeRegistry, flat events, HTML render
 │   ├── lexer_*.ts              # hand-written lexers (json, ts, css, bash, markup, svelte, md, rust)
+│   ├── diff_html.ts            # diff viewer: unified + split rendering over fuz_util's diff data
 │   ├── Code.svelte             # main Svelte component
+│   ├── CodeDiff.svelte         # diff viewer component (unified view)
+│   ├── CodeDiffSplit.svelte    # diff viewer component (side-by-side view)
 │   ├── svelte_preprocess_fuz_code.ts # build-time preprocessor for static `Code` content
 │   ├── code_sample.ts          # `CodeSample` shape + `sample_langs` for the demo site
 │   ├── CodeHighlight.svelte    # experimental CSS Highlight API
@@ -85,20 +91,25 @@ src/
 │   ├── range_highlighting.svelte.ts # shared range-highlighting helper
 │   ├── highlight_priorities.ts # generated token priorities
 │   ├── theme.css               # token CSS classes
+│   ├── theme_diff.css          # diff viewer theme (row tints via fuz_css intent variables)
 │   ├── theme_variables.css     # CSS variable fallbacks
 │   └── theme_highlight.css     # CSS Highlight API theme
 ├── test/                       # test files and fixtures
 │   ├── highlight_manager.test.ts
 │   ├── highlight_test_helpers.ts
+│   ├── html_test_helpers.ts    # HTML assertion helpers (diff + line rendering)
 │   ├── syntax_styler.test.ts   # registry/facade behavior
 │   ├── svelte_preprocess_fuz_code.test.ts
+│   ├── diff_html.test.ts       # diff rendering, both views
 │   ├── lexer*.test.ts          # lexer-engine suites (substrate + per language)
+│   ├── lexer.html_lines.test.ts # per-line rendering + marks
 │   ├── lexer.pathological.test.ts # linearity + validity on adversarial inputs
 │   ├── pathological.ts         # pathological input generators (tests + benchmark)
 │   └── fixtures/
 │       ├── samples/            # source of truth sample files
+│       ├── diff/               # diff case dirs, each an a/b source pair
 │       ├── generated/          # generated fixture outputs
-│       ├── helpers.ts          # sample discovery + html/debug-text generation
+│       ├── helpers.ts          # sample + diff-case discovery, html/debug-text generation
 │       ├── check.test.ts       # fixture validation
 │       └── update.task.ts      # fixture regeneration task
 └── routes/                     # demo/docs site
@@ -106,7 +117,7 @@ src/
     ├── benchmark/              # interactive benchmark UI
     ├── lang_color.ts           # per-language tint for the docs language buttons
     ├── library.ts              # svelte-docinfo library metadata for the API docs
-    └── docs/                   # tomes: usage, samples, textarea, benchmark, api
+    └── docs/                   # tomes: usage, samples, diff, textarea, benchmark, api
 ```
 
 ### Core system
@@ -139,8 +150,32 @@ The lexer emits a flat event stream (`LexedSyntax`) — leaf/open/close records
 in one `Int32Array` with interned type ids; plain text is implicit between
 events (recovered from offsets). `render_syntax_html` streams HTML from it in
 one forward pass, wrapping spans with classes like `.token_keyword`,
-`.token_string` (styled by `theme.css`); `syntax_events_to_tokens` flattens it
+`.token_string` (styled by `theme.css`); `render_syntax_html_lines` renders
+one balanced fragment per source line (spans open at a newline close there
+and reopen on the next line), with optional `marks` ranges wrapped in
+`<mark>` tags — marks wrap text runs only, cut at token boundaries, so
+nesting always stays valid; `syntax_events_to_tokens` flattens it
 to `{type, start, end}` for tests and fixtures.
+
+### Diff viewer
+
+`diff_html.ts` renders syntax-highlighted unified diffs:
+`render_diff_unified_html(a, b, options)` composes `@fuzdev/fuz_util/diff.ts`
+(Myers line diff, hunks, intra-line segments) with whole-document lexing per
+side and `render_syntax_html_lines`. Rows are semantic `<ins>`/`<del>`
+(context rows are `<span>`) carrying `diff_line` + `diff_add`/`diff_remove`/
+`diff_same`, with aria-hidden unselectable gutters, `+`/`-` markers as CSS
+generated content (copied text stays clean code), intra-line `<mark>`
+emphasis, and elided unchanged regions as zero-JS `<details>` blocks
+(options: `'details' | 'omit' | 'none'`). `render_diff_split_html` is the
+side-by-side sibling — a flat cell sequence for a two-column grid, pairing
+k-th remove with k-th add and padding unpaired sides with `.diff_spacer`
+cells. `CodeDiff.svelte`/`CodeDiffSplit.svelte` are the thin wrappers owning
+the `<div class="code_diff">`/`<div class="code_diff_split">` elements
+(split defaults `wrap` on — half-width panes); `theme_diff.css` (opt-in,
+alongside `theme.css`) styles both, with row tints keyed off fuz_css intent
+variables (`--positive_*`/`--negative_*`) through `--diff_*` custom
+properties.
 
 ### Language definitions
 
@@ -231,6 +266,22 @@ the styler:
 - `children` - optional snippet receiving the generated HTML string, to
   customize rendering; remaining props spread onto the `<code>` element
 
+**CodeDiff.svelte / CodeDiffSplit.svelte props** (unified / side-by-side):
+
+- `a`, `b` - the original and updated source texts (or `dangerous_raw_html`
+  like `Code.svelte`)
+- `lang` - language identifier (default: 'svelte'; `null` renders plain rows
+  with diff chrome only)
+- `context_lines` - unchanged lines around changes (default: 3)
+- `elide` - `'details' | 'omit' | 'none'` for unchanged regions (default:
+  'details')
+- `intraline` - intra-line `<mark>` emphasis on paired lines (default: true)
+- `line_numbers` - gutters (default: true)
+- `max_cost` - cost cap for the line diff, forwarded to fuz_util's
+  `diff_lines` (see `DiffOptions.max_cost` in `@fuzdev/fuz_util/diff.ts`)
+- `wrap`, `nomargin`, `syntax_styler` - as in `Code.svelte` (`wrap` defaults
+  on for the split view)
+
 ## Supported languages
 
 Primary ids and their aliases, as registered in `syntax_styler_global`:
@@ -261,6 +312,12 @@ Primary ids and their aliases, as registered in `syntax_styler_global`:
 
 Generated fixtures in `generated/{lang}/` include `.html` (tokenized output) and
 `.txt` (debug output with token names).
+
+Diff fixtures follow the same flow with pairs: each `src/test/fixtures/diff/{case}/`
+holds an `a.{lang}` + `b.{lang}` source pair (byte-exact — the whole dir is
+prettierignored, since trailing newlines and whitespace are diff inputs), and
+`generated/diff/{case}` gets `.html` (unified), `.split.html`, and `.txt`
+(stats + plain unified-diff text).
 
 ## Performance
 
@@ -408,7 +465,7 @@ New languages are written as lexers:
 
 ## Demo pages
 
-- `/docs` - tomes: usage, samples, textarea, benchmark, api
+- `/docs` - tomes: usage, samples, diff, textarea, benchmark, api
 - `/benchmark` - interactive browser benchmark (work vs paint timing)
 
 ## Project standards
