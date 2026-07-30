@@ -79,7 +79,7 @@ src/
 │   ├── syntax_styler_global.ts # pre-configured global instance
 │   ├── lexer.ts                # lexer substrate: Lexer, TokenTypeRegistry, flat events, HTML render
 │   ├── lexer_*.ts              # hand-written lexers (json, ts, css, bash, markup, svelte, md, rust)
-│   ├── diff_html.ts            # diff viewer: render_diff_unified_html over fuz_util's diff data
+│   ├── diff_html.ts            # diff viewer: unified + split rendering over fuz_util's diff data
 │   ├── Code.svelte             # main Svelte component
 │   ├── CodeDiff.svelte         # diff viewer component (unified view)
 │   ├── CodeDiffSplit.svelte    # diff viewer component (side-by-side view)
@@ -97,16 +97,19 @@ src/
 ├── test/                       # test files and fixtures
 │   ├── highlight_manager.test.ts
 │   ├── highlight_test_helpers.ts
+│   ├── html_test_helpers.ts    # HTML assertion helpers (diff + line rendering)
 │   ├── syntax_styler.test.ts   # registry/facade behavior
 │   ├── svelte_preprocess_fuz_code.test.ts
+│   ├── diff_html.test.ts       # diff rendering, both views
 │   ├── lexer*.test.ts          # lexer-engine suites (substrate + per language)
+│   ├── lexer.html_lines.test.ts # per-line rendering + marks
 │   ├── lexer.pathological.test.ts # linearity + validity on adversarial inputs
 │   ├── pathological.ts         # pathological input generators (tests + benchmark)
 │   └── fixtures/
 │       ├── samples/            # source of truth sample files
 │       ├── diff/               # diff case dirs, each an a/b source pair
 │       ├── generated/          # generated fixture outputs
-│       ├── helpers.ts          # sample discovery + html/debug-text generation
+│       ├── helpers.ts          # sample + diff-case discovery, html/debug-text generation
 │       ├── check.test.ts       # fixture validation
 │       └── update.task.ts      # fixture regeneration task
 └── routes/                     # demo/docs site
@@ -114,7 +117,7 @@ src/
     ├── benchmark/              # interactive benchmark UI
     ├── lang_color.ts           # per-language tint for the docs language buttons
     ├── library.ts              # svelte-docinfo library metadata for the API docs
-    └── docs/                   # tomes: usage, samples, textarea, benchmark, api
+    └── docs/                   # tomes: usage, samples, diff, textarea, benchmark, api
 ```
 
 ### Core system
