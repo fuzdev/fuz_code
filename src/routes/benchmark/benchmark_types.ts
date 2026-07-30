@@ -1,8 +1,8 @@
-import type {SvelteHTMLElements} from 'svelte/elements';
-import type {Component} from 'svelte';
-import type {BenchmarkStats as FuzBenchmarkStats} from '@fuzdev/fuz_util/benchmark_stats.ts';
+import type { SvelteHTMLElements } from 'svelte/elements';
+import type { Component } from 'svelte';
+import type { BenchmarkStats as FuzBenchmarkStats } from '@fuzdev/fuz_util/benchmark_stats.ts';
 
-import type {ImplementationName} from './benchmark_fixtures.ts';
+import type { ImplementationName } from './benchmark_fixtures.ts';
 
 export type BenchmarkComponentProps = SvelteHTMLElements['code'] & {
 	content: string;
@@ -86,7 +86,7 @@ export interface SummaryStats {
 export interface BenchmarkHarnessController {
 	run_iteration: (
 		component: Component<BenchmarkComponentProps>,
-		props: BenchmarkComponentProps,
+		props: BenchmarkComponentProps
 	) => Promise<IterationTiming>;
 	cleanup: () => Promise<void>;
 }

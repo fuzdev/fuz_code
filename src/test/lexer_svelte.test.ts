@@ -1,13 +1,13 @@
-import {describe, test, assert} from 'vitest';
-import {readFileSync} from 'node:fs';
+import { describe, test, assert } from 'vitest';
+import { readFileSync } from 'node:fs';
 
-import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
-import {syntax_events_to_tokens, validate_syntax_events} from '$lib/lexer.ts';
+import { syntax_styler_global } from '$lib/syntax_styler_global.ts';
+import { syntax_events_to_tokens, validate_syntax_events } from '$lib/lexer.ts';
 
 const tokens_of = (text: string): Array<[string, string]> =>
 	syntax_events_to_tokens(syntax_styler_global.lex(text, 'svelte')).map((t) => [
 		t.type,
-		text.slice(t.start, t.end),
+		text.slice(t.start, t.end)
 	]);
 
 const picked = (text: string, types: Array<string>): Array<[string, string]> =>
@@ -19,14 +19,14 @@ describe('lexer_svelte expressions', () => {
 			['svelte_expression', '{x}'],
 			['punctuation', '{'],
 			['lang_ts', 'x'],
-			['punctuation', '}'],
+			['punctuation', '}']
 		]);
 	});
 
 	test('an empty expression coalesces its braces', () => {
 		assert.deepEqual(tokens_of('{}'), [
 			['svelte_expression', '{}'],
-			['punctuation', '{}'],
+			['punctuation', '{}']
 		]);
 	});
 
@@ -36,7 +36,7 @@ describe('lexer_svelte expressions', () => {
 			['punctuation', '{'],
 			['lang_ts', "'}'"],
 			['string', "'}'"],
-			['punctuation', '}'],
+			['punctuation', '}']
 		]);
 	});
 
@@ -57,13 +57,13 @@ describe('lexer_svelte expressions', () => {
 		// the window's `<`/`{` probes are cached (`MarkupProbeCache`) — a run of
 		// constructs without one probe char must not lose the construct after it
 		assert.deepEqual(picked('<b>a</b><b>a</b>{x}', ['svelte_expression']), [
-			['svelte_expression', '{x}'],
+			['svelte_expression', '{x}']
 		]);
 		assert.deepEqual(picked('{x}{y}<b>a</b>', ['tag']), [
 			['tag', '<b>'],
 			['tag', '<b'],
 			['tag', '</b>'],
-			['tag', '</b'],
+			['tag', '</b']
 		]);
 	});
 });
@@ -76,23 +76,23 @@ describe('lexer_svelte blocks', () => {
 			['punctuation', '{'],
 			['special_keyword', '#if'],
 			['lang_ts', 'x'],
-			['punctuation', '}'],
+			['punctuation', '}']
 		]);
 		assert.deepEqual(picked('{:else}', ['special_keyword']), [['special_keyword', ':else']]);
 		assert.deepEqual(picked('{:else if y}', ['special_keyword', 'lang_ts']), [
 			['special_keyword', ':else if'],
-			['lang_ts', 'y'],
+			['lang_ts', 'y']
 		]);
 		assert.deepEqual(picked('{/if}', ['block', 'special_keyword']), [
 			['block', '{/if}'],
-			['special_keyword', '/if'],
+			['special_keyword', '/if']
 		]);
 	});
 
 	test('snippet blocks lex their signature as ts', () => {
 		assert.deepEqual(picked('{#snippet greet(name: string)}', ['special_keyword', 'function']), [
 			['special_keyword', '#snippet'],
-			['function', 'greet'],
+			['function', 'greet']
 		]);
 	});
 
@@ -110,7 +110,7 @@ describe('lexer_svelte each', () => {
 			['punctuation', '{'],
 			['special_keyword', '#each'],
 			['lang_ts', 'thing_keys'],
-			['keyword', 'as'],
+			['keyword', 'as']
 		]);
 	});
 
@@ -132,8 +132,8 @@ describe('lexer_svelte await', () => {
 				['special_keyword', '#await'],
 				['lang_ts', 'promise'],
 				['keyword', 'then'],
-				['lang_ts', 'value'],
-			],
+				['lang_ts', 'value']
+			]
 		);
 	});
 
@@ -150,7 +150,7 @@ describe('lexer_svelte at-directives', () => {
 			['at_directive', '{@render children()}'],
 			['punctuation', '{'],
 			['at_keyword', '@render'],
-			['lang_ts', 'children()'],
+			['lang_ts', 'children()']
 		]);
 	});
 
@@ -159,7 +159,7 @@ describe('lexer_svelte at-directives', () => {
 		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'svelte')), []);
 		assert.deepEqual(picked(text, ['at_keyword', 'comment']), [
 			['at_keyword', '@attach'],
-			['comment', '// arg'],
+			['comment', '// arg']
 		]);
 	});
 });
@@ -171,11 +171,11 @@ describe('lexer_svelte declaration tags', () => {
 			['declaration_tag', '{const area = w * h}'],
 			['punctuation', '{'],
 			['keyword', 'const'],
-			['lang_ts', 'area = w * h'],
+			['lang_ts', 'area = w * h']
 		]);
 		assert.deepEqual(picked('{let name = user.name}', ['declaration_tag', 'keyword']), [
 			['declaration_tag', '{let name = user.name}'],
-			['keyword', 'let'],
+			['keyword', 'let']
 		]);
 	});
 
@@ -196,14 +196,14 @@ describe('lexer_svelte declaration tags', () => {
 		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'svelte')), []);
 		assert.deepEqual(picked(text, ['declaration_tag', 'keyword']), [
 			['declaration_tag', '{const x ='],
-			['keyword', 'const'],
+			['keyword', 'const']
 		]);
 	});
 
 	test('the legacy `{@const}` stays an at_directive, not a declaration tag', () => {
 		assert.deepEqual(picked('{@const x = 1}', ['at_directive', 'declaration_tag', 'at_keyword']), [
 			['at_directive', '{@const x = 1}'],
-			['at_keyword', '@const'],
+			['at_keyword', '@const']
 		]);
 	});
 });
@@ -214,14 +214,14 @@ describe('lexer_svelte attribute comments', () => {
 			['attr_name', 'a'],
 			['comment', '// note'],
 			['comment', '/* block */'],
-			['attr_name', 'b'],
+			['attr_name', 'b']
 		]);
 	});
 
 	test('multiple inline block comments, and an unterminated one extends to the end', () => {
 		assert.deepEqual(picked('<span /* a */ /* b */ x>', ['comment']), [
 			['comment', '/* a */'],
-			['comment', '/* b */'],
+			['comment', '/* b */']
 		]);
 		const text = '<div /* open';
 		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'svelte')), []);
@@ -233,7 +233,7 @@ describe('lexer_svelte attribute comments', () => {
 		assert.deepEqual(picked('<div // c >\n>', ['comment', 'punctuation']), [
 			['punctuation', '<'],
 			['comment', '// c >'],
-			['punctuation', '>'],
+			['punctuation', '>']
 		]);
 	});
 
@@ -242,7 +242,7 @@ describe('lexer_svelte attribute comments', () => {
 		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'svelte')), []);
 		assert.deepEqual(picked(text, ['comment', 'attr_name']), [
 			['comment', '/* a > b */'],
-			['attr_name', 'c'],
+			['attr_name', 'c']
 		]);
 	});
 });
@@ -255,35 +255,35 @@ describe('lexer_svelte tags', () => {
 			['punctuation', '='],
 			['svelte_expression', '{x}'],
 			['punctuation', '{'],
-			['lang_ts', 'x'],
+			['lang_ts', 'x']
 		]);
 	});
 
 	test('shorthand and spread expressions in attribute position', () => {
 		assert.deepEqual(picked('<button {onclick}>', ['svelte_expression']), [
-			['svelte_expression', '{onclick}'],
+			['svelte_expression', '{onclick}']
 		]);
 		assert.deepEqual(picked('<a {...rest}>', ['svelte_expression', 'operator']), [
 			['svelte_expression', '{...rest}'],
-			['operator', '...'],
+			['operator', '...']
 		]);
 	});
 
 	test('at-directives in attribute position', () => {
 		assert.deepEqual(picked("<span {@attach f('p')}>", ['at_keyword', 'string']), [
 			['at_keyword', '@attach'],
-			['string', "'p'"],
+			['string', "'p'"]
 		]);
 	});
 
 	test('directives keep their namespace prefix', () => {
 		assert.deepEqual(tokens_of('<input bind:value />').slice(3, 5), [
 			['attr_name', 'bind:value'],
-			['namespace', 'bind:'],
+			['namespace', 'bind:']
 		]);
 		assert.deepEqual(picked('<div class:active={c}>', ['attr_name', 'namespace']), [
 			['attr_name', 'class:active'],
-			['namespace', 'class:'],
+			['namespace', 'class:']
 		]);
 	});
 
@@ -291,28 +291,28 @@ describe('lexer_svelte tags', () => {
 		const tokens = picked('<div transition:fade|local|global={x}>', [
 			'attr_name',
 			'namespace',
-			'punctuation',
+			'punctuation'
 		]);
 		// skip the tag punctuation `<` at index 0
 		assert.deepEqual(tokens.slice(1, 5), [
 			['attr_name', 'transition:fade|local|global'],
 			['namespace', 'transition:'],
 			['punctuation', '|'],
-			['punctuation', '|'],
+			['punctuation', '|']
 		]);
 	});
 
 	test('quoted values interleave text and expressions', () => {
 		assert.deepEqual(picked('<a class="a {b} c">', ['attr_value', 'svelte_expression']), [
 			['attr_value', '="a {b} c"'],
-			['svelte_expression', '{b}'],
+			['svelte_expression', '{b}']
 		]);
 	});
 
 	test('style and on* attributes are ordinary in svelte', () => {
 		assert.deepEqual(
 			picked('<div style="color:red" onclick="f()">', ['special_attr', 'value']),
-			[],
+			[]
 		);
 	});
 });
@@ -322,7 +322,7 @@ describe('lexer_svelte regions', () => {
 		assert.deepEqual(picked('<script>let x = 1;</script>', ['script', 'lang_ts', 'keyword']), [
 			['script', 'let x = 1;'],
 			['lang_ts', 'let x = 1;'],
-			['keyword', 'let'],
+			['keyword', 'let']
 		]);
 	});
 
@@ -330,13 +330,13 @@ describe('lexer_svelte regions', () => {
 		assert.deepEqual(picked('<style>a{color:red}</style>', ['style', 'lang_css', 'property']), [
 			['style', 'a{color:red}'],
 			['lang_css', 'a{color:red}'],
-			['property', 'color'],
+			['property', 'color']
 		]);
 	});
 
 	test('textarea keeps expressions live', () => {
 		assert.deepEqual(picked('<textarea>{value}</textarea>', ['svelte_expression']), [
-			['svelte_expression', '{value}'],
+			['svelte_expression', '{value}']
 		]);
 	});
 
@@ -352,7 +352,7 @@ describe('lexer_svelte malformed-input resilience', () => {
 	test('a pipe before the namespace colon stays valid', () => {
 		assert.deepEqual(
 			validate_syntax_events(syntax_styler_global.lex('<div a|b:c></div>', 'svelte')),
-			[],
+			[]
 		);
 	});
 
@@ -374,7 +374,7 @@ describe('lexer_svelte sample', () => {
 
 	test('sample produces its characteristic token types', () => {
 		const types = new Set(
-			syntax_events_to_tokens(syntax_styler_global.lex(content, 'svelte')).map((t) => t.type),
+			syntax_events_to_tokens(syntax_styler_global.lex(content, 'svelte')).map((t) => t.type)
 		);
 		for (const t of [
 			'tag',
@@ -383,7 +383,7 @@ describe('lexer_svelte sample', () => {
 			'attr_name',
 			'block',
 			'at_directive',
-			'declaration_tag',
+			'declaration_tag'
 		]) {
 			assert.ok(types.has(t), `expected a ${t} token in the sample`);
 		}

@@ -1,18 +1,18 @@
-import {readFile, writeFile} from 'node:fs/promises';
-import {Benchmark} from '@fuzdev/fuz_util/benchmark.ts';
-import {benchmark_format_markdown_grouped} from '@fuzdev/fuz_util/benchmark_format.ts';
+import { readFile, writeFile } from 'node:fs/promises';
+import { Benchmark } from '@fuzdev/fuz_util/benchmark.ts';
+import { benchmark_format_markdown_grouped } from '@fuzdev/fuz_util/benchmark_format.ts';
 import {
 	benchmark_baseline_save,
 	benchmark_baseline_compare,
-	benchmark_baseline_format,
+	benchmark_baseline_format
 } from '@fuzdev/fuz_util/benchmark_baseline.ts';
-import type {BenchmarkGroup, BenchmarkResult} from '@fuzdev/fuz_util/benchmark_types.ts';
-import {format_file} from '@fuzdev/gro/format_file.ts';
+import type { BenchmarkGroup, BenchmarkResult } from '@fuzdev/fuz_util/benchmark_types.ts';
+import { format_file } from '@fuzdev/gro/format_file.ts';
 
-import {samples as all_samples} from '../src/routes/samples/all.ts';
-import {syntax_styler_global} from '../src/lib/syntax_styler_global.ts';
-import {render_syntax_html, type LexedSyntax} from '../src/lib/lexer.ts';
-import {PATHOLOGICAL_CASES} from '../src/test/pathological.ts';
+import { samples as all_samples } from '../src/routes/samples/all.ts';
+import { syntax_styler_global } from '../src/lib/syntax_styler_global.ts';
+import { render_syntax_html, type LexedSyntax } from '../src/lib/lexer.ts';
+import { PATHOLOGICAL_CASES } from '../src/test/pathological.ts';
 
 /* eslint-disable no-console */
 
@@ -32,7 +32,9 @@ const BASELINE_FILE = `${BASELINE_PATH}/baseline.json`;
 const REGRESSION_THRESHOLD = 1.1;
 const STALENESS_WARNING_DAYS = 30;
 
-const filter_samples = (filter?: string): Array<{name: string; lang: string; content: string}> => {
+const filter_samples = (
+	filter?: string
+): Array<{ name: string; lang: string; content: string }> => {
 	const samples = Object.values(all_samples);
 	return filter ? samples.filter((s) => s.name.includes(filter) || s.lang === filter) : samples;
 };
@@ -43,7 +45,7 @@ const pathological_matches = (name: string, lang: string, filter?: string): bool
 export const run_benchmark = async (filter?: string): Promise<Array<BenchmarkResult>> => {
 	const bench = new Benchmark({
 		duration_ms: BENCHMARK_TIME,
-		warmup_iterations: WARMUP_ITERATIONS,
+		warmup_iterations: WARMUP_ITERATIONS
 	});
 
 	const samples_to_run = filter_samples(filter);
@@ -77,7 +79,7 @@ export const run_benchmark = async (filter?: string): Promise<Array<BenchmarkRes
 	// pathological workloads run on a separate instance with a shorter budget
 	const pathological_bench = new Benchmark({
 		duration_ms: PATHOLOGICAL_BENCHMARK_TIME,
-		warmup_iterations: WARMUP_ITERATIONS,
+		warmup_iterations: WARMUP_ITERATIONS
 	});
 	let pathological_count = 0;
 	for (const c of PATHOLOGICAL_CASES) {
@@ -114,7 +116,7 @@ interface OutputMetrics {
  * container open.
  */
 const count_spans = (lexed: LexedSyntax): number => {
-	const {events, events_len} = lexed;
+	const { events, events_len } = lexed;
 	let spans = 0;
 	let i = 0;
 	while (i < events_len) {
@@ -136,7 +138,7 @@ const measure_output = (name: string, content: string, lang: string): OutputMetr
 		name,
 		input_chars: content.length,
 		spans: count_spans(lexed),
-		html_bytes: Buffer.byteLength(render_syntax_html(lexed), 'utf8'),
+		html_bytes: Buffer.byteLength(render_syntax_html(lexed), 'utf8')
 	};
 };
 
@@ -172,9 +174,9 @@ const format_output_metrics = (metrics: Array<OutputMetrics>): string => {
 // Splitting into two groups keeps each section's `vs Best` apples-to-apples
 // within a fixed content size.
 const GROUPS: Array<BenchmarkGroup> = [
-	{name: 'Baseline (1x content)', filter: (r) => r.name.startsWith('baseline:')},
-	{name: 'Large (100x content)', filter: (r) => r.name.startsWith('large:')},
-	{name: 'Pathological (generated, 32KB)', filter: (r) => r.name.startsWith('pathological:')},
+	{ name: 'Baseline (1x content)', filter: (r) => r.name.startsWith('baseline:') },
+	{ name: 'Large (100x content)', filter: (r) => r.name.startsWith('large:') },
+	{ name: 'Pathological (generated, 32KB)', filter: (r) => r.name.startsWith('pathological:') }
 ];
 
 // Heading kept inside the auto-managed region so the writer round-trips the
@@ -193,7 +195,7 @@ const print_baseline_comparison = async (results: Array<BenchmarkResult>): Promi
 	const comparison = await benchmark_baseline_compare(results, {
 		path: BASELINE_PATH,
 		regression_threshold: REGRESSION_THRESHOLD,
-		staleness_warning_days: STALENESS_WARNING_DAYS,
+		staleness_warning_days: STALENESS_WARNING_DAYS
 	});
 
 	console.log('\n Baseline Comparison\n');
@@ -206,7 +208,7 @@ const print_baseline_comparison = async (results: Array<BenchmarkResult>): Promi
 	}
 	if (comparison.methodology_changed.length > 0) {
 		console.log(
-			'\n⚠️  Methodology changed on some tasks. Re-run with --save to update the baseline and surface any drift masked by the budget change.',
+			'\n⚠️  Methodology changed on some tasks. Re-run with --save to update the baseline and surface any drift masked by the budget change.'
 		);
 	}
 	// Tally noise warnings across the three Welch-eligible buckets — a
@@ -217,16 +219,16 @@ const print_baseline_comparison = async (results: Array<BenchmarkResult>): Promi
 		comparison.unchanged.filter((r) => r.noise_warning).length;
 	if (noise_count > 0) {
 		console.log(
-			`\n⚠️  ${noise_count} task(s) flagged with high measurement noise. Treat their significance calls with skepticism; consider rerunning on quieter hardware.`,
+			`\n⚠️  ${noise_count} task(s) flagged with high measurement noise. Treat their significance calls with skepticism; consider rerunning on quieter hardware.`
 		);
 	}
 };
 
 /** Save the baseline to disk, then reformat with prettier so `gro check` stays clean. */
 const save_baseline = async (results: Array<BenchmarkResult>): Promise<void> => {
-	await benchmark_baseline_save(results, {path: BASELINE_PATH});
+	await benchmark_baseline_save(results, { path: BASELINE_PATH });
 	const content = await readFile(BASELINE_FILE, 'utf-8');
-	const formatted = await format_file(content, {filepath: BASELINE_FILE});
+	const formatted = await format_file(content, { filepath: BASELINE_FILE });
 	await writeFile(BASELINE_FILE, formatted);
 	console.log(`\n✓ Baseline saved to ${BASELINE_FILE}`);
 };
@@ -260,7 +262,7 @@ const BENCH_MARKER_END = '<!-- node-bench:end -->';
  */
 export const write_benchmark_results = async (
 	formatted: string,
-	file_path: string,
+	file_path: string
 ): Promise<void> => {
 	let existing: string;
 	try {
@@ -269,7 +271,7 @@ export const write_benchmark_results = async (
 		throw new Error(
 			`Cannot write benchmark results: ${file_path} does not exist. ` +
 				`Create the file with a Node-bench region delimited by ` +
-				`\`${BENCH_MARKER_START}\` and \`${BENCH_MARKER_END}\` first.`,
+				`\`${BENCH_MARKER_START}\` and \`${BENCH_MARKER_END}\` first.`
 		);
 	}
 
@@ -280,7 +282,7 @@ export const write_benchmark_results = async (
 			`Cannot write benchmark results: ${file_path} is missing the ` +
 				`\`${BENCH_MARKER_START}\` / \`${BENCH_MARKER_END}\` markers ` +
 				`that bound the auto-managed region. Add them around the existing ` +
-				`Node-bench section before re-running with --save.`,
+				`Node-bench section before re-running with --save.`
 		);
 	}
 
@@ -301,7 +303,7 @@ export const write_benchmark_results = async (
  */
 export const run_and_save_benchmark = async (
 	filter: string | undefined,
-	results_path: string,
+	results_path: string
 ): Promise<void> => {
 	console.log('Starting benchmark...\n');
 

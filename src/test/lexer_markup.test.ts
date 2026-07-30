@@ -1,13 +1,13 @@
-import {describe, test, assert} from 'vitest';
-import {readFileSync} from 'node:fs';
+import { describe, test, assert } from 'vitest';
+import { readFileSync } from 'node:fs';
 
-import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
-import {syntax_events_to_tokens, validate_syntax_events} from '$lib/lexer.ts';
+import { syntax_styler_global } from '$lib/syntax_styler_global.ts';
+import { syntax_events_to_tokens, validate_syntax_events } from '$lib/lexer.ts';
 
 const tokens_of = (text: string, lang = 'html'): Array<[string, string]> =>
 	syntax_events_to_tokens(syntax_styler_global.lex(text, lang)).map((t) => [
 		t.type,
-		text.slice(t.start, t.end),
+		text.slice(t.start, t.end)
 	]);
 
 const picked = (text: string, types: Array<string>, lang = 'html'): Array<[string, string]> =>
@@ -23,7 +23,7 @@ describe('lexer_markup tags', () => {
 			['tag', '</b>'],
 			['tag', '</b'],
 			['punctuation', '</'],
-			['punctuation', '>'],
+			['punctuation', '>']
 		]);
 	});
 
@@ -37,7 +37,7 @@ describe('lexer_markup tags', () => {
 			['punctuation', '='],
 			['punctuation', '"'],
 			['punctuation', '"'],
-			['punctuation', '>'],
+			['punctuation', '>']
 		]);
 	});
 
@@ -55,7 +55,7 @@ describe('lexer_markup tags', () => {
 			['punctuation', "'"],
 			['punctuation', "'"],
 			['attr_name', 'hidden'],
-			['punctuation', '>'],
+			['punctuation', '>']
 		]);
 	});
 
@@ -75,7 +75,7 @@ describe('lexer_markup tags', () => {
 			['punctuation', '='],
 			['punctuation', '"'],
 			['punctuation', '"'],
-			['punctuation', '/>'],
+			['punctuation', '/>']
 		]);
 	});
 
@@ -106,7 +106,7 @@ describe('lexer_markup entities', () => {
 		assert.deepEqual(tokens_of('a &amp; &#38; &#x26; b'), [
 			['entity', '&amp;'],
 			['entity', '&#38;'],
-			['entity', '&#x26;'],
+			['entity', '&#x26;']
 		]);
 	});
 
@@ -130,7 +130,7 @@ describe('lexer_markup entities', () => {
 describe('lexer_markup comments, doctype, cdata, processing instructions', () => {
 	test('comments swallow tag-lookalikes', () => {
 		assert.deepEqual(tokens_of('<!-- comment <div>a<br /> b</div> <script> -->'), [
-			['comment', '<!-- comment <div>a<br /> b</div> <script> -->'],
+			['comment', '<!-- comment <div>a<br /> b</div> <script> -->']
 		]);
 	});
 
@@ -159,7 +159,7 @@ describe('lexer_markup comments, doctype, cdata, processing instructions', () =>
 
 	test('processing instructions', () => {
 		assert.deepEqual(tokens_of('<?xml version="1.0"?>'), [
-			['processing_instruction', '<?xml version="1.0"?>'],
+			['processing_instruction', '<?xml version="1.0"?>']
 		]);
 	});
 });
@@ -180,13 +180,13 @@ describe('lexer_markup script and style regions', () => {
 			['tag', '</script>'],
 			['tag', '</script'],
 			['punctuation', '</'],
-			['punctuation', '>'],
+			['punctuation', '>']
 		]);
 	});
 
 	test('script content that looks like markup stays js', () => {
 		assert.deepEqual(picked("<script>const ok = '<style>';</script>", ['string', 'style']), [
-			['string', "'<style>'"],
+			['string', "'<style>'"]
 		]);
 	});
 
@@ -198,33 +198,33 @@ describe('lexer_markup script and style regions', () => {
 			['punctuation', '{'],
 			['property', 'color'],
 			['punctuation', ':'],
-			['punctuation', '}'],
+			['punctuation', '}']
 		]);
 	});
 
 	test('close tags match case-insensitively and tolerate whitespace', () => {
 		assert.deepEqual(picked('<script>1</SCRIPT >', ['script', 'number']), [
 			['script', '1'],
-			['number', '1'],
+			['number', '1']
 		]);
 	});
 
 	test('a partial close-tag name does not close the region', () => {
 		assert.deepEqual(picked('<script>a</scripts>b</script>', ['script']), [
-			['script', 'a</scripts>b'],
+			['script', 'a</scripts>b']
 		]);
 	});
 
 	test('an unterminated region extends to the end', () => {
 		assert.deepEqual(picked('<script>let a', ['script', 'keyword']), [
 			['script', 'let a'],
-			['keyword', 'let'],
+			['keyword', 'let']
 		]);
 	});
 
 	test('textarea and title are rcdata: entities only, no tags', () => {
 		assert.deepEqual(tokens_of('<textarea><b>&amp;</b></textarea>').slice(4, -4), [
-			['entity', '&amp;'],
+			['entity', '&amp;']
 		]);
 		// 4 = the outer+inner `tag` pairs of <title> and </title> — no <b> tag
 		assert.strictEqual(picked('<title>a <b> b</title>', ['tag']).length, 4);
@@ -246,27 +246,27 @@ describe('lexer_markup special attributes', () => {
 			['punctuation', '('],
 			['number', '1'],
 			['punctuation', ')'],
-			['punctuation', '"'],
+			['punctuation', '"']
 		]);
 	});
 
 	test('style attributes embed css', () => {
 		assert.deepEqual(picked('<div style="color:red">', ['special_attr', 'property']), [
 			['special_attr', 'style="color:red"'],
-			['property', 'color'],
+			['property', 'color']
 		]);
 	});
 
 	test('unquoted special values embed too', () => {
 		assert.deepEqual(picked('<a onclick=go()>', ['value', 'function']), [
 			['value', 'go()'],
-			['function', 'go'],
+			['function', 'go']
 		]);
 	});
 
 	test('a value starting with whitespace gets no value container', () => {
 		assert.deepEqual(picked('<div style=" color:red">', ['special_attr', 'value', 'property']), [
-			['special_attr', 'style=" color:red"'],
+			['special_attr', 'style=" color:red"']
 		]);
 	});
 });
@@ -280,11 +280,11 @@ describe('lexer_markup xml mode', () => {
 	test('style and on* attributes are ordinary', () => {
 		assert.deepEqual(
 			picked('<div style="color:red" onclick="go()"/>', ['special_attr', 'value'], 'xml'),
-			[],
+			[]
 		);
 		assert.deepEqual(picked('<div style="color:red" onclick="go()"/>', ['attr_name'], 'xml'), [
 			['attr_name', 'style'],
-			['attr_name', 'onclick'],
+			['attr_name', 'onclick']
 		]);
 	});
 
@@ -293,12 +293,12 @@ describe('lexer_markup xml mode', () => {
 			picked(
 				'<?xml version="1.0"?><a><![CDATA[<b>]]></a>',
 				['processing_instruction', 'cdata'],
-				'xml',
+				'xml'
 			),
 			[
 				['processing_instruction', '<?xml version="1.0"?>'],
-				['cdata', '<![CDATA[<b>]]>'],
-			],
+				['cdata', '<![CDATA[<b>]]>']
+			]
 		);
 	});
 });
@@ -312,7 +312,7 @@ describe('lexer_markup sample', () => {
 
 	test('sample produces its characteristic token types', () => {
 		const types = new Set(
-			syntax_events_to_tokens(syntax_styler_global.lex(content, 'html')).map((t) => t.type),
+			syntax_events_to_tokens(syntax_styler_global.lex(content, 'html')).map((t) => t.type)
 		);
 		for (const t of ['tag', 'attr_name', 'attr_value', 'comment', 'doctype']) {
 			assert.ok(types.has(t), `expected a ${t} token in the sample`);

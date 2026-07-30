@@ -1,10 +1,10 @@
 <script lang="ts">
-	import type {Snippet} from 'svelte';
-	import {DEV} from 'esm-env';
-	import type {SvelteHTMLElements} from 'svelte/elements';
+	import type { Snippet } from 'svelte';
+	import { DEV } from 'esm-env';
+	import type { SvelteHTMLElements } from 'svelte/elements';
 
-	import {syntax_styler_global} from './syntax_styler_global.ts';
-	import type {SyntaxStyler} from './syntax_styler.ts';
+	import { syntax_styler_global } from './syntax_styler_global.ts';
+	import type { SyntaxStyler } from './syntax_styler.ts';
 
 	const {
 		content,
@@ -92,7 +92,7 @@
 				// eslint-disable-next-line no-console
 				console.error(
 					`[Code] Language "${lang}" is not supported. ` +
-						`Highlighting disabled. Supported: ${langs}`,
+						`Highlighting disabled. Supported: ${langs}`
 				);
 			}
 		});
@@ -110,7 +110,7 @@
 
 <code {...rest} class:inline class:wrap class:nomargin data-lang={lang}
 	>{#if highlighting_disabled && dangerous_raw_html == null}{content}{:else if children}{@render children(
-			html_content,
+			html_content
 		)}{:else}{@html html_content}{/if}</code
 >
 

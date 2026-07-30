@@ -5,14 +5,14 @@ import {
 	scan_to_line_end,
 	token_type,
 	type Lexer,
-	type SyntaxLang,
+	type SyntaxLang
 } from './lexer.ts';
 import {
 	create_markup_probe_cache,
 	lex_markup_construct,
 	MARKUP_MODE_HTML,
 	scan_entity_end,
-	type MarkupProbeCache,
+	type MarkupProbeCache
 } from './lexer_markup.ts';
 
 /**
@@ -87,7 +87,7 @@ interface MdFenceLang {
 
 const FENCE_LANGS: Map<string, MdFenceLang> = new Map();
 const add_fence_lang = (words: string, id: string, container: number): void => {
-	for (const word of words.split(' ')) FENCE_LANGS.set(word, {id, container});
+	for (const word of words.split(' ')) FENCE_LANGS.set(word, { id, container });
 };
 add_fence_lang('ts typescript', 'ts', T_LANG_TS);
 add_fence_lang('js javascript', 'js', T_LANG_JS);
@@ -130,9 +130,9 @@ const lex_md_emphasis = (
 	ds: string,
 	double_type: number,
 	word_boundary: boolean,
-	allow_single: boolean,
+	allow_single: boolean
 ): number => {
-	const {text} = l;
+	const { text } = l;
 	if (word_boundary && is_ascii_word(text.charCodeAt(i - 1))) return i + 1;
 	if (text.charCodeAt(i + 1) === code) {
 		// double form — interior is [i+2, k), closer [k, k+2)
@@ -198,7 +198,7 @@ interface MdScanCache {
  * immediately after `]`.
  */
 const lex_md_link = (l: Lexer, i: number, line_end: number, cache: MdScanCache): number => {
-	const {text} = l;
+	const { text } = l;
 	cache.rbracket = advance_probe(text, cache.rbracket, i + 1, ']');
 	const rb = cache.rbracket;
 	if (rb >= line_end || rb === i + 1) return i + 1;
@@ -236,9 +236,9 @@ const lex_md_inline = (
 	from: number,
 	to: number,
 	construct_end: number,
-	cache: MdScanCache,
+	cache: MdScanCache
 ): number => {
-	const {text} = l;
+	const { text } = l;
 	let i = from;
 	let line_end = to;
 	while (i < line_end) {
@@ -308,7 +308,7 @@ const lex_md_inline = (
  * `lang_*` container; unknown/absent info leaves the content plain.
  */
 const lex_md_fence = (l: Lexer, ls: number, le: number, next: number, end: number): number => {
-	const {text} = l;
+	const { text } = l;
 	let bt = ls;
 	while (bt < le && text.charCodeAt(bt) === 96) bt++;
 	const count = bt - ls;
@@ -363,9 +363,9 @@ const lex_md_line = (
 	le: number,
 	next: number,
 	end: number,
-	cache: MdScanCache,
+	cache: MdScanCache
 ): number => {
-	const {text} = l;
+	const { text } = l;
 	const c = text.charCodeAt(ls);
 
 	// fenced code block — col 0, 3+ backticks
@@ -435,9 +435,9 @@ const lex_md_line = (
 };
 
 const lex_md = (l: Lexer): void => {
-	const {text, end} = l;
+	const { text, end } = l;
 	// one cache for the whole document scan — see `MdScanCache`
-	const cache: MdScanCache = {rbracket: -1, rparen: -1, markup: create_markup_probe_cache()};
+	const cache: MdScanCache = { rbracket: -1, rparen: -1, markup: create_markup_probe_cache() };
 	let i = l.pos;
 	while (i < end) {
 		const le = scan_to_line_end(text, i, end);
@@ -454,4 +454,4 @@ const lex_md = (l: Lexer): void => {
 /**
  * The Markdown language registration for the lexer engine.
  */
-export const lexer_md: SyntaxLang = {id: 'md', aliases: ['markdown'], lex: lex_md};
+export const lexer_md: SyntaxLang = { id: 'md', aliases: ['markdown'], lex: lex_md };

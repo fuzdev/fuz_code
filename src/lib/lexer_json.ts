@@ -7,7 +7,7 @@ import {
 	skip_quoted,
 	token_type,
 	type Lexer,
-	type SyntaxLang,
+	type SyntaxLang
 } from './lexer.ts';
 
 /**
@@ -59,7 +59,7 @@ const scan_json_number = (text: string, from: number, end: number): number => {
 };
 
 const lex_json = (l: Lexer): void => {
-	const {text, end} = l;
+	const { text, end } = l;
 	let i = l.pos;
 	while (i < end) {
 		const c = text.charCodeAt(i);
@@ -136,4 +136,4 @@ const lex_json = (l: Lexer): void => {
 /**
  * The JSON language registration for the lexer engine.
  */
-export const lexer_json: SyntaxLang = {id: 'json', lex: lex_json};
+export const lexer_json: SyntaxLang = { id: 'json', lex: lex_json };

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import {tick, type Component} from 'svelte';
+	import { tick, type Component } from 'svelte';
 
-	import type {BenchmarkComponentProps, IterationTiming} from './benchmark_types.ts';
+	import type { BenchmarkComponentProps, IterationTiming } from './benchmark_types.ts';
 	import BenchmarkInstance from './BenchmarkInstance.svelte';
 
 	/* eslint-disable no-console */
@@ -33,7 +33,7 @@
 	let active_timeout_id: ReturnType<typeof setTimeout> | undefined;
 	export const run_iteration = async (
 		component: Component<BenchmarkComponentProps>,
-		props: BenchmarkComponentProps,
+		props: BenchmarkComponentProps
 	): Promise<IterationTiming> => {
 		iteration_key++;
 
@@ -85,7 +85,7 @@
 				active_timeout_id = undefined;
 			}
 
-			return {work_ms, paint_ms};
+			return { work_ms, paint_ms };
 		} catch (error) {
 			console.error('[Harness] Render failed:', error);
 			throw error;

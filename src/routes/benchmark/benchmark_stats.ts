@@ -3,14 +3,14 @@
  * Uses fuz_util's BenchmarkStats for core statistics, adding browser-specific stability tracking.
  */
 
-import {BenchmarkStats} from '@fuzdev/fuz_util/benchmark_stats.ts';
-import {TIME_NS_PER_MS} from '@fuzdev/fuz_util/time.ts';
+import { BenchmarkStats } from '@fuzdev/fuz_util/benchmark_stats.ts';
+import { TIME_NS_PER_MS } from '@fuzdev/fuz_util/time.ts';
 
 import type {
 	BenchmarkResult,
 	BrowserBenchmarkStats,
 	MeasurementData,
-	SummaryStats,
+	SummaryStats
 } from './benchmark_types.ts';
 
 /**
@@ -33,7 +33,7 @@ export const analyze_results = (data: MeasurementData): BrowserBenchmarkStats =>
 		core,
 		paint,
 		stability_ratio,
-		unstable_iterations: unstable_count,
+		unstable_iterations: unstable_count
 	};
 };
 
@@ -41,7 +41,7 @@ export const analyze_results = (data: MeasurementData): BrowserBenchmarkStats =>
  * Calculate summary statistics across all test results.
  */
 export const calculate_summary = (
-	results: Array<BenchmarkResult>,
+	results: Array<BenchmarkResult>
 ): Record<string, SummaryStats> => {
 	const by_impl: Record<string, Array<BenchmarkResult>> = {};
 
@@ -69,7 +69,7 @@ export const calculate_summary = (
 			avg_mean,
 			avg_ops,
 			avg_cv,
-			languages: impl_results.length,
+			languages: impl_results.length
 		};
 	}
 
@@ -91,14 +91,14 @@ export const calculate_summary = (
  */
 export const check_high_variance = (
 	results: Array<BenchmarkResult>,
-	threshold = 0.15,
+	threshold = 0.15
 ): Array<string> => {
 	const warnings: Array<string> = [];
 
 	for (const result of results) {
 		if (result.stats.core.cv > threshold) {
 			warnings.push(
-				`High variance for ${result.implementation}/${result.language}: CV=${(result.stats.core.cv * 100).toFixed(1)}%`,
+				`High variance for ${result.implementation}/${result.language}: CV=${(result.stats.core.cv * 100).toFixed(1)}%`
 			);
 		}
 	}

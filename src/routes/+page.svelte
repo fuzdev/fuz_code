@@ -1,12 +1,12 @@
 <script lang="ts">
 	import DocsFooter from '@fuzdev/fuz_ui/DocsFooter.svelte';
-	import {site_context} from '@fuzdev/fuz_ui/site.svelte.ts';
-	import {FUZ_DEV_URL, MAIN_HEADER_MARGIN_TOP} from '@fuzdev/fuz_ui/constants.ts';
-	import {DOCS_PATH} from '@fuzdev/fuz_ui/docs_helpers.svelte.ts';
+	import { site_context } from '@fuzdev/fuz_ui/site.svelte.ts';
+	import { FUZ_DEV_URL, MAIN_HEADER_MARGIN_TOP } from '@fuzdev/fuz_ui/constants.ts';
+	import { DOCS_PATH } from '@fuzdev/fuz_ui/docs_helpers.svelte.ts';
 	import Card from '@fuzdev/fuz_ui/Card.svelte';
 	import Svg from '@fuzdev/fuz_ui/Svg.svelte';
-	import {logo_fuz_code} from '@fuzdev/fuz_ui/logos.ts';
-	import {resolve} from '$app/paths';
+	import { logo_fuz_code } from '@fuzdev/fuz_ui/logos.ts';
+	import { resolve } from '$app/paths';
 
 	import Code from '$lib/Code.svelte';
 
@@ -29,9 +29,10 @@
 			<p>
 				fuz_code is a syntax highlighting library. It runs one lexer per language without regular
 				expressions, outputs HTML strings or Svelte components, and can compile static content at
-				build time. It originated as a fork of
+				build time. It originated as a fork and by-hand rewrite of
 				<a href="https://github.com/PrismJS/prism">Prism</a>
-				by <a href="https://lea.verou.me/">Lea Verou</a>.
+				by <a href="https://lea.verou.me/">Lea Verou</a>, with a redesigned tokenizer that replaces
+				regular expressions with lexers per language emitting a flat token event stream.
 			</p>
 		</section>
 		<section class="box width:100%">

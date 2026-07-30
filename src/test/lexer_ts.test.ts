@@ -1,14 +1,14 @@
-import {describe, test, assert} from 'vitest';
-import {readFileSync} from 'node:fs';
+import { describe, test, assert } from 'vitest';
+import { readFileSync } from 'node:fs';
 
-import {syntax_styler_global} from '$lib/syntax_styler_global.ts';
-import {SyntaxStyler} from '$lib/syntax_styler.ts';
-import {lexer_ts} from '$lib/lexer_ts.ts';
+import { syntax_styler_global } from '$lib/syntax_styler_global.ts';
+import { SyntaxStyler } from '$lib/syntax_styler.ts';
+import { lexer_ts } from '$lib/lexer_ts.ts';
 import {
 	syntax_events_to_tokens,
 	token_type,
 	validate_syntax_events,
-	type SyntaxLang,
+	type SyntaxLang
 } from '$lib/lexer.ts';
 
 /**
@@ -18,7 +18,7 @@ import {
 const tokens_of = (text: string): Array<[string, string]> =>
 	syntax_events_to_tokens(syntax_styler_global.lex(text, 'ts')).map((t) => [
 		t.type,
-		text.slice(t.start, t.end),
+		text.slice(t.start, t.end)
 	]);
 
 /**
@@ -33,7 +33,7 @@ describe('lexer_ts keywords', () => {
 		assert.deepEqual(picked('if (x) return new Foo();', ['keyword', 'special_keyword']), [
 			['special_keyword', 'if'],
 			['special_keyword', 'return'],
-			['keyword', 'new'],
+			['keyword', 'new']
 		]);
 	});
 
@@ -47,7 +47,7 @@ describe('lexer_ts keywords', () => {
 		assert.deepEqual(picked('async () => x; const get = 1; get x() {}', ['keyword']), [
 			['keyword', 'async'],
 			['keyword', 'const'],
-			['keyword', 'get'],
+			['keyword', 'get']
 		]);
 	});
 
@@ -56,7 +56,7 @@ describe('lexer_ts keywords', () => {
 			['keyword', 'null'],
 			['keyword', 'undefined'],
 			['boolean', 'true'],
-			['number', 'NaN'],
+			['number', 'NaN']
 		]);
 	});
 });
@@ -65,20 +65,20 @@ describe('lexer_ts strings and templates', () => {
 	test('string properties in object literals', () => {
 		assert.deepEqual(picked('{"a": 1, \'b\': 2}', ['string_property', 'string']), [
 			['string_property', '"a"'],
-			['string_property', "'b'"],
+			['string_property', "'b'"]
 		]);
 	});
 
 	test('ternary strings are not properties', () => {
 		assert.deepEqual(picked('x ? "a" : "b"', ['string_property', 'string']), [
 			['string', '"a"'],
-			['string', '"b"'],
+			['string', '"b"']
 		]);
 	});
 
 	test('strings containing // are not comments', () => {
 		assert.deepEqual(picked('const a = "x // y";', ['string', 'comment']), [
-			['string', '"x // y"'],
+			['string', '"x // y"']
 		]);
 	});
 
@@ -92,7 +92,7 @@ describe('lexer_ts strings and templates', () => {
 			['interpolation_punctuation', '${'],
 			['interpolation_punctuation', '}'],
 			['string', 'c'],
-			['template_punctuation', '`'],
+			['template_punctuation', '`']
 		]);
 	});
 
@@ -114,7 +114,7 @@ describe('lexer_ts strings and templates', () => {
 
 	test('nested braces inside an interpolation are depth-tracked', () => {
 		assert.deepEqual(picked('`${ {a: 1} }`', ['interpolation']), [
-			['interpolation', '${ {a: 1} }'],
+			['interpolation', '${ {a: 1} }']
 		]);
 	});
 
@@ -125,7 +125,7 @@ describe('lexer_ts strings and templates', () => {
 		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'ts')), []);
 		assert.deepEqual(picked(text, ['interpolation', 'regex']), [
 			['interpolation', '${/}/.test(x)}'],
-			['regex', '/}/'],
+			['regex', '/}/']
 		]);
 	});
 
@@ -146,7 +146,7 @@ describe('lexer_ts regex vs division', () => {
 		assert.deepEqual(picked('const re = /ab+c/gi;', ['regex', 'regex_source', 'regex_flags']), [
 			['regex', '/ab+c/gi'],
 			['regex_source', 'ab+c'],
-			['regex_flags', 'gi'],
+			['regex_flags', 'gi']
 		]);
 	});
 
@@ -167,26 +167,26 @@ describe('lexer_ts identifiers', () => {
 	test('class contexts', () => {
 		assert.deepEqual(picked('class Foo extends Bar {}', ['class_name']), [
 			['class_name', 'Foo'],
-			['class_name', 'Bar'],
+			['class_name', 'Bar']
 		]);
 		assert.deepEqual(picked('new a.b.Thing()', ['class_name']), [
 			['class_name', 'a'],
 			['class_name', 'b'],
-			['class_name', 'Thing'],
+			['class_name', 'Thing']
 		]);
 	});
 
 	test('constants and capitalized identifiers', () => {
 		assert.deepEqual(tokens_of('MAX_VALUE Foo'), [
 			['constant', 'MAX_VALUE'],
-			['capitalized_identifier', 'Foo'],
+			['capitalized_identifier', 'Foo']
 		]);
 	});
 
 	test('function calls and function-valued variables', () => {
 		assert.deepEqual(picked('foo(); const f = (a) => a;', ['function', 'function_variable']), [
 			['function', 'foo'],
-			['function_variable', 'f'],
+			['function_variable', 'f']
 		]);
 	});
 
@@ -195,7 +195,7 @@ describe('lexer_ts identifiers', () => {
 		assert.deepEqual(tokens[0], ['generic_function', 'foo<Bar>']);
 		assert.deepEqual(picked('foo<Bar>(x)', ['function', 'type_name']), [
 			['function', 'foo'],
-			['type_name', 'Bar'],
+			['type_name', 'Bar']
 		]);
 	});
 
@@ -203,7 +203,7 @@ describe('lexer_ts identifiers', () => {
 		assert.deepEqual(picked('a < b; c > d;', ['generic_function']), []);
 		assert.deepEqual(picked('a < b; c > d;', ['operator']), [
 			['operator', '<'],
-			['operator', '>'],
+			['operator', '>']
 		]);
 	});
 
@@ -214,21 +214,21 @@ describe('lexer_ts identifiers', () => {
 		assert.deepEqual(picked(text, ['generic_function']), []);
 		assert.deepEqual(picked(text, ['interpolation']), [
 			['interpolation', '${a < b}'],
-			['interpolation', '${c > (d)}'],
+			['interpolation', '${c > (d)}']
 		]);
 	});
 
 	test('balanced object and tuple types stay inside generics', () => {
 		assert.deepEqual(picked('foo<{a: B}>(x); bar<[C, D]>(y);', ['generic_function']), [
 			['generic_function', 'foo<{a: B}>'],
-			['generic_function', 'bar<[C, D]>'],
+			['generic_function', 'bar<[C, D]>']
 		]);
 	});
 
 	test('lowercase builtins', () => {
 		assert.deepEqual(picked('console.log(x); const s: unknown = 1;', ['builtin']), [
 			['builtin', 'console'],
-			['builtin', 'unknown'], // inside the type annotation region
+			['builtin', 'unknown'] // inside the type annotation region
 		]);
 	});
 });
@@ -237,20 +237,20 @@ describe('lexer_ts type syntax', () => {
 	test('type alias declarations', () => {
 		assert.deepEqual(picked('type Foo = Bar;', ['keyword', 'class_name']), [
 			['keyword', 'type'],
-			['class_name', 'Foo'],
+			['class_name', 'Foo']
 		]);
 	});
 
 	test('import type', () => {
 		assert.deepEqual(picked("import type {A} from 'b';", ['import_type_keyword']), [
-			['import_type_keyword', 'type'],
+			['import_type_keyword', 'type']
 		]);
 	});
 
 	test('type assertions with as and satisfies', () => {
 		assert.deepEqual(picked('x as Foo; y satisfies Baz;', ['type_assertion']), [
 			['type_assertion', 'Foo'],
-			['type_assertion', 'Baz'],
+			['type_assertion', 'Baz']
 		]);
 	});
 
@@ -260,7 +260,7 @@ describe('lexer_ts type syntax', () => {
 		assert.ok(annotation);
 		assert.deepEqual(picked('const x: Map<string, Foo> = y;', ['type_name']), [
 			['type_name', 'Map'],
-			['type_name', 'Foo'],
+			['type_name', 'Foo']
 		]);
 	});
 
@@ -274,7 +274,7 @@ describe('lexer_ts decorators and misc', () => {
 		assert.deepEqual(tokens_of('@component'), [
 			['decorator', '@component'],
 			['at', '@'],
-			['function', 'component'],
+			['function', 'component']
 		]);
 	});
 
@@ -288,7 +288,7 @@ describe('lexer_ts decorators and misc', () => {
 			['number', '0b10'],
 			['number', '1_000n'],
 			['number', '1.5e-3'],
-			['number', '.5'],
+			['number', '.5']
 		]);
 	});
 
@@ -296,7 +296,7 @@ describe('lexer_ts decorators and misc', () => {
 		assert.deepEqual(picked('f(...a); b?.c ?? d;', ['operator']), [
 			['operator', '...'],
 			['operator', '?.'],
-			['operator', '??'],
+			['operator', '??']
 		]);
 	});
 });
@@ -311,7 +311,7 @@ describe('lexer_ts sample', () => {
 
 	test('sample produces its characteristic token types', () => {
 		const types = new Set(
-			syntax_events_to_tokens(syntax_styler_global.lex(content, 'ts')).map((t) => t.type),
+			syntax_events_to_tokens(syntax_styler_global.lex(content, 'ts')).map((t) => t.type)
 		);
 		for (const t of ['keyword', 'string', 'comment', 'number', 'function', 'operator']) {
 			assert.ok(types.has(t), `expected a ${t} token in the sample`);
@@ -365,7 +365,7 @@ describe('lexer_ts as an embedded guest', () => {
 			lex: (l) => {
 				l.embed('ts', 0, split);
 				if (l.end > split) l.leaf(T_TAIL, split, l.end);
-			},
+			}
 		};
 		const styler = new SyntaxStyler();
 		styler.add_lang(lexer_ts);
@@ -380,7 +380,7 @@ describe('lexer_ts as an embedded guest', () => {
 		['0xff', 1],
 		['0n', 1],
 		['a...', 3],
-		['1.5', 2],
+		['1.5', 2]
 	] as Array<[string, number]>) {
 		test(`stays within its window: ${JSON.stringify(text)} @ ${split}`, () => {
 			const lexed = embed_ts(text, split);
@@ -389,7 +389,7 @@ describe('lexer_ts as an embedded guest', () => {
 			for (const t of syntax_events_to_tokens(lexed)) {
 				assert.ok(
 					!(t.start < split && t.end > split),
-					`token ${t.type} [${t.start},${t.end}) crosses the embed boundary ${split}`,
+					`token ${t.type} [${t.start},${t.end}) crosses the embed boundary ${split}`
 				);
 			}
 		});
@@ -399,7 +399,7 @@ describe('lexer_ts as an embedded guest', () => {
 		const lexed = embed_ts('...x', 4);
 		assert.deepEqual(validate_syntax_events(lexed), []);
 		assert.ok(
-			syntax_events_to_tokens(lexed).some((t) => t.type === 'operator' && t.end - t.start === 3),
+			syntax_events_to_tokens(lexed).some((t) => t.type === 'operator' && t.end - t.start === 3)
 		);
 	});
 });

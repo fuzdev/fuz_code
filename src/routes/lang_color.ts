@@ -1,4 +1,4 @@
-import type {SampleLang} from '$lib/code_sample.ts';
+import type { SampleLang } from '$lib/code_sample.ts';
 
 /**
  * A `palette_*` utility class per demo language, chosen to evoke each language's
@@ -12,5 +12,5 @@ export const lang_colors: Record<SampleLang, string> = {
 	html: 'palette_c', // red
 	svelte: 'palette_h', // orange
 	md: 'palette_f', // brown
-	sh: 'palette_b', // green
+	sh: 'palette_b' // green
 };
