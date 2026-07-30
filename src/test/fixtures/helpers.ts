@@ -101,7 +101,7 @@ export interface DiffCaseSpec {
 /**
  * Discovers diff fixture cases in `src/test/fixtures/diff` — each case dir
  * holds an `a.{ext}` + `b.{ext}` pair whose extension is the language.
- * Throws on unpaired or extension-mismatched cases.
+ * Throws on unpaired, duplicated, or extension-mismatched cases.
  */
 export const discover_diff_cases = async (): Promise<Array<DiffCaseSpec>> => {
 	const files = await fs_search('src/test/fixtures/diff', {
@@ -120,8 +120,14 @@ export const discover_diff_cases = async (): Promise<Array<DiffCaseSpec>> => {
 			entry = {};
 			by_case.set(name, entry);
 		}
+		const ext_key = side === 'a' ? 'a_ext' : 'b_ext';
+		if (entry[ext_key] !== undefined) {
+			throw Error(
+				`Diff case "${name}" has multiple ${side} files: ${side}.${entry[ext_key]} and ${side}.${ext}`
+			);
+		}
 		entry[side] = readFileSync(file.id, 'utf-8');
-		entry[side === 'a' ? 'a_ext' : 'b_ext'] = ext;
+		entry[ext_key] = ext;
 	}
 
 	const cases: Array<DiffCaseSpec> = [];

@@ -6,6 +6,7 @@ import {
 	get_fixture_path,
 	discover_diff_cases,
 	process_diff_case,
+	generate_diff_debug_text,
 	get_diff_fixture_path
 } from './helpers.ts';
 import { sample_langs } from '$lib/code_sample.ts';
@@ -143,9 +144,10 @@ describe('generated diff fixtures match runtime', async () => {
 		describe(diff_case.name, () => {
 			const html_path = get_diff_fixture_path(diff_case.name, 'html');
 			const split_path = get_diff_fixture_path(diff_case.name, 'split.html');
+			const txt_path = get_diff_fixture_path(diff_case.name, 'txt');
 
 			test('fixture files exist', () => {
-				for (const path of [html_path, split_path]) {
+				for (const path of [html_path, split_path, txt_path]) {
 					assert.ok(
 						existsSync(path),
 						`Fixture file missing: ${path}. Run 'gro src/test/fixtures/update' to generate.`
@@ -164,6 +166,11 @@ describe('generated diff fixtures match runtime', async () => {
 					output.split_html,
 					readFileSync(split_path, 'utf-8'),
 					`Split diff HTML mismatch for ${diff_case.name}`
+				);
+				assert.strictEqual(
+					generate_diff_debug_text(diff_case),
+					readFileSync(txt_path, 'utf-8'),
+					`Debug text mismatch for ${diff_case.name}`
 				);
 			});
 

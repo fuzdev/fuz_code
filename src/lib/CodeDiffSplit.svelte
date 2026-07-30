@@ -16,6 +16,7 @@
 		elide = 'details',
 		intraline = true,
 		line_numbers = true,
+		max_cost,
 		wrap = true,
 		nomargin = false,
 		syntax_styler = syntax_styler_global,
@@ -74,6 +75,10 @@
 			 */
 			line_numbers?: boolean;
 			/**
+			 * Cost cap for the line diff — see `RenderDiffOptions.max_cost`.
+			 */
+			max_cost?: number;
+			/**
 			 * Whether to wrap long lines. Defaults on for the split view —
 			 * each pane has half the width, so wrapping beats per-cell
 			 * horizontal scrolling.
@@ -124,7 +129,8 @@
 			context_lines,
 			elide,
 			intraline,
-			line_numbers
+			line_numbers,
+			max_cost
 		});
 	});
 </script>

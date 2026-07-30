@@ -63,10 +63,10 @@
 		<TomeSectionHeader text="Compared to Shiki and Prism" />
 		<p>
 			The cross-implementation benchmark measures fuz_code against
-			<a href="https://github.com/PrismJS/prism">Prism</a> and Shiki (both the JS and
-			Oniguruma engines). For end-to-end <code>stylize</code> — lexing plus HTML generation, the realistic
-			runtime path — fuz_code runs roughly an order of magnitude faster than Prism and about two orders
-			of magnitude faster than Shiki:
+			<a href="https://github.com/PrismJS/prism">Prism</a> and Shiki (both the JS and Oniguruma
+			engines). For end-to-end <code>stylize</code> — lexing plus HTML generation, the realistic runtime
+			path — fuz_code runs roughly an order of magnitude faster than Prism and about two orders of magnitude
+			faster than Shiki:
 		</p>
 		<div class="overflow-x:auto">
 			<table>

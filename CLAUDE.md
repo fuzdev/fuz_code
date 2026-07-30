@@ -277,6 +277,8 @@ the styler:
   'details')
 - `intraline` - intra-line `<mark>` emphasis on paired lines (default: true)
 - `line_numbers` - gutters (default: true)
+- `max_cost` - cost cap for the line diff, forwarded to fuz_util's
+  `diff_lines` (see `DiffOptions.max_cost` in `@fuzdev/fuz_util/diff.ts`)
 - `wrap`, `nomargin`, `syntax_styler` - as in `Code.svelte` (`wrap` defaults
   on for the split view)
 
