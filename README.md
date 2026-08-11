@@ -173,6 +173,10 @@ Experimental modules:
 - [@fuzdev/fuz_code/theme_highlight.css](src/lib/theme_highlight.css) -
   theme with `::highlight()` pseudo-elements for CSS Custom Highlight API
 
+## Contributing
+
+[fuz.dev/contributing](https://www.fuz.dev/contributing)
+
 ## License [🐦](https://wikipedia.org/wiki/Free_and_open-source_software)
 
 originally forked from [Prism](https://github.com/PrismJS/prism)
