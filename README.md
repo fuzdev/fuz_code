@@ -6,7 +6,7 @@
 
 **[code.fuz.dev](https://code.fuz.dev/)**
 
-`fuz_code` is a runtime syntax highlighter: it turns source code into HTML with
+`fuz_code` is a syntax highlighter: it turns source code into HTML or highlighted ranges with
 token CSS classes, and knows nothing about the DOM.
 It originated as a fork and by-hand rewrite
 of [Prism](https://github.com/PrismJS/prism) ([prismjs.com](https://prismjs.com/)),
