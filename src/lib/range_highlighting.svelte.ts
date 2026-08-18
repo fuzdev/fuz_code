@@ -5,8 +5,8 @@ import type { SyntaxStyler } from './syntax_styler.ts';
 import { HighlightManager, supports_css_highlight_api } from './highlight_manager.ts';
 
 /**
- * Reactive inputs for `create_range_highlighting`. All values are getters so the
- * helper can track the consuming component's reactive state across the call
+ * Reactive inputs for `RangeHighlighting`. All values are getters so the
+ * class can track the consuming component's reactive state across the call
  * boundary (the Svelte 5 getter-injection pattern).
  */
 export interface RangeHighlightingOptions {
@@ -27,67 +27,67 @@ export interface RangeHighlightingOptions {
 	dev_label: string;
 }
 
-/** Reactive outputs from `create_range_highlighting`. */
-export interface RangeHighlighting {
-	readonly highlighting_disabled: boolean;
-}
-
 /**
  * Wires up CSS Custom Highlight API range highlighting for a single element's
  * text node, shared by `CodeHighlight` and `CodeTextarea`. Creates a
  * `HighlightManager`, memoizes tokenization, applies/clears ranges in an effect,
  * emits DEV warnings for unsupported languages, and tears down on destroy.
  *
- * Must be called during component initialization (it uses `$effect`/`onDestroy`).
+ * Must be constructed during component initialization (it uses `$effect`/`onDestroy`).
  */
-export const create_range_highlighting = (options: RangeHighlightingOptions): RangeHighlighting => {
-	const manager = supports_css_highlight_api() ? new HighlightManager() : null;
-	const is_enabled = options.enabled ?? (() => true);
+export class RangeHighlighting {
+	readonly #options: RangeHighlightingOptions;
+	readonly #manager: HighlightManager | null;
+	readonly #is_enabled: () => boolean;
 
-	const language_supported = $derived(
-		options.lang() !== null && options.syntax_styler().has_lang(options.lang()!)
+	readonly #language_supported: boolean = $derived.by(() => {
+		const lang = this.#options.lang();
+		return lang !== null && this.#options.syntax_styler().has_lang(lang);
+	});
+
+	readonly highlighting_disabled: boolean = $derived.by(
+		() => this.#options.lang() === null || !this.#language_supported
 	);
-	const highlighting_disabled = $derived(options.lang() === null || !language_supported);
 
 	// lex once per (text, lang) change -- memoized so unrelated reactivity doesn't
 	// trigger a full re-lex (`! safe bc of `highlighting_disabled`)
-	const range_lexed = $derived.by(() => {
-		if (!manager || !is_enabled() || highlighting_disabled) return null;
-		const text = options.text();
+	readonly #range_lexed = $derived.by(() => {
+		if (!this.#manager || !this.#is_enabled() || this.highlighting_disabled) return null;
+		const text = this.#options.text();
 		if (!text) return null;
-		return options.syntax_styler().lex(text, options.lang()!);
+		return this.#options.syntax_styler().lex(text, this.#options.lang()!);
 	});
 
-	if (manager) {
-		$effect(() => {
-			const element = options.element();
-			if (!element || !range_lexed) {
-				manager.clear_element_ranges();
-				return;
-			}
-			manager.highlight_from_lexed(element, range_lexed);
-		});
-	}
+	constructor(options: RangeHighlightingOptions) {
+		this.#options = options;
+		this.#is_enabled = options.enabled ?? (() => true);
+		const manager = (this.#manager = supports_css_highlight_api() ? new HighlightManager() : null);
 
-	if (DEV) {
-		$effect(() => {
-			// a lang was requested but we can't highlight it (unknown id)
-			if (options.lang() && highlighting_disabled) {
-				const langs = [...options.syntax_styler().langs.keys()].join(', ');
-				// eslint-disable-next-line no-console
-				console.error(
-					`[${options.dev_label}] Language "${options.lang()}" is not supported. ` +
-						`Highlighting disabled. Supported: ${langs}`
-				);
-			}
-		});
-	}
-
-	onDestroy(() => manager?.destroy());
-
-	return {
-		get highlighting_disabled() {
-			return highlighting_disabled;
+		if (manager) {
+			$effect(() => {
+				const element = options.element();
+				if (!element || !this.#range_lexed) {
+					manager.clear_element_ranges();
+					return;
+				}
+				manager.highlight_from_lexed(element, this.#range_lexed);
+			});
 		}
-	};
-};
+
+		if (DEV) {
+			$effect(() => {
+				// a lang was requested but we can't highlight it (unknown id)
+				if (options.lang() && this.highlighting_disabled) {
+					const langs = [...options.syntax_styler().langs.keys()].join(', ');
+					// eslint-disable-next-line no-console
+					console.error(
+						`[${options.dev_label}] Language "${options.lang()}" is not supported. ` +
+							`Highlighting disabled. Supported: ${langs}`
+					);
+				}
+			});
+		}
+
+		onDestroy(() => manager?.destroy());
+	}
+}

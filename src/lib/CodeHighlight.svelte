@@ -13,7 +13,7 @@
 	import { syntax_styler_global } from './syntax_styler_global.ts';
 	import type { SyntaxStyler } from './syntax_styler.ts';
 	import { supports_css_highlight_api, type HighlightMode } from './highlight_manager.ts';
-	import { create_range_highlighting } from './range_highlighting.svelte.ts';
+	import { RangeHighlighting } from './range_highlighting.svelte.ts';
 
 	const {
 		content,
@@ -80,7 +80,7 @@
 
 	const use_ranges = $derived(supports_ranges && (mode === 'ranges' || mode === 'auto'));
 
-	const rh = create_range_highlighting({
+	const rh = new RangeHighlighting({
 		element: () => code_element,
 		text: () => content,
 		enabled: () => use_ranges,

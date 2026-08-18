@@ -19,7 +19,7 @@
 
 	import { syntax_styler_global } from './syntax_styler_global.ts';
 	import type { SyntaxStyler } from './syntax_styler.ts';
-	import { create_range_highlighting } from './range_highlighting.svelte.ts';
+	import { RangeHighlighting } from './range_highlighting.svelte.ts';
 
 	let {
 		value = $bindable(''),
@@ -59,7 +59,7 @@
 	// and tokenized as-is so range positions match the text node exactly.
 	const display_text = $derived(value + '\n');
 
-	create_range_highlighting({
+	new RangeHighlighting({
 		element: () => backdrop,
 		text: () => display_text,
 		lang: () => lang,
