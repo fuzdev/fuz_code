@@ -59,6 +59,7 @@
 	// and tokenized as-is so range positions match the text node exactly.
 	const display_text = $derived(value + '\n');
 
+	// eslint-disable-next-line no-new
 	new RangeHighlighting({
 		element: () => backdrop,
 		text: () => display_text,
