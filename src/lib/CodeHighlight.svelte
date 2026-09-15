@@ -104,13 +104,17 @@
 
 <!-- eslint-disable svelte/no-at-html-tags -->
 
-<code {...rest} class:inline class:wrap data-lang={lang} bind:this={code_element}
-	>{#if use_ranges && children}{@render children(
-			content
-		)}{:else if use_ranges || rh.highlighting_disabled}{content}{:else if children}{@render children(
-			html_content
-		)}{:else}{@html html_content}{/if}</code
->
+<code {...rest} class:inline class:wrap data-lang={lang} bind:this={code_element}>
+	{#if use_ranges && children}
+		{@render children(content)}
+	{:else if use_ranges || rh.highlighting_disabled}
+		{content}
+	{:else if children}
+		{@render children(html_content)}
+	{:else}
+		{@html html_content}
+	{/if}
+</code>
 
 <style>
 	/* inline code inherits fuz_css defaults: pre-wrap, inline-block, baseline alignment */

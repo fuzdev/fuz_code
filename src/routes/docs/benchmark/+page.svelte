@@ -51,12 +51,11 @@
 		</p>
 		<p>
 			It is optimized for <em>runtime</em> highlighting, including streaming use cases.
-			<a href="https://github.com/shikijs/shiki">Shiki</a>
-			targets build-time use and runs the
-			<a href="https://shiki.matsu.io/guide/regex-engines">Oniguruma regexp engine</a> that TextMate grammars
-			require, trading runtime speed for grammar and theme coverage. fuz_code trades that coverage for
-			a small, fast runtime path — it also provides tools for pre-compilation, and you can bring your
-			own lexers for languages it doesn't support.
+			<a href="https://github.com/shikijs/shiki">Shiki</a> targets build-time use and runs the
+			<a href="https://shiki.matsu.io/guide/regex-engines">Oniguruma regexp engine</a> that TextMate
+			grammars require, trading runtime speed for grammar and theme coverage. fuz_code trades that
+			coverage for a small, fast runtime path — it also provides tools for pre-compilation, and you
+			can bring your own lexers for languages it doesn't support.
 		</p>
 	</section>
 	<TomeSection>
@@ -64,9 +63,9 @@
 		<p>
 			The cross-implementation benchmark measures fuz_code against
 			<a href="https://github.com/PrismJS/prism">Prism</a> and Shiki (both the JavaScript and
-			Oniguruma engines). For end-to-end <code>stylize</code> — lexing plus HTML generation, the realistic
-			runtime path — fuz_code runs roughly an order of magnitude faster than Prism and about two orders
-			of magnitude faster than Shiki:
+			Oniguruma engines). For end-to-end <code>stylize</code> — lexing plus HTML generation, the
+			realistic runtime path — fuz_code runs roughly an order of magnitude faster than Prism and
+			about two orders of magnitude faster than Shiki:
 		</p>
 		<div class="overflow-x:auto">
 			<table>
@@ -89,34 +88,35 @@
 			</table>
 		</div>
 		<p>
-			<small
-				>Representative <code>stylize</code> results on larger inputs from one machine; absolute
-				numbers vary by hardware. See the
-				<a href={RESULTS_URL}>committed comparison results</a> for the full matrix across engines and
-				sizes, plus tokenize-only rows that compare the raw lexers without HTML generation.</small
-			>
+			<small>
+				Representative <code>stylize</code> results on larger inputs from one machine; absolute
+				numbers vary by hardware. See the <a href={RESULTS_URL}>committed comparison results</a> for
+				the full matrix across engines and sizes, plus tokenize-only rows that compare the raw
+				lexers without HTML generation.
+			</small>
 		</p>
 	</TomeSection>
 	<TomeSection>
 		<TomeSectionHeader text="In the browser" />
 		<p>
-			The <a href={resolve('/benchmark')}>in-browser benchmark</a>
-			measures real DOM rendering rather than pure compute. It times fuz_code's two renderers — the standard
-			HTML path (<DeclarationLink name="Code" />) and the experimental CSS Custom Highlight API path
+			The <a href={resolve('/benchmark')}>in-browser benchmark</a> measures real DOM rendering
+			rather than pure compute. It times fuz_code's two renderers — the standard HTML path
+			(<DeclarationLink name="Code" />) and the experimental CSS Custom Highlight API path
 			(<DeclarationLink name="CodeHighlight" />, ranges) — across every supported language,
 			reporting mean, median, percentiles, coefficient of variation, and throughput, with
 			system-stability gating between samples.
 		</p>
 		<p>
 			Set the iteration count, warmup runs, cooldown, and content multiplier, then run it on your
-			own hardware. For the steadiest numbers, launch Chromium with garbage collection exposed (<code
-				>chromium --js-flags="--expose-gc"</code
-			>) so the harness can settle the heap between samples.
+			own hardware. For the steadiest numbers, launch Chromium with garbage collection exposed
+			(<code>chromium --js-flags="--expose-gc"</code>) so the harness can settle the heap between
+			samples.
 		</p>
 		<p>
 			A sample run of work time — stylize plus DOM commit — per language for each renderer. The
 			default <DeclarationLink name="Code" /> path builds a <code>.token_*</code> span per token;
-			the experimental <DeclarationLink name="CodeHighlight" /> path skips that DOM, so it commits less:
+			the experimental <DeclarationLink name="CodeHighlight" /> path skips that DOM, so it commits
+			less:
 		</p>
 		<div class="perf-legend">
 			<span><span class="perf-swatch perf-html"></span> <code>Code</code> (html)</span>
@@ -130,7 +130,7 @@
 						<div class="perf-track">
 							<div class="perf-fill perf-html" style:width="{(html / browser_max) * 100}%"></div>
 						</div>
-						<span class="perf-num">{html}<span class="unit"> ms</span></span>
+						<span class="perf-num">{html}<span class="unit">ms</span></span>
 					</div>
 					<div class="perf-row">
 						<div class="perf-track">
@@ -139,17 +139,17 @@
 								style:width="{(ranges / browser_max) * 100}%"
 							></div>
 						</div>
-						<span class="perf-num">{ranges}<span class="unit"> ms</span></span>
+						<span class="perf-num">{ranges}<span class="unit">ms</span></span>
 					</div>
 				</div>
 			{/each}
 		</div>
 		<p>
-			<small
-				>Lower is better. The benchmark uses complex samples at the tool's default size, so this is
+			<small>
+				Lower is better. The benchmark uses complex samples at the tool's default size, so this is
 				illustrative, not representative of most inputs. The live tool also reports paint-settle
-				time, percentiles, and throughput.</small
-			>
+				time, percentiles, and throughput.
+			</small>
 		</p>
 	</TomeSection>
 	<TomeSection>
@@ -157,20 +157,20 @@
 		<p>The command-line benchmarks run from a checkout of the repo:</p>
 		<ul>
 			<li>
-				<code>npm run benchmark</code> — the internal suite, timing every sample at normal and 100× sizes
-				against a local baseline for regression detection.
+				<code>npm run benchmark</code> — the internal suite, timing every sample at normal and 100×
+				sizes against a local baseline for regression detection.
 			</li>
 			<li>
-				<code>npm run benchmark:vs</code> — the cross-implementation shootout against Prism and Shiki
-				that produces the comparison results above.
+				<code>npm run benchmark:vs</code> — the cross-implementation shootout against Prism and
+				Shiki that produces the comparison results above.
 			</li>
 		</ul>
 		<p>
-			The internal suite includes a <code>pathological</code> group of adversarial inputs (deeply nested
-			and degenerate source) that pins the lexer's worst-case behavior to linear time; the same generators
-			back the linearity tests. The engine keeps no resumable state, so it re-lexes the whole document
-			on every change rather than tokenizing incrementally — whole-document lexing is already sub-frame
-			at these speeds.
+			The internal suite includes a <code>pathological</code> group of adversarial inputs (deeply
+			nested and degenerate source) that pins the lexer's worst-case behavior to linear time; the
+			same generators back the linearity tests. The engine keeps no resumable state, so it re-lexes
+			the whole document on every change rather than tokenizing incrementally — whole-document
+			lexing is already sub-frame at these speeds.
 		</p>
 	</TomeSection>
 	<TomeSection>
@@ -180,8 +180,8 @@
 				No regular expressions — char-code scanning, native <code>indexOf</code>, keyword maps.
 			</li>
 			<li>
-				One single-pass lexer per language emitting a flat <code>Int32Array</code> event stream, rendered
-				to HTML in a single forward pass.
+				One single-pass lexer per language emitting a flat <code>Int32Array</code> event stream,
+				rendered to HTML in a single forward pass.
 			</li>
 			<li>
 				Linear-time by construction — every scan loop advances, so there is no catastrophic
@@ -192,9 +192,9 @@
 		<p>
 			The same entry points power all of it: <DeclarationLink name="syntax_styler_global" /> and the
 			<ModuleLink module_path="syntax_styler.ts">SyntaxStyler</ModuleLink> class expose
-			<code>lex</code>
-			(the flat event stream) and <code>stylize</code> (HTML). See the
-			<TomeLink slug="usage" /> for the API and the <TomeLink slug="samples" /> for output in every language.
+			<code>lex</code> (the flat event stream) and <code>stylize</code> (HTML). See the
+			<TomeLink slug="usage" /> for the API and the <TomeLink slug="samples" /> for output in every
+			language.
 		</p>
 	</TomeSection>
 </TomeContent>
