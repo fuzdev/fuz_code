@@ -23,9 +23,8 @@
 	<section>
 		<p>
 			fuz_code highlights code with one lexer per language without regular expressions, generating
-			HTML with
-			<code>.token_*</code> classes that a theme styles. The <DeclarationLink name="Code" /> Svelte component
-			is the typical entry point.
+			HTML with <code>.token_*</code> classes that a theme styles. The
+			<DeclarationLink name="Code" /> Svelte component is the typical entry point.
 		</p>
 		<p>To use it, import the default theme or your own:</p>
 		<Code
@@ -59,10 +58,11 @@ import '@fuzdev/fuz_code/theme_variables.css';"
 	<TomeSection>
 		<TomeSectionHeader text="Preprocessor" />
 		<p>
-			The <ModuleLink module_path="svelte_preprocess_fuz_code.ts"
-				>svelte_preprocess_fuz_code</ModuleLink
-			> preprocessor compiles static
-			<DeclarationLink name="Code" /> content at build time, replacing runtime syntax highlighting:
+			The
+			<ModuleLink module_path="svelte_preprocess_fuz_code.ts">
+				svelte_preprocess_fuz_code
+			</ModuleLink> preprocessor compiles static <DeclarationLink name="Code" /> content at build
+			time, replacing runtime syntax highlighting:
 		</p>
 		<Code
 			lang="ts"
@@ -77,18 +77,17 @@ export default {
 };`}
 		/>
 		<p>
-			Static string <code>content</code> props are highlighted at build time and replaced with pre-rendered
-			HTML. Dynamic content is left unchanged for runtime highlighting.
+			Static string <code>content</code> props are highlighted at build time and replaced with
+			pre-rendered HTML. Dynamic content is left unchanged for runtime highlighting.
 		</p>
 	</TomeSection>
 	<TomeSection>
 		<TomeSectionHeader text="Svelte support" />
 		<p>
-			<DeclarationLink name="Code" /> styles
-			<a href="https://svelte.dev/">Svelte</a>
-			by default, originally based on
-			<a href="https://github.com/pngwn/prism-svelte"><code>prism-svelte</code></a>
-			by <a href="https://github.com/pngwn">@pngwn</a> (<a href="https://pngwn.at/">pngwn.at</a>):
+			<DeclarationLink name="Code" /> styles <a href="https://svelte.dev/">Svelte</a> by default,
+			originally based on
+			<a href="https://github.com/pngwn/prism-svelte"><code>prism-svelte</code></a> by
+			<a href="https://github.com/pngwn">@pngwn</a> (<a href="https://pngwn.at/">pngwn.at</a>):
 		</p>
 		<Code content={'<Code content="<scr..." />'} />
 		<p>styled:</p>
@@ -149,9 +148,9 @@ export default {
 	<TomeSection>
 		<TomeSectionHeader text="Programmatic usage" />
 		<p>
-			fuz_code can be used directly from TypeScript without Svelte. Import <DeclarationLink
-				name="syntax_styler_global"
-			/> for a pre-configured instance with all built-in languages:
+			fuz_code can be used directly from TypeScript without Svelte. Import
+			<DeclarationLink name="syntax_styler_global" /> for a pre-configured instance with all
+			built-in languages:
 		</p>
 		<Code
 			lang="ts"
@@ -169,8 +168,8 @@ const html = syntax_styler_global.stylize('${programmatic_example}', 'ts');`}
 			<code data-lang="ts">{@html programmatic_result}</code>
 		</p>
 		<p>
-			For a custom configuration, create your own <DeclarationLink name="SyntaxStyler" /> and register
-			only the languages you need:
+			For a custom configuration, create your own <DeclarationLink name="SyntaxStyler" /> and
+			register only the languages you need:
 		</p>
 		<Code
 			lang="ts"

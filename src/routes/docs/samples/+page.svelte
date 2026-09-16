@@ -56,9 +56,8 @@
 		<section>
 			<p>
 				Syntax-highlighted <TomeLink slug="samples" /> in every supported language, rendered with
-				<DeclarationLink name="Code" /> and the experimental <DeclarationLink
-					name="CodeHighlight"
-				/>.
+				<DeclarationLink name="Code" /> and the experimental
+				<DeclarationLink name="CodeHighlight" />.
 			</p>
 		</section>
 	{:else}
@@ -66,8 +65,8 @@
 			<p>
 				Code samples in every supported language. Filter by language and toggle the renderers:
 				<DeclarationLink name="Code" /> (standard HTML with <code>.token_*</code> classes) and the
-				experimental <DeclarationLink name="CodeHighlight" /> (CSS Custom Highlight API, ranges). With
-				both on, each sample renders side by side.
+				experimental <DeclarationLink name="CodeHighlight" /> (CSS Custom Highlight API, ranges).
+				With both on, each sample renders side by side.
 			</p>
 
 			<div class="row gap_xs flex-wrap:wrap mb_md">
@@ -114,11 +113,12 @@
 				<aside class="panel p_md mb_lg">
 					<p>
 						⚠️ <strong>Experimental:</strong> the <code>highlight</code> renderer uses the
-						<a href="https://developer.mozilla.org/en-US/docs/Web/API/CSS_Custom_Highlight_API"
-							>CSS Custom Highlight API</a
-						>, which has limited browser support and can't apply layout-affecting styles like font
-						weight (<a href="https://github.com/w3c/csswg-drafts/issues/8355">csswg-drafts#8355</a
-						>). It requires <code>theme_highlight.css</code> instead of <code>theme.css</code>.
+						<a href="https://developer.mozilla.org/en-US/docs/Web/API/CSS_Custom_Highlight_API">
+							CSS Custom Highlight API
+						</a>, which has limited browser support and can't apply layout-affecting styles like
+						font weight
+						(<a href="https://github.com/w3c/csswg-drafts/issues/8355">csswg-drafts#8355</a>). It
+						requires <code>theme_highlight.css</code> instead of <code>theme.css</code>.
 					</p>
 				</aside>
 			{/if}

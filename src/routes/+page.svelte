@@ -27,11 +27,10 @@
 		</section>
 		<section>
 			<p>
-				fuz_code is a syntax highlighting library. It runs one lexer per language without regular
-				expressions, outputs HTML strings or Svelte components, and can compile static content at
-				build time. It originated as a fork and by-hand rewrite of
-				<a href="https://github.com/PrismJS/prism">Prism</a>
-				by <a href="https://lea.verou.me/">Lea Verou</a>, with a redesigned tokenizer that replaces
+				fuz_code is a syntax highlighter: it turns source code into HTML or highlighted ranges with
+				token CSS classes, and knows nothing about the DOM. It originated as a fork and by-hand
+				rewrite of <a href="https://github.com/PrismJS/prism">Prism</a> by
+				<a href="https://lea.verou.me/">Lea Verou</a>, with a redesigned tokenizer that replaces
 				regular expressions with lexers per language emitting a flat token event stream.
 			</p>
 		</section>
@@ -39,9 +38,18 @@
 			<Code content={hero_example} />
 		</section>
 		<section class="box gap_md width:100%">
-			<Card href={DOCS_PATH}>docs{#snippet icon()}{/snippet}</Card>
-			<Card href={resolve('/docs/samples')}>samples{#snippet icon()}{/snippet}</Card>
-			<Card href={resolve('/docs/benchmark')}>benchmark{#snippet icon()}{/snippet}</Card>
+			<Card href={DOCS_PATH}>
+				docs
+				{#snippet icon()}{/snippet}
+			</Card>
+			<Card href={resolve('/docs/samples')}>
+				samples
+				{#snippet icon()}{/snippet}
+			</Card>
+			<Card href={resolve('/docs/benchmark')}>
+				benchmark
+				{#snippet icon()}{/snippet}
+			</Card>
 		</section>
 		<section>
 			<DocsFooter repo_url={site.repo_url} root_url={FUZ_DEV_URL} />
