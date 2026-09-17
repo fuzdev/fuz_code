@@ -249,10 +249,10 @@
 		transition: width 0.3s ease;
 	}
 	.perf-html {
-		background: var(--color_j_50);
+		background: var(--palette_j_50);
 	}
 	.perf-ranges {
-		background: var(--color_g_50);
+		background: var(--palette_g_50);
 	}
 	.perf-num {
 		font-size: var(--font_size_sm);

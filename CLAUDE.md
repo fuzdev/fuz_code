@@ -335,27 +335,27 @@ Limitations: no font-weight/font-style support in range mode.
 ## Color variables
 
 `theme.css` and `theme_highlight.css` reference the fuz_css palette at the `50`
-stop — `--text_50` and `--color_a_50` through `--color_j_50` (`--color_c_50` is
-currently unused):
+stop — `--text_50` and `--palette_a_50` through `--palette_j_50`
+(`--palette_c_50` is currently unused):
 
 - `--text_50` - punctuation, doctype, cdata, processing instructions, `=` in attributes
-- `--color_a_50` - keywords, tags, constants, symbols, booleans, null, headings
-- `--color_b_50` - comments, char literals, blockquotes, inserted
-- `--color_d_50` - at-keywords, urls
-- `--color_e_50` - selectors, functions, regex, variables, important
-- `--color_f_50` - atrules
-- `--color_g_50` - special keywords, namespaces, rules
-- `--color_h_50` - strings, attribute values, inline code
-- `--color_i_50` - attribute names, properties, decorators, link text
-- `--color_j_50` - builtins, class names, numbers
+- `--palette_a_50` - keywords, tags, constants, symbols, booleans, null, headings
+- `--palette_b_50` - comments, char literals, blockquotes, inserted
+- `--palette_d_50` - at-keywords, urls
+- `--palette_e_50` - selectors, functions, regex, variables, important
+- `--palette_f_50` - atrules
+- `--palette_g_50` - special keywords, namespaces, rules
+- `--palette_h_50` - strings, attribute values, inline code
+- `--palette_i_50` - attribute names, properties, decorators, link text
+- `--palette_j_50` - builtins, class names, numbers
 
 Rust's added token types ride existing colors via aliases — `lifetime`→`symbol`,
 `macro`→`function`, `attribute`→`attr_name`, `doc_comment`→`comment` — so no
 theme rules were added for them.
 
 `theme_variables.css` (the fallback for consumers not using fuz_css) declares
-the older `--color_a_5` / `--text_color_5` spelling and so does not currently
-satisfy either theme.
+`--text_50` plus `--palette_a_50`…`--palette_j_50` as sRGB snapshots of
+fuz_css's derived OKLCH palette, per color scheme.
 
 ## Development guidelines
 
