@@ -49,15 +49,14 @@ export const VERSION = 2;
 	{:else}
 		<section>
 			<p>
-				<DeclarationLink name="CodeDiff" /> renders a unified diff of two versions of a source text, and
-				<DeclarationLink name="CodeDiffSplit" /> renders the same diff side-by-side. Both sides are lexed
-				as whole documents, so the normal syntax highlighting is preserved and the diff information —
-				row tints, line-number gutters, intra-line <code>&lt;mark&gt;</code> emphasis — is overlaid
-				on top. Added and removed rows are semantic <code>&lt;ins&gt;</code>/<code>&lt;del&gt;</code
-				>
-				elements, the markers and gutters stay out of copied text, and unchanged regions collapse into
-				expandable <code>&lt;details&gt;</code> blocks with no JS. Requires
-				<code>theme_diff.css</code>.
+				<DeclarationLink name="CodeDiff" /> renders a unified diff of two versions of a source text,
+				and <DeclarationLink name="CodeDiffSplit" /> renders the same diff side-by-side. Both sides
+				are lexed as whole documents, so the normal syntax highlighting is preserved and the diff
+				information — row tints, line-number gutters, intra-line <code>&lt;mark&gt;</code> emphasis
+				— is overlaid on top. Added and removed rows are semantic
+				<code>&lt;ins&gt;</code>/<code>&lt;del&gt;</code> elements, the markers and gutters stay out
+				of copied text, and unchanged regions collapse into expandable <code>&lt;details&gt;</code>
+				blocks with no JS. Requires <code>theme_diff.css</code>.
 			</p>
 
 			<Code

@@ -224,11 +224,11 @@ const print_baseline_comparison = async (results: Array<BenchmarkResult>): Promi
 	}
 };
 
-/** Save the baseline to disk, then reformat with prettier so `gro check` stays clean. */
+/** Save the baseline to disk, then reformat with tsv so `gro check` stays clean. */
 const save_baseline = async (results: Array<BenchmarkResult>): Promise<void> => {
 	await benchmark_baseline_save(results, { path: BASELINE_PATH });
 	const content = await readFile(BASELINE_FILE, 'utf-8');
-	const formatted = await format_file(content, { filepath: BASELINE_FILE });
+	const formatted = format_file(content, { filepath: BASELINE_FILE });
 	await writeFile(BASELINE_FILE, formatted);
 	console.log(`\n✓ Baseline saved to ${BASELINE_FILE}`);
 };

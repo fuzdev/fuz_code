@@ -13,7 +13,7 @@
 	import { syntax_styler_global } from './syntax_styler_global.ts';
 	import type { SyntaxStyler } from './syntax_styler.ts';
 	import { supports_css_highlight_api, type HighlightMode } from './highlight_manager.ts';
-	import { create_range_highlighting } from './range_highlighting.svelte.ts';
+	import { RangeHighlighting } from './range_highlighting.svelte.ts';
 
 	const {
 		content,
@@ -80,7 +80,7 @@
 
 	const use_ranges = $derived(supports_ranges && (mode === 'ranges' || mode === 'auto'));
 
-	const rh = create_range_highlighting({
+	const rh = new RangeHighlighting({
 		element: () => code_element,
 		text: () => content,
 		enabled: () => use_ranges,
@@ -104,13 +104,17 @@
 
 <!-- eslint-disable svelte/no-at-html-tags -->
 
-<code {...rest} class:inline class:wrap data-lang={lang} bind:this={code_element}
-	>{#if use_ranges && children}{@render children(
-			content
-		)}{:else if use_ranges || rh.highlighting_disabled}{content}{:else if children}{@render children(
-			html_content
-		)}{:else}{@html html_content}{/if}</code
->
+<code {...rest} class:inline class:wrap data-lang={lang} bind:this={code_element}>
+	{#if use_ranges && children}
+		{@render children(content)}
+	{:else if use_ranges || rh.highlighting_disabled}
+		{content}
+	{:else if children}
+		{@render children(html_content)}
+	{:else}
+		{@html html_content}
+	{/if}
+</code>
 
 <style>
 	/* inline code inherits fuz_css defaults: pre-wrap, inline-block, baseline alignment */

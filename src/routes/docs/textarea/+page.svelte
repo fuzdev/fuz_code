@@ -50,9 +50,9 @@
 			<p>
 				<DeclarationLink name="CodeTextarea" /> highlights an editable <code>&lt;textarea&gt;</code>
 				live using the
-				<a href="https://developer.mozilla.org/en-US/docs/Web/API/CSS_Custom_Highlight_API"
-					>CSS Custom Highlight API</a
-				>. Type below to see it re-highlight. Requires <code>theme_highlight.css</code>.
+				<a href="https://developer.mozilla.org/en-US/docs/Web/API/CSS_Custom_Highlight_API">
+					CSS Custom Highlight API
+				</a>. Type below to see it re-highlight. Requires <code>theme_highlight.css</code>.
 			</p>
 			{#if !supported}
 				<p class="color_e_50">

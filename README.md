@@ -6,7 +6,7 @@
 
 **[code.fuz.dev](https://code.fuz.dev/)**
 
-`fuz_code` is a runtime syntax highlighter: it turns source code into HTML with
+`fuz_code` is a syntax highlighter: it turns source code into HTML or highlighted ranges with
 token CSS classes, and knows nothing about the DOM.
 It originated as a fork and by-hand rewrite
 of [Prism](https://github.com/PrismJS/prism) ([prismjs.com](https://prismjs.com/)),
@@ -172,6 +172,10 @@ Experimental modules:
   and [`Range`](https://developer.mozilla.org/en-US/docs/Web/API/Range) APIs
 - [@fuzdev/fuz_code/theme_highlight.css](src/lib/theme_highlight.css) -
   theme with `::highlight()` pseudo-elements for CSS Custom Highlight API
+
+## Contributing
+
+[fuz.dev/contributing](https://www.fuz.dev/contributing)
 
 ## License [🐦](https://wikipedia.org/wiki/Free_and_open-source_software)
 
