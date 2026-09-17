@@ -1,0 +1,126 @@
+/*
+
+Styles for the diff viewer (`CodeDiff.svelte` unified view,
+`CodeDiffSplit.svelte` side-by-side view, and the `diff_html.ts` renderers
+beneath them). Import alongside theme.css. Row tints key off fuz_css's
+semantic intent variables (positive/negative) through a small indirection
+layer — override the four `--diff_*` custom properties to retheme.
+
+*/
+
+.code_diff,
+.code_diff_split {
+	--diff_add_bg: var(--positive_05);
+	--diff_remove_bg: var(--negative_05);
+	--diff_add_emph_bg: var(--positive_20);
+	--diff_remove_emph_bg: var(--negative_20);
+	font-family: var(--font_family_mono);
+	overflow: auto;
+	max-width: 100%;
+	padding: var(--space_xs3) 0;
+}
+
+.code_diff:not(.nomargin):not(:last-child),
+.code_diff_split:not(.nomargin):not(:last-child) {
+	margin-bottom: var(--space_lg);
+}
+
+.diff_line {
+	display: block;
+}
+
+/* split view: a two-column grid of half-row cells */
+.code_diff_split {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	align-content: start;
+}
+
+.code_diff_split .diff_skip {
+	grid-column: 1 / -1;
+}
+
+/* rows inside an expandable elision replicate the two-column layout */
+.diff_split_rows {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.diff_cell {
+	overflow-x: auto;
+}
+
+/* restore code styling on the semantic add/remove rows */
+del.diff_line,
+ins.diff_line,
+del.diff_cell,
+ins.diff_cell {
+	text-decoration: none;
+	color: inherit;
+}
+
+.diff_add {
+	background-color: var(--diff_add_bg);
+}
+
+.diff_remove {
+	background-color: var(--diff_remove_bg);
+}
+
+.diff_text {
+	white-space: pre;
+}
+
+.code_diff.wrap .diff_text,
+.code_diff_split.wrap .diff_text {
+	white-space: pre-wrap;
+}
+
+/* the +/-/space markers are generated content with accessible alt text,
+   so copied text stays clean code */
+.diff_text::before {
+	content: ' ' / '';
+}
+
+.diff_add > .diff_text::before {
+	content: '+' / 'added';
+}
+
+.diff_remove > .diff_text::before {
+	content: '-' / 'removed';
+}
+
+.diff_gutter {
+	user-select: none;
+	white-space: pre;
+	padding-inline: var(--space_xs);
+	color: var(--text_50);
+}
+
+/* intra-line emphasis — marks wrap text runs inside token spans */
+.diff_add mark {
+	background-color: var(--diff_add_emph_bg);
+	color: inherit;
+}
+
+.diff_remove mark {
+	background-color: var(--diff_remove_emph_bg);
+	color: inherit;
+}
+
+.diff_skip {
+	color: var(--text_50);
+	padding-inline: var(--space_xs);
+}
+
+.diff_skip summary {
+	user-select: none;
+	cursor: pointer;
+}
+
+/* marks the final line of a side that lacks a trailing newline */
+.diff_no_newline::before {
+	content: '⏎' / 'no newline at end of file';
+	opacity: 0.5;
+	text-decoration: line-through;
+}

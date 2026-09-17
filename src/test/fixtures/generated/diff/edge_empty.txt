@@ -1,0 +1,9 @@
+=== STATS ===
+a: 0 chars, b: 9 chars
+lines: 1 (1 changed), hunks: 1
+
+=== DIFF ===
+--- a.json
++++ b.json
+@@ -0,0 +1,1 @@
++{"a": 1}
