@@ -410,7 +410,7 @@ New languages are written as lexers:
 
 Skill(fuz-stack) covers the shared conventions. Repo-specific:
 
-- Prettier with tabs, 100 char width (not tsv)
+- tsv (`gro format`) with tabs, 100 char width
 - Node >= 24.14
 
 ## Related projects
