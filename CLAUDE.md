@@ -20,9 +20,6 @@ gro build                       # build the package for production
 gro src/test/fixtures/update    # regenerate test fixtures
 ```
 
-IMPORTANT for AI agents: Do NOT run `gro dev` - the developer will manage the
-dev server.
-
 ## Key dependencies
 
 - Svelte 5 - component framework (optional peer dep, for Code.svelte)
