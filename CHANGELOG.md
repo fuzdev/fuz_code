@@ -1,11 +1,18 @@
 # @fuzdev/fuz_code
 
+## 0.49.0
+
+### Minor Changes
+
+- refactor: replace the `create_range_highlighting` getter factory with a `RangeHighlighting` class (the interface of that name is replaced by the class; construct during component init) ([#47](https://github.com/fuzdev/fuz_code/pull/47))
+- fix: `theme_variables.css` declares the `--text_50` and `--color_*_50` variables that the themes read, replacing the stale `--text_color_5` and `--color_*_5` names ([3c7017e](https://github.com/fuzdev/fuz_code/commit/3c7017e))
+
 ## 0.48.0
 
 ### Minor Changes
 
 - feat: add rust lexer ([#42](https://github.com/fuzdev/fuz_code/pull/42))
-- refactor: make `sh` the primary shell lang, with `bash` and `shell` as aliases ([#41](https://github.com/fuzdev/fuz_code/pull/41))
+- make `sh` the primary shell lang, with `bash` and `shell` as aliases ([#41](https://github.com/fuzdev/fuz_code/pull/41)) ([refactor](https://github.com/fuzdev/fuz_code/commit/refactor))
 
 ### Patch Changes
 
@@ -46,6 +53,7 @@
 ### Minor Changes
 
 - fix: reclassify preprocessor deps ([b0d5932](https://github.com/fuzdev/fuz_code/commit/b0d5932))
+
   - `magic-string` and `zimmerframe` from optional peers to `dependencies`
   - `@fuzdev/fuz_util` from an optional to a required
 
