@@ -27,11 +27,16 @@
 		</section>
 		<section>
 			<p>
-				fuz_code is a syntax highlighter: it turns source code into HTML or highlighted ranges with
-				token CSS classes, and knows nothing about the DOM. It originated as a fork and by-hand
-				rewrite of <a href="https://github.com/PrismJS/prism">Prism</a> by
-				<a href="https://lea.verou.me/">Lea Verou</a>, with a redesigned tokenizer that replaces
-				regular expressions with lexers per language emitting a flat token event stream.
+				fuz_code is a syntax styler: it turns source code into HTML with token CSS classes, or
+				ranges for the
+				<a href="https://developer.mozilla.org/en-US/docs/Web/API/CSS_Custom_Highlight_API">
+					CSS Custom Highlight API
+				</a>. It originated as a fork of <a href="https://prismjs.com/">Prism</a> by
+				<a href="https://lea.verou.me/">Lea Verou</a> and has since been rewritten: each language
+				has a lexer that scans without regular expressions and emits tokens as a flat stream in a
+				typed array. The flat token stream is an idea borrowed from
+				<a href="https://pngwn.at/">pngwn</a>, the author of
+				<a href="https://twinkleplop.pngwn.at/">Twinkleplop</a>.
 			</p>
 		</section>
 		<section class="box width:100%">

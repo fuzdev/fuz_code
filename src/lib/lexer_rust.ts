@@ -14,7 +14,7 @@ import {
 } from './lexer.ts';
 
 /**
- * Hand-written Rust lexer.
+ * Rust lexer.
  *
  * A single flat scan loop — Rust has no re-entrant interiors at the token
  * level (no template interpolations), so the constructs that nest are handled

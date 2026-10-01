@@ -19,7 +19,7 @@ import type {
  */
 export const analyze_results = (data: MeasurementData): BrowserBenchmarkStats => {
 	// Convert milliseconds to nanoseconds for BenchmarkStats. `core` is the work
-	// time (the highlighter's compute cost); `paint` adds the frames until pixels
+	// time (the styler's compute cost); `paint` adds the frames until pixels
 	// settle. Both series are index-aligned, so failed iterations drop out of each.
 	const core = new BenchmarkStats(data.work_ms.map((ms) => ms * TIME_NS_PER_MS));
 	const paint = new BenchmarkStats(data.paint_ms.map((ms) => ms * TIME_NS_PER_MS));

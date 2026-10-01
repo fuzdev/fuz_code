@@ -17,7 +17,7 @@ import {
 } from './lexer.ts';
 
 /**
- * Hand-written TypeScript/JavaScript lexer.
+ * TypeScript/JavaScript lexer.
  *
  * Disambiguation rests on three rules: previous-token tracking separates a
  * regex literal from division, template literals nest their `${…}`

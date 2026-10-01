@@ -1,5 +1,5 @@
 /**
- * Flat-event lexer substrate — the engine beneath the hand-written per-language
+ * Flat-event lexer substrate — the engine beneath the per-language
  * lexers (`lexer_json.ts`, `lexer_ts.ts`, …).
  *
  * Tokens are emitted as variable-length records into one `Int32Array`:
@@ -127,7 +127,7 @@ export interface SyntaxLang {
 }
 
 /**
- * The result of lexing: the source text plus its flat token event stream.
+ * The result of lexing: the source text plus its flat event stream.
  */
 export interface LexedSyntax {
 	text: string;
@@ -261,7 +261,7 @@ export class Lexer {
 }
 
 /**
- * Lexes `text` with `lang`, returning the flat token event stream.
+ * Lexes `text` with `lang`, returning the flat event stream.
  *
  * @param langs - registry used to resolve embedded languages by id
  * @param types - token-type registry stamped on the result; must be the one
@@ -308,7 +308,7 @@ const escape_html_slice = (text: string, from: number, to: number): string => {
 };
 
 /**
- * Renders a lexed token event stream to HTML in one forward pass.
+ * Renders a lexed event stream to HTML in one forward pass.
  * Gap text is copy-escaped; token spans use the precomputed open tags.
  */
 export const render_syntax_html = (lexed: LexedSyntax): string => {

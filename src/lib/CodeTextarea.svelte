@@ -32,7 +32,7 @@
 		value?: string;
 		/**
 		 * Language identifier (e.g. 'ts', 'css', 'svelte'). `null` disables
-		 * highlighting; `undefined` falls back to the default ('svelte').
+		 * styling; `undefined` falls back to the default ('svelte').
 		 */
 		lang?: string | null;
 		/** Custom `SyntaxStyler` instance (defaults to the global one). */

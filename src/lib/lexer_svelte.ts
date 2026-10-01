@@ -11,7 +11,7 @@ import {
 import { lex_markup_window, type MarkupLexMode } from './lexer_markup.ts';
 
 /**
- * Hand-written Svelte lexer — the shared markup scanner (`lexer_markup.ts`)
+ * Svelte lexer — the shared markup scanner (`lexer_markup.ts`)
  * in svelte mode plus the `{…}` expression lexer.
  *
  * Emits markup's tag/attr/comment/entity structure (no `special_attr` —

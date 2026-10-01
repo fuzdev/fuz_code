@@ -55,7 +55,7 @@
 	{#if at_root}
 		<section>
 			<p>
-				Syntax-highlighted <TomeLink slug="samples" /> in every supported language, rendered with
+				Syntax-styled <TomeLink slug="samples" /> in every supported language, rendered with
 				<DeclarationLink name="Code" /> and the experimental
 				<DeclarationLink name="CodeHighlight" />.
 			</p>

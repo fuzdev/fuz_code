@@ -202,7 +202,7 @@ export const format_comparison_results = (results: Array<BenchmarkResult>): stri
 	const groups = build_groups(languages_in_results);
 
 	const lines: Array<string> = [
-		'# Syntax Highlighting Performance Comparison',
+		'# Syntax Styling Performance Comparison',
 		'',
 		'Comparing fuz_code vs Prism vs Shiki across multiple languages and content sizes.',
 		'',

@@ -9,7 +9,7 @@ import {
 } from './lexer.ts';
 
 /**
- * Hand-written CSS lexer.
+ * CSS lexer.
  *
  * Emits: `comment`, `atrule` (a container wrapping `rule` + prelude), `rule`,
  * `selector`, `string`, `property`, `important`, `function`, `url` (a

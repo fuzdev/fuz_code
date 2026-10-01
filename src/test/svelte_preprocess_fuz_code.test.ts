@@ -95,7 +95,7 @@ describe('svelte_preprocess_fuz_code', () => {
 			);
 		});
 
-		test('skips empty string content (no highlighting benefit)', async () => {
+		test('skips empty string content (no styling benefit)', async () => {
 			const input = `<script lang="ts">
 	import Code from '@fuzdev/fuz_code/Code.svelte';
 </script>
@@ -162,7 +162,7 @@ const y = 2;" lang="ts" />`;
 	});
 
 	describe('escaping', () => {
-		test('escapes single quotes in highlighted source', async () => {
+		test('escapes single quotes in styled source', async () => {
 			const input = `<script lang="ts">
 	import Code from '@fuzdev/fuz_code/Code.svelte';
 </script>
@@ -178,7 +178,7 @@ const y = 2;" lang="ts" />`;
 			assert.strictEqual(raw_html, syntax_styler_global.stylize("const x = 'hello';", 'ts'));
 		});
 
-		test('escapes backslashes in highlighted source', async () => {
+		test('escapes backslashes in styled source', async () => {
 			const input = String.raw`<script lang="ts">
 	import Code from '@fuzdev/fuz_code/Code.svelte';
 </script>

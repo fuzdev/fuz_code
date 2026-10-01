@@ -106,7 +106,7 @@
 			<ul>
 				<li>
 					<strong>Mean / Median / percentiles</strong>: work time — stylize + DOM commit + layout,
-					the highlighter's compute cost
+					the styler's compute cost
 				</li>
 				<li>
 					<strong>Paint</strong>: mean time until pixels settle (work plus ~1–2 animation frames)

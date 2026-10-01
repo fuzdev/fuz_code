@@ -11,7 +11,7 @@ import {
 } from './lexer.ts';
 
 /**
- * Hand-written JSON lexer (accepts JSONC — line and block comments).
+ * JSON lexer (accepts JSONC — line and block comments).
  *
  * Emits: `property` (a string key), `string`, `comment`, `number`,
  * `punctuation`, `operator` (`:`), `boolean`, and `null` (aliased to
