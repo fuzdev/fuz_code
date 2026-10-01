@@ -1,10 +1,16 @@
 # @fuzdev/fuz_code
 
+## 0.49.1
+
+### Patch Changes
+
+- fix: give `CodeTextarea`'s wrapper fuz_css's flow margin so it drops in for a `<textarea>` ([503cf1f](https://github.com/fuzdev/fuz_code/commit/503cf1f))
+
 ## 0.49.0
 
 ### Minor Changes
 
-- refactor: replace the `create_range_highlighting` getter factory with a `RangeHighlighting` class (the interface of that name is replaced by the class; construct during component init) ([#47](https://github.com/fuzdev/fuz_code/pull/47))
+- replace the `create_range_highlighting` getter factory with a `RangeHighlighting` class (the interface of that name is replaced by the class; construct during component init) ([#47](https://github.com/fuzdev/fuz_code/pull/47)) ([refactor](https://github.com/fuzdev/fuz_code/commit/refactor))
 - fix: `theme_variables.css` declares the `--text_50` and `--color_*_50` variables that the themes read, replacing the stale `--text_color_5` and `--color_*_5` names ([3c7017e](https://github.com/fuzdev/fuz_code/commit/3c7017e))
 
 ## 0.48.0
