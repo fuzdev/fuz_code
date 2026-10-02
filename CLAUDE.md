@@ -13,7 +13,7 @@ For coding conventions, see Skill(fuz-stack).
 ## Gro commands
 
 ```bash
-gro check                       # typecheck, test, lint, format check (run before committing)
+gro check                       # typecheck, test, gen check, format check, lint (run before committing)
 gro typecheck                   # typecheck only (faster iteration)
 gro test                        # run tests with vitest
 gro gen                         # regenerate .gen files
@@ -60,10 +60,11 @@ fuz_code is a **syntax styling library**:
 ### Directory structure
 
 ```
-benchmark/                          # performance testing
+benchmark/                      # performance testing
 ├── run_benchmarks.ts           # CLI entry (--save writes results.md + baseline.json)
 ├── benchmarks.ts               # benchmark cases, output metrics, markdown writers
-└── compare/                    # Prism/Shiki comparison
+├── results.md                  # committed internal results (baseline.json is gitignored)
+└── compare/                    # Prism/Shiki comparison (compare.ts, run_compare.ts, results.md)
 src/
 ├── lib/                        # exportable library code
 │   ├── syntax_styler.ts        # SyntaxStyler class: registry + lex/stylize facade
@@ -105,9 +106,9 @@ src/
 
 ### Core system
 
-**Lexer engine** (`lexer.ts` + `lexer_*.ts`) - single-pass
-lexers emitting flat token events (`Int32Array`) rendered to HTML in one
-forward pass. Token types intern into a `TokenTypeRegistry`
+**Lexer engine** (`lexer.ts` + `lexer_*.ts`) - single-pass lexers emitting
+flat token events (`Int32Array`) rendered to HTML in one forward pass. Token
+types intern into a `TokenTypeRegistry`
 (`token_types_global` by default, injectable via `SyntaxStylerOptions`).
 
 **SyntaxStyler** - The main class: a language registry and a `lex`/`stylize`
@@ -158,11 +159,11 @@ aliases in the Supported languages table below):
   info matching and any-length closers, headings, blockquotes, lists, hr)
   with a per-block inline scan (emphasis, inline code, links, entities, raw
   markup via the markup scanner); fences embed their languages
-- `lexer_rust.ts` - Rust: one
-  flat scan loop (nested block comments and raw strings resolve with counters;
-  attribute interiors lex inline under an `[`/`]` depth counter — no frame
-  machine), lifetime-vs-char `'` disambiguation, `name!` macros, doc-vs-plain
-  comment split, the r/b/c string prefixes
+- `lexer_rust.ts` - Rust: one flat scan loop (nested block comments and raw
+  strings resolve with counters; attribute interiors lex inline under an
+  `[`/`]` depth counter — no frame machine), lifetime-vs-char `'`
+  disambiguation, `name!` macros, doc-vs-plain comment split, the r/b/c string
+  prefixes
 
 Embedded languages resolve lazily by name through the registry (markdown
 fences → any language, markup `<script>`/`<style>`/`style=`/`on*=`, svelte
@@ -246,15 +247,15 @@ Primary ids and their aliases, as registered in `syntax_styler_global`:
 
 ### Fixture workflow
 
-1. Edit samples in `src/test/fixtures/samples/sample_*.{lang}`
+1. Edit samples in `src/test/fixtures/samples/sample_{variant}.{ext}`
 2. Run `gro src/test/fixtures/update` (or `npm run fixtures:update`) to
    regenerate — it invokes `gen` first, so the samples also refresh
    `src/routes/samples/all.ts` for the docs site and benchmark
 3. Run `gro test src/test/fixtures/check` to verify
 4. Review changes with `git diff src/test/fixtures/`
 
-Generated fixtures in `generated/{lang}/` include `.html` (tokenized output) and
-`.txt` (debug output with token names).
+Generated fixtures in `generated/{ext}/` are named `{ext}_{variant}` and include
+`.html` (tokenized output) and `.txt` (debug output with token names).
 
 ## Performance
 
@@ -384,13 +385,15 @@ New languages are written as lexers:
 3. Style any new token types in `theme.css` and `theme_highlight.css`, or give
    them an alias onto an existing type (`token_type('macro', 'function')`) —
    the rust lexer aliases its additions rather than adding rules
-4. Add samples in `src/test/fixtures/samples/sample_{variant}.{lang}`
+4. Add samples in `src/test/fixtures/samples/sample_{variant}.{ext}` — the
+   file extension becomes the sample's `lang`, so it must be a registered id or
+   alias (`rs` and `html` are aliases)
 5. Wire the new file extension into both sample-discovery filters — the
    `file_filter` regexes in `src/routes/samples/all.gen.ts` and
    `src/test/fixtures/helpers.ts` are separate hardcoded copies, and a sample
    the filter misses is silently skipped rather than failing
-6. Add the lang to `sample_langs` in `code_sample.ts` (its order drives the
-   docs) and a tint in `src/routes/lang_color.ts` — that's a
+6. Add the extension to `sample_langs` in `code_sample.ts` (its order drives
+   the docs) and a tint in `src/routes/lang_color.ts` — that's a
    `Record<SampleLang, string>`, so a missing entry fails typecheck
 7. Add it to `languages` in `src/routes/benchmark/benchmark_fixtures.ts` — the
    browser benchmark uses a fixed list, unlike the internal benchmark which

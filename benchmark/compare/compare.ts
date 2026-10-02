@@ -243,8 +243,9 @@ export const run_and_print_comparison = async (filter?: string): Promise<void> =
  * `format_comparison_results` produces the complete markdown shape (H1 + tables)
  * and the file has no other hand-curated sections to preserve.
  *
- * The README.md `vastly faster` link points to this file (`./benchmark/compare/results.md`),
- * so keeping it current is load-bearing for the published narrative.
+ * The README.md "about two orders of magnitude faster" link points to this file
+ * (`benchmark/compare/results.md`), so keeping it current is load-bearing for the
+ * published narrative.
  */
 export const run_and_save_comparison = async (
 	filter: string | undefined,

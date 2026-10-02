@@ -132,6 +132,7 @@ Add a language by writing a `SyntaxLang` lexer and registering it with
 - [code.fuz.dev/docs](https://code.fuz.dev/docs) -
   [usage](https://code.fuz.dev/docs/usage),
   [samples](https://code.fuz.dev/docs/samples),
+  [textarea](https://code.fuz.dev/docs/textarea),
   [benchmark](https://code.fuz.dev/docs/benchmark), and
   [API](https://code.fuz.dev/docs/api)
 - [CLAUDE.md](./CLAUDE.md) - architecture and development guidelines
@@ -175,6 +176,8 @@ Experimental modules:
 
 - [@fuzdev/fuz_code/CodeHighlight.svelte](src/lib/CodeHighlight.svelte) -
   component supporting both HTML generation and CSS Custom Highlight API
+- [@fuzdev/fuz_code/CodeTextarea.svelte](src/lib/CodeTextarea.svelte) -
+  editable `<textarea>` with live range highlighting
 - [@fuzdev/fuz_code/highlight_manager.ts](src/lib/highlight_manager.ts) -
   manages browser [`Highlight`](https://developer.mozilla.org/en-US/docs/Web/API/Highlight)
   and [`Range`](https://developer.mozilla.org/en-US/docs/Web/API/Range) APIs

@@ -30,8 +30,9 @@
 		/**
 		 * Language identifier (e.g. 'ts', 'css', 'html', 'json', 'svelte', 'md').
 		 * Selects the registered lexer and sets the `data-lang` attribute. `null`
-		 * disables highlighting (content renders as plain text); `undefined`
-		 * falls back to the default ('svelte').
+		 * or an unregistered id disables highlighting (content renders as plain
+		 * text, and an unregistered id logs an error in DEV); `undefined` falls
+		 * back to the default ('svelte').
 		 *
 		 * @default 'svelte'
 		 */

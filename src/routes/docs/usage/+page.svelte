@@ -22,8 +22,8 @@
 <TomeContent {tome}>
 	<section>
 		<p>
-			fuz_code lexes code with one lexer per language, without regular expressions, and generates
-			HTML with <code>.token_*</code> classes for a theme to style. The
+			fuz_code tokenizes code with one lexer per language, without regular expressions, and
+			generates HTML with <code>.token_*</code> classes for a theme to style. The
 			<DeclarationLink name="Code" /> Svelte component is the typical entry point.
 		</p>
 		<p>To use it, import the default theme or your own:</p>
@@ -134,6 +134,26 @@ export default {
 		</p>
 		<Code content={'<Code lang={null} content="<aside>all is gray</aside>" />'} />
 		<Code lang={null} content={`<aside>all is gray</aside>`} />
+		<p>
+			The <code>plaintext</code> language does the same by name. Every
+			<DeclarationLink name="SyntaxStyler" /> registers it, so it also works with
+			<code>stylize</code>:
+		</p>
+		<Code content={'<Code lang="plaintext" content="<aside>all is gray</aside>" />'} />
+		<Code lang="plaintext" content={`<aside>all is gray</aside>`} />
+		<p>
+			A <code>lang</code> that isn't registered also renders as plain text in
+			<DeclarationLink name="Code" />, and logs an error in development. Called directly,
+			<code>stylize</code> and <code>lex</code> throw on an unregistered language, so check with
+			<code>has_lang</code> first or fall back to <code>plaintext</code>:
+		</p>
+		<Code
+			lang="ts"
+			content={`const html = syntax_styler_global.stylize(
+	text,
+	syntax_styler_global.has_lang(lang) ? lang : 'plaintext'
+);`}
+		/>
 	</TomeSection>
 	<TomeSection>
 		<TomeSectionHeader text="Layout" />
