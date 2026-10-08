@@ -39,6 +39,40 @@
 	];
 	// bars scale to the slowest single result so lengths compare across languages
 	const browser_max = Math.max(...browser_results.flatMap((r) => [r.html, r.ranges]));
+
+	type Renderer = 'html' | 'ranges';
+	const renderers: Array<{ key: Renderer; label: string; color: string }> = [
+		{ key: 'html', label: 'Code', color: 'var(--palette_j_50)' },
+		{ key: 'ranges', label: 'CodeHighlight', color: 'var(--palette_g_50)' }
+	];
+
+	// each language's ratios are taken against its `Code` row by default, or against
+	// whichever row the pointer is over, so either renderer can be the baseline
+	let hovered: { lang: string; renderer: Renderer } | undefined = $state();
+	const to_hovered = (event: Event): typeof hovered => {
+		const row = (event.target as Element | null)?.closest<HTMLElement>('[data-renderer]');
+		const lang = row?.dataset.lang;
+		const renderer = row?.dataset.renderer as Renderer | undefined;
+		return lang && renderer ? { lang, renderer } : undefined;
+	};
+	const to_anchor = (lang: string): Renderer =>
+		hovered?.lang === lang ? hovered.renderer : 'html';
+
+	// how many times faster a row is than its anchor (`7.58x`), or the reciprocal
+	// negated when slower (`−7.58x`), two decimals under 10 and one from there
+	const format_speedup = (ratio: number): string => {
+		const magnitude = ratio >= 1 ? ratio : 1 / ratio;
+		const digits = Number(magnitude.toFixed(2)) >= 10 ? 1 : 2;
+		const text = magnitude.toFixed(digits);
+		return `${ratio < 1 && text !== '1.00' ? '−' : ''}${text}x`;
+	};
+	const ratio_color = (ratio: number): string => {
+		if (ratio < 0.5) return 'var(--palette_c_50)';
+		if (ratio < 1) return 'var(--palette_h_50)';
+		if (ratio < 2) return 'var(--palette_e_50)';
+		if (ratio < 5) return 'var(--palette_b_50)';
+		return 'var(--palette_j_50)';
+	};
 </script>
 
 <TomeContent {tome}>
@@ -120,36 +154,66 @@
 			less:
 		</p>
 		<div class="perf-legend">
-			<span><span class="perf-swatch perf-html"></span> <code>Code</code> (html)</span>
-			<span><span class="perf-swatch perf-ranges"></span> <code>CodeHighlight</code> (ranges)</span>
+			{#each renderers as { key, label, color } (key)}
+				<span>
+					<span class="perf-swatch" style:background={color}></span>
+					<DeclarationLink name={label} /> ({key})
+				</span>
+			{/each}
 		</div>
-		<div class="perf-bars">
-			{#each browser_results as { lang, html, ranges } (lang)}
-				<div class="perf-lang"><code>{lang}</code></div>
-				<div class="perf-set">
-					<div class="perf-row">
-						<div class="perf-track">
-							<div class="perf-fill perf-html" style:width="{(html / browser_max) * 100}%"></div>
+		<!-- A table to assistive tech, one row per renderer per language. Hover is delegated
+			to the chart, which reads the row under the pointer off its data attributes, and
+			`pointerleave` restores every language's default anchor. Re-baselining is a
+			pointer-only affordance over numbers that are all visible regardless. -->
+		<div
+			class="perf-chart"
+			role="table"
+			aria-label="Work time per language for each renderer"
+			onpointerover={(event) => (hovered = to_hovered(event))}
+			onpointerleave={() => (hovered = undefined)}
+		>
+			{#each browser_results as result (result.lang)}
+				{@const anchor = to_anchor(result.lang)}
+				<div class="perf-group" role="rowgroup">
+					<div class="perf-lang" aria-hidden="true"><code>{result.lang}</code></div>
+					{#each renderers as { key, label, color } (key)}
+						{@const ms = result[key]}
+						{@const ratio = result[anchor] / ms}
+						<div
+							class="perf-row"
+							class:anchor={key === anchor}
+							role="row"
+							aria-label="{result.lang} {label}"
+							data-lang={result.lang}
+							data-renderer={key}
+						>
+							<div class="perf-track" aria-hidden="true">
+								<div
+									class="perf-fill"
+									style:width="{(ms / browser_max) * 100}%"
+									style:background={color}
+								></div>
+							</div>
+							<span class="perf-num" role="cell">{ms} <span class="unit">ms</span></span>
+							<span
+								class="perf-ratio"
+								role="cell"
+								style:color={key === anchor ? 'var(--text_40)' : ratio_color(ratio)}
+							>
+								{format_speedup(ratio)}
+							</span>
 						</div>
-						<span class="perf-num">{html}<span class="unit">ms</span></span>
-					</div>
-					<div class="perf-row">
-						<div class="perf-track">
-							<div
-								class="perf-fill perf-ranges"
-								style:width="{(ranges / browser_max) * 100}%"
-							></div>
-						</div>
-						<span class="perf-num">{ranges}<span class="unit">ms</span></span>
-					</div>
+					{/each}
 				</div>
 			{/each}
 		</div>
 		<p>
 			<small>
-				Lower is better; this run does not include Rust. The benchmark uses complex samples at the
-				tool's default size, so this is illustrative, not representative of most inputs. The live
-				tool also reports paint-settle time, percentiles, and throughput.
+				Lower is better. Each language's ratios are relative to its highlighted row, and a negative
+				ratio means that many times slower; hover the other row to compare against it. Ratios come
+				from the rounded times shown, and this run does not include Rust. The benchmark uses complex
+				samples at the tool's default size, so this is illustrative, not representative of most
+				inputs. The live tool also reports paint-settle time, percentiles, and throughput.
 			</small>
 		</p>
 	</TomeSection>
@@ -216,49 +280,58 @@
 		border-radius: var(--border_radius_xs);
 		vertical-align: middle;
 	}
-	.perf-bars {
+	/* the chart is the grid and its groups and rows are subgrids, so every column
+	 * sizes to its content across all languages; the ratio column is held at the
+	 * widest ratio `format_speedup` prints here, so re-baselining shifts nothing */
+	.perf-chart {
 		display: grid;
-		grid-template-columns: 6rem 1fr;
-		align-items: center;
-		column-gap: var(--space_md);
-		row-gap: var(--space_md);
+		grid-template-columns:
+			[lang] max-content [track] minmax(0, 1fr) [value] max-content [ratio] 7ch;
+		column-gap: var(--space_sm);
+		row-gap: var(--space_sm);
 		margin-bottom: var(--space_lg);
 	}
+	.perf-group {
+		display: grid;
+		grid-template-columns: subgrid;
+		grid-column: 1 / -1;
+		align-items: center;
+	}
 	.perf-lang {
+		grid-column: lang;
+		grid-row: 1 / span 2;
 		text-align: right;
 	}
-	.perf-set {
-		display: flex;
-		flex-direction: column;
-	}
+	/* rows within a language sit flush, so the anchor band reads as one row */
 	.perf-row {
 		display: grid;
-		grid-template-columns: 1fr 3.5rem;
+		grid-template-columns: subgrid;
+		grid-column: track / -1;
 		align-items: center;
-		gap: var(--space_sm);
+		padding: var(--space_xs);
+	}
+	.perf-row.anchor {
+		background-color: var(--fg_05);
+		box-shadow: inset var(--border_width_3) 0 0 var(--fg_50);
 	}
 	.perf-track {
-		height: 0.4rem;
-		background: var(--fg_05);
+		height: 1.2rem;
 		border-radius: var(--border_radius_xs);
-		overflow: hidden;
+		background: var(--fg_05);
 	}
 	.perf-fill {
 		height: 100%;
 		min-width: 2px;
 		border-radius: var(--border_radius_xs);
-		transition: width 0.3s ease;
 	}
-	.perf-html {
-		background: var(--palette_j_50);
-	}
-	.perf-ranges {
-		background: var(--palette_g_50);
-	}
-	.perf-num {
-		font-size: var(--font_size_sm);
+	.perf-num,
+	.perf-ratio {
 		text-align: right;
 		white-space: nowrap;
+		font-variant-numeric: tabular-nums;
+	}
+	.perf-ratio {
+		font-weight: 700;
 	}
 	.unit {
 		color: var(--text_50);
