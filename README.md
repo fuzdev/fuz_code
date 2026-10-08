@@ -13,7 +13,7 @@ It originated as a fork of [Prism](https://prismjs.com/) by [Lea Verou](https://
 and has since been rewritten: each language has a lexer that scans without
 regular expressions and emits tokens as a flat stream in a typed array, for high performance.
 The flat token stream is an idea borrowed from [pngwn](https://pngwn.at/),
-the author of [Twinkleplop](https://twinkleplop.pngwn.at/).
+the author of [Twinkleplop](https://twinkleplop.pngwn.at/) (a featureful alternative to fuz_code).
 
 Twinkleplop is the broader project: it compiles declarative grammars, covers more
 languages, and ships themes, annotations, and markdown integrations.

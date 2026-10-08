@@ -36,7 +36,8 @@
 				has a lexer that scans without regular expressions and emits tokens as a flat stream in a
 				typed array, for high performance. The flat token stream is an idea borrowed from
 				<a href="https://pngwn.at/">pngwn</a>, the author of
-				<a href="https://twinkleplop.pngwn.at/">Twinkleplop</a>.
+				<a href="https://twinkleplop.pngwn.at/">Twinkleplop</a> (a featureful alternative to
+				fuz_code).
 			</p>
 		</section>
 		<section class="box width:100%">
