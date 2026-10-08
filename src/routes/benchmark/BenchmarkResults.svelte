@@ -19,7 +19,7 @@
 </script>
 
 {#if warnings.length > 0}
-	<section class="panel p_md warning">
+	<section class="panel p_md caution_60">
 		<h3 class="mt_0">⚠️ Warnings</h3>
 		<ul>
 			{#each warnings as warning (warning)}
@@ -51,7 +51,10 @@
 					</div>
 					{#if impl !== 'html' && stats.improvement !== undefined}
 						<div>
-							<strong class:positive={stats.improvement > 0} class:negative={stats.improvement < 0}>
+							<strong
+								class:positive_60={stats.improvement > 0}
+								class:negative_60={stats.improvement < 0}
+							>
 								{stats.improvement > 0 ? '+' : ''}{fmt(stats.improvement, 1)}%
 							</strong>
 							<span>vs baseline</span>

@@ -73,7 +73,7 @@
 				{#each sample_langs as lang (lang)}
 					<button
 						type="button"
-						class="sm deselectable {lang_colors[lang]}"
+						class="sized_sm deselectable {lang_colors[lang]}"
 						class:selected={shown_langs.has(lang)}
 						onclick={() => toggle_lang(lang)}
 					>
@@ -82,7 +82,7 @@
 				{/each}
 				<button
 					type="button"
-					class="sm deselectable"
+					class="sized_sm deselectable"
 					class:selected={all_shown}
 					onclick={toggle_all}
 				>

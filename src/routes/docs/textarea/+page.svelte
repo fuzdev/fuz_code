@@ -50,7 +50,7 @@
 			{#each sample_langs as l (l)}
 				<button
 					type="button"
-					class="sm {lang_colors[l]}"
+					class="sized_sm {lang_colors[l]}"
 					class:selected={l === lang}
 					onclick={() => select_lang(l)}
 				>
