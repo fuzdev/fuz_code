@@ -11,7 +11,7 @@ token CSS classes, or ranges for the
 [CSS Custom Highlight API](https://developer.mozilla.org/en-US/docs/Web/API/CSS_Custom_Highlight_API).
 It originated as a fork of [Prism](https://prismjs.com/) by [Lea Verou](https://lea.verou.me/)
 and has since been rewritten: each language has a lexer that scans without
-regular expressions and emits tokens as a flat stream in a typed array.
+regular expressions and emits tokens as a flat stream in a typed array, for high performance.
 The flat token stream is an idea borrowed from [pngwn](https://pngwn.at/),
 the author of [Twinkleplop](https://twinkleplop.pngwn.at/).
 
