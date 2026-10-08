@@ -1,0 +1,1 @@
+const t=["json","css","ts","rs","html","svelte","md","sh"],e={json:"palette_e",css:"palette_d",ts:"palette_a",rs:"palette_g",html:"palette_c",svelte:"palette_h",md:"palette_f",sh:"palette_b"};export{e as l,t as s};
