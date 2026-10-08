@@ -1,7 +1,7 @@
 /*
 
-CSS variables for syntax highlighting when not using fuz_css.
-Import this alongside theme.css if you're not using fuz_css.
+CSS variables for the fuz_code themes when not using fuz_css.
+Import this alongside theme.css or theme_highlight.css.
 
 Values are sRGB snapshots of fuz_css's derived OKLCH palette at stop 50
 (`--palette_X_50`) and the neutral text scale (`--text_50`), per scheme.

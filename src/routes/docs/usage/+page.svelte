@@ -22,8 +22,8 @@
 <TomeContent {tome}>
 	<section>
 		<p>
-			fuz_code highlights code with one lexer per language without regular expressions, generating
-			HTML with <code>.token_*</code> classes that a theme styles. The
+			fuz_code tokenizes code with one lexer per language, without regular expressions, and
+			generates HTML with <code>.token_*</code> classes for a theme to style. The
 			<DeclarationLink name="Code" /> Svelte component is the typical entry point.
 		</p>
 		<p>To use it, import the default theme or your own:</p>
@@ -43,9 +43,9 @@ import '@fuzdev/fuz_code/theme.css'; // add this"
 	<TomeSection>
 		<TomeSectionHeader text="Dependencies" />
 		<p>
-			By default fuz_code depends on <a href="https://css.fuz.dev">fuz_css</a> to provide
-			color-scheme-aware color variables. If you're not using it, import
-			<code>theme_variables.css</code> or bring your own:
+			The default theme reads color-scheme-aware color variables from
+			<a href="https://css.fuz.dev">fuz_css</a>. Without fuz_css, import
+			<code>theme_variables.css</code> or define the variables yourself:
 		</p>
 		<Code
 			lang="ts"
@@ -61,13 +61,13 @@ import '@fuzdev/fuz_code/theme_variables.css';"
 			The
 			<ModuleLink module_path="svelte_preprocess_fuz_code.ts">
 				svelte_preprocess_fuz_code
-			</ModuleLink> preprocessor compiles static <DeclarationLink name="Code" /> content at build
-			time, replacing runtime syntax highlighting:
+			</ModuleLink> preprocessor styles static <DeclarationLink name="Code" /> content at build
+			time:
 		</p>
 		<Code
 			lang="ts"
 			content={`// svelte.config.js
-import {svelte_preprocess_fuz_code} from '@fuzdev/fuz_code/svelte_preprocess_fuz_code.js';
+import {svelte_preprocess_fuz_code} from '@fuzdev/fuz_code/svelte_preprocess_fuz_code.ts';
 
 export default {
   preprocess: [
@@ -77,17 +77,18 @@ export default {
 };`}
 		/>
 		<p>
-			Static string <code>content</code> props are highlighted at build time and replaced with
-			pre-rendered HTML. Dynamic content is left unchanged for runtime highlighting.
+			A <code>content</code> that is statically known (a string, a module-level constant, or a
+			ternary of those) is replaced with pre-rendered HTML. Anything else is left for runtime
+			styling.
 		</p>
 	</TomeSection>
 	<TomeSection>
 		<TomeSectionHeader text="Svelte support" />
 		<p>
-			<DeclarationLink name="Code" /> styles <a href="https://svelte.dev/">Svelte</a> by default,
-			originally based on
+			The Svelte lexer was originally based on
 			<a href="https://github.com/pngwn/prism-svelte"><code>prism-svelte</code></a> by
-			<a href="https://github.com/pngwn">@pngwn</a> (<a href="https://pngwn.at/">pngwn.at</a>):
+			<a href="https://github.com/pngwn">@pngwn</a> (<a href="https://pngwn.at/">pngwn.at</a>).
+			<DeclarationLink name="Code" /> styles <a href="https://svelte.dev/">Svelte</a> by default:
 		</p>
 		<Code content={'<Code content="<scr..." />'} />
 		<p>styled:</p>
@@ -133,6 +134,26 @@ export default {
 		</p>
 		<Code content={'<Code lang={null} content="<aside>all is gray</aside>" />'} />
 		<Code lang={null} content={`<aside>all is gray</aside>`} />
+		<p>
+			The <code>plaintext</code> language does the same by name. Every
+			<DeclarationLink name="SyntaxStyler" /> registers it, so it also works with
+			<code>stylize</code>:
+		</p>
+		<Code content={'<Code lang="plaintext" content="<aside>all is gray</aside>" />'} />
+		<Code lang="plaintext" content={`<aside>all is gray</aside>`} />
+		<p>
+			A <code>lang</code> that isn't registered also renders as plain text in
+			<DeclarationLink name="Code" />, and logs an error in development. Called directly,
+			<code>stylize</code> and <code>lex</code> throw on an unregistered language, so check with
+			<code>has_lang</code> first or fall back to <code>plaintext</code>:
+		</p>
+		<Code
+			lang="ts"
+			content={`const html = syntax_styler_global.stylize(
+	text,
+	syntax_styler_global.has_lang(lang) ? lang : 'plaintext'
+);`}
+		/>
 	</TomeSection>
 	<TomeSection>
 		<TomeSectionHeader text="Layout" />
@@ -154,15 +175,15 @@ export default {
 		</p>
 		<Code
 			lang="ts"
-			content={`import {syntax_styler_global} from '@fuzdev/fuz_code/syntax_styler_global.js';
+			content={`import {syntax_styler_global} from '@fuzdev/fuz_code/syntax_styler_global.ts';
 
 const html = syntax_styler_global.stylize('${programmatic_example}', 'ts');`}
 		/>
-		<p>returns HTML string:</p>
+		<p>returns an HTML string:</p>
 		<Code content={programmatic_result} />
 		<p>then rendered with:</p>
 		<Code content={'<code data-lang="ts">{@html programmatic_result}</code>'} />
-		<p>we get:</p>
+		<p>renders:</p>
 		<p>
 			<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 			<code data-lang="ts">{@html programmatic_result}</code>
@@ -173,9 +194,9 @@ const html = syntax_styler_global.stylize('${programmatic_example}', 'ts');`}
 		</p>
 		<Code
 			lang="ts"
-			content={`import {SyntaxStyler} from '@fuzdev/fuz_code/syntax_styler.js';
-import {lexer_markup} from '@fuzdev/fuz_code/lexer_markup.js';
-import {lexer_css} from '@fuzdev/fuz_code/lexer_css.js';
+			content={`import {SyntaxStyler} from '@fuzdev/fuz_code/syntax_styler.ts';
+import {lexer_markup} from '@fuzdev/fuz_code/lexer_markup.ts';
+import {lexer_css} from '@fuzdev/fuz_code/lexer_css.ts';
 
 const styler = new SyntaxStyler();
 styler.add_lang(lexer_markup);

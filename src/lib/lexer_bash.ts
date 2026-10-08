@@ -13,7 +13,7 @@ import {
 } from './lexer.ts';
 
 /**
- * Hand-written Bash/shell lexer.
+ * Bash/shell lexer.
  *
  * Emits: `shebang`, `comment`, `string` (double-quoted strings are containers
  * whose `$`-expansions nest as `variable`/`command_substitution`), `keyword`,
@@ -43,7 +43,7 @@ import {
  * arbitrarily deep input tokenizes fully without touching the JS call stack.
  *
  * Scope: the bash family — registered as `sh`, with `bash`/`shell` as
- * aliases. POSIX sh is a syntactic subset of bash for highlighting purposes
+ * aliases. POSIX sh is a syntactic subset of bash for styling purposes
  * (everything sh scripts use — `$(…)`, `$((…))`, backticks, heredocs, `${…}`
  * — is shared syntax), and bash-only forms don't occur in sh input. Shells
  * with their own syntax (fish, PowerShell) are out of scope.
@@ -996,7 +996,7 @@ const lex_bash = (l: Lexer): void => {
  * The shell (bash-family) language registration for the lexer engine.
  *
  * Registered as `sh`; `bash` and `shell` alias it: POSIX sh is a syntactic
- * subset of bash for highlighting purposes, and the bash-only constructs this
+ * subset of bash for styling purposes, and the bash-only constructs this
  * lexer additionally recognizes don't occur in sh input, so running it on sh
  * scripts is exact. There is no separate sh lexer.
  */

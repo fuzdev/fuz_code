@@ -16,7 +16,7 @@ import {
 } from './lexer_markup.ts';
 
 /**
- * Hand-written Markdown lexer — the structural rethink: a line-oriented block
+ * Markdown lexer — a line-oriented block
  * scan (fences, headings, blockquotes, lists, horizontal rules) with an
  * inline scan per block (bold/italic/strikethrough, inline code, links,
  * entities, and raw markup constructs dispatched through `lexer_markup`).

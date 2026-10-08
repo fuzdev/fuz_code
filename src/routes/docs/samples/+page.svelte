@@ -55,7 +55,7 @@
 	{#if at_root}
 		<section>
 			<p>
-				Syntax-highlighted <TomeLink slug="samples" /> in every supported language, rendered with
+				Syntax-styled <TomeLink slug="samples" /> in every supported language, rendered with
 				<DeclarationLink name="Code" /> and the experimental
 				<DeclarationLink name="CodeHighlight" />.
 			</p>
@@ -139,7 +139,7 @@
 						{/if}
 					</div>
 					{#if !show_html && !show_highlight}
-						<p class="palette_e_50">Select a renderer above.</p>
+						<p class="color_e_50">Select a renderer above.</p>
 					{/if}
 				</section>
 			{/each}

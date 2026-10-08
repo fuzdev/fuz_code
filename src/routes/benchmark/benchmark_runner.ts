@@ -99,7 +99,7 @@ export const measurement_phase = async (
 		try {
 			const { work_ms: work, paint_ms: paint } = await harness.run_iteration(impl.component, props);
 
-			// Validate against the work time — the highlighter's compute cost — and
+			// Validate against the work time — the styler's compute cost — and
 			// keep the two series index-aligned (a failed iteration is NaN in both).
 			if (work <= 0) {
 				console.warn(`[Measurement] Suspicious timing (${work}ms) - marking as failed`);

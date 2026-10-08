@@ -2,27 +2,33 @@
 
 [<img src="static/logo.svg" alt="a friendly pink spider facing you" align="right" width="192" height="192">](https://code.fuz.dev/)
 
-> syntax styling utilities and components for TypeScript, Svelte, Markdown, and more 🎨
+> syntax styler for TypeScript, Svelte, Markdown, and more 🎨
 
 **[code.fuz.dev](https://code.fuz.dev/)**
 
-`fuz_code` is a syntax highlighter: it turns source code into HTML or highlighted ranges with
-token CSS classes, and knows nothing about the DOM.
-It originated as a fork and by-hand rewrite
-of [Prism](https://github.com/PrismJS/prism) ([prismjs.com](https://prismjs.com/)),
-with a redesigned tokenizer that replaces regular expressions with lexers per
-language emitting a flat token event stream.
+`fuz_code` is a syntax styler: it turns source code into HTML with
+token CSS classes, or ranges for the
+[CSS Custom Highlight API](https://developer.mozilla.org/en-US/docs/Web/API/CSS_Custom_Highlight_API).
+It originated as a fork of [Prism](https://prismjs.com/) by [Lea Verou](https://lea.verou.me/)
+and has since been rewritten: each language has a lexer that scans without
+regular expressions and emits tokens as a flat stream in a typed array.
+The flat token stream is an idea borrowed from [pngwn](https://pngwn.at/),
+the author of [Twinkleplop](https://twinkleplop.pngwn.at/).
 
-Highlights:
+Twinkleplop is the broader project: it compiles declarative grammars, covers more
+languages, and ships themes, annotations, and markdown integrations.
+fuz_code is narrower, with a lexer written as ordinary code for each of a small
+set of languages, and a few Svelte components.
+
+Features:
 
 - a minimal, explicit API to generate stylized HTML — `stylize(code, lang)`
-- stateless ES modules, instead of globals with side effects
-- written in TypeScript, with no runtime dependencies
-- nine built-in languages (see below), extensible by writing a lexer
+- written in TypeScript; the lexers and styler import nothing outside the package
+- built-in languages listed below, extensible by writing a lexer
 
 Two optional integrations:
 
-- builtin [Svelte](https://svelte.dev/) support with a
+- [Svelte](https://svelte.dev/) support with a
   [Svelte lexer](src/lib/lexer_svelte.ts) and a
   [Svelte component](src/lib/Code.svelte)
 - the [default theme](src/lib/theme.css) integrates with
@@ -31,13 +37,12 @@ Two optional integrations:
   [theme_variables.css](src/lib/theme_variables.css) or otherwise define those
   variables
 
-Compared to [Shiki](https://github.com/shikijs/shiki), fuz_code is smaller and
+Compared to [Shiki](https://github.com/shikijs/shiki), fuz_code is
 [about two orders of magnitude faster](./benchmark/compare/results.md) for
-runtime usage: it runs hand-written single-pass lexers rather than the
+runtime usage: it runs one single-pass lexer per language rather than the
 [Oniguruma regexp engine](https://shiki.matsu.io/guide/regex-engines) that
-TextMate grammars require, and has no runtime dependencies instead of 38. Shiki
-targets build-time use and supports far more languages and themes — pick the
-tool that fits; fuz_code is optimized for small, fast runtime highlighting.
+TextMate grammars require. Shiki targets build-time use and supports far more
+languages and themes.
 
 ## Usage
 
@@ -59,14 +64,14 @@ npm i -D @fuzdev/fuz_code
 ```ts
 import { syntax_styler_global } from '@fuzdev/fuz_code/syntax_styler_global.ts';
 
-// Generate HTML with syntax highlighting
+// Generate HTML with syntax styling
 const html = syntax_styler_global.stylize(code, 'ts');
 
-// Get the raw flat token event stream for custom processing
+// Get the flat event stream for custom processing
 const lexed = syntax_styler_global.lex(code, 'ts');
 ```
 
-Themes are just CSS files, so they work with any JS framework.
+Themes are CSS files and work with any framework.
 
 With SvelteKit:
 
@@ -75,7 +80,7 @@ With SvelteKit:
 import '@fuzdev/fuz_code/theme.css';
 ```
 
-The primary themes (currently just [one](src/lib/theme.css)) depend on
+The [default theme](src/lib/theme.css) depends on
 [fuz_css](https://github.com/fuzdev/fuz_css)
 for [color-scheme](https://css.fuz.dev/docs/themes) awareness.
 See the [fuz_css docs](https://css.fuz.dev/) for its usage.
@@ -90,44 +95,48 @@ import '@fuzdev/fuz_code/theme_variables.css';
 
 ### Modules
 
-- [@fuzdev/fuz_code/syntax_styler_global.js](src/lib/syntax_styler_global.ts) - pre-configured instance with all built-in languages
-- [@fuzdev/fuz_code/syntax_styler.js](src/lib/syntax_styler.ts) - the `SyntaxStyler` class (register your own lexers)
+- [@fuzdev/fuz_code/syntax_styler_global.ts](src/lib/syntax_styler_global.ts) -
+  pre-configured instance with all built-in languages
+- [@fuzdev/fuz_code/syntax_styler.ts](src/lib/syntax_styler.ts) -
+  the `SyntaxStyler` class (register your own lexers)
 - [@fuzdev/fuz_code/theme.css](src/lib/theme.css) -
   default theme that depends on [fuz_css](https://github.com/fuzdev/fuz_css)
 - [@fuzdev/fuz_code/theme_variables.css](src/lib/theme_variables.css) -
   CSS variables for non-fuz_css users
 - [@fuzdev/fuz_code/Code.svelte](src/lib/Code.svelte) -
-  Svelte component for syntax highlighting with HTML generation
+  Svelte component for syntax styling with HTML generation
+- [@fuzdev/fuz_code/svelte_preprocess_fuz_code.ts](src/lib/svelte_preprocess_fuz_code.ts) -
+  build-time preprocessor for static `Code` content
 
 See [`src/lib`](src/lib) for the full set of modules.
 
 ### Languages
 
-Registered by default in `syntax_styler_global` — one hand-written lexer each:
+Registered by default in `syntax_styler_global`:
 
 - [`markup`](src/lib/lexer_markup.ts) (`html`, `mathml`, `svg`)
 - [`xml`](src/lib/lexer_markup.ts) (`ssml`, `atom`, `rss`)
 - [`svelte`](src/lib/lexer_svelte.ts)
-- [`md`](src/lib/lexer_md.ts) (markdown)
-- [`ts`](src/lib/lexer_ts.ts) (TypeScript — also serves `js`/`javascript`, a syntactic subset)
+- [`md`](src/lib/lexer_md.ts) (`markdown`)
+- [`ts`](src/lib/lexer_ts.ts) (`typescript`, `js`, `javascript` — JS is a syntactic subset)
 - [`css`](src/lib/lexer_css.ts)
-- [`json`](src/lib/lexer_json.ts) (with comments — jsonc)
-- [`sh`](src/lib/lexer_bash.ts) (POSIX/bash family — also serves `bash`/`shell`)
-- [`rust`](src/lib/lexer_rust.ts) (also serves `rs`)
+- [`json`](src/lib/lexer_json.ts) — accepts comments (JSONC)
+- [`sh`](src/lib/lexer_bash.ts) (`bash`, `shell` — the POSIX/bash family)
+- [`rust`](src/lib/lexer_rust.ts) (`rs`)
 
 Add a language by writing a `SyntaxLang` lexer and registering it with
 `add_lang` — see the existing `lexer_*.ts` modules.
 
-### More
+### Docs
 
-Docs are a work in progress:
-
-- this readme has basic usage instructions
-- [CLAUDE.md](./CLAUDE.md) has more high-level docs including benchmarks
-- [code.fuz.dev](https://code.fuz.dev/) has usage examples with the Svelte component
-- [samples](https://code.fuz.dev/docs/samples) on the website
-  (also see the [sample files](src/test/fixtures/samples/))
-- [tests](src/test/)
+- [code.fuz.dev/docs](https://code.fuz.dev/docs) -
+  [usage](https://code.fuz.dev/docs/usage),
+  [samples](https://code.fuz.dev/docs/samples),
+  [textarea](https://code.fuz.dev/docs/textarea),
+  [benchmark](https://code.fuz.dev/docs/benchmark), and
+  [API](https://code.fuz.dev/docs/api)
+- [CLAUDE.md](./CLAUDE.md) - architecture and development guidelines
+- [sample files](src/test/fixtures/samples/) and [tests](src/test/)
 
 Issues and questions are welcome.
 
@@ -167,7 +176,9 @@ Experimental modules:
 
 - [@fuzdev/fuz_code/CodeHighlight.svelte](src/lib/CodeHighlight.svelte) -
   component supporting both HTML generation and CSS Custom Highlight API
-- [@fuzdev/fuz_code/highlight_manager.js](src/lib/highlight_manager.ts) -
+- [@fuzdev/fuz_code/CodeTextarea.svelte](src/lib/CodeTextarea.svelte) -
+  editable `<textarea>` with live range highlighting
+- [@fuzdev/fuz_code/highlight_manager.ts](src/lib/highlight_manager.ts) -
   manages browser [`Highlight`](https://developer.mozilla.org/en-US/docs/Web/API/Highlight)
   and [`Range`](https://developer.mozilla.org/en-US/docs/Web/API/Range) APIs
 - [@fuzdev/fuz_code/theme_highlight.css](src/lib/theme_highlight.css) -
@@ -179,11 +190,10 @@ Experimental modules:
 
 ## License [🐦](https://wikipedia.org/wiki/Free_and_open-source_software)
 
-originally forked from [Prism](https://github.com/PrismJS/prism)
+Originally forked from [Prism](https://github.com/PrismJS/prism)
 ([prismjs.com](https://prismjs.com/)) by [Lea Verou](https://lea.verou.me/) —
 with the Svelte support originally based on
 [`prism-svelte`](https://github.com/pngwn/prism-svelte) by
-[@pngwn](https://github.com/pngwn). The tokenizer has since been rewritten as
-lexers, but the fork's lineage remains.
+[@pngwn](https://github.com/pngwn).
 
 [MIT](LICENSE)

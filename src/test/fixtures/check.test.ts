@@ -31,7 +31,7 @@ describe('generated fixtures match runtime', async () => {
 				 * Current: Tests exact HTML string match
 				 *
 				 * Ideal: Should test:
-				 * - All code is highlighted (no plain text except whitespace)
+				 * - All code is styled (no plain text except whitespace)
 				 * - Token boundaries are correct
 				 * - Token types are semantically correct
 				 * - No overlapping spans
@@ -149,13 +149,13 @@ describe('all expected languages are tested', () => {
  *     // Compare token positions are valid
  *   });
  *
- *   test('no code is left unhighlighted', () => {
+ *   test('no code is left unstyled', () => {
  *     // Verify 95%+ coverage (allowing for whitespace)
  *   });
  * });
  *
  * describe('performance benchmarks', () => {
- *   test('highlighting completes within time budget', () => {
+ *   test('styling completes within time budget', () => {
  *     // Track time per KB of code
  *   });
  *
@@ -166,7 +166,7 @@ describe('all expected languages are tested', () => {
  *
  * describe('edge cases', () => {
  *   test('handles malformed code gracefully', () => {
- *     // Should not crash, should highlight what it can
+ *     // Should not crash, should style what it can
  *   });
  *
  *   test('handles extremely long lines', () => {
@@ -179,7 +179,7 @@ describe('all expected languages are tested', () => {
  * });
  *
  * describe('visual regression', () => {
- *   test('highlighted code screenshots match', () => {
+ *   test('styled code screenshots match', () => {
  *     // Render to canvas, compare pixels
  *   });
  * });

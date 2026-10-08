@@ -1,32 +1,25 @@
 # fuz_code
 
-> Syntax highlighting - hand-written single-pass lexers
+> Syntax styling - single-pass lexers, one per language
 
-fuz_code (`@fuzdev/fuz_code`) is a runtime syntax highlighting library optimized
-for HTML generation with CSS classes. It originated as a fork and by-hand rewrite of PrismJS,
-with a redesigned tokenizer that replaces regular expressions with lexers per
-language emitting a flat token event stream.
+fuz_code (`@fuzdev/fuz_code`) is a runtime syntax styling library optimized
+for HTML generation with CSS classes. It originated as a fork of Prism
+and has since been rewritten: each language has a lexer that scans without
+regular expressions and emits tokens as a flat stream in a typed array, an
+idea borrowed from pngwn's Twinkleplop.
 
 For coding conventions, see Skill(fuz-stack).
-
-## Committing
-
-`git add` and `git commit` are denied by `.claude/settings.local.json` in
-this repo — make the edits and stop, the user commits.
 
 ## Gro commands
 
 ```bash
-gro check                       # typecheck, test, lint, format check (run before committing)
+gro check                       # typecheck, test, gen check, format check, lint (run before committing)
 gro typecheck                   # typecheck only (faster iteration)
 gro test                        # run tests with vitest
 gro gen                         # regenerate .gen files
 gro build                       # build the package for production
 gro src/test/fixtures/update    # regenerate test fixtures
 ```
-
-IMPORTANT for AI agents: Do NOT run `gro dev` - the developer will manage the
-dev server.
 
 ## Key dependencies
 
@@ -40,12 +33,12 @@ dev server.
 
 ## Scope
 
-fuz_code is a **syntax highlighting library**:
+fuz_code is a **syntax styling library**:
 
 - Runtime HTML generation with CSS classes
-- Hand-written single-pass lexers (zero regex), one per language
-- 9 built-in lexers (`markup`, `xml`, `svelte`, `md`, `ts`, `css`, `json`,
-  `sh`, `rust`) plus the no-op `plaintext` every styler registers
+- Single-pass lexers without regular expressions, one per language
+- Built-in languages: `markup`, `xml`, `svelte`, `md`, `ts`, `css`, `json`,
+  `sh`, `rust`, plus the no-op `plaintext` every styler registers
 - Extensible by writing a lexer (`SyntaxLang`)
 - Optional Svelte component (`Code.svelte`) and a build-time Svelte
   preprocessor (`svelte_preprocess_fuz_code`) that pre-renders static `Code`
@@ -53,12 +46,13 @@ fuz_code is a **syntax highlighting library**:
 
 ### What fuz_code does NOT include
 
-- A build-time/SSR-only highlighting architecture (use Shiki) — the optional
+- A build-time/SSR-only styling architecture (use Shiki) — the optional
   preprocessor pre-renders static `<Code content="…">` at build time, but the
   library's model is runtime lexing
 - TextMate grammar compatibility — some edge cases differ from IDE highlighting
 - VS Code theme support
-- Line numbers or code editing
+- Line numbers or a code editor (the experimental `CodeTextarea` is a styled
+  input only)
 - Syntax validation or error detection
 
 ## Architecture
@@ -66,16 +60,17 @@ fuz_code is a **syntax highlighting library**:
 ### Directory structure
 
 ```
-benchmark/                          # performance testing
+benchmark/                      # performance testing
 ├── run_benchmarks.ts           # CLI entry (--save writes results.md + baseline.json)
 ├── benchmarks.ts               # benchmark cases, output metrics, markdown writers
-└── compare/                    # Prism/Shiki comparison
+├── results.md                  # committed internal results (baseline.json is gitignored)
+└── compare/                    # Prism/Shiki comparison (compare.ts, run_compare.ts, results.md)
 src/
 ├── lib/                        # exportable library code
 │   ├── syntax_styler.ts        # SyntaxStyler class: registry + lex/stylize facade
 │   ├── syntax_styler_global.ts # pre-configured global instance
 │   ├── lexer.ts                # lexer substrate: Lexer, TokenTypeRegistry, flat events, HTML render
-│   ├── lexer_*.ts              # hand-written lexers (json, ts, css, bash, markup, svelte, md, rust)
+│   ├── lexer_*.ts              # per-language lexers (json, ts, css, bash, markup, svelte, md, rust)
 │   ├── Code.svelte             # main Svelte component
 │   ├── svelte_preprocess_fuz_code.ts # build-time preprocessor for static `Code` content
 │   ├── code_sample.ts          # `CodeSample` shape + `sample_langs` for the demo site
@@ -111,16 +106,16 @@ src/
 
 ### Core system
 
-**Lexer engine** (`lexer.ts` + `lexer_*.ts`) - hand-written single-pass
-lexers emitting flat token events (`Int32Array`) rendered to HTML in one
-forward pass. Token types intern into a `TokenTypeRegistry`
+**Lexer engine** (`lexer.ts` + `lexer_*.ts`) - single-pass lexers emitting
+flat token events (`Int32Array`) rendered to HTML in one forward pass. Token
+types intern into a `TokenTypeRegistry`
 (`token_types_global` by default, injectable via `SyntaxStylerOptions`).
 
 **SyntaxStyler** - The main class: a language registry and a `lex`/`stylize`
 facade over the lexer engine. `lex(text, lang)` returns the flat event stream
 (`LexedSyntax`); `stylize(text, lang)` renders it to HTML. Every instance
 registers `plaintext`, a no-op lexer whose text renders escaped but unstyled —
-the explicit "highlight nothing" language, distinct from an unregistered one
+the explicit "style nothing" language, distinct from an unregistered one
 (which throws).
 
 **syntax_styler_global** - Pre-configured instance with all built-in
@@ -131,7 +126,7 @@ component AST for `Code` usages with a statically known `content` (plain
 strings and ternary chains, resolved through module-level bindings) and
 rewrites them to `dangerous_raw_html` with the HTML already generated. Skips
 usages with spreads, a custom `syntax_styler`, or a non-static `lang`, so it
-degrades to runtime highlighting rather than failing.
+degrades to runtime styling rather than failing.
 
 ### Token structure
 
@@ -152,7 +147,7 @@ aliases in the Supported languages table below):
   syntactic superset, so there is no separate JS lexer
 - `lexer_css.ts` - CSS (including native nesting)
 - `lexer_bash.ts` - the bash-family shell lexer (POSIX sh is a syntactic
-  subset for highlighting — bash-family only, no fish etc.)
+  subset for styling — bash-family only, no fish etc.)
 - `lexer_markup.ts` - HTML (rawtext script/style/textarea/title, `style=`/`on*=`
   attribute embedding) and XML (plain tag scanning), one shared scanner
   parameterized by `MarkupLexMode`
@@ -164,11 +159,11 @@ aliases in the Supported languages table below):
   info matching and any-length closers, headings, blockquotes, lists, hr)
   with a per-block inline scan (emphasis, inline code, links, entities, raw
   markup via the markup scanner); fences embed their languages
-- `lexer_rust.ts` - Rust: one
-  flat scan loop (nested block comments and raw strings resolve with counters;
-  attribute interiors lex inline under an `[`/`]` depth counter — no frame
-  machine), lifetime-vs-char `'` disambiguation, `name!` macros, doc-vs-plain
-  comment split, the r/b/c string prefixes
+- `lexer_rust.ts` - Rust: one flat scan loop (nested block comments and raw
+  strings resolve with counters; attribute interiors lex inline under an
+  `[`/`]` depth counter — no frame machine), lifetime-vs-char `'`
+  disambiguation, `name!` macros, doc-vs-plain comment split, the r/b/c string
+  prefixes
 
 Embedded languages resolve lazily by name through the registry (markdown
 fences → any language, markup `<script>`/`<style>`/`style=`/`on*=`, svelte
@@ -188,8 +183,8 @@ can't overflow the call stack; past the cap a region stays plain text.
 
 **SyntaxStyler class:**
 
-- `stylize(text, lang)` - generate HTML with syntax highlighting
-- `lex(text, lang)` - lex to the flat token event stream (`LexedSyntax`)
+- `stylize(text, lang)` - generate HTML with syntax styling
+- `lex(text, lang)` - lex to the flat event stream (`LexedSyntax`)
 - `add_lang(lang)` - register a `SyntaxLang` lexer (and its aliases)
 - `has_lang(id)` - whether a language is registered under `id`
 - `langs` - the id→lexer `Map`, keyed by primary id and every alias
@@ -219,11 +214,11 @@ the styler:
 
 **Code.svelte props:**
 
-- `content` - source code to highlight
-- `dangerous_raw_html` - pre-highlighted HTML (what the preprocessor emits);
-  mutually exclusive with `content` and skips runtime highlighting
+- `content` - source code to style
+- `dangerous_raw_html` - pre-styled HTML (what the preprocessor emits);
+  mutually exclusive with `content` and skips runtime styling
 - `lang` - language identifier (default: 'svelte'; `null` or an unregistered
-  id disables highlighting and renders plain text, warning in DEV)
+  id disables styling and renders plain text, warning in DEV)
 - `inline` - boolean for inline vs block
 - `wrap` - boolean for text wrapping
 - `nomargin` - boolean for margin control
@@ -252,15 +247,15 @@ Primary ids and their aliases, as registered in `syntax_styler_global`:
 
 ### Fixture workflow
 
-1. Edit samples in `src/test/fixtures/samples/sample_*.{lang}`
+1. Edit samples in `src/test/fixtures/samples/sample_{variant}.{ext}`
 2. Run `gro src/test/fixtures/update` (or `npm run fixtures:update`) to
    regenerate — it invokes `gen` first, so the samples also refresh
    `src/routes/samples/all.ts` for the docs site and benchmark
 3. Run `gro test src/test/fixtures/check` to verify
 4. Review changes with `git diff src/test/fixtures/`
 
-Generated fixtures in `generated/{lang}/` include `.html` (tokenized output) and
-`.txt` (debug output with token names).
+Generated fixtures in `generated/{ext}/` are named `{ext}_{variant}` and include
+`.html` (tokenized output) and `.txt` (debug output with token names).
 
 ## Performance
 
@@ -350,16 +345,17 @@ stop — `--text_50` and `--palette_a_50` through `--palette_j_50`
 - `--palette_j_50` - builtins, class names, numbers
 
 Rust's added token types ride existing colors via aliases — `lifetime`→`symbol`,
-`macro`→`function`, `attribute`→`attr_name`, `doc_comment`→`comment` — so no
-theme rules were added for them.
+`macro`→`function`, `attribute`→`attr_name`, `doc_comment`→`comment` — so they need
+no theme rules of their own.
 
 `theme_variables.css` (the fallback for consumers not using fuz_css) declares
 `--text_50` plus `--palette_a_50`…`--palette_j_50` as sRGB snapshots of
-fuz_css's derived OKLCH palette, per color scheme.
+fuz_css's derived OKLCH palette, with fixed `light-dark()` values per color
+scheme.
 
 ## Development guidelines
 
-1. **Zero regex in lexers** - char-code scanning, native `indexOf`, keyword
+1. **No regular expressions in lexers** - char-code scanning, native `indexOf`, keyword
    `Map` lookups; no `RegExp` anywhere (speed + Rust-twin discipline)
 2. **Never throw, always cover** - any input (mid-keystroke, malformed) yields a
    valid event stream; unterminated constructs extend to their natural boundary
@@ -390,14 +386,16 @@ New languages are written as lexers:
 2. Register via `add_lang` in `syntax_styler_global.ts`
 3. Style any new token types in `theme.css` and `theme_highlight.css`, or give
    them an alias onto an existing type (`token_type('macro', 'function')`) —
-   the rust lexer aliases all four of its additions rather than adding rules
-4. Add samples in `src/test/fixtures/samples/sample_{variant}.{lang}`
+   the rust lexer aliases its additions rather than adding rules
+4. Add samples in `src/test/fixtures/samples/sample_{variant}.{ext}` — the
+   file extension becomes the sample's `lang`, so it must be a registered id or
+   alias (`rs` and `html` are aliases)
 5. Wire the new file extension into both sample-discovery filters — the
    `file_filter` regexes in `src/routes/samples/all.gen.ts` and
    `src/test/fixtures/helpers.ts` are separate hardcoded copies, and a sample
    the filter misses is silently skipped rather than failing
-6. Add the lang to `sample_langs` in `code_sample.ts` (its order drives the
-   docs) and a tint in `src/routes/lang_color.ts` — that's a
+6. Add the extension to `sample_langs` in `code_sample.ts` (its order drives
+   the docs) and a tint in `src/routes/lang_color.ts` — that's a
    `Record<SampleLang, string>`, so a missing entry fails typecheck
 7. Add it to `languages` in `src/routes/benchmark/benchmark_fixtures.ts` — the
    browser benchmark uses a fixed list, unlike the internal benchmark which
@@ -415,7 +413,7 @@ New languages are written as lexers:
 
 Skill(fuz-stack) covers the shared conventions. Repo-specific:
 
-- Prettier with tabs, 100 char width (not tsv)
+- tsv (`gro format`) with tabs, 100 char width
 - Node >= 24.14
 
 ## Related projects

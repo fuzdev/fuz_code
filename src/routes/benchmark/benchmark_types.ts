@@ -32,7 +32,7 @@ export interface StabilityCheck {
 
 /**
  * One iteration's two timings, both measured from the same start (props set):
- * `work_ms` ends when the highlight work is committed and laid out; `paint_ms`
+ * `work_ms` ends when the styling work is committed and laid out; `paint_ms`
  * ends once the browser has settled pixels (adds ~1-2 animation frames).
  */
 export interface IterationTiming {
@@ -54,7 +54,7 @@ export interface MeasurementData {
  * Uses milliseconds for display (mean_ms, median_ms, etc.) while storing nanoseconds internally.
  */
 export interface BrowserBenchmarkStats {
-	/** Work-time stats — stylize + DOM commit, the highlighter's compute cost (in nanoseconds). */
+	/** Work-time stats — stylize + DOM commit, the styler's compute cost (in nanoseconds). */
 	core: FuzBenchmarkStats;
 	/** Paint-settled stats — work plus the frames until pixels update (in nanoseconds). */
 	paint: FuzBenchmarkStats;

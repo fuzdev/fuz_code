@@ -1,4 +1,4 @@
-# Syntax Highlighting Performance Comparison
+# Syntax Styling Performance Comparison
 
 Comparing fuz_code vs Prism vs Shiki across multiple languages and content sizes.
 
