@@ -281,7 +281,8 @@ describe('lexer_bash heredocs', () => {
 
 describe('lexer_bash escapes', () => {
 	test('a backslash outside quotes makes the next char literal', () => {
-		const text = "case $x in\n  *\\`* | *\\'* | *\\\"* | *' '* ) exit 1 ;;\nesac\n# a `comment`\necho \\$HOME";
+		const text =
+			"case $x in\n  *\\`* | *\\'* | *\\\"* | *' '* ) exit 1 ;;\nesac\n# a `comment`\necho \\$HOME";
 		assert.deepEqual(
 			tokens_of(text).filter(([type]) => type !== 'operator'),
 			[
