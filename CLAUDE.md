@@ -210,7 +210,7 @@ the styler:
 - scanning helpers - `is_space`, `is_digit`, `is_upper`, `is_ascii_alnum`,
   `is_ascii_word`, `is_hex_digit`, `is_ident_start`, `is_ident`, `scan_ident`,
   `skip_space`, `trim_space_end`, `scan_to_line_end`, `skip_quoted`,
-  `matches_ci`, `advance_probe`, `scan_balanced_braces`
+  `matches_ci`, `advance_probe` (with `PROBE_NOT_FOUND`), `scan_balanced_braces`
 
 **Code.svelte props:**
 
@@ -376,6 +376,15 @@ scheme.
    which is depth-capped rather than framed.
 5. **Test with fixtures** - all changes must pass fixture tests
 6. **Follow patterns** - use existing `lexer_*.ts` modules as templates
+7. **Keep hidden classes alive and stable** - V8 embeds the hidden classes of
+   objects in optimized code and drops that code when a major GC clears one.
+   An object made per `lex` call (`Lexer`, the probe caches) holds a class
+   nothing else does, so: never store a double (`Infinity`, `NaN`, a
+   fraction) into a field that holds integers — use an integer sentinel like
+   `PROBE_NOT_FOUND`, since the store changes the field's representation and
+   with it the class — and give a new per-call class a static instance like
+   `Lexer.shape_anchor` (a module variable doesn't work: V8 frees one no
+   function reads, and bundlers drop an unused export)
 
 ### Adding a new language
 
