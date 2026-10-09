@@ -189,8 +189,12 @@ export class Lexer {
 	 */
 	static readonly shape_anchor: Lexer = new Lexer();
 
-	constructor(capacity = 256) {
-		this.events = new Int32Array(capacity < 256 ? 256 : capacity);
+	/**
+	 * @param events - the buffer to emit into from index 0; `#grow` replaces it
+	 *   with a larger copy when it fills
+	 */
+	constructor(events: Int32Array = new Int32Array(256)) {
+		this.events = events;
 	}
 
 	// cold path of the emitters' capacity checks — kept out of line so the
@@ -275,7 +279,61 @@ export class Lexer {
 }
 
 /**
- * Lexes `text` with `lang`, returning the flat event stream.
+ * The largest scratch buffer kept between calls, in ints (1 MiB). A larger one,
+ * grown for an outsized input, is dropped after its call.
+ */
+const SCRATCH_RETAIN_MAX = 1 << 18;
+
+// the buffer every lex writes into, reused across calls; null while a lex holds it,
+// so a re-entrant call (a custom lexer calling `lex_syntax`) gets a buffer of its own,
+// and after a lexer throws the next call makes a new one
+let scratch_events: Int32Array | null = new Int32Array(256);
+
+/**
+ * Lexes `text` into the scratch buffer and passes the result to `use`, which
+ * must not keep its `events` — the next call overwrites them.
+ *
+ * Allocating a buffer per call is what this avoids: a buffer sized for the
+ * input is off-heap memory that is zero-filled up front and freed only at a
+ * later GC, so on small inputs it costs more than the lexing, and in a hot loop
+ * it makes timing depend on when collections run.
+ */
+const lex_into_scratch = <T>(
+	text: string,
+	lang: SyntaxLang,
+	langs: Map<string, SyntaxLang> | undefined,
+	types: TokenTypeRegistry,
+	use: (lexed: LexedSyntax) => T
+): T => {
+	const scratch = scratch_events;
+	scratch_events = null;
+	// capacity heuristic: dense token streams run ~1 int per source char
+	const lexer = new Lexer(
+		scratch !== null && scratch.length >= text.length
+			? scratch
+			: new Int32Array(text.length < 256 ? 256 : text.length)
+	);
+	lexer.text = text;
+	lexer.pos = 0;
+	lexer.end = text.length;
+	lexer.langs = langs ?? null;
+	lang.lex(lexer);
+	const { events } = lexer;
+	const result = use({ text, events, events_len: lexer.events_len, types });
+	scratch_events = events.length <= SCRATCH_RETAIN_MAX ? events : scratch;
+	return result;
+};
+
+const copy_lexed = (lexed: LexedSyntax): LexedSyntax => ({
+	text: lexed.text,
+	events: lexed.events.slice(0, lexed.events_len),
+	events_len: lexed.events_len,
+	types: lexed.types
+});
+
+/**
+ * Lexes `text` with `lang`, returning the flat event stream. The result owns
+ * its `events`, sized to `events_len`.
  *
  * @param langs - registry used to resolve embedded languages by id
  * @param types - token-type registry stamped on the result; must be the one
@@ -286,16 +344,21 @@ export const lex_syntax = (
 	lang: SyntaxLang,
 	langs?: Map<string, SyntaxLang>,
 	types: TokenTypeRegistry = token_types_global
-): LexedSyntax => {
-	// capacity heuristic: dense token streams run ~1 int per source char
-	const lexer = new Lexer(text.length);
-	lexer.text = text;
-	lexer.pos = 0;
-	lexer.end = text.length;
-	lexer.langs = langs ?? null;
-	lang.lex(lexer);
-	return { text, events: lexer.events, events_len: lexer.events_len, types };
-};
+): LexedSyntax => lex_into_scratch(text, lang, langs, types, copy_lexed);
+
+/**
+ * Lexes `text` with `lang` and renders it to HTML: `lex_syntax` then
+ * `render_syntax_html`, without copying the event stream out.
+ *
+ * @param langs - registry used to resolve embedded languages by id
+ * @param types - token-type registry the lexers interned into
+ */
+export const stylize_syntax = (
+	text: string,
+	lang: SyntaxLang,
+	langs?: Map<string, SyntaxLang>,
+	types: TokenTypeRegistry = token_types_global
+): string => lex_into_scratch(text, lang, langs, types, render_syntax_html);
 
 /**
  * Escapes `text[from..to)` for HTML text content in a single pass.

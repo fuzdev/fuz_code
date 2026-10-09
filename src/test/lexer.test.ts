@@ -6,6 +6,7 @@ import {
 	lex_syntax,
 	PROBE_NOT_FOUND,
 	render_syntax_html,
+	stylize_syntax,
 	syntax_events_to_tokens,
 	token_type,
 	token_types_global,
@@ -108,6 +109,81 @@ describe('Lexer', () => {
 		});
 		assert.strictEqual(syntax_events_to_tokens(lexed).length, 1000);
 		assert.deepEqual(validate_syntax_events(lexed), []);
+	});
+});
+
+describe('lex_syntax', () => {
+	// one leaf per word of lowercase letters
+	const lang_words: SyntaxLang = {
+		id: 'test_words',
+		lex: (l) => {
+			let i = l.pos;
+			while (i < l.end) {
+				const start = i;
+				while (i < l.end && l.text.charCodeAt(i) !== 32) i++;
+				l.leaf(start % 2 ? T_A : T_B, start, i);
+				i++;
+			}
+			l.pos = l.end;
+		}
+	};
+
+	test('returns events that later calls leave intact, sized to events_len', () => {
+		const first = lex_syntax('aa bb cc', lang_words);
+		const tokens = syntax_events_to_tokens(first);
+		lex_syntax('dddddddd eeeeeeee', lang_words);
+		assert.deepEqual(syntax_events_to_tokens(first), tokens);
+		assert.strictEqual(first.events.length, first.events_len);
+	});
+
+	test('a lexer that calls lex_syntax gets a buffer of its own', () => {
+		let inner: LexedSyntax | null = null;
+		const lang_outer: SyntaxLang = {
+			id: 'test_reentrant',
+			lex: (l) => {
+				l.leaf(T_A, 0, 2);
+				inner = lex_syntax('xx yy', lang_words);
+				l.leaf(T_B, 3, 5);
+				l.pos = l.end;
+			}
+		};
+		const outer = lex_syntax('aa bb', lang_outer);
+		assert.deepEqual(syntax_events_to_tokens(outer), [
+			{ type: 'test_a', start: 0, end: 2 },
+			{ type: 'test_b', start: 3, end: 5 }
+		]);
+		assert(inner);
+		assert.deepEqual(syntax_events_to_tokens(inner), [
+			{ type: 'test_b', start: 0, end: 2 },
+			{ type: 'test_a', start: 3, end: 5 }
+		]);
+	});
+
+	test('grows past the scratch buffer and past the retained size', () => {
+		const big = 'ab '.repeat(200_000);
+		const lexed = lex_syntax(big, lang_words);
+		assert.strictEqual(lexed.events_len, 200_000 * 3);
+		assert.deepEqual(validate_syntax_events(lexed), []);
+		// a small lex after an outsized one still works from a retained buffer
+		assert.deepEqual(syntax_events_to_tokens(lex_syntax('aa', lang_words)), [
+			{ type: 'test_b', start: 0, end: 2 }
+		]);
+	});
+});
+
+describe('stylize_syntax', () => {
+	test('renders what lex_syntax returns', () => {
+		const lang: SyntaxLang = {
+			id: 'test_stylize',
+			lex: (l) => {
+				l.open(T_CONTAINER, 0);
+				l.leaf(T_A, 1, 3);
+				l.close(4);
+				l.pos = l.end;
+			}
+		};
+		const text = 'a<b& c';
+		assert.strictEqual(stylize_syntax(text, lang), render_syntax_html(lex_syntax(text, lang)));
 	});
 });
 

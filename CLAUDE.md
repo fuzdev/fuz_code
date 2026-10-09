@@ -198,7 +198,9 @@ Both `lex` and `stylize` throw on an unregistered language — guard with
 the styler:
 
 - `lex_syntax(text, lang, langs?, types?)` / `render_syntax_html(lexed)` - the
-  two halves `SyntaxStyler` composes
+  two halves; `stylize_syntax` does both without copying the events out, which
+  `SyntaxStyler#stylize` uses. Lexing writes into one reused module buffer, so a
+  call allocates no input-sized buffer: `lex_syntax` returns an exact-size copy
 - `syntax_events_to_tokens(lexed)` - flatten events to `{type, start, end}`
   (fixtures, tests, range building)
 - `validate_syntax_events(lexed)` - structural invariants as a list of issues,

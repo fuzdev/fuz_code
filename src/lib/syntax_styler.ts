@@ -1,6 +1,6 @@
 import {
 	lex_syntax,
-	render_syntax_html,
+	stylize_syntax,
 	token_types_global,
 	TokenTypeRegistry,
 	type LexedSyntax,
@@ -90,6 +90,8 @@ export class SyntaxStyler {
 	 * `text`. Throws when `lang` is not registered — see `has_lang`.
 	 */
 	stylize(text: string, lang: string): string {
-		return render_syntax_html(this.lex(text, lang));
+		const l = this.langs.get(lang);
+		if (l === undefined) throw Error(`The language "${lang}" is not registered.`);
+		return stylize_syntax(text, l, this.langs, this.token_types);
 	}
 }
