@@ -1,5 +1,12 @@
 # @fuzdev/fuz_code
 
+## 0.52.0
+
+### Minor Changes
+
+- perf: lexers allocate almost nothing per call: keywords are looked up with the new `WordIndex` instead of slicing every identifier, the TS and Rust number scanners make no closures, and the TS and shell lexers reuse their machines across embedded regions ([dcf3bd9](https://github.com/fuzdev/fuz_code/commit/dcf3bd9))
+- perf: lex into one reused buffer instead of allocating an input-sized `Int32Array` per call; breaking: a `lex_syntax` / `SyntaxStyler#lex` result is valid until the next lex (keep one with the new `copy_lexed_syntax`), and `new Lexer(events?)` takes the buffer to emit into, not a capacity ([a99d615](https://github.com/fuzdev/fuz_code/commit/a99d615))
+
 ## 0.51.0
 
 ### Minor Changes
