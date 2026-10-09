@@ -1,5 +1,11 @@
 # @fuzdev/fuz_code
 
+## 0.51.0
+
+### Minor Changes
+
+- perf: keep the lexers' optimized code across major GCs: `advance_probe` returns the new `PROBE_NOT_FOUND` instead of `Infinity` when there is no further occurrence, and `Lexer.shape_anchor` keeps one lexer alive so its hidden class survives between `lex` calls ([aa1977a](https://github.com/fuzdev/fuz_code/commit/aa1977a))
+
 ## 0.50.0
 
 ### Minor Changes
