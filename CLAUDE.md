@@ -113,7 +113,7 @@ types intern into a `TokenTypeRegistry`
 
 **SyntaxStyler** - The main class: a language registry and a `lex`/`stylize`
 facade over the lexer engine. `lex(text, lang)` returns the flat event stream
-(`LexedSyntax`); `stylize(text, lang)` renders it to HTML. Every instance
+(`LexedSyntax`), valid until the next lex; `stylize(text, lang)` renders it to HTML. Every instance
 registers `plaintext`, a no-op lexer whose text renders escaped but unstyled —
 the explicit "style nothing" language, distinct from an unregistered one
 (which throws).
@@ -198,9 +198,9 @@ Both `lex` and `stylize` throw on an unregistered language — guard with
 the styler:
 
 - `lex_syntax(text, lang, langs?, types?)` / `render_syntax_html(lexed)` - the
-  two halves; `stylize_syntax` does both without copying the events out, which
-  `SyntaxStyler#stylize` uses. Lexing writes into one reused module buffer, so a
-  call allocates no input-sized buffer: `lex_syntax` returns an exact-size copy
+  two halves `SyntaxStyler` composes. Lexing writes into one reused module
+  buffer, so a result is valid until the next lex; `copy_lexed_syntax(lexed)`
+  keeps one (as `RangeHighlighting` does, since its effect reads the result later)
 - `syntax_events_to_tokens(lexed)` - flatten events to `{type, start, end}`
   (fixtures, tests, range building)
 - `validate_syntax_events(lexed)` - structural invariants as a list of issues,

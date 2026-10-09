@@ -2,11 +2,11 @@ import { describe, test, assert } from 'vitest';
 
 import {
 	advance_probe,
+	copy_lexed_syntax,
 	Lexer,
 	lex_syntax,
 	PROBE_NOT_FOUND,
 	render_syntax_html,
-	stylize_syntax,
 	syntax_events_to_tokens,
 	token_type,
 	token_types_global,
@@ -128,12 +128,15 @@ describe('lex_syntax', () => {
 		}
 	};
 
-	test('returns events that later calls leave intact, sized to events_len', () => {
+	test('reuses one buffer, so a kept result needs copy_lexed_syntax', () => {
 		const first = lex_syntax('aa bb cc', lang_words);
 		const tokens = syntax_events_to_tokens(first);
-		lex_syntax('dddddddd eeeeeeee', lang_words);
-		assert.deepEqual(syntax_events_to_tokens(first), tokens);
-		assert.strictEqual(first.events.length, first.events_len);
+		const kept = copy_lexed_syntax(first);
+		assert.strictEqual(kept.events.length, kept.events_len);
+		const second = lex_syntax('dddddddd eeeeeeee', lang_words);
+		assert.strictEqual(second.events, first.events);
+		assert.notDeepEqual(syntax_events_to_tokens(first), tokens);
+		assert.deepEqual(syntax_events_to_tokens(kept), tokens);
 	});
 
 	test('a lexer that calls lex_syntax gets a buffer of its own', () => {
@@ -168,22 +171,6 @@ describe('lex_syntax', () => {
 		assert.deepEqual(syntax_events_to_tokens(lex_syntax('aa', lang_words)), [
 			{ type: 'test_b', start: 0, end: 2 }
 		]);
-	});
-});
-
-describe('stylize_syntax', () => {
-	test('renders what lex_syntax returns', () => {
-		const lang: SyntaxLang = {
-			id: 'test_stylize',
-			lex: (l) => {
-				l.open(T_CONTAINER, 0);
-				l.leaf(T_A, 1, 3);
-				l.close(4);
-				l.pos = l.end;
-			}
-		};
-		const text = 'a<b& c';
-		assert.strictEqual(stylize_syntax(text, lang), render_syntax_html(lex_syntax(text, lang)));
 	});
 });
 

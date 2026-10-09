@@ -280,31 +280,35 @@ export class Lexer {
 
 /**
  * The largest scratch buffer kept between calls, in ints (1 MiB). A larger one,
- * grown for an outsized input, is dropped after its call.
+ * grown for an outsized input, is left to its result.
  */
 const SCRATCH_RETAIN_MAX = 1 << 18;
 
-// the buffer every lex writes into, reused across calls; null while a lex holds it,
-// so a re-entrant call (a custom lexer calling `lex_syntax`) gets a buffer of its own,
-// and after a lexer throws the next call makes a new one
+// the buffer every lex writes into, reused across calls; null while a lex runs, so a
+// re-entrant call (a custom lexer calling `lex_syntax`) gets a buffer of its own, and
+// after a lexer throws the next call makes a new one
 let scratch_events: Int32Array | null = new Int32Array(256);
 
 /**
- * Lexes `text` into the scratch buffer and passes the result to `use`, which
- * must not keep its `events` — the next call overwrites them.
+ * Lexes `text` with `lang`, returning the flat event stream.
  *
- * Allocating a buffer per call is what this avoids: a buffer sized for the
- * input is off-heap memory that is zero-filled up front and freed only at a
- * later GC, so on small inputs it costs more than the lexing, and in a hot loop
- * it makes timing depend on when collections run.
+ * The result is valid until the next `lex_syntax` call: every call writes its
+ * events into one reused buffer, which is also why `events` runs past
+ * `events_len`. Use the result right away, or keep a copy with
+ * `copy_lexed_syntax`. A buffer allocated per call would be off-heap memory,
+ * zero-filled up front and freed only at a later GC, which on small inputs
+ * costs more than the lexing.
+ *
+ * @param langs - registry used to resolve embedded languages by id
+ * @param types - token-type registry stamped on the result; must be the one
+ *   `lang` (and any embedded language) interned its type ids into
  */
-const lex_into_scratch = <T>(
+export const lex_syntax = (
 	text: string,
 	lang: SyntaxLang,
-	langs: Map<string, SyntaxLang> | undefined,
-	types: TokenTypeRegistry,
-	use: (lexed: LexedSyntax) => T
-): T => {
+	langs?: Map<string, SyntaxLang>,
+	types: TokenTypeRegistry = token_types_global
+): LexedSyntax => {
 	const scratch = scratch_events;
 	scratch_events = null;
 	// capacity heuristic: dense token streams run ~1 int per source char
@@ -319,46 +323,20 @@ const lex_into_scratch = <T>(
 	lexer.langs = langs ?? null;
 	lang.lex(lexer);
 	const { events } = lexer;
-	const result = use({ text, events, events_len: lexer.events_len, types });
 	scratch_events = events.length <= SCRATCH_RETAIN_MAX ? events : scratch;
-	return result;
+	return { text, events, events_len: lexer.events_len, types };
 };
 
-const copy_lexed = (lexed: LexedSyntax): LexedSyntax => ({
+/**
+ * Copies a lexed event stream out of the buffer `lex_syntax` reuses, sized to
+ * `events_len`, for a result kept past the next lex.
+ */
+export const copy_lexed_syntax = (lexed: LexedSyntax): LexedSyntax => ({
 	text: lexed.text,
 	events: lexed.events.slice(0, lexed.events_len),
 	events_len: lexed.events_len,
 	types: lexed.types
 });
-
-/**
- * Lexes `text` with `lang`, returning the flat event stream. The result owns
- * its `events`, sized to `events_len`.
- *
- * @param langs - registry used to resolve embedded languages by id
- * @param types - token-type registry stamped on the result; must be the one
- *   `lang` (and any embedded language) interned its type ids into
- */
-export const lex_syntax = (
-	text: string,
-	lang: SyntaxLang,
-	langs?: Map<string, SyntaxLang>,
-	types: TokenTypeRegistry = token_types_global
-): LexedSyntax => lex_into_scratch(text, lang, langs, types, copy_lexed);
-
-/**
- * Lexes `text` with `lang` and renders it to HTML: `lex_syntax` then
- * `render_syntax_html`, without copying the event stream out.
- *
- * @param langs - registry used to resolve embedded languages by id
- * @param types - token-type registry the lexers interned into
- */
-export const stylize_syntax = (
-	text: string,
-	lang: SyntaxLang,
-	langs?: Map<string, SyntaxLang>,
-	types: TokenTypeRegistry = token_types_global
-): string => lex_into_scratch(text, lang, langs, types, render_syntax_html);
 
 /**
  * Escapes `text[from..to)` for HTML text content in a single pass.
