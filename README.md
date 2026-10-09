@@ -83,7 +83,7 @@ import '@fuzdev/fuz_code/theme.css';
 The [default theme](src/lib/theme.css) depends on
 [fuz_css](https://github.com/fuzdev/fuz_css)
 for [color-scheme](https://css.fuz.dev/docs/themes) awareness.
-See the [fuz_css docs](https://css.fuz.dev/) for its usage.
+See the [fuz_css usage docs](https://css.fuz.dev/docs/introduction#Usage) for setup.
 
 If you're not using fuz_css, import `theme_variables.css` alongside `theme.css`:
 

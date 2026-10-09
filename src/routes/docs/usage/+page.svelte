@@ -44,8 +44,9 @@ import '@fuzdev/fuz_code/theme.css'; // add this"
 		<TomeSectionHeader text="Dependencies" />
 		<p>
 			The default theme reads color-scheme-aware color variables from
-			<a href="https://css.fuz.dev">fuz_css</a>. Without fuz_css, import
-			<code>theme_variables.css</code> or define the variables yourself:
+			<a href="https://css.fuz.dev">fuz_css</a>; see its
+			<a href="https://css.fuz.dev/docs/introduction#Usage">usage docs</a> for setup. Without
+			fuz_css, import <code>theme_variables.css</code> or define the variables yourself:
 		</p>
 		<Code
 			lang="ts"
