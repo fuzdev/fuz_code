@@ -1,6 +1,7 @@
 import {
 	advance_probe,
 	is_digit,
+	is_hex_digit,
 	is_ident,
 	is_ident_start,
 	is_space,
@@ -12,7 +13,8 @@ import {
 	token_type,
 	trim_space_end,
 	words_map,
-	type Lexer,
+	WordIndex,
+	Lexer,
 	type SyntaxLang
 } from './lexer.ts';
 
@@ -141,6 +143,8 @@ const BUILTIN_WORDS: Set<string> = new Set([
 	'unknown'
 ]);
 
+const WORD_INDEX = new WordIndex([...WORDS.keys(), ...BUILTIN_WORDS]);
+
 // previous-significant-token categories, for regex-vs-division and contexts
 const P_NONE = 0; // start / after operator, `{`, `(`, `[`, `,`, `;` — regex allowed
 const P_VALUE = 1; // after a value — `/` is division
@@ -192,54 +196,61 @@ const scan_ts_string = (text: string, from: number, end: number, quote: number):
 	return end;
 };
 
+// the digit loops allow `_` only between two wanted digits
+const scan_ts_decimal = (text: string, from: number, end: number): number => {
+	let j = from;
+	while (j < end) {
+		const c = text.charCodeAt(j);
+		if ((c >= 48 && c <= 57) || (c === 95 && is_digit(text.charCodeAt(j + 1)))) j++;
+		else break;
+	}
+	return j;
+};
+
+// `radix` is 16, 8, or 2
+const scan_ts_radix = (text: string, from: number, end: number, radix: number): number => {
+	let j = from;
+	while (j < end) {
+		const c = text.charCodeAt(j);
+		const wanted =
+			radix === 16 ? is_hex_digit(c) : radix === 2 ? c === 48 || c === 49 : c >= 48 && c <= 55;
+		if (wanted) j++;
+		else if (c === 95) {
+			const n = text.charCodeAt(j + 1);
+			const next =
+				radix === 16 ? is_hex_digit(n) : radix === 2 ? n === 48 || n === 49 : n >= 48 && n <= 55;
+			if (next) j++;
+			else break;
+		} else break;
+	}
+	return j;
+};
+
 /**
  * Scans a numeric literal from `i` (at a digit, or `.` before a digit),
  * returning the exclusive end. Handles hex/binary/octal, `_` separators,
  * exponents, and bigint `n` suffixes.
  *
- * The per-call closures are a measured exception to the top-level-functions
- * rule: V8 inlines them into specialized loops inside this function, and
- * hoisted top-level variants (both a param'd helper and a decimal-specialized
- * one) run ~1.2x slower on number-dense input.
+ * The digit loops are top-level functions rather than closures made per
+ * literal: closures allocate on every number, and measured slower on
+ * number-dense input.
  */
 const scan_ts_number = (text: string, i: number, end: number): number => {
-	const scan_digits = (from: number, is_wanted: (c: number) => boolean): number => {
-		let j = from;
-		while (j < end) {
-			const c = text.charCodeAt(j);
-			if (is_wanted(c) || (c === 95 && is_wanted(text.charCodeAt(j + 1)))) j++;
-			else break;
-		}
-		return j;
-	};
-	const is_hex = (c: number): boolean =>
-		(c >= 48 && c <= 57) || (c >= 97 && c <= 102) || (c >= 65 && c <= 70);
-	const is_binary = (c: number): boolean => c === 48 || c === 49;
-	const is_octal = (c: number): boolean => c >= 48 && c <= 55;
-
 	if (text.charCodeAt(i) === 48) {
 		const c2 = text.charCodeAt(i + 1);
-		if (c2 === 120 || c2 === 88) {
-			let j = scan_digits(i + 2, is_hex);
+		const radix =
+			c2 === 120 || c2 === 88 ? 16 : c2 === 98 || c2 === 66 ? 2 : c2 === 111 || c2 === 79 ? 8 : 0;
+		if (radix !== 0) {
+			let j = scan_ts_radix(text, i + 2, end, radix);
 			if (text.charCodeAt(j) === 110) j++; // n
 			return j;
 		}
-		if (c2 === 98 || c2 === 66) {
-			let j = scan_digits(i + 2, is_binary);
-			if (text.charCodeAt(j) === 110) j++;
-			return j;
-		}
-		if (c2 === 111 || c2 === 79) {
-			let j = scan_digits(i + 2, is_octal);
-			if (text.charCodeAt(j) === 110) j++;
-			return j;
-		}
 	}
-	let j = scan_digits(i, is_digit);
+	let j = scan_ts_decimal(text, i, end);
 	let is_integer = true;
 	if (text.charCodeAt(j) === 46 && is_digit(text.charCodeAt(j + 1))) {
 		is_integer = false;
-		j = scan_digits(j + 1, is_digit);
+		j = scan_ts_decimal(text, j + 1, end);
 	}
 	const e = text.charCodeAt(j);
 	if (e === 101 || e === 69) {
@@ -247,7 +258,7 @@ const scan_ts_number = (text: string, i: number, end: number): number => {
 		const sign = text.charCodeAt(k);
 		if (sign === 43 || sign === 45) k++;
 		if (is_digit(text.charCodeAt(k))) {
-			j = scan_digits(k, is_digit);
+			j = scan_ts_decimal(text, k, end);
 			is_integer = false;
 		}
 	}
@@ -761,8 +772,8 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 			prev_code = 0;
 			i = ident_end;
 
-			const word = text.slice(start, ident_end);
-			const kind = c === 35 || was_dot ? undefined : WORDS.get(word);
+			const word = c === 35 ? undefined : WORD_INDEX.find(text, start, ident_end);
+			const kind = word === undefined || was_dot ? undefined : WORDS.get(word);
 
 			if (was_class_ctx && kind === undefined && c !== 35) {
 				// class-name chain: `Foo`, `a.b.Foo`, optionally with generics
@@ -800,7 +811,12 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 				continue;
 			}
 
-			if (was_as_ctx && kind === undefined && c !== 35 && !BUILTIN_WORDS.has(word)) {
+			if (
+				was_as_ctx &&
+				kind === undefined &&
+				c !== 35 &&
+				!(word !== undefined && BUILTIN_WORDS.has(word))
+			) {
 				// `x as Foo` — but `as unknown`/`as string` keep their builtin type
 				l.leaf(T_TYPE_ASSERTION, start, ident_end);
 				continue;
@@ -868,10 +884,10 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 				}
 				if (keyword_id !== 0) {
 					l.leaf(keyword_id, start, ident_end);
-					if (CLASS_CTX_WORDS.has(word)) class_ctx = true;
-					if (AS_WORDS.has(word)) as_ctx = true;
-					if (IMPORT_WORDS.has(word)) import_ctx = true;
-					if (!VALUE_WORDS.has(word)) prev = P_NONE;
+					if (CLASS_CTX_WORDS.has(word!)) class_ctx = true;
+					if (AS_WORDS.has(word!)) as_ctx = true;
+					if (IMPORT_WORDS.has(word!)) import_ctx = true;
+					if (!VALUE_WORDS.has(word!)) prev = P_NONE;
 					continue;
 				}
 			}
@@ -949,7 +965,7 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 				continue;
 			}
 
-			if (kind === undefined && !was_dot && c !== 35 && BUILTIN_WORDS.has(word)) {
+			if (kind === undefined && !was_dot && word !== undefined && BUILTIN_WORDS.has(word)) {
 				l.leaf(T_BUILTIN, start, ident_end);
 				continue;
 			}
@@ -1295,6 +1311,10 @@ const run_ts = (mac: TsMachine): void => {
 	}
 };
 
+// machines kept between calls, frames and all, so each embedded region (a Svelte
+// expression, a Markdown fence) doesn't build one; a stack, since embeds nest
+const ts_machines: Array<TsMachine> = [];
+
 const lex_ts = (l: Lexer): void => {
 	let i = l.pos;
 	// hashbang at the very start of the document
@@ -1303,10 +1323,17 @@ const lex_ts = (l: Lexer): void => {
 		l.leaf(T_HASHBANG, 0, line_end);
 		i = line_end;
 	}
-	const mac: TsMachine = { l, cache: create_ts_scan_cache(), stack: [], sp: 0 };
+	const mac = ts_machines.pop() ?? { l, cache: create_ts_scan_cache(), stack: [], sp: 0 };
+	mac.l = l;
+	mac.sp = 0;
+	const { cache } = mac;
+	cache.next_eq = cache.next_gt = cache.next_rparen = -1;
 	mac_push_window(mac, i, l.end, false, R_ROOT, 0, 0, 0, 0);
 	run_ts(mac);
 	l.pos = l.end;
+	// let go of the lexer and its text before pooling
+	mac.l = Lexer.shape_anchor;
+	ts_machines.push(mac);
 };
 
 /**

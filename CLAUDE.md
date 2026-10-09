@@ -206,7 +206,9 @@ the styler:
 - `validate_syntax_events(lexed)` - structural invariants as a list of issues,
   empty when valid (used by the pathological suite)
 - `token_type(name, alias?)` / `TokenTypeRegistry` / `token_types_global` -
-  interning; `words_map(...entries)` - keyword tables
+  interning; `words_map(...entries)` - keyword tables; `WordIndex` - finds
+  which word of a set a text span spells without slicing it, so classifying
+  identifiers allocates nothing
 - `Lexer` - the lex context: `text`/`pos`/`end`, the `leaf`/`open`/`close`
   emitters, and `embed(lang_id, start, end)`
 - scanning helpers - `is_space`, `is_digit`, `is_upper`, `is_ascii_alnum`,

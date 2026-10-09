@@ -94,6 +94,59 @@ export const token_type = (name: string, alias?: string | Array<string>): number
 	token_types_global.intern(name, alias);
 
 /**
+ * A fixed set of ASCII words that a span of text is looked up in without
+ * slicing it out. A lexer classifying every identifier through
+ * `map.get(text.slice(start, end))` allocates and hashes a string per
+ * identifier; `find` compares char codes against the few words of the span's
+ * length and first char, and returns the set's own string, so the usual `Map`
+ * and `Set` lookups run on an interned key.
+ */
+export class WordIndex {
+	// candidates by `length * 128 + first char code`
+
+	readonly #buckets: Array<Array<string> | undefined>;
+	readonly #max_len: number;
+
+	/**
+	 * @param words - the set; each must be non-empty ASCII
+	 */
+	constructor(words: Iterable<string>) {
+		let max_len = 0;
+		const list = [...new Set(words)];
+		for (const w of list) {
+			if (w === '') throw Error('empty word');
+			for (let i = 0; i < w.length; i++) {
+				if (w.charCodeAt(i) > 127) throw Error(`not an ASCII word: ${w}`);
+			}
+			if (w.length > max_len) max_len = w.length;
+		}
+		this.#max_len = max_len;
+		this.#buckets = Array.from({ length: (max_len + 1) * 128 }, () => undefined);
+		for (const w of list) (this.#buckets[w.length * 128 + w.charCodeAt(0)] ??= []).push(w);
+	}
+
+	/**
+	 * Returns the word `text[start, end)` spells, or `undefined` when it is none
+	 * of the set's.
+	 */
+	find(text: string, start: number, end: number): string | undefined {
+		const len = end - start;
+		if (len > this.#max_len) return undefined;
+		const c0 = text.charCodeAt(start);
+		if (c0 > 127) return undefined;
+		const bucket = this.#buckets[len * 128 + c0];
+		if (bucket === undefined) return undefined;
+		for (let b = 0; b < bucket.length; b++) {
+			const w = bucket[b]!;
+			let k = 1;
+			while (k < len && w.charCodeAt(k) === text.charCodeAt(start + k)) k++;
+			if (k === len) return w;
+		}
+		return undefined;
+	}
+}
+
+/**
  * Builds a word→kind classification map from `[kind, words]` entries, where
  * `words` is space-separated — the shared shape of the lexers' keyword tables.
  */

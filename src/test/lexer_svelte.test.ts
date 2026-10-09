@@ -13,6 +13,23 @@ const tokens_of = (text: string): Array<[string, string]> =>
 const picked = (text: string, types: Array<string>): Array<[string, string]> =>
 	tokens_of(text).filter(([type]) => types.includes(type));
 
+describe('lexer_svelte embedded regions', () => {
+	test('lexing again through pooled machines gives the same events', () => {
+		const text =
+			'<script lang="ts">let n = 0x_ff;</script>\n' +
+			'{#each items as item, i (item.id)}<p class:on={i > 1}>{item.name ?? `x${i}`}</p>{/each}\n' +
+			'<style>p { color: red; }</style>';
+		const first = tokens_of(text);
+		syntax_styler_global.lex('{a}{b}{c}', 'svelte');
+		syntax_styler_global.lex(
+			'```ts\nlet x = 1;\n```\n```sh\necho $HOME <<EOF_LONG_DELIMITER\nx\nEOF_LONG_DELIMITER\n```',
+			'md'
+		);
+		assert.deepEqual(tokens_of(text), first);
+		assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'svelte')), []);
+	});
+});
+
 describe('lexer_svelte expressions', () => {
 	test('a plain expression', () => {
 		assert.deepEqual(tokens_of('{x}'), [

@@ -8,7 +8,8 @@ import {
 	skip_space,
 	token_type,
 	words_map,
-	type Lexer,
+	WordIndex,
+	Lexer,
 	type SyntaxLang
 } from './lexer.ts';
 
@@ -93,6 +94,8 @@ const WORDS: Map<string, number> = words_map(
 	],
 	[K_BOOLEAN, 'true false']
 );
+
+const WORD_INDEX = new WordIndex(WORDS.keys());
 
 // `$`-followed single-char special variables (`$@ $# $? $$ $! $* $-`); digits
 // are handled by the `$word` scan
@@ -761,8 +764,8 @@ const run_bash_window = (mac: BashMachine, frame: BashFrame): boolean => {
 				i = wend;
 				continue;
 			}
-			const word = text.slice(i, wend);
-			const kind = WORDS.get(word);
+			const word = WORD_INDEX.find(text, i, wend);
+			const kind = word === undefined ? undefined : WORDS.get(word);
 			if (kind === K_KEYWORD) {
 				l.leaf(T_KEYWORD, i, wend);
 				if (word === 'function') prev_function_kw = true;
@@ -985,11 +988,21 @@ const run_bash = (mac: BashMachine): void => {
 	}
 };
 
+// machines kept between calls, frames and all (see `lexer_ts.ts`)
+const bash_machines: Array<BashMachine> = [];
+
 const lex_bash = (l: Lexer): void => {
-	const mac: BashMachine = { l, stack: [], sp: 0 };
+	const mac = bash_machines.pop() ?? { l, stack: [], sp: 0 };
+	mac.l = l;
+	mac.sp = 0;
 	mac_push_window(mac, l.pos, l.end, R_ROOT, 0, 0, 0);
 	run_bash(mac);
 	l.pos = l.end;
+	// let go of the lexer and its text before pooling: a heredoc delimiter is a
+	// slice of the text, which a long one keeps alive
+	mac.l = Lexer.shape_anchor;
+	for (const frame of mac.stack) frame.hd_delim = '';
+	bash_machines.push(mac);
 };
 
 /**
