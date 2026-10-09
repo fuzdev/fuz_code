@@ -145,6 +145,7 @@
 	--palette_chroma_max: 0.106;
 	--palette_chroma_min: 0.0132;
 	--palette_d_10: oklch(var(--palette_lightness_10) calc(var(--palette_chroma_10) * var(--chroma_scale, 1) * var(--palette_d_chroma_scale, 1)) var(--hue_d));
+	--palette_d_50: oklch(var(--palette_lightness_50) calc(var(--palette_chroma_50) * var(--chroma_scale, 1) * var(--palette_d_chroma_scale, 1)) var(--hue_d));
 	--palette_d_60: oklch(var(--palette_lightness_60) calc(var(--palette_chroma_60) * var(--chroma_scale, 1) * var(--palette_d_chroma_scale, 1)) var(--hue_d));
 	--palette_d_chroma_scale: 1;
 	--palette_e_10: oklch(var(--palette_lightness_10) calc(var(--palette_chroma_10) * var(--chroma_scale, 1) * var(--palette_e_chroma_scale, 1)) var(--hue_e));
@@ -152,6 +153,7 @@
 	--palette_e_60: oklch(var(--palette_lightness_60) calc(var(--palette_chroma_60) * var(--chroma_scale, 1) * var(--palette_e_chroma_scale, 1)) var(--hue_e));
 	--palette_e_chroma_scale: 1;
 	--palette_f_10: oklch(var(--palette_lightness_10) calc(var(--palette_chroma_10) * var(--chroma_scale, 1) * var(--palette_f_chroma_scale, 1)) var(--hue_f));
+	--palette_f_50: oklch(var(--palette_lightness_50) calc(var(--palette_chroma_50) * var(--chroma_scale, 1) * var(--palette_f_chroma_scale, 1)) var(--hue_f));
 	--palette_f_60: oklch(var(--palette_lightness_60) calc(var(--palette_chroma_60) * var(--chroma_scale, 1) * var(--palette_f_chroma_scale, 1)) var(--hue_f));
 	--palette_f_chroma_scale: 0.55;
 	--palette_g_10: oklch(var(--palette_lightness_10) calc(var(--palette_chroma_10) * var(--chroma_scale, 1) * var(--palette_g_chroma_scale, 1)) var(--hue_g));
@@ -163,6 +165,7 @@
 	--palette_h_60: oklch(var(--palette_lightness_60) calc(var(--palette_chroma_60) * var(--chroma_scale, 1) * var(--palette_h_chroma_scale, 1)) var(--hue_h));
 	--palette_h_chroma_scale: 1;
 	--palette_i_10: oklch(var(--palette_lightness_10) calc(var(--palette_chroma_10) * var(--chroma_scale, 1) * var(--palette_i_chroma_scale, 1)) var(--hue_i));
+	--palette_i_50: oklch(var(--palette_lightness_50) calc(var(--palette_chroma_50) * var(--chroma_scale, 1) * var(--palette_i_chroma_scale, 1)) var(--hue_i));
 	--palette_i_60: oklch(var(--palette_lightness_60) calc(var(--palette_chroma_60) * var(--chroma_scale, 1) * var(--palette_i_chroma_scale, 1)) var(--hue_i));
 	--palette_i_chroma_scale: 1;
 	--palette_j_10: oklch(var(--palette_lightness_10) calc(var(--palette_chroma_10) * var(--chroma_scale, 1) * var(--palette_j_chroma_scale, 1)) var(--hue_j));
@@ -337,7 +340,7 @@
 	}
 
 body {
-		min-height: 100vh;
+		min-height: 100svh; /* the small viewport, so the floor never scrolls a short page under a mobile toolbar */
 		font-size: var(--font_size_md, 1.6rem); /* rem against `font-size: 62.5%`; the token follows `--font_size_scale` */
 		font-family: var(--font_family);
 		font-weight: var(--font_weight);
@@ -558,7 +561,7 @@ body {
 		font-size: var(--font_size_lg);
 	}
 
-:where(input, textarea, select) {
+:where(button, input, textarea, select) {
 		font: inherit;
 	}
 
@@ -793,7 +796,6 @@ body {
 		flex-wrap: wrap;
 		align-items: center;
 		justify-content: center;
-		font: inherit;
 		font-size: var(--font_size, inherit);
 		font-weight: 700;
 		line-height: normal;
@@ -1149,7 +1151,7 @@ These are used as modifiers to buttons.
 			}
 .chip {
 				font-weight: 500;
-				font-size: var(--font_size, inherit);
+				font-size: var(--font_size, revert-layer); /* without a size context, the element's base size wins */
 				padding-left: var(--chip_padding_x, var(--space_xs));
 				padding-right: var(--chip_padding_x, var(--space_xs));
 				background-color: var(--fg_10);
@@ -1210,6 +1212,7 @@ These are used as modifiers to buttons.
 			}
 .font_family_mono { font-family: var(--font_family_mono); }
 .font_size_sm { font-size: var(--font_size_sm); --font_size: var(--font_size_sm); }
+.text_70 { color: var(--text_70); --text_color: var(--text_70); }
 .color_c_50 { color: var(--palette_c_50); --text_color: var(--palette_c_50); }
 .color_e_50 { color: var(--palette_e_50); --text_color: var(--palette_e_50); }
 .positive_60 { color: var(--positive_60); --text_color: var(--positive_60); }
