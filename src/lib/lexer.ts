@@ -102,8 +102,8 @@ export const token_type = (name: string, alias?: string | Array<string>): number
  * and `Set` lookups run on an interned key.
  */
 export class WordIndex {
-	// candidates by `length * 128 + first char code`
-
+	// candidates by `(first char code + length * 64) & 255`, which spreads a lexer's
+	// keywords over the slots; a bucket is checked by length then chars
 	readonly #buckets: Array<Array<string> | undefined>;
 	readonly #max_len: number;
 
@@ -121,8 +121,10 @@ export class WordIndex {
 			if (w.length > max_len) max_len = w.length;
 		}
 		this.#max_len = max_len;
-		this.#buckets = Array.from({ length: (max_len + 1) * 128 }, () => undefined);
-		for (const w of list) (this.#buckets[w.length * 128 + w.charCodeAt(0)] ??= []).push(w);
+		const buckets: Array<Array<string> | undefined> = Array.from({ length: 256 }, () => undefined);
+		for (const w of list) (buckets[(w.charCodeAt(0) + w.length * 64) & 255] ??= []).push(w);
+		// a pushed array keeps spare capacity; copies are exact-size
+		this.#buckets = buckets.map((bucket) => bucket?.slice());
 	}
 
 	/**
@@ -134,10 +136,11 @@ export class WordIndex {
 		if (len > this.#max_len) return undefined;
 		const c0 = text.charCodeAt(start);
 		if (c0 > 127) return undefined;
-		const bucket = this.#buckets[len * 128 + c0];
+		const bucket = this.#buckets[(c0 + len * 64) & 255];
 		if (bucket === undefined) return undefined;
 		for (let b = 0; b < bucket.length; b++) {
 			const w = bucket[b]!;
+			if (w.length !== len) continue;
 			let k = 1;
 			while (k < len && w.charCodeAt(k) === text.charCodeAt(start + k)) k++;
 			if (k === len) return w;
