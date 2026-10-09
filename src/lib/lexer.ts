@@ -175,6 +175,20 @@ export class Lexer {
 	// current embed nesting, guarded by MAX_EMBED_DEPTH
 	#embed_depth = 0;
 
+	/**
+	 * One instance alive for the class's lifetime. V8 holds the hidden class of
+	 * an initialized `Lexer` only through live instances, and `lex_syntax` makes
+	 * one per call, so without it a major GC between calls clears the class and
+	 * discards every optimized lexer function that embeds it. Every field is
+	 * declared here, so this instance's hidden class is the one every lexer has.
+	 * A static rather than a module variable: V8 frees a module variable that no
+	 * function reads once the module has evaluated, and bundlers drop an unused
+	 * export.
+	 *
+	 * @internal
+	 */
+	static readonly shape_anchor: Lexer = new Lexer();
+
 	constructor(capacity = 256) {
 		this.events = new Int32Array(capacity < 256 ? 256 : capacity);
 	}
@@ -558,15 +572,26 @@ export const skip_quoted = (text: string, from: number, end: number, quote: numb
 };
 
 /**
+ * What `advance_probe` returns when the text has no further occurrence: past
+ * the end of any string, since V8 caps string length below it. It is a small
+ * integer rather than `Infinity` so probe-cache fields, which start at `-1`,
+ * never change representation: a double stored there gives the cache a hidden
+ * class that only live caches hold, so a major GC between `lex` calls would
+ * discard every optimized lexer function that embeds it.
+ */
+export const PROBE_NOT_FOUND = 0x3fffffff;
+
+/**
  * Returns the cached next occurrence of `ch` at or after `from`, re-probing
- * with `indexOf` only when the cached position has fallen behind. `Infinity`
- * when the text has no further occurrence — a monotonic probe that keeps
- * delimiter scans linear across a construct that is dense in `ch`.
+ * with `indexOf` only when the cached position has fallen behind.
+ * `PROBE_NOT_FOUND` when the text has no further occurrence — a monotonic
+ * probe that keeps delimiter scans linear across a construct that is dense in
+ * `ch`.
  */
 export const advance_probe = (text: string, cached: number, from: number, ch: string): number => {
 	if (cached >= from) return cached;
 	const found = text.indexOf(ch, from);
-	return found === -1 ? Infinity : found;
+	return found === -1 ? PROBE_NOT_FOUND : found;
 };
 
 /**

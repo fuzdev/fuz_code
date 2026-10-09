@@ -182,8 +182,8 @@ const lex_md_emphasis = (
  * uncached (or cached only per line), a `[x](`-per-line document pays a full
  * forward `indexOf` per line, O(n²) across the document. The caches advance
  * forward through the block and inline scans (which visit positions in
- * increasing order), so total probe work is O(n). `Infinity` means the char
- * has no further occurrence.
+ * increasing order), so total probe work is O(n). `PROBE_NOT_FOUND` means the
+ * char has no further occurrence.
  */
 interface MdScanCache {
 	rbracket: number;

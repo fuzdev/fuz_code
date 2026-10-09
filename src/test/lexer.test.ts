@@ -4,6 +4,7 @@ import {
 	advance_probe,
 	Lexer,
 	lex_syntax,
+	PROBE_NOT_FOUND,
 	render_syntax_html,
 	syntax_events_to_tokens,
 	token_type,
@@ -121,9 +122,18 @@ describe('advance_probe', () => {
 		assert.strictEqual(advance_probe('a&b&c', 1, 2, '&'), 3);
 	});
 
-	test('no further occurrence is Infinity, and Infinity persists', () => {
-		assert.strictEqual(advance_probe('abc', -1, 0, '&'), Infinity);
-		assert.strictEqual(advance_probe('abc', Infinity, 2, '&'), Infinity);
+	test('no further occurrence is PROBE_NOT_FOUND, and it persists', () => {
+		assert.strictEqual(advance_probe('abc', -1, 0, '&'), PROBE_NOT_FOUND);
+		assert.strictEqual(advance_probe('abc', PROBE_NOT_FOUND, 2, '&'), PROBE_NOT_FOUND);
+	});
+
+	test('PROBE_NOT_FOUND is a small integer past any string index', () => {
+		// a double would change the probe caches' field representation
+		assert.ok(Number.isInteger(PROBE_NOT_FOUND));
+		// within a Smi under pointer compression, the narrower case
+		assert.ok(PROBE_NOT_FOUND <= 2 ** 30 - 1);
+		// past V8's 64-bit string length cap, `2 ** 29 - 24`
+		assert.ok(PROBE_NOT_FOUND > 2 ** 29 - 24);
 	});
 });
 
