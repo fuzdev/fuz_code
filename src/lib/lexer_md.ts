@@ -231,6 +231,10 @@ const lex_md_link = (l: Lexer, i: number, line_end: number, cache: MdScanCache):
  * containers, so container nesting stays valid). Returns the final position,
  * which exceeds `to` only when a paragraph construct spanned lines.
  */
+// the chars that start an inline construct: < & ` * _ ~ [
+const MD_INLINE_START = new Uint8Array(128);
+for (const c of '<&`*_~[') MD_INLINE_START[c.charCodeAt(0)] = 1;
+
 const lex_md_inline = (
 	l: Lexer,
 	from: number,
@@ -243,6 +247,10 @@ const lex_md_inline = (
 	let line_end = to;
 	while (i < line_end) {
 		const c = text.charCodeAt(i);
+		if (c > 127 || MD_INLINE_START[c] === 0) {
+			i++;
+			continue;
+		}
 		if (c === 60) {
 			// < — raw markup construct
 			i = lex_markup_construct(l, i, construct_end, MARKUP_MODE_HTML, cache.markup);

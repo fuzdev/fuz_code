@@ -88,12 +88,20 @@ const scan_css_comment = (text: string, i: number, end: number): number => {
  * comments, and balanced `()`/`[]`. Returns its index, or `end` when none is
  * found. This is the selector-vs-declaration discriminator.
  */
+// the chars `scan_to_terminator` acts on: " ' / ( ) [ ] { ; }
+const TERMINATOR_SCAN = new Uint8Array(128);
+for (const c of `"'/()[]{;}`) TERMINATOR_SCAN[c.charCodeAt(0)] = 1;
+
 const scan_to_terminator = (text: string, i: number, end: number): number => {
 	let paren = 0;
 	let bracket = 0;
 	let j = i;
 	while (j < end) {
 		const c = text.charCodeAt(j);
+		if (c > 127 || TERMINATOR_SCAN[c] === 0) {
+			j++;
+			continue;
+		}
 		if (c === 34 || c === 39) {
 			j = skip_quoted(text, j, end, c);
 		} else if (c === 47 && text.charCodeAt(j + 1) === 42) {

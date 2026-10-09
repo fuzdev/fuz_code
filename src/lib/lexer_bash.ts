@@ -659,6 +659,13 @@ const run_bash_window = (mac: BashMachine, frame: BashFrame): boolean => {
 		const fn = prev_function_kw;
 		prev_function_kw = false;
 
+		// a backslash outside quotes makes the next char literal (`\``, `\'`, `\"`,
+		// `\$`, `\#`), and before a newline continues the line
+		if (c === 92) {
+			i += 2;
+			continue;
+		}
+
 		// shebang / comments
 		if (c === 35) {
 			if (i === 0 && text.charCodeAt(1) === 33) {
