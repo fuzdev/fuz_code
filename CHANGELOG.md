@@ -1,5 +1,12 @@
 # @fuzdev/fuz_code
 
+## 0.52.1
+
+### Patch Changes
+
+- fix: the shell lexer treats a backslash outside quotes as an escape, so ` \``,  `\'`, and `\"` no longer open a substitution or string that runs on through later lines; perf: the markdown inline scan and the CSS statement scan skip plain chars through a lookup table ([4d72632](https://github.com/fuzdev/fuz_code/commit/4d72632))
+- perf: `WordIndex` keeps a 256-slot table with exact-size buckets, cutting each lexer's retained memory by about 15KB ([9c9a3a5](https://github.com/fuzdev/fuz_code/commit/9c9a3a5))
+
 ## 0.52.0
 
 ### Minor Changes
