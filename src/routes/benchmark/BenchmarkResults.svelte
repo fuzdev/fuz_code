@@ -12,9 +12,9 @@
 		summary = null,
 		warnings = []
 	}: {
-		results: Array<BenchmarkResult>;
-		summary: Record<ImplementationName, SummaryStats> | null;
-		warnings: Array<string>;
+		results?: Array<BenchmarkResult>;
+		summary?: Record<ImplementationName, SummaryStats> | null;
+		warnings?: Array<string>;
 	} = $props();
 </script>
 

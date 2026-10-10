@@ -1,15 +1,15 @@
 import { describe, test, assert } from 'vitest';
 import { readFileSync } from 'node:fs';
 
-import { syntax_styler_global } from '$lib/syntax_styler_global.ts';
-import { SyntaxStyler } from '$lib/syntax_styler.ts';
-import { lexer_ts } from '$lib/lexer_ts.ts';
+import { syntax_styler_global } from '#lib/syntax_styler_global.ts';
+import { SyntaxStyler } from '#lib/syntax_styler.ts';
+import { lexer_ts } from '#lib/lexer_ts.ts';
 import {
 	syntax_events_to_tokens,
 	token_type,
 	validate_syntax_events,
 	type SyntaxLang
-} from '$lib/lexer.ts';
+} from '#lib/lexer.ts';
 
 /**
  * Lexes `text` as ts and returns `[type, text]` pairs.

@@ -1,7 +1,7 @@
 import { test, assert, describe } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { discover_samples, process_sample, get_fixture_path } from './helpers.ts';
-import { sample_langs } from '$lib/code_sample.ts';
+import { sample_langs } from '#lib/code_sample.ts';
 
 /**
  * Verifies runtime lexer output against the generated fixtures: HTML

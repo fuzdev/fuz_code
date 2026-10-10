@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { fs_search } from '@fuzdev/fuz_util/fs.ts';
 import { basename, join, relative } from 'node:path';
-import { syntax_styler_global } from '$lib/syntax_styler_global.ts';
-import { syntax_events_to_tokens } from '$lib/lexer.ts';
+import { syntax_styler_global } from '#lib/syntax_styler_global.ts';
+import { syntax_events_to_tokens } from '#lib/lexer.ts';
 
 export interface SampleSpec {
 	lang: string;

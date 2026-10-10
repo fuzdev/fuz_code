@@ -53,12 +53,19 @@ export interface PreprocessFuzCodeOptions {
  *
  * @example
  * ```ts
- * // svelte.config.js
+ * // vite.config.ts
+ * import {defineConfig} from 'vite';
+ * import {sveltekit} from '@sveltejs/kit/vite';
+ * import {vitePreprocess} from '@sveltejs/vite-plugin-svelte';
  * import {svelte_preprocess_fuz_code} from '@fuzdev/fuz_code/svelte_preprocess_fuz_code.ts';
  *
- * export default {
- *   preprocess: [svelte_preprocess_fuz_code(), vitePreprocess()],
- * };
+ * export default defineConfig({
+ *   plugins: [
+ *     sveltekit({
+ *       preprocess: [svelte_preprocess_fuz_code(), vitePreprocess()],
+ *     }),
+ *   ],
+ * });
  * ```
  */
 export const svelte_preprocess_fuz_code = (

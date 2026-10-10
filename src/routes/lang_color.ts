@@ -1,4 +1,4 @@
-import type { SampleLang } from '$lib/code_sample.ts';
+import type { SampleLang } from '#lib/code_sample.ts';
 
 /**
  * A `palette_*` utility class per demo language, chosen to evoke each language's

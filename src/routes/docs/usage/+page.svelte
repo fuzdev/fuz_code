@@ -7,8 +7,8 @@
 	import TomeSectionHeader from '@fuzdev/fuz_ui/TomeSectionHeader.svelte';
 	import { tome_get_by_slug } from '@fuzdev/fuz_ui/tome.ts';
 
-	import Code from '$lib/Code.svelte';
-	import { syntax_styler_global } from '$lib/syntax_styler_global.ts';
+	import Code from '#lib/Code.svelte';
+	import { syntax_styler_global } from '#lib/syntax_styler_global.ts';
 
 	const TOME_SLUG = 'usage';
 	const tome = tome_get_by_slug(TOME_SLUG);
@@ -67,15 +67,22 @@ import '@fuzdev/fuz_code/theme_variables.css';"
 		</p>
 		<Code
 			lang="ts"
-			content={`// svelte.config.js
+			content={`// vite.config.ts
+import {defineConfig} from 'vite';
+import {sveltekit} from '@sveltejs/kit/vite';
+import {vitePreprocess} from '@sveltejs/vite-plugin-svelte';
 import {svelte_preprocess_fuz_code} from '@fuzdev/fuz_code/svelte_preprocess_fuz_code.ts';
 
-export default {
-  preprocess: [
-    svelte_preprocess_fuz_code(),
-    vitePreprocess(),
+export default defineConfig({
+  plugins: [
+    sveltekit({
+      preprocess: [
+        svelte_preprocess_fuz_code(),
+        vitePreprocess(),
+      ],
+    }),
   ],
-};`}
+});`}
 		/>
 		<p>
 			A <code>content</code> that is statically known (a string, a module-level constant, or a

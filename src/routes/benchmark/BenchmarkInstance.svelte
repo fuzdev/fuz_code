@@ -10,8 +10,8 @@
 		on_commit = () => {},
 		on_paint = () => {}
 	}: {
-		BenchmarkedComponent: Component<BenchmarkComponentProps> | null;
-		props: BenchmarkComponentProps | null;
+		BenchmarkedComponent?: Component<BenchmarkComponentProps> | null;
+		props?: BenchmarkComponentProps | null;
 		/** Fires once the styling work is committed and laid out (work boundary). */
 		on_commit?: () => void;
 		/** Fires once the browser has settled pixels, ~1-2 frames later (paint boundary). */

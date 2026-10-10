@@ -1,6 +1,6 @@
 <script lang="ts">
 	// the Highlight API rules live in theme_highlight.css (not theme.css)
-	import '$lib/theme_highlight.css';
+	import '#lib/theme_highlight.css';
 
 	import { page } from '$app/state';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -10,11 +10,11 @@
 	import TomeLink from '@fuzdev/fuz_ui/TomeLink.svelte';
 	import DeclarationLink from '@fuzdev/fuz_ui/DeclarationLink.svelte';
 
-	import Code from '$lib/Code.svelte';
-	import CodeHighlight from '$lib/CodeHighlight.svelte';
-	import { sample_langs } from '$lib/code_sample.ts';
-	import { samples } from '$routes/samples/all.ts';
-	import { lang_colors } from '$routes/lang_color.ts';
+	import Code from '#lib/Code.svelte';
+	import CodeHighlight from '#lib/CodeHighlight.svelte';
+	import { sample_langs } from '#lib/code_sample.ts';
+	import { samples } from '#routes/samples/all.ts';
+	import { lang_colors } from '#routes/lang_color.ts';
 
 	const TOME_SLUG = 'samples';
 	const tome = tome_get_by_slug(TOME_SLUG);

@@ -15,7 +15,7 @@ import {
 	WordIndex,
 	type LexedSyntax,
 	type SyntaxLang
-} from '$lib/lexer.ts';
+} from '#lib/lexer.ts';
 
 const T_A = token_type('test_a');
 const T_B = token_type('test_b');

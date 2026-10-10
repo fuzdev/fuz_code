@@ -8,7 +8,7 @@
 	import { logo_fuz_code } from '@fuzdev/fuz_ui/logos.ts';
 	import { resolve } from '$app/paths';
 
-	import Code from '$lib/Code.svelte';
+	import Code from '#lib/Code.svelte';
 
 	const site = site_context.get();
 

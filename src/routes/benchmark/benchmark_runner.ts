@@ -10,7 +10,7 @@ import type {
 	BenchmarkHarnessController,
 	BenchmarkComponentProps
 } from './benchmark_types.ts';
-import type { CodeSample } from '$lib/code_sample.ts';
+import type { CodeSample } from '#lib/code_sample.ts';
 import { inter_test_cooldown } from './benchmark_dom.ts';
 import {
 	check_system_stability,
