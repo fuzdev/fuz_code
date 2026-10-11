@@ -114,8 +114,8 @@ See [`src/lib`](src/lib) for the full set of modules.
 
 Registered by default in `syntax_styler_global`:
 
-- [`markup`](src/lib/lexer_markup.ts) (`html`, `mathml`, `svg`)
-- [`xml`](src/lib/lexer_markup.ts) (`ssml`, `atom`, `rss`)
+- [`markup`](src/lib/lexer_markup.ts) (`html`, `svg`, `mathml`)
+- [`xml`](src/lib/lexer_markup.ts) (`rss`, `atom`, `ssml`)
 - [`svelte`](src/lib/lexer_svelte.ts)
 - [`md`](src/lib/lexer_md.ts) (`markdown`)
 - [`ts`](src/lib/lexer_ts.ts) (`typescript`, `js`, `javascript` — JS is a syntactic subset)
