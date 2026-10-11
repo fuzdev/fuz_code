@@ -22,20 +22,27 @@ set of languages, and a few Svelte components.
 
 Features:
 
-- a minimal, explicit API to generate stylized HTML — `stylize(code, lang)`
-- written in TypeScript; the lexers and styler import nothing outside the package
-- built-in languages listed below, extensible by writing a lexer
+- a small, explicit API — `stylize(code, lang)` returns HTML,
+  `lex(code, lang)` returns the flat token stream
+- two outputs: HTML with `.token_*` classes for any framework, or ranges for the
+  CSS Custom Highlight API ([experimental](#experimental-highlight-support))
+- the lexers and styler have no dependencies
+- lexers accept any input, including incomplete code mid-edit, and run in linear time
+- built-in languages [listed below](#languages), extensible by writing a lexer
 
-Two optional integrations:
+Optional integrations:
 
-- [Svelte](https://svelte.dev/) support with a
-  [Svelte lexer](src/lib/lexer_svelte.ts) and a
-  [Svelte component](src/lib/Code.svelte)
-- the [default theme](src/lib/theme.css) integrates with
-  [fuz_css](https://github.com/fuzdev/fuz_css) for colors that adapt to the
-  user's runtime `color-scheme` preference — without fuz_css, import
-  [theme_variables.css](src/lib/theme_variables.css) or otherwise define those
-  variables
+- [Svelte](https://svelte.dev/) support:
+  - a [Svelte lexer](src/lib/lexer_svelte.ts)
+  - Svelte components: [`Code`](src/lib/Code.svelte) renders HTML; the experimental
+    [`CodeHighlight`](src/lib/CodeHighlight.svelte) and
+    [`CodeTextarea`](src/lib/CodeTextarea.svelte) use the CSS Custom Highlight API
+  - a [build-time preprocessor](src/lib/svelte_preprocess_fuz_code.ts)
+    that pre-renders static `Code` content
+- the [default theme](src/lib/theme.css) uses
+  [fuz_css](https://github.com/fuzdev/fuz_css) variables for colors that adapt
+  to the user's `color-scheme` — without fuz_css, import
+  [theme_variables.css](src/lib/theme_variables.css)
 
 Compared to [Shiki](https://github.com/shikijs/shiki), fuz_code is
 [about two orders of magnitude faster](./benchmark/compare/results.md) for
@@ -99,6 +106,8 @@ import '@fuzdev/fuz_code/theme_variables.css';
   pre-configured instance with all built-in languages
 - [@fuzdev/fuz_code/syntax_styler.ts](src/lib/syntax_styler.ts) -
   the `SyntaxStyler` class (register your own lexers)
+- [@fuzdev/fuz_code/lexer.ts](src/lib/lexer.ts) -
+  the lexer substrate: `Lexer`, token types, scanning helpers, HTML rendering
 - [@fuzdev/fuz_code/theme.css](src/lib/theme.css) -
   default theme that depends on [fuz_css](https://github.com/fuzdev/fuz_css)
 - [@fuzdev/fuz_code/theme_variables.css](src/lib/theme_variables.css) -
