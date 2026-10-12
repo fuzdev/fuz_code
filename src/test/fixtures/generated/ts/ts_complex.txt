@@ -1,32 +1,32 @@
 === STATS ===
 Sample length: 2883 characters
-Total tokens: 577
+Total tokens: 628
 
 Token types (28 unique):
   punctuation: 195
-  operator: 90
+  operator: 66
   keyword: 56
   special_keyword: 48
   builtin: 34
+  type_annotation: 28
+  :: 28
+  type: 28
   function: 26
   string: 25
   number: 14
   class_name: 11
   comment: 11
-  capitalized_identifier: 10
   interpolation_punctuation: 8
+  type_name: 8
   template_punctuation: 6
+  capitalized_identifier: 5
   boolean: 4
   interpolation: 4
   regex_delimiter: 4
-  type_annotation: 3
-  :: 3
-  type: 3
   decorator: 3
   at: 3
   template_string: 3
   type_assertion: 3
-  type_name: 3
   function_variable: 2
   regex: 2
   regex_source: 2
@@ -61,7 +61,9 @@ Token types (28 unique):
   92-93    punctuation               ;
   95-102   keyword                   declare
  103-108   keyword                   const
- 123-124   operator                  :
+ 123-128   type_annotation           : any
+ 123-124   :                         :
+ 125-128   type                      any
  125-128   builtin                   any
  128-129   punctuation               ;
  131-139   keyword                   abstract
@@ -71,7 +73,9 @@ Token types (28 unique):
  154-162   keyword                   abstract
  163-178   function                  abstract_method
  178-180   punctuation               ()
- 180-181   operator                  :
+ 180-186   type_annotation           : void
+ 180-181   :                         :
+ 182-186   type                      void
  182-186   keyword                   void
  186-187   punctuation               ;
  188-189   punctuation               }
@@ -92,7 +96,9 @@ Token types (28 unique):
  284-285   operator                  =
  286-289   string                    'd'
  289-290   punctuation               ;
- 294-295   operator                  :
+ 294-302   type_annotation           : number
+ 294-295   :                         :
+ 296-302   type                      number
  296-302   builtin                   number
  302-303   punctuation               ;
  308-309   operator                  =
@@ -108,7 +114,9 @@ Token types (28 unique):
  359-360   punctuation               ;
  363-374   function                  constructor
  374-375   punctuation               (
- 377-378   operator                  :
+ 377-385   type_annotation           : number
+ 377-378   :                         :
+ 379-385   type                      number
  379-385   builtin                   number
  385-386   punctuation               )
  387-388   punctuation               {
@@ -121,7 +129,9 @@ Token types (28 unique):
  417-418   punctuation               }
  421-436   function                  abstract_method
  436-438   punctuation               ()
- 438-439   operator                  :
+ 438-444   type_annotation           : void
+ 438-439   :                         :
+ 440-444   type                      void
  440-444   keyword                   void
  445-446   punctuation               {
  449-466   comment                   // implementation
@@ -138,7 +148,9 @@ Token types (28 unique):
  512-514   punctuation               })
  516-528   function                  class_method
  528-530   punctuation               ()
- 530-531   operator                  :
+ 530-538   type_annotation           : string
+ 530-531   :                         :
+ 532-538   type                      string
  532-538   builtin                   string
  539-540   punctuation               {
  543-549   special_keyword           return
@@ -156,7 +168,9 @@ Token types (28 unique):
  576-591   function_variable         instance_method
  592-593   operator                  =
  594-596   punctuation               ()
- 596-597   operator                  :
+ 596-602   type_annotation           : void
+ 596-597   :                         :
+ 598-602   type                      void
  598-602   keyword                   void
  603-605   operator                  =>
  606-607   punctuation               {
@@ -244,7 +258,9 @@ Token types (28 unique):
  961-963   punctuation               );
  966-967   punctuation               }
  971-976   keyword                   const
- 980-981   operator                  :
+ 980-1015  type_annotation           : {has_d1?: boolean; is_d: boolean}
+ 980-981   :                         :
+ 982-1015  type                      {has_d1?: boolean; is_d: boolean}
  982-983   punctuation               {
  989-991   operator                  ?:
  992-999   builtin                   boolean
@@ -272,13 +288,19 @@ Token types (28 unique):
 1109-1111  punctuation               };
 1114-1129  function                  #private_method
 1129-1130  punctuation               (
-1132-1133  operator                  :
+1132-1140  type_annotation           : number
+1132-1133  :                         :
+1134-1140  type                      number
 1134-1140  builtin                   number
 1140-1141  punctuation               ,
-1144-1145  operator                  :
+1144-1149  type_annotation           : any
+1144-1145  :                         :
+1146-1149  type                      any
 1146-1149  builtin                   any
 1149-1150  punctuation               )
-1150-1151  operator                  :
+1150-1156  type_annotation           : void
+1150-1151  :                         :
+1152-1156  type                      void
 1152-1156  keyword                   void
 1157-1158  punctuation               {
 1161-1166  special_keyword           throw
@@ -304,12 +326,14 @@ Token types (28 unique):
 1231-1232  operator                  *
 1232-1241  function                  generator
 1241-1243  punctuation               ()
-1243-1244  operator                  :
-1245-1254  capitalized_identifier    Generator
+1243-1278  type_annotation           : Generator<number | Array<number>>
+1243-1244  :                         :
+1245-1278  type                      Generator<number | Array<number>>
+1245-1254  type_name                 Generator
 1254-1255  operator                  <
 1255-1261  builtin                   number
 1262-1263  operator                  |
-1264-1269  capitalized_identifier    Array
+1264-1269  type_name                 Array
 1269-1270  operator                  <
 1270-1276  builtin                   number
 1276-1278  operator                  >>
@@ -329,8 +353,10 @@ Token types (28 unique):
 1320-1321  operator                  *
 1321-1336  function                  async_generator
 1336-1338  punctuation               ()
-1338-1339  operator                  :
-1340-1354  capitalized_identifier    AsyncGenerator
+1338-1362  type_annotation           : AsyncGenerator<number>
+1338-1339  :                         :
+1340-1362  type                      AsyncGenerator<number>
+1340-1354  type_name                 AsyncGenerator
 1354-1355  operator                  <
 1355-1361  builtin                   number
 1361-1362  operator                  >
@@ -348,8 +374,10 @@ Token types (28 unique):
 1414-1419  keyword                   async
 1420-1436  function                  protected_method
 1436-1438  punctuation               ()
-1438-1439  operator                  :
-1440-1447  capitalized_identifier    Promise
+1438-1453  type_annotation           : Promise<void>
+1438-1439  :                         :
+1440-1453  type                      Promise<void>
+1440-1447  type_name                 Promise
 1447-1448  operator                  <
 1448-1452  keyword                   void
 1452-1453  operator                  >
@@ -415,7 +443,9 @@ Token types (28 unique):
 1707-1708  punctuation               }
 1709-1714  special_keyword           catch
 1715-1716  punctuation               (
-1721-1722  operator                  :
+1721-1730  type_annotation           : unknown
+1721-1722  :                         :
+1723-1730  type                      unknown
 1723-1730  builtin                   unknown
 1730-1731  punctuation               )
 1732-1733  punctuation               {
@@ -480,18 +510,27 @@ Token types (28 unique):
 2122-2126  keyword                   null
 2126-2127  operator                  >
 2128-2129  punctuation               {
-2135-2136  operator                  :
+2135-2143  type_annotation           : string
+2135-2136  :                         :
+2137-2143  type                      string
 2137-2143  builtin                   string
 2143-2144  punctuation               ;
-2149-2150  operator                  :
+2149-2157  type_annotation           : number
+2149-2150  :                         :
+2151-2157  type                      number
 2151-2157  builtin                   number
 2157-2158  punctuation               ;
-2161-2163  operator                  ?:
-2164-2165  capitalized_identifier    T
+2161-2162  operator                  ?
+2162-2165  type_annotation           : T
+2162-2163  :                         :
+2164-2165  type                      T
+2164-2165  type_name                 T
 2165-2166  punctuation               ;
 2167-2168  punctuation               }
 2170-2175  keyword                   const
-2177-2178  operator                  :
+2177-2206  type_annotation           : {name: string; age: number}
+2177-2178  :                         :
+2179-2206  type                      {name: string; age: number}
 2179-2180  punctuation               {
 2184-2185  operator                  :
 2186-2192  builtin                   string
@@ -536,13 +575,19 @@ Token types (28 unique):
 2328-2336  keyword                   function
 2337-2340  function                  add
 2340-2341  punctuation               (
-2342-2343  operator                  :
+2342-2350  type_annotation           : number
+2342-2343  :                         :
+2344-2350  type                      number
 2344-2350  builtin                   number
 2350-2351  punctuation               ,
-2353-2354  operator                  :
+2353-2361  type_annotation           : number
+2353-2354  :                         :
+2355-2361  type                      number
 2355-2361  builtin                   number
 2361-2362  punctuation               )
-2362-2363  operator                  :
+2362-2370  type_annotation           : number
+2362-2363  :                         :
+2364-2370  type                      number
 2364-2370  builtin                   number
 2371-2372  punctuation               {
 2374-2380  special_keyword           return
@@ -554,13 +599,19 @@ Token types (28 unique):
 2404-2408  function_variable         plus
 2409-2410  operator                  =
 2411-2412  punctuation               (
-2413-2414  operator                  :
+2413-2418  type_annotation           : any
+2413-2414  :                         :
+2415-2418  type                      any
 2415-2418  builtin                   any
 2418-2419  punctuation               ,
-2421-2422  operator                  :
+2421-2426  type_annotation           : any
+2421-2422  :                         :
+2423-2426  type                      any
 2423-2426  builtin                   any
 2426-2427  punctuation               )
-2427-2428  operator                  :
+2427-2432  type_annotation           : any
+2427-2428  :                         :
+2429-2432  type                      any
 2429-2432  builtin                   any
 2433-2435  operator                  =>
 2438-2439  operator                  +

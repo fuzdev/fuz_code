@@ -48,7 +48,7 @@ This is a <span class="token_link"><span class="token_link_text_wrapper"><span c
 <span class="token_heading"><span class="token_punctuation token_heading_punctuation">###</span> TypeScript</span>
 
 <span class="token_fenced_code"><span class="token_code_fence token_punctuation">```ts</span><span class="token_lang_ts">
-<span class="token_keyword">function</span> <span class="token_function">add</span><span class="token_punctuation">(</span>a<span class="token_operator">:</span> <span class="token_builtin">number</span><span class="token_punctuation">,</span> b<span class="token_operator">:</span> <span class="token_builtin">number</span><span class="token_punctuation">)</span><span class="token_operator">:</span> <span class="token_builtin">number</span> <span class="token_punctuation">{</span>
+<span class="token_keyword">function</span> <span class="token_function">add</span><span class="token_punctuation">(</span>a<span class="token_type_annotation"><span class="token_:">:</span> <span class="token_type"><span class="token_builtin">number</span></span></span><span class="token_punctuation">,</span> b<span class="token_type_annotation"><span class="token_:">:</span> <span class="token_type"><span class="token_builtin">number</span></span></span><span class="token_punctuation">)</span><span class="token_type_annotation"><span class="token_:">:</span> <span class="token_type"><span class="token_builtin">number</span></span></span> <span class="token_punctuation">{</span>
 	<span class="token_special_keyword">return</span> a <span class="token_operator">+</span> b<span class="token_punctuation">;</span>
 <span class="token_punctuation">}</span>
 </span><span class="token_code_fence token_punctuation">```</span></span>
@@ -57,8 +57,8 @@ This is a <span class="token_link"><span class="token_link_text_wrapper"><span c
 
 <span class="token_fenced_code"><span class="token_code_fence token_punctuation">```typescript</span><span class="token_lang_ts">
 <span class="token_keyword">interface</span> <span class="token_class_name">User</span> <span class="token_punctuation">{</span>
-	name<span class="token_operator">:</span> <span class="token_builtin">string</span><span class="token_punctuation">;</span>
-	age<span class="token_operator">:</span> <span class="token_builtin">number</span><span class="token_punctuation">;</span>
+	name<span class="token_type_annotation"><span class="token_:">:</span> <span class="token_type"><span class="token_builtin">string</span></span></span><span class="token_punctuation">;</span>
+	age<span class="token_type_annotation"><span class="token_:">:</span> <span class="token_type"><span class="token_builtin">number</span></span></span><span class="token_punctuation">;</span>
 <span class="token_punctuation">}</span>
 
 <span class="token_keyword">const</span> user<span class="token_type_annotation"><span class="token_:">:</span> <span class="token_type"><span class="token_type_name token_class_name">User</span></span></span> <span class="token_operator">=</span> <span class="token_punctuation">{</span>name<span class="token_operator">:</span> <span class="token_string">'Alice'</span><span class="token_punctuation">,</span> age<span class="token_operator">:</span> <span class="token_number">30</span><span class="token_punctuation">};</span>

@@ -109,7 +109,10 @@ Lexers:
 
 - `lexer_json.ts` - JSON (with comments)
 - `lexer_ts.ts` - TypeScript, also serving `js` — TS is a syntactic superset,
-  so there's no separate JS lexer
+  so there's no separate JS lexer. A `:` is a type annotation or an operator
+  by the bracket level it is in (block, object literal, parens, class body)
+  and whether a ternary is pending; types lex in type mode and find their own
+  end
 - `lexer_css.ts` - CSS, including native nesting
 - `lexer_bash.ts` - bash-family shells (POSIX sh is a subset for styling; no
   fish etc.)
@@ -222,13 +225,17 @@ As registered in `syntax_styler_global`:
 1. **No regular expressions in lexers** - char-code scanning, native
    `indexOf`, keyword `Map` lookups; no `RegExp` anywhere (speed + Rust-twin
    discipline)
-2. **Never throw, always cover** - any input (mid-keystroke, malformed) yields
+2. **Correct before fast** - a lexer can keep state a regular-expression
+   grammar can't (bracket kinds, pending contexts), and classifying by it is
+   the reason to have one. Take a correctness gain that costs a few percent;
+   weigh it against speed only when it would make some input pathological
+3. **Never throw, always cover** - any input (mid-keystroke, malformed) yields
    a valid event stream; unterminated constructs extend to their natural
    boundary (damage propagates editor-style rather than being contained — a
    malformed interior may consume its construct's closing delimiter)
-3. **Progress discipline** - every scan loop advances position or
+4. **Progress discipline** - every scan loop advances position or
    emits+advances
-4. **Nesting discipline** - no JS-call-stack recursion that scales with input
+5. **Nesting discipline** - no JS-call-stack recursion that scales with input
    nesting. Flat single-pass loops wherever the grammar allows (css, markup,
    svelte, json, md, and rust need no stacks); an explicit pooled frame machine
    only where a construct's interior re-enters the same grammar (`lexer_ts.ts`
@@ -240,7 +247,7 @@ As registered in `syntax_styler_global`:
    real one, and it makes full-depth nesting quadratic. Cross-language
    interiors go through `Lexer.embed` or `Lexer.embed_to_brace`, which are
    depth-capped rather than framed.
-5. **Keep hidden classes alive and stable** - V8 embeds the hidden classes of
+6. **Keep hidden classes alive and stable** - V8 embeds the hidden classes of
    objects in optimized code and drops that code when a major GC clears one.
    An object made per `lex` call (`Lexer`, the probe caches) holds a class
    nothing else does, so: never store a double (`Infinity`, `NaN`, a fraction)
@@ -249,7 +256,7 @@ As registered in `syntax_styler_global`:
    with it the class — and give a new per-call class a static instance like
    `Lexer.shape_anchor` (a module variable doesn't work: V8 frees one no
    function reads, and bundlers drop an unused export)
-6. **Append few pieces, and flat ones** - `render_syntax_html` builds its
+7. **Append few pieces, and flat ones** - `render_syntax_html` builds its
    result with `+=`, which in V8 makes a rope that the first read copies into
    one string, at a cost per piece. A piece that is itself a rope costs
    several: a string precomputed with `+` and at least 13 chars long stays a
@@ -257,7 +264,7 @@ As registered in `syntax_styler_global`:
    pieces with `[…].join('')` (the open tags, `TokenTypeInfo.char_spans`), and
    slice clean text rather than scanning it. A benchmark that discards the
    result never pays for the copy, so read a character of it inside the clock
-7. **Follow patterns and fixtures** - use existing `lexer_*.ts` modules as
+8. **Follow patterns and fixtures** - use existing `lexer_*.ts` modules as
    templates; all changes must pass the fixture tests
 
 ### Adding a new language

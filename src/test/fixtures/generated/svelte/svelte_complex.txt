@@ -1,11 +1,11 @@
 === STATS ===
 Sample length: 2517 characters
-Total tokens: 680
+Total tokens: 696
 
-Token types (39 unique):
+Token types (40 unique):
   punctuation: 303
   tag: 78
-  operator: 40
+  operator: 32
   lang_ts: 28
   svelte_expression: 28
   function: 24
@@ -16,13 +16,17 @@ Token types (39 unique):
   string: 12
   comment: 10
   builtin: 10
-  capitalized_identifier: 8
+  type_annotation: 9
+  :: 9
+  type: 9
   property: 8
   block: 7
   selector: 7
   number: 6
   at_directive: 6
   at_keyword: 6
+  capitalized_identifier: 4
+  type_name: 4
   interpolation_punctuation: 4
   script: 3
   namespace: 3
@@ -35,9 +39,6 @@ Token types (39 unique):
   style: 2
   lang_css: 2
   import_type_keyword: 1
-  type_annotation: 1
-  :: 1
-  type: 1
   each: 1
   template_string: 1
   atrule: 1
@@ -102,10 +103,12 @@ Token types (39 unique):
  239-240   punctuation               ,
  250-251   punctuation               ,
  253-254   punctuation               }
- 254-255   operator                  :
+ 254-354   type_annotation           : {\n\t\tthing: Record<string, any>;\n\t\tbound?: boolean;\n\t\tchildren: Snippet;\n\t\tonclick?: () => void;\n\t}
+ 254-255   :                         :
+ 256-354   type                      {\n\t\tthing: Record<string, any>;\n\t\tbound?: boolean;\n\t\tchildren: Snippet;\n\t\tonclick?: () => void;\n\t}
  256-257   punctuation               {
  265-266   operator                  :
- 267-273   capitalized_identifier    Record
+ 267-273   type_name                 Record
  273-274   operator                  <
  274-280   builtin                   string
  280-281   punctuation               ,
@@ -116,7 +119,7 @@ Token types (39 unique):
  298-305   builtin                   boolean
  305-306   punctuation               ;
  317-318   operator                  :
- 319-326   capitalized_identifier    Snippet
+ 319-326   type_name                 Snippet
  326-327   punctuation               ;
  337-339   operator                  ?:
  340-342   punctuation               ()
@@ -161,10 +164,14 @@ Token types (39 unique):
  508-509   function_variable         f
  510-511   operator                  =
  512-513   punctuation               (
- 514-515   operator                  :
+ 514-519   type_annotation           : any
+ 514-515   :                         :
+ 516-519   type                      any
  516-519   builtin                   any
  519-520   punctuation               )
- 520-521   operator                  :
+ 520-525   type_annotation           : any
+ 520-521   :                         :
+ 522-525   type                      any
  522-525   builtin                   any
  526-528   operator                  =>
  530-531   punctuation               ;
@@ -172,18 +179,24 @@ Token types (39 unique):
  540-550   function_variable         attachment
  551-552   operator                  =
  553-554   punctuation               (
- 557-558   operator                  :
+ 557-565   type_annotation           : string
+ 557-558   :                         :
+ 559-565   type                      string
  559-565   builtin                   string
  565-566   punctuation               ,
- 570-571   operator                  :
+ 570-578   type_annotation           : number
+ 570-571   :                         :
+ 572-578   type                      number
  572-578   builtin                   number
  578-579   punctuation               )
  580-582   operator                  =>
  583-584   punctuation               {
  587-593   special_keyword           return
  594-595   punctuation               (
- 597-598   operator                  :
- 599-610   capitalized_identifier    HTMLElement
+ 597-610   type_annotation           : HTMLElement
+ 597-598   :                         :
+ 599-610   type                      HTMLElement
+ 599-610   type_name                 HTMLElement
  610-611   punctuation               )
  612-614   operator                  =>
  615-616   punctuation               {
@@ -199,8 +212,10 @@ Token types (39 unique):
  678-680   string                    ''
  680-683   punctuation               ]);
  685-688   keyword                   let
- 700-701   operator                  :
- 702-713   capitalized_identifier    HTMLElement
+ 700-713   type_annotation           : HTMLElement
+ 700-701   :                         :
+ 702-713   type                      HTMLElement
+ 702-713   type_name                 HTMLElement
  713-714   punctuation               ;
  715-724   tag                       </script>
  715-723   tag                       </script
@@ -485,7 +500,9 @@ Token types (39 unique):
 1550-1571  lang_ts                   my_snippet(p: string)
 1550-1560  function                  my_snippet
 1560-1561  punctuation               (
-1562-1563  operator                  :
+1562-1570  type_annotation           : string
+1562-1563  :                         :
+1564-1570  type                      string
 1564-1570  builtin                   string
 1570-1571  punctuation               )
 1571-1572  punctuation               }
