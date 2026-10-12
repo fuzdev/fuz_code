@@ -102,58 +102,73 @@ export const token_type = (name: string, alias?: string | Array<string>): number
 	token_types_global.intern(name, alias);
 
 /**
- * A fixed set of ASCII words that a span of text is looked up in without
- * slicing it out. A lexer classifying every identifier through
- * `map.get(text.slice(start, end))` allocates and hashes a string per
+ * A fixed table of ASCII words, each carrying an integer, that a span of text
+ * is looked up in without slicing it out. A lexer classifying every identifier
+ * through `map.get(text.slice(start, end))` allocates and hashes a string per
  * identifier; `find` compares char codes against the few words of the span's
- * length and first char, and returns the set's own string, so the usual `Map`
- * and `Set` lookups run on an interned key.
+ * length and first char and returns the matching word's integer, so the lexer
+ * branches on a number. The integer is the lexer's to define: a kind, or a
+ * kind with flag bits beside it.
  */
 export class WordIndex {
 	// candidates by `(first char code + length * 64) & 255`, which spreads a lexer's
 	// keywords over the slots; a bucket is checked by length then chars
 	readonly #buckets: Array<Array<string> | undefined>;
+	// the words' values, parallel to `#buckets`
+	readonly #values: Array<Array<number> | undefined>;
 	readonly #max_len: number;
 
 	/**
-	 * @param words - the set; each must be non-empty ASCII
+	 * @param words - `[word, value]` entries, as a `Map` from `words_map`
+	 * iterates. Each word must be non-empty ASCII and each value a non-zero
+	 * 32-bit integer; a repeated word keeps its last value.
 	 */
-	constructor(words: Iterable<string>) {
+	constructor(words: Iterable<readonly [word: string, value: number]>) {
 		let max_len = 0;
-		const list = [...new Set(words)];
-		for (const w of list) {
+		const map = new Map(words);
+		for (const [w, value] of map) {
 			if (w === '') throw Error('empty word');
 			for (let i = 0; i < w.length; i++) {
 				if (w.charCodeAt(i) > 127) throw Error(`not an ASCII word: ${w}`);
+			}
+			if (value === 0 || (value | 0) !== value) {
+				throw Error(`not a non-zero 32-bit integer for ${w}: ${value}`);
 			}
 			if (w.length > max_len) max_len = w.length;
 		}
 		this.#max_len = max_len;
 		const buckets: Array<Array<string> | undefined> = Array.from({ length: 256 }, () => undefined);
-		for (const w of list) (buckets[(w.charCodeAt(0) + w.length * 64) & 255] ??= []).push(w);
+		const values: Array<Array<number> | undefined> = Array.from({ length: 256 }, () => undefined);
+		for (const [w, value] of map) {
+			const slot = (w.charCodeAt(0) + w.length * 64) & 255;
+			(buckets[slot] ??= []).push(w);
+			(values[slot] ??= []).push(value);
+		}
 		// a pushed array keeps spare capacity; copies are exact-size
 		this.#buckets = buckets.map((bucket) => bucket?.slice());
+		this.#values = values.map((bucket) => bucket?.slice());
 	}
 
 	/**
-	 * Returns the word `text[start, end)` spells, or `undefined` when it is none
-	 * of the set's.
+	 * Returns the value of the word `text[start, end)` spells, or `0` when it is
+	 * none of the table's.
 	 */
-	find(text: string, start: number, end: number): string | undefined {
+	find(text: string, start: number, end: number): number {
 		const len = end - start;
-		if (len > this.#max_len) return undefined;
+		if (len > this.#max_len) return 0;
 		const c0 = text.charCodeAt(start);
-		if (c0 > 127) return undefined;
-		const bucket = this.#buckets[(c0 + len * 64) & 255];
-		if (bucket === undefined) return undefined;
+		if (c0 > 127) return 0;
+		const slot = (c0 + len * 64) & 255;
+		const bucket = this.#buckets[slot];
+		if (bucket === undefined) return 0;
 		for (let b = 0; b < bucket.length; b++) {
 			const w = bucket[b]!;
 			if (w.length !== len) continue;
 			let k = 1;
 			while (k < len && w.charCodeAt(k) === text.charCodeAt(start + k)) k++;
-			if (k === len) return w;
+			if (k === len) return this.#values[slot]![b]!;
 		}
-		return undefined;
+		return 0;
 	}
 }
 

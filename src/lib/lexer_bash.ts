@@ -95,7 +95,12 @@ const WORDS: Map<string, number> = words_map(
 	[K_BOOLEAN, 'true false']
 );
 
-const WORD_INDEX = new WordIndex(WORDS.keys());
+// a word's value in `WORD_INDEX`: its kind in the low bits and flags above
+const KIND_MASK = 15;
+const F_FUNCTION = 16; // the `function` keyword — the next word names the function
+WORDS.set('function', K_KEYWORD | F_FUNCTION);
+
+const WORD_INDEX = new WordIndex(WORDS);
 
 // `$`-followed single-char special variables (`$@ $# $? $$ $! $* $-`); digits
 // are handled by the `$word` scan
@@ -772,10 +777,10 @@ const run_bash_window = (mac: BashMachine, frame: BashFrame): boolean => {
 				continue;
 			}
 			const word = WORD_INDEX.find(text, i, wend);
-			const kind = word === undefined ? undefined : WORDS.get(word);
+			const kind = word & KIND_MASK;
 			if (kind === K_KEYWORD) {
 				l.leaf(T_KEYWORD, i, wend);
-				if (word === 'function') prev_function_kw = true;
+				if ((word & F_FUNCTION) !== 0) prev_function_kw = true;
 			} else if (kind === K_BUILTIN) {
 				l.leaf(T_BUILTIN, i, wend);
 			} else if (kind === K_BOOLEAN) {

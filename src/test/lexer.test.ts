@@ -13,6 +13,7 @@ import {
 	TokenTypeRegistry,
 	validate_syntax_events,
 	WordIndex,
+	words_map,
 	type LexedSyntax,
 	type SyntaxLang
 } from '#lib/lexer.ts';
@@ -176,32 +177,56 @@ describe('lex_syntax', () => {
 });
 
 describe('WordIndex', () => {
-	const index = new WordIndex(['as', 'async', 'await', 'a', 'in', 'interface']);
+	const index = new WordIndex([
+		['as', 1],
+		['async', 2],
+		['await', 3],
+		['a', 4],
+		['in', 5],
+		['interface', -6]
+	]);
 
-	test("finds a span by its words, returning the set's string", () => {
+	test("finds a span by its words, returning the word's value", () => {
 		const text = 'x async await as a in interface';
-		assert.strictEqual(index.find(text, 2, 7), 'async');
-		assert.strictEqual(index.find(text, 8, 13), 'await');
-		assert.strictEqual(index.find(text, 14, 16), 'as');
-		assert.strictEqual(index.find(text, 17, 18), 'a');
-		assert.strictEqual(index.find(text, 19, 21), 'in');
-		assert.strictEqual(index.find(text, 22, 31), 'interface');
+		assert.strictEqual(index.find(text, 2, 7), 2);
+		assert.strictEqual(index.find(text, 8, 13), 3);
+		assert.strictEqual(index.find(text, 14, 16), 1);
+		assert.strictEqual(index.find(text, 17, 18), 4);
+		assert.strictEqual(index.find(text, 19, 21), 5);
+		assert.strictEqual(index.find(text, 22, 31), -6);
 	});
 
-	test('misses spans that are not words of the set', () => {
+	test('misses spans that are not words of the table', () => {
 		const text = 'asyncs asynx awai x é inn';
-		assert.strictEqual(index.find(text, 0, 6), undefined); // longer
-		assert.strictEqual(index.find(text, 7, 12), undefined); // same length and first char
-		assert.strictEqual(index.find(text, 13, 17), undefined); // a prefix of a word
-		assert.strictEqual(index.find(text, 18, 19), undefined); // no word starts with it
-		assert.strictEqual(index.find(text, 20, 21), undefined); // non-ASCII
-		assert.strictEqual(index.find(text, 22, 25), undefined);
-		assert.strictEqual(index.find(text, 0, 30), undefined); // past the longest word
+		assert.strictEqual(index.find(text, 0, 6), 0); // longer
+		assert.strictEqual(index.find(text, 7, 12), 0); // same length and first char
+		assert.strictEqual(index.find(text, 13, 17), 0); // a prefix of a word
+		assert.strictEqual(index.find(text, 18, 19), 0); // no word starts with it
+		assert.strictEqual(index.find(text, 20, 21), 0); // non-ASCII
+		assert.strictEqual(index.find(text, 22, 25), 0);
+		assert.strictEqual(index.find(text, 0, 30), 0); // past the longest word
 	});
 
-	test('rejects words it cannot index', () => {
-		assert.throws(() => new WordIndex(['ok', '']), /empty word/);
-		assert.throws(() => new WordIndex(['café']), /not an ASCII word/);
+	test('takes the entries of a `words_map`, a repeated word keeping its last value', () => {
+		const words = new WordIndex([...words_map([1, 'if else'], [2, 'true']), ['if', 9]]);
+		assert.strictEqual(words.find('if else true', 0, 2), 9);
+		assert.strictEqual(words.find('if else true', 3, 7), 1);
+		assert.strictEqual(words.find('if else true', 8, 12), 2);
+	});
+
+	test('rejects entries it cannot index', () => {
+		assert.throws(
+			() =>
+				new WordIndex([
+					['ok', 1],
+					['', 1]
+				]),
+			/empty word/
+		);
+		assert.throws(() => new WordIndex([['café', 1]]), /not an ASCII word/);
+		assert.throws(() => new WordIndex([['ok', 0]]), /non-zero 32-bit integer/);
+		assert.throws(() => new WordIndex([['ok', 1.5]]), /non-zero 32-bit integer/);
+		assert.throws(() => new WordIndex([['ok', 2 ** 31]]), /non-zero 32-bit integer/);
 	});
 });
 

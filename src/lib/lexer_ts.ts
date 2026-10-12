@@ -111,39 +111,28 @@ const WORDS: Map<string, number> = words_map(
 	[K_NUMBER_WORD, 'NaN Infinity']
 );
 
-// keywords that put the lexer in a class-name context for the next identifier
-const CLASS_CTX_WORDS: Set<string> = new Set([
-	'class',
-	'extends',
-	'implements',
-	'instanceof',
-	'interface',
-	'new',
-	'type'
-]);
-// keywords after which the next identifier is a type assertion
-const AS_WORDS: Set<string> = new Set(['as', 'satisfies']);
-const IMPORT_WORDS: Set<string> = new Set(['import', 'export']);
-// value-like keywords — division follows, not a regex literal
-const VALUE_WORDS: Set<string> = new Set(['this', 'super', 'null', 'undefined']);
-
+// a word's value in `WORD_INDEX`: its kind in the low bits, `0` for a word that
+// is only a builtin, and context flags above
+const KIND_MASK = 15;
+const F_CLASS_CTX = 16; // puts the lexer in a class-name context for the next identifier
+const F_AS = 32; // the next identifier is a type assertion
+const F_IMPORT = 64;
+const F_VALUE = 128; // value-like keyword — division follows, not a regex literal
 // lowercase-only builtins are reachable — capitalized ones are claimed by
 // `capitalized_identifier` first in the classification order
-const BUILTIN_WORDS: Set<string> = new Set([
-	'Array',
-	'Function',
-	'Promise',
-	'any',
-	'boolean',
-	'console',
-	'never',
-	'number',
-	'string',
-	'symbol',
-	'unknown'
-]);
+const F_BUILTIN = 256;
 
-const WORD_INDEX = new WordIndex([...WORDS.keys(), ...BUILTIN_WORDS]);
+for (const [flag, words] of [
+	[F_CLASS_CTX, 'class extends implements instanceof interface new type'],
+	[F_AS, 'as satisfies'],
+	[F_IMPORT, 'import export'],
+	[F_VALUE, 'this super null undefined'],
+	[F_BUILTIN, 'Array Function Promise any boolean console never number string symbol unknown']
+] as const) {
+	for (const word of words.split(' ')) WORDS.set(word, (WORDS.get(word) ?? 0) | flag);
+}
+
+const WORD_INDEX = new WordIndex(WORDS);
 
 // previous-significant-token categories, for regex-vs-division and contexts
 const P_NONE = 0; // start / after operator, `{`, `(`, `[`, `,`, `;` — regex allowed
@@ -772,10 +761,10 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 			prev_code = 0;
 			i = ident_end;
 
-			const word = c === 35 ? undefined : WORD_INDEX.find(text, start, ident_end);
-			const kind = word === undefined || was_dot ? undefined : WORDS.get(word);
+			const word = c === 35 ? 0 : WORD_INDEX.find(text, start, ident_end);
+			const kind = was_dot ? 0 : word & KIND_MASK;
 
-			if (was_class_ctx && kind === undefined && c !== 35) {
+			if (was_class_ctx && kind === 0 && c !== 35) {
 				// class-name chain: `Foo`, `a.b.Foo`, optionally with generics
 				l.leaf(T_CLASS_NAME, start, ident_end);
 				while (i + 1 < to && text.charCodeAt(i) === 46 && is_ident_start(text.charCodeAt(i + 1))) {
@@ -811,19 +800,14 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 				continue;
 			}
 
-			if (
-				was_as_ctx &&
-				kind === undefined &&
-				c !== 35 &&
-				!(word !== undefined && BUILTIN_WORDS.has(word))
-			) {
+			if (was_as_ctx && kind === 0 && c !== 35 && (word & F_BUILTIN) === 0) {
 				// `x as Foo` — but `as unknown`/`as string` keep their builtin type
 				l.leaf(T_TYPE_ASSERTION, start, ident_end);
 				continue;
 			}
 
 			// keyword classification (with contextual lookaheads)
-			if (kind !== undefined) {
+			if (kind !== 0) {
 				let keyword_id = 0;
 				switch (kind) {
 					case K_KEYWORD:
@@ -884,10 +868,10 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 				}
 				if (keyword_id !== 0) {
 					l.leaf(keyword_id, start, ident_end);
-					if (CLASS_CTX_WORDS.has(word!)) class_ctx = true;
-					if (AS_WORDS.has(word!)) as_ctx = true;
-					if (IMPORT_WORDS.has(word!)) import_ctx = true;
-					if (!VALUE_WORDS.has(word!)) prev = P_NONE;
+					if ((word & F_CLASS_CTX) !== 0) class_ctx = true;
+					if ((word & F_AS) !== 0) as_ctx = true;
+					if ((word & F_IMPORT) !== 0) import_ctx = true;
+					if ((word & F_VALUE) === 0) prev = P_NONE;
 					continue;
 				}
 			}
@@ -965,7 +949,7 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 				continue;
 			}
 
-			if (kind === undefined && !was_dot && word !== undefined && BUILTIN_WORDS.has(word)) {
+			if (kind === 0 && !was_dot && (word & F_BUILTIN) !== 0) {
 				l.leaf(T_BUILTIN, start, ident_end);
 				continue;
 			}

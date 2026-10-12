@@ -78,18 +78,19 @@ const WORDS: Map<string, number> = words_map(
 	[K_MACRO_RULES, 'macro_rules']
 );
 
-// keywords that put the lexer in a type-name context for the next identifier
-const CLASS_CTX_WORDS: Set<string> = new Set([
-	'struct',
-	'enum',
-	'trait',
-	'union',
-	'type',
-	'impl',
-	'dyn'
-]);
+// a word's value in `WORD_INDEX`: its kind in the low bits and flags above
+const KIND_MASK = 15;
+const F_FN = 16; // the next identifier names a function
+const F_CLASS_CTX = 32; // puts the lexer in a type-name context for the next identifier
 
-const WORD_INDEX = new WordIndex(WORDS.keys());
+for (const [flag, words] of [
+	[F_FN, 'fn'],
+	[F_CLASS_CTX, 'struct enum trait type impl dyn']
+] as const) {
+	for (const word of words.split(' ')) WORDS.set(word, WORDS.get(word)! | flag);
+}
+
+const WORD_INDEX = new WordIndex(WORDS);
 
 /**
  * Scans a `"` string from the quote at `from`, returning the exclusive end.
@@ -395,22 +396,22 @@ const lex_rust = (l: Lexer): void => {
 			const start = i;
 			const ident_end = scan_ident(text, i, end);
 			const word = WORD_INDEX.find(text, start, ident_end);
-			const kind = word === undefined ? undefined : WORDS.get(word);
+			const kind = word & KIND_MASK;
 			const was_fn_ctx = fn_ctx;
 			const was_class_ctx = class_ctx;
 			fn_ctx = class_ctx = false;
 			i = ident_end;
 
-			if (kind !== undefined) {
+			if (kind !== 0) {
 				if (kind === K_KEYWORD) {
 					l.leaf(T_KEYWORD, start, ident_end);
 					// `fn name`/`struct Name` name the identifier that follows, but
 					// `fn(…)` is a pointer *type* and `impl<T>`/`struct;` have no name
 					// here — only enter the naming context when an identifier actually
 					// follows, or it leaks onto the next value
-					if (word === 'fn') {
+					if ((word & F_FN) !== 0) {
 						fn_ctx = is_ident_start(text.charCodeAt(skip_space(text, ident_end, end)));
-					} else if (CLASS_CTX_WORDS.has(word!)) {
+					} else if ((word & F_CLASS_CTX) !== 0) {
 						class_ctx = is_ident_start(text.charCodeAt(skip_space(text, ident_end, end)));
 					}
 					continue;

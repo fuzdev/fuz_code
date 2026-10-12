@@ -168,8 +168,9 @@ overflow the stack; past the cap a region stays plain text.
 - `validate_syntax_events(lexed)` - structural invariant issues, empty when
   valid
 - `token_type(name, alias?)`, `TokenTypeRegistry`, `token_types_global`;
-  `words_map(...entries)` for keyword tables; `WordIndex` matches a text span
-  against a word set without slicing
+  `words_map(...entries)` for keyword tables; `WordIndex` looks a text span up
+  in a table of words without slicing it and returns the word's integer (a
+  kind plus flag bits, `0` for a miss), so a lexer branches on numbers
 - `Lexer` - `text`/`pos`/`end`, the `leaf`/`open`/`close` emitters,
   `embed(lang_id, start, end)`
 - scanning helpers - `is_space`, `is_digit`, `is_upper`, `is_ascii_alnum`,
