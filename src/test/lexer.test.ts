@@ -272,6 +272,65 @@ describe('render_syntax_html', () => {
 		});
 		assert.strictEqual(render_syntax_html(lexed), '<span class="token_test_a">a b</span> c');
 	});
+
+	test('renders one-char leaves, escaped, the same from the cache', () => {
+		const lexed = lexed_of('a<&;\u00a0\u00e9', (l) => {
+			l.leaf(T_A, 0, 1);
+			l.leaf(T_B, 1, 2);
+			l.leaf(T_A, 2, 3);
+			l.leaf(T_B, 3, 4);
+			l.leaf(T_A, 4, 5); // nbsp
+			l.leaf(T_B, 5, 6); // past ascii, so not cached
+		});
+		const expected =
+			'<span class="token_test_a">a</span><span class="token_test_b">&lt;</span>' +
+			'<span class="token_test_a">&amp;</span><span class="token_test_b">;</span>' +
+			'<span class="token_test_a"> </span><span class="token_test_b">\u00e9</span>';
+		assert.strictEqual(render_syntax_html(lexed), expected);
+		assert.strictEqual(render_syntax_html(lexed), expected);
+		const spans = token_types_global.info(T_B).char_spans;
+		assert(spans !== null);
+		assert.strictEqual(spans[60], '<span class="token_test_b">&lt;</span>');
+		assert.strictEqual(spans[65], '');
+	});
+
+	test('escapes text wherever it falls', () => {
+		// an escape in the gap before each kind of event, in a leaf, and in the tail
+		const text = '<a x &b; <(c<d)e& f <g';
+		const lexed = lexed_of(text, (l) => {
+			l.leaf(T_A, 3, 4); // 'x', one char, after a gap with `<`
+			l.leaf(T_B, 5, 7); // '&b'
+			l.open(T_CONTAINER, 10); // after a gap with `<`
+			l.leaf(T_A, 11, 14); // 'c<d'
+			l.close(17); // after a gap with `&`
+		});
+		assert.strictEqual(
+			render_syntax_html(lexed),
+			'&lt;a <span class="token_test_a">x</span> <span class="token_test_b">&amp;b</span>; &lt;' +
+				'<span class="token_test_container">(<span class="token_test_a">c&lt;d</span>)e&amp;</span>' +
+				' f &lt;g'
+		);
+	});
+
+	test('renders text with no events, escaped or not', () => {
+		assert.strictEqual(render_syntax_html(lexed_of('plain text', () => {})), 'plain text');
+		assert.strictEqual(
+			render_syntax_html(lexed_of('a < b\u00a0& c', () => {})),
+			'a &lt; b &amp; c'
+		);
+	});
+
+	test('caches one-char spans per registry', () => {
+		const types = new TokenTypeRegistry();
+		const id = types.intern('test_other');
+		const lexer = new Lexer();
+		lexer.text = ';';
+		lexer.end = 1;
+		lexer.leaf(id, 0, 1);
+		const lexed = { text: ';', events: lexer.events, events_len: lexer.events_len, types };
+		assert.strictEqual(render_syntax_html(lexed), '<span class="token_test_other">;</span>');
+		assert.strictEqual(types.info(id).char_spans?.[59], '<span class="token_test_other">;</span>');
+	});
 });
 
 describe('validate_syntax_events', () => {

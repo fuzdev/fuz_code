@@ -94,7 +94,9 @@ src/
 leaf/open/close events into one `Int32Array` with interned type ids; plain text
 is implicit between events (recovered from offsets). `render_syntax_html`
 streams HTML from it in one forward pass, wrapping spans in classes like
-`.token_keyword` (styled by `theme.css`). Token types intern into a
+`.token_keyword` (styled by `theme.css`); a one-char leaf appends its whole
+span from a per-type cache, and text is sliced unscanned up to the next
+character that needs an escape. Token types intern into a
 `TokenTypeRegistry` (`token_types_global` by default).
 
 Lexers:
@@ -235,7 +237,15 @@ As registered in `syntax_styler_global`:
    with it the class — and give a new per-call class a static instance like
    `Lexer.shape_anchor` (a module variable doesn't work: V8 frees one no
    function reads, and bundlers drop an unused export)
-6. **Follow patterns and fixtures** - use existing `lexer_*.ts` modules as
+6. **Append few pieces, and flat ones** - `render_syntax_html` builds its
+   result with `+=`, which in V8 makes a rope that the first read copies into
+   one string, at a cost per piece. A piece that is itself a rope costs
+   several: a string precomputed with `+` and at least 13 chars long stays a
+   tree, and every use carries the tree into the output. Build precomputed
+   pieces with `[…].join('')` (the open tags, `TokenTypeInfo.char_spans`), and
+   slice clean text rather than scanning it. A benchmark that discards the
+   result never pays for the copy, so read a character of it inside the clock
+7. **Follow patterns and fixtures** - use existing `lexer_*.ts` modules as
    templates; all changes must pass the fixture tests
 
 ### Adding a new language

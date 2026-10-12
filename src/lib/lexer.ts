@@ -30,6 +30,12 @@ export interface TokenTypeInfo {
 	 * Precomputed HTML open tag, e.g. `'<span class="token_null token_keyword">'`.
 	 */
 	open_tag: string;
+	/**
+	 * The whole rendered span of each one-char ASCII leaf of this type, indexed
+	 * by char code, `''` where not yet rendered. `render_syntax_html` fills it
+	 * as it meets them; `null` until the first.
+	 */
+	char_spans: Array<string> | null;
 }
 
 /**
@@ -45,7 +51,7 @@ export class TokenTypeRegistry {
 	 */
 	readonly infos: Array<TokenTypeInfo> = [
 		// id 0 is reserved — it's the close-event tag
-		{ id: 0, name: '', aliases: [], classes: '', open_tag: '' }
+		{ id: 0, name: '', aliases: [], classes: '', open_tag: '', char_spans: null }
 	];
 	#ids: Map<string, number> = new Map();
 
@@ -63,7 +69,9 @@ export class TokenTypeRegistry {
 		let classes = 'token_' + name;
 		for (const a of aliases) classes += ' token_' + a;
 		const id = this.infos.length;
-		this.infos.push({ id, name, aliases, classes, open_tag: '<span class="' + classes + '">' });
+		// `join` rather than `+`: see `render_syntax_html` on flat strings
+		const open_tag = ['<span class="', classes, '">'].join('');
+		this.infos.push({ id, name, aliases, classes, open_tag, char_spans: null });
 		this.#ids.set(key, id);
 		return id;
 	}
@@ -418,9 +426,25 @@ const escape_html_slice = (text: string, from: number, to: number): string => {
 	return seg === from ? text.slice(from, to) : out + text.slice(seg, to);
 };
 
+// cold path of the renderer's one-char leaves: builds the span and caches it on its type
+const fill_char_span = (info: TokenTypeInfo, c: number): string => {
+	const spans = (info.char_spans ??= new Array<string>(128).fill(''));
+	const escaped = c === 38 ? '&amp;' : c === 60 ? '&lt;' : String.fromCharCode(c);
+	return (spans[c] = [info.open_tag, escaped, '</span>'].join(''));
+};
+
 /**
  * Renders a lexed event stream to HTML in one forward pass.
  * Gap text is copy-escaped; token spans use the precomputed open tags.
+ *
+ * The result is built by appending, which in V8 makes a rope the first read
+ * copies into one string, at a cost per piece. So the loop appends few pieces
+ * and flat ones: an open tag is a single string rather than the tree `+` would
+ * have left at intern time, which every span would otherwise carry into the
+ * rope, and a one-char leaf, the most common kind in code, appends its whole
+ * span from `TokenTypeInfo.char_spans`. Text is sliced without a scan while
+ * the next character needing an escape, tracked by monotonic probes, lies
+ * past it.
  */
 export const render_syntax_html = (lexed: LexedSyntax): string => {
 	const { text, events, events_len } = lexed;
@@ -428,30 +452,56 @@ export const render_syntax_html = (lexed: LexedSyntax): string => {
 	let out = '';
 	let pos = 0;
 	let i = 0;
-	while (i < events_len) {
+	// the next `&`, `<`, and nbsp at or after `pos`, and `escape_at`, the nearest of them
+	let amp = -1;
+	let lt = -1;
+	let nbsp = -1;
+	let escape_at = -1;
+	for (;;) {
+		if (escape_at < pos) {
+			amp = advance_probe(text, amp, pos, '&');
+			lt = advance_probe(text, lt, pos, '<');
+			nbsp = advance_probe(text, nbsp, pos, '\u00a0');
+			escape_at = amp < lt ? (amp < nbsp ? amp : nbsp) : lt < nbsp ? lt : nbsp;
+		}
+		if (i >= events_len) break;
 		const tag = events[i]!;
 		if (tag > 0) {
 			const start = events[i + 1]!;
 			const end = events[i + 2]!;
-			if (start > pos) out += escape_html_slice(text, pos, start);
-			out += infos[tag]!.open_tag + escape_html_slice(text, start, end) + '</span>';
+			const info = infos[tag]!;
+			let c: number;
+			if (end - start === 1 && (c = text.charCodeAt(start)) < 128) {
+				if (start > pos) {
+					out += escape_at < start ? escape_html_slice(text, pos, start) : text.slice(pos, start);
+				}
+				const spans = info.char_spans;
+				let span: string;
+				if (spans === null || (span = spans[c]!) === '') span = fill_char_span(info, c);
+				out += span;
+			} else if (escape_at < end) {
+				if (start > pos) out += escape_html_slice(text, pos, start);
+				out += info.open_tag + escape_html_slice(text, start, end) + '</span>';
+			} else {
+				if (start > pos) out += text.slice(pos, start);
+				out += info.open_tag + text.slice(start, end) + '</span>';
+			}
 			pos = end;
 			i += 3;
-		} else if (tag < 0) {
-			const start = events[i + 1]!;
-			if (start > pos) out += escape_html_slice(text, pos, start);
-			out += infos[-tag]!.open_tag;
-			pos = start;
-			i += 2;
 		} else {
-			const end = events[i + 1]!;
-			if (end > pos) out += escape_html_slice(text, pos, end);
-			out += '</span>';
-			pos = end;
+			// an open at its start, or a close at its end
+			const at = events[i + 1]!;
+			if (at > pos) {
+				out += escape_at < at ? escape_html_slice(text, pos, at) : text.slice(pos, at);
+			}
+			out += tag < 0 ? infos[-tag]!.open_tag : '</span>';
+			pos = at;
 			i += 2;
 		}
 	}
-	if (pos < text.length) out += escape_html_slice(text, pos, text.length);
+	if (pos < text.length) {
+		out += escape_at < text.length ? escape_html_slice(text, pos, text.length) : text.slice(pos);
+	}
 	return out;
 };
 
