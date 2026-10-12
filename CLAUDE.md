@@ -139,7 +139,9 @@ one cycle in the embed graph — markdown fences embedding markdown — can't
 overflow the stack; past the cap a region stays plain text. A region that ends
 at a closing brace the host hasn't located (a svelte `{…}`) goes through
 `Lexer.embed_to_brace` instead: the guest's optional `SyntaxLang.lex_to_brace`
-finds the brace as it tokenizes, so the host doesn't scan for it first.
+finds the brace as it tokenizes, so the host doesn't scan for it first. Its
+optional stop word ends the region at a top-level word too, which is how
+`{#each … as …}` and `{#await … then …}` split.
 
 ### Generated files
 

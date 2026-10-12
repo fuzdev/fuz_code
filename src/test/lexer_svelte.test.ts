@@ -71,7 +71,10 @@ describe('lexer_svelte expressions', () => {
 			'{x && /}/.test(x)}',
 			'{a.replace(/[{}]/g, "")}',
 			'{`a${`}`}b`}',
-			'{@const m = /}/}'
+			'{@const m = /}/}',
+			'{#if /}/.test(s)}',
+			'{#each xs.filter((x) => /}/.test(x)) as x}',
+			'{#await load(/}/) then v}'
 		]) {
 			const tokens = tokens_of(text + ' {y}');
 			assert.deepEqual(tokens[0], ['svelte_expression', text], text);
@@ -190,6 +193,40 @@ describe('lexer_svelte each', () => {
 		assert.deepEqual(picked('{#each f([x as y]) as z}', ['keyword']).length, 1);
 	});
 
+	test('`as` is found by the ts lexer, so only a real top-level `as` splits', () => {
+		// a regex or a member named `as` before it, and `as` names after it
+		assert.deepEqual(
+			picked('{#each a.as.filter((x) => /as }/.test(x)) as as}', ['keyword', 'lang_ts']),
+			[
+				['lang_ts', 'a.as.filter((x) => /as }/.test(x))'],
+				['keyword', 'as'],
+				['lang_ts', 'as']
+			]
+		);
+		assert.deepEqual(picked('{#each as x}', ['keyword', 'lang_ts']), [
+			['keyword', 'as'],
+			['lang_ts', 'x']
+		]);
+		assert.deepEqual(
+			validate_syntax_events(syntax_styler_global.lex('{#each xs as', 'svelte')),
+			[]
+		);
+	});
+
+	test('a styler without ts still splits at `as`', () => {
+		const styler = new SyntaxStyler();
+		styler.add_lang(lexer_svelte);
+		const text = '{#each xs as x}';
+		const tokens = syntax_events_to_tokens(styler.lex(text, 'svelte'))
+			.map((t) => [t.type, text.slice(t.start, t.end)])
+			.filter(([type]) => type === 'keyword' || type === 'lang_ts');
+		assert.deepEqual(tokens, [
+			['lang_ts', 'xs'],
+			['keyword', 'as'],
+			['lang_ts', 'x']
+		]);
+	});
+
 	test('a close-each is a block', () => {
 		assert.deepEqual(picked('{/each}', ['block', 'each']), [['block', '{/each}']]);
 	});
@@ -206,6 +243,12 @@ describe('lexer_svelte await', () => {
 				['lang_ts', 'value']
 			]
 		);
+	});
+
+	test('a `.then` call is not the `then` split', () => {
+		assert.deepEqual(picked('{#await api.load().then(parse)}', ['keyword', 'lang_ts']), [
+			['lang_ts', 'api.load().then(parse)']
+		]);
 	});
 
 	test(':then and :catch are special keywords', () => {

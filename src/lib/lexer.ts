@@ -210,8 +210,13 @@ export interface SyntaxLang {
 	 * there, or `-1` after lexing to `lexer.end` without meeting one. The lexer
 	 * finds the brace as it tokenizes, so a brace in a string, comment, or regex
 	 * doesn't count. Optional: a host falls back to finding the brace itself.
+	 *
+	 * With a `stop_word`, it also stops before that word where it stands alone
+	 * outside every bracket of the region (the `as` of a Svelte `{#each}`), and
+	 * returns the word's index instead; the host tells the two apart by the char
+	 * there.
 	 */
-	lex_to_brace?: (lexer: Lexer) => number;
+	lex_to_brace?: (lexer: Lexer, stop_word?: string) => number;
 }
 
 /**
@@ -376,9 +381,11 @@ export class Lexer {
 	 * which finds the brace through `SyntaxLang.lex_to_brace`. Returns the
 	 * brace's index, or `-1` when the region ran to `end` without one, or
 	 * `EMBED_UNAVAILABLE` when nothing was lexed: the language is unregistered or
-	 * has no `lex_to_brace`, or nesting is at `MAX_EMBED_DEPTH`.
+	 * has no `lex_to_brace`, or nesting is at `MAX_EMBED_DEPTH`. With a
+	 * `stop_word` the region also ends before that word at its top level, and
+	 * the word's index is returned.
 	 */
-	embed_to_brace(lang_id: string, start: number, end: number): number {
+	embed_to_brace(lang_id: string, start: number, end: number, stop_word?: string): number {
 		if (start >= end) return EMBED_UNAVAILABLE;
 		if (this.#embed_depth >= MAX_EMBED_DEPTH) return EMBED_UNAVAILABLE;
 		const lex_to_brace = this.langs?.get(lang_id)?.lex_to_brace;
@@ -389,7 +396,7 @@ export class Lexer {
 		this.end = end;
 		this.#last_leaf = -1;
 		this.#embed_depth++;
-		const close = lex_to_brace(this);
+		const close = lex_to_brace(this, stop_word);
 		this.#embed_depth--;
 		this.pos = prev_pos;
 		this.end = prev_end;

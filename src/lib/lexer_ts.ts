@@ -598,6 +598,11 @@ interface TsMachine {
 	 */
 	levels: Int32Array;
 	level_sp: number;
+	/**
+	 * A word that ends the root window where it stands outside every bracket,
+	 * `''` for none: see `SyntaxLang.lex_to_brace`.
+	 */
+	stop_word: string;
 	/** Frame pool doubling as the stack; frames above `sp` are dormant. */
 	stack: Array<TsFrame>;
 	sp: number;
@@ -810,6 +815,9 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 	const self_type = frame.self_type;
 	const level_base = frame.level_base;
 	const term = frame.term;
+	// only the root window stops at the machine's word
+	const stop_word = frame.ret === R_ROOT ? mac.stop_word : '';
+	const stop_len = stop_word.length;
 	let i = frame.i;
 	let prev = frame.prev;
 	let prev_code = frame.prev_code; // last significant punctuation char, for string-property detection
@@ -834,6 +842,17 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 		if (is_ident_start(c) || (c === 35 && i + 1 < to && is_ident_start(text.charCodeAt(i + 1)))) {
 			const start = i;
 			const ident_end = scan_ident(text, c === 35 ? i + 1 : i, to);
+			if (
+				stop_len !== 0 &&
+				ident_end - start === stop_len &&
+				level_sp === level_base &&
+				prev !== P_DOT &&
+				text.startsWith(stop_word, start)
+			) {
+				frame.ret_a = start;
+				mac.level_sp = level_sp;
+				return true;
+			}
 			if (self_type && frame.depth === 0 && frame.angle === 0) {
 				// a name where the type is complete starts something else, unless
 				// it is a word that continues a type (`extends`, `is`)
@@ -1648,21 +1667,24 @@ const ts_machines: Array<TsMachine> = [];
 
 /**
  * Lexes `[from, l.end)` as the root window. A nonzero `term` makes it stop at
- * the `term` char that closes none of its own openers, and the return value is
- * that char's index; otherwise, and when the window runs to its end, `-1`.
+ * the `term` char that closes none of its own openers, and a `stop_word`
+ * before that word outside every bracket; the return value is the index it
+ * stopped at. Otherwise, and when the window runs to its end, `-1`.
  */
-const lex_ts_root = (l: Lexer, from: number, term: number): number => {
+const lex_ts_root = (l: Lexer, from: number, term: number, stop_word: string): number => {
 	const mac = ts_machines.pop() ?? {
 		l,
 		cache: create_ts_scan_cache(),
 		levels: new Int32Array(64),
 		level_sp: -1,
+		stop_word: '',
 		stack: [],
 		sp: 0
 	};
 	mac.l = l;
 	mac.sp = 0;
 	mac.level_sp = -1;
+	mac.stop_word = stop_word;
 	const { cache } = mac;
 	cache.next_gt = cache.next_rparen = -1;
 	mac_push_window(mac, from, l.end, false, R_ROOT, -1, 0, term, term === 0 ? 0 : 1);
@@ -1682,13 +1704,13 @@ const lex_ts = (l: Lexer): void => {
 		l.leaf(T_HASHBANG, 0, line_end);
 		i = line_end;
 	}
-	lex_ts_root(l, i, 0);
+	lex_ts_root(l, i, 0, '');
 	l.pos = l.end;
 };
 
 // the root window in terminator mode, as a template's `${…}` body runs
-const lex_ts_to_brace = (l: Lexer): number => {
-	const close = lex_ts_root(l, l.pos, 125);
+const lex_ts_to_brace = (l: Lexer, stop_word = ''): number => {
+	const close = lex_ts_root(l, l.pos, 125, stop_word);
 	l.pos = close === -1 ? l.end : close;
 	return close;
 };

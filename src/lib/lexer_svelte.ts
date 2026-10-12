@@ -28,9 +28,10 @@ import { lex_markup_window, type MarkupLexMode } from './lexer_markup.ts';
  * Notable behavior: an expression's closing brace is the one the ts lexer
  * reaches as it tokenizes the interior, so braces nest to any depth and those
  * in strings, templates, comments, and regexes don't count (`{'}'}` works).
- * Three forms find the brace before lexing instead, by a scan that knows
- * strings, templates, and comments but not regexes: `{#each}` and `{#await}`,
- * which split at `as`/`then`, and an interior that starts with `/`; expression-valued attributes
+ * `{#each}` and `{#await}` split at the `as`/`then` ts stops at the same way.
+ * Two forms find the brace before lexing instead, by a scan that knows strings,
+ * templates, and comments but not regexes: a plain expression that starts with
+ * `/`, and an unknown sigil word; expression-valued attributes
  * emit full structure (`attr_name` + `attr_value` with `attr_equals`, not the
  * `=` swallowed into the name); quoted values interleave text and expressions
  * (`class="a {b} c"`); the `{#each}` expression before `as` is lexed as ts; the
@@ -84,7 +85,8 @@ const lex_ts_interior = (l: Lexer, from: number, to: number): void => {
 /**
  * Finds `word` at bracket-depth 0 in `[from, to)` with identifier boundaries
  * on both sides, skipping strings/templates. Returns its index or -1 — the
- * `as`/`then` splitter for each/await forms.
+ * `as`/`then` splitter for each/await forms when no ts lexer is registered to
+ * find it.
  */
 const find_top_level_word = (text: string, from: number, to: number, word: string): number => {
 	let depth = 0;
@@ -130,29 +132,54 @@ const declaration_keyword_len = (text: string, i: number, end: number): number =
  * lexer embedded, which finds the brace as it tokenizes. Returns the brace's
  * index, or -1 when the expression is unterminated. An empty or
  * whitespace-only interior emits nothing.
+ *
+ * A `stop_word` (`'as'`, `'then'`) also ends the interior before that word at
+ * its top level, returning the word's index. `guard_slash` is for an interior
+ * that follows the `{` directly: one starting with `/` is then a comment or a
+ * malformed closing tag like `{/i}` mid-edit, which ts would read as a regex
+ * running past the brace, so the brace is found first.
  */
-const lex_ts_to_brace = (l: Lexer, open: number, from: number, end: number): number => {
+const lex_ts_to_brace = (
+	l: Lexer,
+	open: number,
+	from: number,
+	end: number,
+	guard_slash: boolean,
+	stop_word: string
+): number => {
 	const { text } = l;
 	const start = skip_space(text, from, end);
 	if (start >= end) return -1;
 	const c = text.charCodeAt(start);
 	if (c === 125) return start;
-	if (c === 47) {
-		// a leading `/` is a comment or a malformed closing tag like `{/i}` mid-edit,
-		// which ts would read as a regex running past the brace — bound it first
+	if (guard_slash && c === 47) {
 		const close = scan_balanced_braces(text, open, end);
 		lex_ts_interior(l, start, close === -1 ? end : close);
 		return close;
 	}
+	if (
+		stop_word !== '' &&
+		text.startsWith(stop_word, start) &&
+		!is_ident(text.charCodeAt(start + stop_word.length))
+	) {
+		return start; // nothing before the word
+	}
 	l.open(T_LANG_TS, start);
-	let close = l.embed_to_brace('ts', start, end);
-	if (close === EMBED_UNAVAILABLE) close = scan_balanced_braces(text, open, end);
+	let stop = l.embed_to_brace('ts', start, end, stop_word);
+	if (stop === EMBED_UNAVAILABLE) {
+		// no ts lexer to find them: scan for the brace, then the word before it
+		stop = scan_balanced_braces(text, open, end);
+		if (stop_word !== '') {
+			const word = find_top_level_word(text, start, stop === -1 ? end : stop, stop_word);
+			if (word !== -1) stop = word;
+		}
+	}
 	// trimmed, but never to before the last token: a comment or an unterminated
 	// string can itself end in whitespace
-	const content_end = trim_space_end(text, start, close === -1 ? end : close);
+	const content_end = trim_space_end(text, start, stop === -1 ? end : stop);
 	const last_end = l.events[l.events_len - 1]!;
 	l.close(last_end > content_end ? last_end : content_end);
-	return close;
+	return stop;
 };
 
 /**
@@ -175,7 +202,7 @@ const lex_svelte_expression = (l: Lexer, from: number, end: number, full: boolea
 		l.open(T_AT_DIRECTIVE, from);
 		l.leaf(T_PUNCTUATION, from, from + 1);
 		l.leaf(T_AT_KEYWORD, from + 1, word_end);
-		close = lex_ts_to_brace(l, from, word_end, end);
+		close = lex_ts_to_brace(l, from, word_end, end, false, '');
 	} else if (full && (sigil === 35 || sigil === 58 || sigil === 47)) {
 		// {#word …} / {:word …} / {/word}
 		let word_end = from + 2;
@@ -198,28 +225,25 @@ const lex_svelte_expression = (l: Lexer, from: number, end: number, full: boolea
 			lex_ts_interior(l, from + 1, close === -1 ? end : close);
 		} else if (sigil === 35 && (word === 'each' || word === 'await')) {
 			// {#each expr as pattern} / {#await expr then value} — `as`/`then`
-			// splits two ts interiors, so the brace is found first
-			close = scan_balanced_braces(text, from, end);
-			const inner_end = close === -1 ? end : close;
+			// splits two ts interiors; ts stops at it as it would at the brace
 			const is_each = word === 'each';
 			// a bare `{#each}` is a plain block
-			l.open(is_each && keyword_end < inner_end ? T_EACH : T_BLOCK, from);
+			const bare = keyword_end >= end || text.charCodeAt(keyword_end) === 125;
+			l.open(is_each && !bare ? T_EACH : T_BLOCK, from);
 			l.leaf(T_PUNCTUATION, from, from + 1);
 			l.leaf(T_SPECIAL_KEYWORD, from + 1, keyword_end);
 			const split_word = is_each ? 'as' : 'then';
-			const split = find_top_level_word(text, keyword_end, inner_end, split_word);
-			if (split === -1) {
-				lex_ts_interior(l, keyword_end, inner_end);
-			} else {
-				lex_ts_interior(l, keyword_end, split);
-				l.leaf(T_KEYWORD, split, split + split_word.length);
-				lex_ts_interior(l, split + split_word.length, inner_end);
+			close = lex_ts_to_brace(l, from, keyword_end, end, false, split_word);
+			if (close !== -1 && text.charCodeAt(close) !== 125) {
+				const split_end = close + split_word.length;
+				l.leaf(T_KEYWORD, close, split_end);
+				close = lex_ts_to_brace(l, from, split_end, end, false, '');
 			}
 		} else {
 			l.open(T_BLOCK, from);
 			l.leaf(T_PUNCTUATION, from, from + 1);
 			l.leaf(T_SPECIAL_KEYWORD, from + 1, keyword_end);
-			close = lex_ts_to_brace(l, from, keyword_end, end);
+			close = lex_ts_to_brace(l, from, keyword_end, end, false, '');
 		}
 	} else {
 		// `{const …}`/`{let …}` — only at top level; never collides with the
@@ -231,11 +255,11 @@ const lex_svelte_expression = (l: Lexer, from: number, end: number, full: boolea
 			l.open(T_DECLARATION_TAG, from);
 			l.leaf(T_PUNCTUATION, from, from + 1);
 			l.leaf(T_KEYWORD, from + 1, kw_end);
-			close = lex_ts_to_brace(l, from, kw_end, end);
+			close = lex_ts_to_brace(l, from, kw_end, end, false, '');
 		} else {
 			nested = false;
 			l.leaf(T_PUNCTUATION, from, from + 1);
-			close = lex_ts_to_brace(l, from, from + 1, end);
+			close = lex_ts_to_brace(l, from, from + 1, end, true, '');
 		}
 	}
 	const expr_end = close === -1 ? end : close + 1;
