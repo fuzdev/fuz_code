@@ -1,5 +1,18 @@
 # @fuzdev/fuz_code
 
+## 0.53.0
+
+### Minor Changes
+
+- perf: `render_syntax_html` appends flat strings and fewer of them, so `stylize` plus the first read of its result takes about a third less time: open tags are single strings instead of concatenation trees, a one-char leaf appends its whole span from the new `TokenTypeInfo.char_spans` cache, and text is sliced without a scan up to the next character that needs an escape; breaking: `TokenTypeInfo` has the new required `char_spans` field ([6f060d6](https://github.com/fuzdev/fuz_code/commit/6f060d6))
+- perf: the TypeScript, Rust and bash lexers classify a word from one integer instead of string-keyed `Map` and `Set` lookups, so lexing takes about 8% less time for TypeScript, 12% less for bash and 5% less for Rust; breaking: `WordIndex` takes `[word, value]` entries (a `words_map` result as it is) in place of words, and `find` returns the word's value, or `0` for a miss, in place of the word or `undefined` ([902cc6f](https://github.com/fuzdev/fuz_code/commit/902cc6f))
+- perf: a Svelte `{expression}` is lexed in one pass, about 3% less lex time on Svelte files and 9–18% on an expression: the TypeScript lexer finds the closing brace as it tokenizes through the new optional `SyntaxLang.lex_to_brace` and `Lexer.embed_to_brace` (with `EMBED_UNAVAILABLE`), in place of a scan for the brace followed by the lex; a brace inside a regex no longer closes the expression (`{x.replace(/}/g, '')}`, `{#if /}/.test(s)}`); `{#each}` and `{#await}` split at the `as`/`then` the TypeScript lexer reaches, through an optional `stop_word` on both, so `{#await api.load().then(parse)}` is no longer split at the `.then` call ([c10f87d](https://github.com/fuzdev/fuz_code/commit/c10f87d))
+- feat: TypeScript type annotations are recognized without an initializer (`(x: T)`, `let x: T;`, `): T {`, class and interface members), along with a type alias's body and the tail of an `as` assertion, so names in type positions are `type_name` and each annotation has its `type_annotation` and `type` containers; fix: a `case` clause, a destructuring rename with a default, and a template literal containing `=` are no longer read as annotations. TypeScript lexing takes about 9% longer and JavaScript 5% ([b9882af](https://github.com/fuzdev/fuz_code/commit/b9882af))
+
+### Patch Changes
+
+- fix: in TypeScript a single uppercase letter (`T`, `K`, `V`) is a `capitalized_identifier` instead of a `constant`, so a type parameter is styled as a type at its uses ([c366894](https://github.com/fuzdev/fuz_code/commit/c366894))
+
 ## 0.52.1
 
 ### Patch Changes
