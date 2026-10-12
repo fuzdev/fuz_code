@@ -54,6 +54,7 @@ benchmark/                      # performance testing (see Performance)
 ├── run_benchmarks.ts           # internal benchmark CLI
 ├── benchmarks.ts               # cases, output metrics, markdown writers
 ├── results.md                  # committed internal results
+├── html_sink.ts                # reads timed HTML so its flatten is on the clock
 └── compare/                    # Prism/Shiki comparison
 src/
 ├── lib/
@@ -296,7 +297,10 @@ The internal benchmark covers every sample at normal and 100x sizes, plus a
 `pathological:` group (32KB adversarial inputs from `src/test/pathological.ts`,
 the same generators behind the linearity suite) that tracks worst-case
 constants. Each run also prints deterministic output metrics (spans and utf8
-HTML bytes per case — DOM-cost proxies, not timed).
+HTML bytes per case — DOM-cost proxies, not timed). Every timed `stylize` call,
+here and in `:vs`, passes its result to `sink_html` (`benchmark/html_sink.ts`),
+which reads one character so the copy that flattens the string is inside the
+clock.
 
 `:vs` is the cross-implementation shootout against Prism and Shiki (JS and
 Oniguruma engines); its languages are fixed at `ts`, `css`, `html`, `json`,

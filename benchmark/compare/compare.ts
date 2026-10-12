@@ -30,6 +30,7 @@ import nord from 'shiki/themes/nord.mjs';
 // Fuz Code imports
 import { samples as all_samples } from '../../src/routes/samples/all.ts';
 import { syntax_styler_global } from '../../src/lib/syntax_styler_global.ts';
+import { sink_html } from '../html_sink.ts';
 
 /* eslint-disable no-console */
 
@@ -138,23 +139,23 @@ export const run_comparison_benchmark = async (
 
 			// Stylization benchmarks (all implementations)
 			bench.add(`fuz_code_stylize_${lang}_${size_label}`, () => {
-				syntax_styler_global.stylize(content, fuz_lang);
+				sink_html(syntax_styler_global.stylize(content, fuz_lang));
 			});
 
 			if (Prism.languages[prism_lang]) {
 				bench.add(`prism_stylize_${lang}_${size_label}`, () => {
-					Prism.highlight(content, Prism.languages[prism_lang], prism_lang);
+					sink_html(Prism.highlight(content, Prism.languages[prism_lang], prism_lang));
 				});
 			} else {
 				throw new Error(`Prism language not available: ${prism_lang}`);
 			}
 
 			bench.add(`shiki_js_stylize_${lang}_${size_label}`, () => {
-				shiki_js.codeToHtml(content, { lang: shiki_lang, theme: 'nord' });
+				sink_html(shiki_js.codeToHtml(content, { lang: shiki_lang, theme: 'nord' }));
 			});
 
 			bench.add(`shiki_oniguruma_stylize_${lang}_${size_label}`, () => {
-				shiki_oniguruma.codeToHtml(content, { lang: shiki_lang, theme: 'nord' });
+				sink_html(shiki_oniguruma.codeToHtml(content, { lang: shiki_lang, theme: 'nord' }));
 			});
 		}
 	}
@@ -212,7 +213,9 @@ export const format_comparison_results = (results: Array<BenchmarkResult>): stri
 		'(`<span class="token_x">`) styled by a static stylesheet, while Shiki has no',
 		'native class output and inlines resolved theme colors on every span plus a',
 		'`<pre>` wrapper — so its `stylize` cost includes per-token color work the',
-		'class-based libraries offload to CSS.',
+		'class-based libraries offload to CSS. Each `stylize` call reads one character',
+		'of its result, so a library that returns an unflattened string pays for the',
+		'copy inside the clock, as any consumer of the HTML would.',
 		'',
 		'## Results',
 		'',

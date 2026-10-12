@@ -13,6 +13,7 @@ import { samples as all_samples } from '../src/routes/samples/all.ts';
 import { syntax_styler_global } from '../src/lib/syntax_styler_global.ts';
 import { render_syntax_html, type LexedSyntax } from '../src/lib/lexer.ts';
 import { PATHOLOGICAL_CASES } from '../src/test/pathological.ts';
+import { sink_html } from './html_sink.ts';
 
 /* eslint-disable no-console */
 
@@ -52,7 +53,7 @@ export const run_benchmark = async (filter?: string): Promise<Array<BenchmarkRes
 
 	for (const sample of samples_to_run) {
 		bench.add(`baseline:${sample.name}`, () => {
-			syntax_styler_global.stylize(sample.content, sample.lang);
+			sink_html(syntax_styler_global.stylize(sample.content, sample.lang));
 		});
 	}
 
@@ -70,7 +71,7 @@ export const run_benchmark = async (filter?: string): Promise<Array<BenchmarkRes
 		const large_content = sample.content.repeat(LARGE_CONTENT_MULTIPLIER);
 
 		bench.add(`large:${sample.name}`, () => {
-			syntax_styler_global.stylize(large_content, sample.lang);
+			sink_html(syntax_styler_global.stylize(large_content, sample.lang));
 		});
 	}
 
@@ -86,7 +87,7 @@ export const run_benchmark = async (filter?: string): Promise<Array<BenchmarkRes
 		if (!pathological_matches(c.name, c.lang, filter)) continue;
 		const content = c.generate(PATHOLOGICAL_SIZE);
 		pathological_bench.add(`pathological:${c.name}`, () => {
-			syntax_styler_global.stylize(content, c.lang);
+			sink_html(syntax_styler_global.stylize(content, c.lang));
 		});
 		pathological_count++;
 	}
