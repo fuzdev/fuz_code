@@ -55,6 +55,11 @@ benchmark/                      # performance testing (see Performance)
 ├── benchmarks.ts               # cases, output metrics, markdown writers
 ├── results.md                  # committed internal results
 ├── html_sink.ts                # reads timed HTML so its flatten is on the clock
+├── run_cost_model.ts           # cost model CLI
+├── cost_model.ts               # per-construct costs, floor ratios, time budget
+├── constructs.ts               # the constructs: units of source per language
+├── floor_lexer.ts              # grammar-free lexers, the reference to beat
+├── timing.ts                   # the cost model's deterministic timer
 └── compare/                    # Prism/Shiki comparison
 src/
 ├── lib/
@@ -289,6 +294,8 @@ Generated fixtures in `generated/{ext}/` are named `{ext}_{variant}`, as
 npm run benchmark            # internal benchmark, compared against benchmark/baseline.json
 npm run benchmark:save       # …and write benchmark/results.md + baseline.json
 npm run benchmark:clean      # delete baseline.json (re-seeded on next --save)
+npm run benchmark:cost       # cost model, compared against its own baseline (seconds)
+npm run benchmark:cost:save  # …and save that baseline
 npm run benchmark:vs         # compare against Prism and Shiki (stdout only)
 npm run benchmark:vs:write   # …and overwrite benchmark/compare/results.md
 ```
@@ -301,6 +308,61 @@ HTML bytes per case — DOM-cost proxies, not timed). Every timed `stylize` call
 here and in `:vs`, passes its result to `sink_html` (`benchmark/html_sink.ts`),
 which reads one character so the copy that flattens the string is inside the
 clock.
+
+### Cost model
+
+`npm run benchmark:cost -- [<lang>] [--corpus <dir>]` is the tool for
+iterating on a lexer: a full run takes seconds, one language a second or two.
+The internal benchmark above is the regression gate, and cross-library numbers
+come from the separate syntax-highlighter-bench repo. For each language it
+prints:
+
+- **constructs** - `benchmark/constructs.ts` lists short units of source that
+  each take one path through the lexer (`'const '`, `'a: T = b; '`). Each is
+  repeated into one input and timed: ns per unit and per token, and the ratio
+  to the floor lexer on the same text. Repetition makes every branch
+  predictable, so these are the cheap end of a path's cost; they compare paths
+  with each other and a change with the code before it
+- **samples** - the fixture samples (or every file under `--corpus <dir>`, by
+  extension; a language with many lists only their total): ns per char and per
+  token, the ratio to the floor, and how much of a `stylize` is the renderer
+- **budget** - a census of the samples' tokens times the cost of the construct
+  that prices each kind, as shares of the measured lex time. The remainder is
+  token kinds no construct covers (listed under the table), whitespace and
+  plain text, and what a repeated unit can't show: context and lookahead
+
+A **floor lexer** (`benchmark/floor_lexer.ts`) knows no grammar: one table
+lookup per char, then skip whitespace and identifiers and emit a leaf for
+each number, string, comment, and punctuation run, through the same `Lexer`.
+A real lexer's time over it is what the grammar costs, the part that tuning
+can reach. It is a reference, not a strict bound (a specialized scan can beat
+it on one construct).
+
+`--save` writes `benchmark/cost_model.local.json` (gitignored), one baseline
+per set of cases, and later runs print each case's change against the one for
+the same cases: save and compare with the same arguments. What makes the
+numbers repeat to a few percent, all in `benchmark/timing.ts` and
+`cost_model.ts`:
+
+- batches make a fixed number of calls and nothing is sized by the clock, and
+  the timing processes run V8 with `--single-threaded` and fixed `--hash-seed`
+  and `--random-seed`, so a run compiles the same code at the same points
+  every time. Sized by elapsed time, short repetitive inputs land on one of
+  several levels 20–40% apart
+- a few processes time the cases side by side, pinned to separate cores where
+  the OS allows, and each case takes the median: an occasional process puts a
+  case 10–20% off
+- changes are read relative to the floor lexers' median change, which tracks
+  the machine (a laptop slows a few percent as back-to-back runs warm it).
+  A change to the emitters or helpers in `lexer.ts` moves the floor too, and
+  the last line of a run says how far it moved
+- a case's cost depends on what ran before it in the process: the same
+  construct can time tens of percent apart between a one-language run, a full
+  run, and a corpus run. So a cost is read within a run and against that
+  run's own baseline, and a baseline from another Node version is not used
+
+The scripts run `node` directly, not `gro run`: the entry point starts its
+own timing processes with those V8 flags.
 
 `:vs` is the cross-implementation shootout against Prism and Shiki (JS and
 Oniguruma engines); its languages are fixed at `ts`, `css`, `html`, `json`,
