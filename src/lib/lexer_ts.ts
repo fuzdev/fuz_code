@@ -889,9 +889,11 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 			}
 
 			// SCREAMING_CASE constants, then capitalized identifiers — both
-			// classified before the call lookahead
+			// classified before the call lookahead. A single uppercase letter is
+			// capitalized, not a constant: it is nearly always a type parameter
+			// (`x: T`, `Map<K, V>`), and most type positions lex in value mode
 			if (is_upper(c)) {
-				let all_caps = true;
+				let all_caps = ident_end - start > 1;
 				for (let k = start + 1; k < ident_end; k++) {
 					const cc = text.charCodeAt(k);
 					// `x` only after a digit (hex-ish constants like `A0x`)

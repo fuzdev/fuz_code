@@ -183,6 +183,20 @@ describe('lexer_ts identifiers', () => {
 		]);
 	});
 
+	test('a single uppercase letter is capitalized, not a constant', () => {
+		assert.deepEqual(
+			picked('(x: T): T => x; let m: Map<K, V>; ID', ['constant', 'capitalized_identifier']),
+			[
+				['capitalized_identifier', 'T'],
+				['capitalized_identifier', 'T'],
+				['capitalized_identifier', 'Map'],
+				['capitalized_identifier', 'K'],
+				['capitalized_identifier', 'V'],
+				['constant', 'ID']
+			]
+		);
+	});
+
 	test('function calls and function-valued variables', () => {
 		assert.deepEqual(picked('foo(); const f = (a) => a;', ['function', 'function_variable']), [
 			['function', 'foo'],

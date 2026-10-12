@@ -2,7 +2,7 @@
 Sample length: 2883 characters
 Total tokens: 577
 
-Token types (29 unique):
+Token types (28 unique):
   punctuation: 195
   operator: 90
   keyword: 56
@@ -13,8 +13,8 @@ Token types (29 unique):
   number: 14
   class_name: 11
   comment: 11
+  capitalized_identifier: 10
   interpolation_punctuation: 8
-  capitalized_identifier: 7
   template_punctuation: 6
   boolean: 4
   interpolation: 4
@@ -26,7 +26,6 @@ Token types (29 unique):
   at: 3
   template_string: 3
   type_assertion: 3
-  constant: 3
   type_name: 3
   function_variable: 2
   regex: 2
@@ -459,11 +458,11 @@ Token types (29 unique):
 2009-2015  special_keyword           export
 2016-2017  punctuation               {
 2018-2019  punctuation               ,
-2020-2021  constant                  A
+2020-2021  capitalized_identifier    A
 2021-2022  punctuation               ,
 2024-2025  punctuation               ,
 2027-2028  punctuation               ,
-2029-2030  constant                  D
+2029-2030  capitalized_identifier    D
 2030-2032  punctuation               };
 2047-2049  special_keyword           as
 2050-2057  builtin                   unknown
@@ -488,7 +487,7 @@ Token types (29 unique):
 2151-2157  builtin                   number
 2157-2158  punctuation               ;
 2161-2163  operator                  ?:
-2164-2165  constant                  T
+2164-2165  capitalized_identifier    T
 2165-2166  punctuation               ;
 2167-2168  punctuation               }
 2170-2175  keyword                   const
