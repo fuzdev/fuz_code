@@ -203,7 +203,21 @@ export interface SyntaxLang {
 	 * Must never throw and must always terminate with `lexer.pos === lexer.end`.
 	 */
 	lex: (lexer: Lexer) => void;
+	/**
+	 * Lexes from `lexer.pos` as `lex` does, but stops at the first `}` that closes
+	 * no `{` of the region's own, for a host whose region ends at that brace
+	 * (a Svelte `{expression}`). Returns the brace's index, leaving `lexer.pos`
+	 * there, or `-1` after lexing to `lexer.end` without meeting one. The lexer
+	 * finds the brace as it tokenizes, so a brace in a string, comment, or regex
+	 * doesn't count. Optional: a host falls back to finding the brace itself.
+	 */
+	lex_to_brace?: (lexer: Lexer) => number;
 }
+
+/**
+ * Returned by `Lexer.embed_to_brace` when it lexed nothing.
+ */
+export const EMBED_UNAVAILABLE = -2;
 
 /**
  * The result of lexing: the source text plus its flat event stream.
@@ -354,6 +368,33 @@ export class Lexer {
 		this.end = prev_end;
 		this.#last_leaf = -1;
 		return true;
+	}
+
+	/**
+	 * Lexes an embedded region that starts at `start` and ends at its closing
+	 * `}`, somewhere before `end`, with the language registered under `lang_id`,
+	 * which finds the brace through `SyntaxLang.lex_to_brace`. Returns the
+	 * brace's index, or `-1` when the region ran to `end` without one, or
+	 * `EMBED_UNAVAILABLE` when nothing was lexed: the language is unregistered or
+	 * has no `lex_to_brace`, or nesting is at `MAX_EMBED_DEPTH`.
+	 */
+	embed_to_brace(lang_id: string, start: number, end: number): number {
+		if (start >= end) return EMBED_UNAVAILABLE;
+		if (this.#embed_depth >= MAX_EMBED_DEPTH) return EMBED_UNAVAILABLE;
+		const lex_to_brace = this.langs?.get(lang_id)?.lex_to_brace;
+		if (lex_to_brace === undefined) return EMBED_UNAVAILABLE;
+		const prev_pos = this.pos;
+		const prev_end = this.end;
+		this.pos = start;
+		this.end = end;
+		this.#last_leaf = -1;
+		this.#embed_depth++;
+		const close = lex_to_brace(this);
+		this.#embed_depth--;
+		this.pos = prev_pos;
+		this.end = prev_end;
+		this.#last_leaf = -1;
+		return close;
 	}
 }
 

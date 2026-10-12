@@ -133,7 +133,10 @@ Embedded languages resolve lazily by name through the registry (markdown
 fences → any language; markup `<script>`/`<style>`/`style=`/`on*=`; svelte
 `{…}` → ts) via `Lexer.embed`, which caps nesting at `MAX_EMBED_DEPTH` so the
 one cycle in the embed graph — markdown fences embedding markdown — can't
-overflow the stack; past the cap a region stays plain text.
+overflow the stack; past the cap a region stays plain text. A region that ends
+at a closing brace the host hasn't located (a svelte `{…}`) goes through
+`Lexer.embed_to_brace` instead: the guest's optional `SyntaxLang.lex_to_brace`
+finds the brace as it tokenizes, so the host doesn't scan for it first.
 
 ### Generated files
 
@@ -172,7 +175,9 @@ overflow the stack; past the cap a region stays plain text.
   in a table of words without slicing it and returns the word's integer (a
   kind plus flag bits, `0` for a miss), so a lexer branches on numbers
 - `Lexer` - `text`/`pos`/`end`, the `leaf`/`open`/`close` emitters,
-  `embed(lang_id, start, end)`
+  `embed(lang_id, start, end)`, and `embed_to_brace(lang_id, start, end)`,
+  which returns the closing brace's index, `-1` when unterminated, or
+  `EMBED_UNAVAILABLE`
 - scanning helpers - `is_space`, `is_digit`, `is_upper`, `is_ascii_alnum`,
   `is_ascii_word`, `is_hex_digit`, `is_ident_start`, `is_ident`, `scan_ident`,
   `skip_space`, `trim_space_end`, `scan_to_line_end`, `skip_quoted`,
@@ -233,8 +238,8 @@ As registered in `syntax_styler_global`:
    real scan (a terminator char + depth counter on the frame) — never prescan
    for it: a prescan is a second, dumber tokenizer that can disagree with the
    real one, and it makes full-depth nesting quadratic. Cross-language
-   interiors go through `Lexer.embed`, which is depth-capped rather than
-   framed.
+   interiors go through `Lexer.embed` or `Lexer.embed_to_brace`, which are
+   depth-capped rather than framed.
 5. **Keep hidden classes alive and stable** - V8 embeds the hidden classes of
    objects in optimized code and drops that code when a major GC clears one.
    An object made per `lex` call (`Lexer`, the probe caches) holds a class

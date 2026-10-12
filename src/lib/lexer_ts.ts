@@ -1301,6 +1301,26 @@ const run_ts = (mac: TsMachine): void => {
 // expression, a Markdown fence) doesn't build one; a stack, since embeds nest
 const ts_machines: Array<TsMachine> = [];
 
+/**
+ * Lexes `[from, l.end)` as the root window. A nonzero `term` makes it stop at
+ * the `term` char that closes none of its own openers, and the return value is
+ * that char's index; otherwise, and when the window runs to its end, `-1`.
+ */
+const lex_ts_root = (l: Lexer, from: number, term: number): number => {
+	const mac = ts_machines.pop() ?? { l, cache: create_ts_scan_cache(), stack: [], sp: 0 };
+	mac.l = l;
+	mac.sp = 0;
+	const { cache } = mac;
+	cache.next_eq = cache.next_gt = cache.next_rparen = -1;
+	mac_push_window(mac, from, l.end, false, R_ROOT, -1, 0, term, term === 0 ? 0 : 1);
+	run_ts(mac);
+	const close = mac.stack[0]!.ret_a;
+	// let go of the lexer and its text before pooling
+	mac.l = Lexer.shape_anchor;
+	ts_machines.push(mac);
+	return close;
+};
+
 const lex_ts = (l: Lexer): void => {
 	let i = l.pos;
 	// hashbang at the very start of the document
@@ -1309,17 +1329,15 @@ const lex_ts = (l: Lexer): void => {
 		l.leaf(T_HASHBANG, 0, line_end);
 		i = line_end;
 	}
-	const mac = ts_machines.pop() ?? { l, cache: create_ts_scan_cache(), stack: [], sp: 0 };
-	mac.l = l;
-	mac.sp = 0;
-	const { cache } = mac;
-	cache.next_eq = cache.next_gt = cache.next_rparen = -1;
-	mac_push_window(mac, i, l.end, false, R_ROOT, 0, 0, 0, 0);
-	run_ts(mac);
+	lex_ts_root(l, i, 0);
 	l.pos = l.end;
-	// let go of the lexer and its text before pooling
-	mac.l = Lexer.shape_anchor;
-	ts_machines.push(mac);
+};
+
+// the root window in terminator mode, as a template's `${…}` body runs
+const lex_ts_to_brace = (l: Lexer): number => {
+	const close = lex_ts_root(l, l.pos, 125);
+	l.pos = close === -1 ? l.end : close;
+	return close;
 };
 
 /**
@@ -1334,5 +1352,6 @@ const lex_ts = (l: Lexer): void => {
 export const lexer_ts: SyntaxLang = {
 	id: 'ts',
 	aliases: ['typescript', 'js', 'javascript'],
-	lex: lex_ts
+	lex: lex_ts,
+	lex_to_brace: lex_ts_to_brace
 };

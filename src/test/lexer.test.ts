@@ -12,6 +12,7 @@ import {
 	token_types_global,
 	TokenTypeRegistry,
 	validate_syntax_events,
+	EMBED_UNAVAILABLE,
 	WordIndex,
 	words_map,
 	type LexedSyntax,
@@ -415,5 +416,51 @@ describe('embed', () => {
 			{ type: 'test_container', start: 0, end: 4 },
 			{ type: 'test_b', start: 1, end: 3 }
 		]);
+	});
+});
+
+describe('embed_to_brace', () => {
+	// lexes one leaf up to the first `}`
+	const inner: SyntaxLang = {
+		id: 'test_inner',
+		lex: (l) => {
+			l.pos = l.end;
+		},
+		lex_to_brace: (l) => {
+			const close = l.text.indexOf('}', l.pos);
+			const found = close !== -1 && close < l.end;
+			l.leaf(T_B, l.pos, found ? close : l.end);
+			l.pos = found ? close : l.end;
+			return found ? close : -1;
+		}
+	};
+	const lex_with = (text: string, lang_id: string, langs: Array<SyntaxLang>): Array<number> => {
+		const results: Array<number> = [];
+		const outer: SyntaxLang = {
+			id: 'test_outer',
+			lex: (l) => {
+				results.push(l.embed_to_brace(lang_id, 1, l.end));
+				// the host's window is restored
+				results.push(l.pos, l.end);
+				l.pos = l.end;
+			}
+		};
+		const lexed = lex_syntax(text, outer, new Map(langs.map((lang) => [lang.id, lang])));
+		assert.deepEqual(validate_syntax_events(lexed), []);
+		return results;
+	};
+
+	test('returns the brace the language found', () => {
+		assert.deepEqual(lex_with('{ab}c', 'test_inner', [inner]), [3, 0, 5]);
+	});
+
+	test('returns -1 when the region runs to the end', () => {
+		assert.deepEqual(lex_with('{abc', 'test_inner', [inner]), [-1, 0, 4]);
+	});
+
+	test('lexes nothing for an unregistered language or one without `lex_to_brace`', () => {
+		const plain: SyntaxLang = { id: 'test_plain', lex: inner.lex };
+		assert.deepEqual(lex_with('{ab}', 'test_missing', [inner]), [EMBED_UNAVAILABLE, 0, 4]);
+		assert.deepEqual(lex_with('{ab}', 'test_plain', [plain]), [EMBED_UNAVAILABLE, 0, 4]);
 	});
 });

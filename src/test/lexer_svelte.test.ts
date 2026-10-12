@@ -2,6 +2,8 @@ import { describe, test, assert } from 'vitest';
 import { readFileSync } from 'node:fs';
 
 import { syntax_styler_global } from '#lib/syntax_styler_global.ts';
+import { SyntaxStyler } from '#lib/syntax_styler.ts';
+import { lexer_svelte } from '#lib/lexer_svelte.ts';
 import { syntax_events_to_tokens, validate_syntax_events } from '#lib/lexer.ts';
 
 const tokens_of = (text: string): Array<[string, string]> =>
@@ -62,6 +64,58 @@ describe('lexer_svelte expressions', () => {
 		const tokens = tokens_of(text);
 		assert.deepEqual(tokens[0], ['svelte_expression', text]);
 		assert.deepEqual(tokens.at(-1), ['punctuation', '}']);
+	});
+
+	test('a brace inside a regex or template does not close the expression', () => {
+		for (const text of [
+			'{x && /}/.test(x)}',
+			'{a.replace(/[{}]/g, "")}',
+			'{`a${`}`}b`}',
+			'{@const m = /}/}'
+		]) {
+			const tokens = tokens_of(text + ' {y}');
+			assert.deepEqual(tokens[0], ['svelte_expression', text], text);
+			assert.deepEqual(validate_syntax_events(syntax_styler_global.lex(text, 'svelte')), []);
+		}
+	});
+
+	test('a token ending in whitespace stays inside the ts interior', () => {
+		// the comment keeps its trailing space, so `lang_ts` can't be trimmed past it
+		assert.deepEqual(tokens_of('{a // c \n}'), [
+			['svelte_expression', '{a // c \n}'],
+			['punctuation', '{'],
+			['lang_ts', 'a // c '],
+			['comment', '// c '],
+			['punctuation', '}']
+		]);
+	});
+
+	test('a malformed closing tag stays inside its braces', () => {
+		// `/i}…/` would read as a regex if ts looked for the brace itself
+		assert.deepEqual(picked('{/i}</div>{x}', ['svelte_expression']), [
+			['svelte_expression', '{/i}'],
+			['svelte_expression', '{x}']
+		]);
+		assert.deepEqual(picked('<a b={/c}></a>{x}', ['svelte_expression']), [
+			['svelte_expression', '{/c}'],
+			['svelte_expression', '{x}']
+		]);
+	});
+
+	test('a styler without ts leaves the interior plain and still finds the brace', () => {
+		const styler = new SyntaxStyler();
+		styler.add_lang(lexer_svelte);
+		const text = "{f('}')} {y}";
+		const tokens = syntax_events_to_tokens(styler.lex(text, 'svelte')).map((t) => [
+			t.type,
+			text.slice(t.start, t.end)
+		]);
+		assert.deepEqual(tokens.slice(0, 4), [
+			['svelte_expression', "{f('}')}"],
+			['punctuation', '{'],
+			['lang_ts', "f('}')"],
+			['punctuation', '}']
+		]);
 	});
 
 	test('an unterminated expression extends to the end', () => {
