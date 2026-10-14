@@ -49,7 +49,10 @@ Compared to [Shiki](https://github.com/shikijs/shiki), fuz_code is
 runtime usage: it runs one single-pass lexer per language rather than the
 [Oniguruma regexp engine](https://shiki.matsu.io/guide/regex-engines) that
 TextMate grammars require. Shiki targets build-time use and supports far more
-languages and themes.
+languages and themes. For a fairer comparison that also covers
+[Twinkleplop](https://twinkleplop.pngwn.at/), see
+[syntax-highlighter-bench](https://syntax-highlighter-bench.ryanatkn.com/)
+([repo](https://github.com/ryanatkn/syntax-highlighter-bench)).
 
 ## Usage
 

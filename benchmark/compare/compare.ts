@@ -217,6 +217,11 @@ export const format_comparison_results = (results: Array<BenchmarkResult>): stri
 		'of its result, so a library that returns an unflattened string pays for the',
 		'copy inside the clock, as any consumer of the HTML would.',
 		'',
+		'These results come from this repo, which is not neutral. For a fairer comparison that',
+		'also covers [Twinkleplop](https://twinkleplop.pngwn.at/), see',
+		'[syntax-highlighter-bench](https://syntax-highlighter-bench.ryanatkn.com/)',
+		'([repo](https://github.com/ryanatkn/syntax-highlighter-bench)).',
+		'',
 		'## Results',
 		'',
 		benchmark_format_markdown_grouped(results, groups)

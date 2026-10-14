@@ -329,7 +329,9 @@ clock.
 `npm run benchmark:cost -- [<lang>] [--corpus <dir>]` is the tool for
 iterating on a lexer: a full run takes seconds, one language a second or two.
 The internal benchmark above is the regression gate, and cross-library numbers
-come from the separate syntax-highlighter-bench repo. For each language it
+come from the separate
+[syntax-highlighter-bench](https://github.com/ryanatkn/syntax-highlighter-bench)
+repo ([site](https://syntax-highlighter-bench.ryanatkn.com/)). For each language it
 prints:
 
 - **constructs** - `benchmark/constructs.ts` lists short units of source that

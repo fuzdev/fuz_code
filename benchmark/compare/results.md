@@ -8,7 +8,14 @@ library actually ships: fuz_code and Prism emit CSS-class spans
 (`<span class="token_x">`) styled by a static stylesheet, while Shiki has no
 native class output and inlines resolved theme colors on every span plus a
 `<pre>` wrapper — so its `stylize` cost includes per-token color work the
-class-based libraries offload to CSS.
+class-based libraries offload to CSS. Each `stylize` call reads one character
+of its result, so a library that returns an unflattened string pays for the
+copy inside the clock, as any consumer of the HTML would.
+
+These results come from this repo, which is not neutral. For a fairer comparison that
+also covers [Twinkleplop](https://twinkleplop.pngwn.at/), see
+[syntax-highlighter-bench](https://syntax-highlighter-bench.ryanatkn.com/)
+([repo](https://github.com/ryanatkn/syntax-highlighter-bench)).
 
 ## Results
 

@@ -12,6 +12,8 @@
 	const tome = tome_get_by_slug(TOME_SLUG);
 
 	const RESULTS_URL = 'https://github.com/fuzdev/fuz_code/blob/main/benchmark/compare/results.md';
+	const BENCH_URL = 'https://syntax-highlighter-bench.ryanatkn.com/';
+	const BENCH_REPO_URL = 'https://github.com/ryanatkn/syntax-highlighter-bench';
 
 	// representative end-to-end `stylize` speedups on larger (100×) inputs, rounded
 	// from the committed comparison results and measured against the faster of
@@ -129,6 +131,12 @@
 				the full matrix across engines and sizes, plus tokenize-only rows that compare the raw
 				lexers without HTML generation.
 			</small>
+		</p>
+		<p>
+			These numbers come from fuz_code's own repo. For a fairer comparison that also covers
+			<a href="https://twinkleplop.pngwn.at/">Twinkleplop</a>, see
+			<a href={BENCH_URL}>syntax-highlighter-bench</a> (<a href={BENCH_REPO_URL}>repo</a>), which
+			also measures bundle size, memory, and cold start.
 		</p>
 	</TomeSection>
 	<TomeSection>
