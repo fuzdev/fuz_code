@@ -137,6 +137,6 @@
 		overflow: hidden;
 		pointer-events: none;
 		z-index: 100;
-		background-color: var(--fg_05);
+		background-color: var(--ink_05);
 	}
 </style>

@@ -319,13 +319,13 @@
 		padding: var(--space_xs);
 	}
 	.perf-row.anchor {
-		background-color: var(--fg_05);
-		box-shadow: inset var(--border_width_3) 0 0 var(--fg_50);
+		background-color: var(--ink_05);
+		box-shadow: inset var(--border_width_3) 0 0 var(--ink_50);
 	}
 	.perf-track {
 		height: 1.2rem;
 		border-radius: var(--border_radius_xs);
-		background: var(--fg_05);
+		background: var(--ink_05);
 	}
 	.perf-fill {
 		height: 100%;
