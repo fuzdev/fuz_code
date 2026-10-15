@@ -208,4 +208,4 @@ with the Svelte support originally based on
 [`prism-svelte`](https://github.com/pngwn/prism-svelte) by
 [@pngwn](https://github.com/pngwn).
 
-[MIT](LICENSE)
+[0BSD](LICENSE)
