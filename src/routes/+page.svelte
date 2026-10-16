@@ -37,7 +37,9 @@
 				typed array, for high performance. The flat token stream is an idea borrowed from
 				<a href="https://pngwn.at/">pngwn</a>, the author of
 				<a href="https://twinkleplop.pngwn.at/">Twinkleplop</a> (a featureful alternative to
-				fuz_code).
+				fuz_code). See
+				<a href="https://syntax-highlighter-bench.ryanatkn.com/">syntax-highlighter-bench</a> to
+				compare them with Prism and Shiki.
 			</p>
 		</section>
 		<section class="box width:100%">
