@@ -82,7 +82,8 @@
 		<p>
 			fuz_code is optimized for <em>runtime</em> syntax styling. This page compares it with Prism
 			and Shiki, measures its two renderers in the browser, and lists the benchmarks that run from a
-			checkout.
+			checkout. For a neutral comparison across more libraries, see
+			<a href={BENCH_URL}>syntax-highlighter-bench</a>.
 		</p>
 		<p>
 			<a href="https://github.com/shikijs/shiki">Shiki</a> targets build-time use and runs the
