@@ -59,8 +59,7 @@ benchmark/                      # performance testing (see Performance)
 ├── cost_model.ts               # per-construct costs, floor ratios, time budget
 ├── constructs.ts               # the constructs: units of source per language
 ├── floor_lexer.ts              # grammar-free lexers, the reference to beat
-├── timing.ts                   # the cost model's deterministic timer
-└── compare/                    # Prism/Shiki comparison
+└── timing.ts                   # the cost model's deterministic timer
 src/
 ├── lib/
 │   ├── syntax_styler.ts        # SyntaxStyler: registry + lex/stylize facade
@@ -311,18 +310,15 @@ npm run benchmark:save       # …and write benchmark/results.md + baseline.json
 npm run benchmark:clean      # delete baseline.json (re-seeded on next --save)
 npm run benchmark:cost       # cost model, compared against its own baseline (seconds)
 npm run benchmark:cost:save  # …and save that baseline
-npm run benchmark:vs         # compare against Prism and Shiki (stdout only)
-npm run benchmark:vs:write   # …and overwrite benchmark/compare/results.md
 ```
 
 The internal benchmark covers every sample at normal and 100x sizes, plus a
 `pathological:` group (32KB adversarial inputs from `src/test/pathological.ts`,
 the same generators behind the linearity suite) that tracks worst-case
 constants. Each run also prints deterministic output metrics (spans and utf8
-HTML bytes per case — DOM-cost proxies, not timed). Every timed `stylize` call,
-here and in `:vs`, passes its result to `sink_html` (`benchmark/html_sink.ts`),
-which reads one character so the copy that flattens the string is inside the
-clock.
+HTML bytes per case — DOM-cost proxies, not timed). Every timed `stylize` call
+passes its result to `sink_html` (`benchmark/html_sink.ts`), which reads one
+character so the copy that flattens the string is inside the clock.
 
 ### Cost model
 
@@ -381,15 +377,14 @@ numbers repeat to a few percent, all in `benchmark/timing.ts` and
 The scripts run `node` directly, not `gro run`: the entry point starts its
 own timing processes with those V8 flags.
 
-`:vs` is the cross-implementation shootout against Prism and Shiki (JS and
-Oniguruma engines); its languages are fixed at `ts`, `css`, `html`, `json`,
-`svelte` by `supported_languages` in `benchmark/compare/compare.ts`.
+Comparisons with other libraries (Prism, Shiki, Twinkleplop) live in
+syntax-highlighter-bench, which times each library in its own process on a
+neutral corpus. Its results back the speed claims in the README and on the
+benchmark docs page, whose figures are copied from a bench run along with
+that run's versions, date, and machine.
 
 Result files:
 
-- `benchmark/compare/results.md` - backs the README's "about two orders of
-  magnitude faster" claim vs Shiki, so it's load-bearing; `:vs:write`
-  regenerates it entirely
 - `benchmark/results.md` - `--save` rewrites only the region between
   `<!-- node-bench:start -->` and `<!-- node-bench:end -->` (it errors if the
   sentinels are missing). The `## Browser Benchmark Results` section is

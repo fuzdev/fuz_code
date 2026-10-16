@@ -26,7 +26,7 @@ export interface BenchmarkedImplementation {
 export interface StabilityCheck {
 	is_stable: boolean;
 	lag: number;
-	memory_pressure?: number;
+	memory_pressure: number;
 	jitter: number;
 }
 
@@ -46,7 +46,6 @@ export interface MeasurementData {
 	/** Per-iteration paint-settled time — work plus the frames until pixels update (ms). */
 	paint_ms: Array<number>;
 	stability_checks: Array<StabilityCheck>;
-	timestamps: Array<number>;
 }
 
 /**
@@ -74,8 +73,8 @@ export interface BenchmarkResult {
 }
 
 export interface SummaryStats {
-	avg_mean: number;
-	avg_ops: number;
+	geomean_ms: number;
+	geomean_ops: number;
 	avg_cv: number;
 	languages: number;
 	relative_speed?: number;

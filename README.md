@@ -44,15 +44,16 @@ Optional integrations:
   to the user's `color-scheme` — without fuz_css, import
   [theme_variables.css](src/lib/theme_variables.css)
 
-Compared to [Shiki](https://github.com/shikijs/shiki), fuz_code is
-[about two orders of magnitude faster](./benchmark/compare/results.md) for
-runtime usage: it runs one single-pass lexer per language rather than the
+Compared to [Shiki](https://github.com/shikijs/shiki), fuz_code is one to two
+orders of magnitude faster for runtime usage, about 60x at the geometric mean
+across languages in
+[syntax-highlighter-bench](https://syntax-highlighter-bench.ryanatkn.com/)
+([repo](https://github.com/ryanatkn/syntax-highlighter-bench)), which also
+covers Prism and [Twinkleplop](https://twinkleplop.pngwn.at/). fuz_code runs one
+single-pass lexer per language rather than the
 [Oniguruma regexp engine](https://shiki.matsu.io/guide/regex-engines) that
 TextMate grammars require. Shiki targets build-time use and supports far more
-languages and themes. For a fairer comparison that also covers
-[Twinkleplop](https://twinkleplop.pngwn.at/), see
-[syntax-highlighter-bench](https://syntax-highlighter-bench.ryanatkn.com/)
-([repo](https://github.com/ryanatkn/syntax-highlighter-bench)).
+languages and themes.
 
 ## Usage
 

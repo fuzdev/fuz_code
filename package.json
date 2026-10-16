@@ -28,8 +28,6 @@
     "benchmark:clean": "rm -f benchmark/baseline.json",
     "benchmark:cost": "node benchmark/run_cost_model.ts",
     "benchmark:cost:save": "node benchmark/run_cost_model.ts --save",
-    "benchmark:vs": "gro run benchmark/compare/run_compare.ts",
-    "benchmark:vs:write": "gro run benchmark/compare/run_compare.ts --write",
     "fixtures:update": "gro src/test/fixtures/update"
   },
   "type": "module",

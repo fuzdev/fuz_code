@@ -38,12 +38,12 @@
 				<div>
 					<h3>{impl}</h3>
 					<div>
-						<strong>{fmt(stats.avg_mean)}ms</strong>
-						<span>avg time</span>
+						<strong>{fmt(stats.geomean_ms)}ms</strong>
+						<span>geomean time</span>
 					</div>
 					<div>
-						<strong>{fmt(stats.avg_ops, 0)}</strong>
-						<span>ops/sec</span>
+						<strong>{fmt(stats.geomean_ops, 0)}</strong>
+						<span>geomean ops/sec</span>
 					</div>
 					<div>
 						<strong>{fmt(stats.avg_cv * 100, 1)}%</strong>
