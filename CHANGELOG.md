@@ -1,5 +1,11 @@
 # @fuzdev/fuz_code
 
+## 0.54.0
+
+### Minor Changes
+
+- chore: upgrade fuz_css 0.70.0 and fuz_util 0.77.0 ([17dce1b](https://github.com/fuzdev/fuz_code/commit/17dce1b))
+
 ## 0.53.0
 
 ### Minor Changes
