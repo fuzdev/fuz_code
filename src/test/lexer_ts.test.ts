@@ -384,6 +384,49 @@ describe('lexer_ts type syntax', () => {
 	test('object literal colons are not annotations', () => {
 		assert.deepEqual(picked('const o = {a: b};', ['type_annotation']), []);
 	});
+
+	test('an annotation colon is an operator', () => {
+		const tokens = tokens_of('const x: T = y; f(a?: U) {}');
+		assert.deepEqual(
+			tokens.filter(([, text]) => text === ':').map(([type]) => type),
+			['operator', 'operator']
+		);
+	});
+
+	test('bigint is a builtin type', () => {
+		assert.deepEqual(picked('let a: number | bigint;', ['builtin']), [
+			['builtin', 'number'],
+			['builtin', 'bigint']
+		]);
+	});
+});
+
+describe('lexer_ts module renames', () => {
+	test('an `as` that renames a binding is not a type assertion', () => {
+		for (const text of [
+			"import {a as B, c as d} from 'x';",
+			"import * as ns from 'x';",
+			"import D, {a as B} from 'x';",
+			"import type {A as B} from 'x';",
+			'export {a as B, c as default};',
+			"export * as ns from 'x';",
+			"export type * as ns from 'x';"
+		]) {
+			assert.deepEqual(picked(text, ['type_assertion']), [], text);
+		}
+	});
+
+	test('`as` outside a specifier list still asserts', () => {
+		for (const text of [
+			'const x = y as Foo;',
+			'export const o = {a: b as Foo};',
+			'export default {a: b as Foo};',
+			"import x from 'y'; const z = {a: q as Foo};",
+			'const r = a * b as Foo;'
+		]) {
+			assert.deepEqual(picked(text, ['type_assertion']), [['type_assertion', 'Foo']], text);
+		}
+	});
 });
 
 describe('lexer_ts decorators and misc', () => {

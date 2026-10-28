@@ -2,13 +2,13 @@
 Sample length: 2799 characters
 Total tokens: 535
 
-Token types (51 unique):
+Token types (50 unique):
   punctuation: 223
   tag: 56
   code_fence: 34
   heading: 23
+  operator: 22
   fenced_code: 17
-  operator: 15
   keyword: 12
   list: 9
   bold: 7
@@ -17,7 +17,6 @@ Token types (51 unique):
   content: 7
   lang_ts: 7
   type_annotation: 7
-  :: 7
   type: 7
   builtin: 7
   number: 7
@@ -143,17 +142,17 @@ Token types (51 unique):
  733-736   function                  add
  736-737   punctuation               (
  738-746   type_annotation           : number
- 738-739   :                         :
+ 738-739   operator                  :
  740-746   type                      number
  740-746   builtin                   number
  746-747   punctuation               ,
  749-757   type_annotation           : number
- 749-750   :                         :
+ 749-750   operator                  :
  751-757   type                      number
  751-757   builtin                   number
  757-758   punctuation               )
  758-766   type_annotation           : number
- 758-759   :                         :
+ 758-759   operator                  :
  760-766   type                      number
  760-766   builtin                   number
  767-768   punctuation               {
@@ -171,19 +170,19 @@ Token types (51 unique):
  856-860   class_name                User
  861-862   punctuation               {
  868-876   type_annotation           : string
- 868-869   :                         :
+ 868-869   operator                  :
  870-876   type                      string
  870-876   builtin                   string
  876-877   punctuation               ;
  882-890   type_annotation           : number
- 882-883   :                         :
+ 882-883   operator                  :
  884-890   type                      number
  884-890   builtin                   number
  890-891   punctuation               ;
  892-893   punctuation               }
  895-900   keyword                   const
  905-911   type_annotation           : User
- 905-906   :                         :
+ 905-906   operator                  :
  907-911   type                      User
  907-911   type_name                 User
  912-913   operator                  =
@@ -358,7 +357,7 @@ Token types (51 unique):
 1514-1581  lang_ts                   \n\tlet count: number = $state(0);\n\tconst increment = () => count++;\n
 1516-1519  keyword                   let
 1525-1533  type_annotation           : number
-1525-1526  :                         :
+1525-1526  operator                  :
 1527-1533  type                      number
 1527-1533  builtin                   number
 1534-1535  operator                  =

@@ -84,7 +84,6 @@ const T_DECORATOR = token_type('decorator');
 const T_AT = token_type('at', 'operator');
 const T_DECORATOR_NAME = token_type('function', 'decorator_name');
 const T_TYPE_ANNOTATION = token_type('type_annotation');
-const T_COLON = token_type(':');
 const T_TYPE = token_type('type');
 
 // word classification kinds
@@ -142,7 +141,10 @@ for (const [flag, words] of [
 	[F_AS, 'as satisfies'],
 	[F_IMPORT, 'import export'],
 	[F_VALUE, 'this super null undefined'],
-	[F_BUILTIN, 'Array Function Promise any boolean console never number string symbol unknown'],
+	[
+		F_BUILTIN,
+		'Array Function Promise any bigint boolean console never number string symbol unknown'
+	],
 	[F_BLOCK_INTRO, 'else try finally do'],
 	[F_CASE, 'case default'],
 	[F_CLASS_BODY, 'class interface'],
@@ -169,6 +171,7 @@ const L_OBJECT = 1;
 const L_PAREN = 2;
 const L_ARRAY = 3;
 const L_CLASS = 4;
+const L_MODULE = 5; // an `import {…}`/`export {…}` specifier list
 const L_KIND_MASK = 7;
 const L_TERNARY = 8;
 
@@ -428,6 +431,18 @@ const is_function_variable = (
 		return text.charCodeAt(k) === 61 && text.charCodeAt(k + 1) === 62;
 	}
 	return false;
+};
+
+/**
+ * Whether the `as` at `as_start` renames a module binding rather than asserting
+ * a type: it sits in an `import {…}`/`export {…}` specifier list, or follows the
+ * `*` of `import * as ns`/`export * as ns`, which no expression can.
+ */
+const is_module_rename = (text: string, as_start: number, level: number): boolean => {
+	if ((level & L_KIND_MASK) === L_MODULE) return true;
+	let before = as_start - 1;
+	while (before >= 0 && is_space(text.charCodeAt(before))) before--;
+	return text.charCodeAt(before) === 42;
 };
 
 /**
@@ -872,6 +887,10 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 			prev = P_VALUE;
 			prev_code = 0;
 			i = ident_end;
+			// `import a, {…}`: a default binding before a specifier list
+			if (was_import_ctx && !was_dot && text.charCodeAt(skip_space(text, ident_end, to)) === 44) {
+				import_ctx = true;
+			}
 
 			const word = c === 35 ? 0 : WORD_INDEX.find(text, start, ident_end);
 			const kind = was_dot ? 0 : word & KIND_MASK;
@@ -973,6 +992,7 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 						// import/export modifier, not a type-alias declaration
 						if (was_import_ctx && (n === 123 || n === 42)) {
 							l.leaf(T_IMPORT_TYPE_KEYWORD, start, ident_end);
+							import_ctx = true;
 							continue;
 						}
 						if (n === 123 || n === 42 || is_ident_start(n)) {
@@ -999,7 +1019,10 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 					l.leaf(keyword_id, start, ident_end);
 					if ((word & F_CTX) !== 0) {
 						if ((word & F_CLASS_CTX) !== 0) class_ctx = true;
-						if ((word & F_AS) !== 0) as_ctx = true;
+						// `as` renames in a specifier list or after `* as`, never asserts
+						if ((word & F_AS) !== 0 && !is_module_rename(text, start, levels[level_sp]!)) {
+							as_ctx = true;
+						}
 						if ((word & F_IMPORT) !== 0) import_ctx = true;
 						if ((word & F_BLOCK_INTRO) !== 0) prev_code = PC_BLOCK_INTRO;
 						if ((word & F_CASE) !== 0) frame.flags |= FF_CASE;
@@ -1299,7 +1322,7 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 						t !== 58
 					) {
 						l.open(T_TYPE_ANNOTATION, i);
-						l.leaf(T_COLON, i, i + 1);
+						l.leaf(T_OPERATOR, i, i + 1);
 						l.open(T_TYPE, type_start);
 						// a type that is one name and then its end (`x: T,`, `): void {`)
 						// needs no window: the name is the only token one would emit
@@ -1385,6 +1408,8 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 					if (c === 123) {
 						if ((frame.flags & FF_CLASS_BODY) !== 0) {
 							level_kind = L_CLASS;
+						} else if (import_ctx) {
+							level_kind = L_MODULE;
 						} else if (
 							prev === P_NONE &&
 							prev_code !== 59 &&
@@ -1454,7 +1479,9 @@ const run_ts_window = (mac: TsMachine, frame: TsFrame): boolean => {
 			prev = c === 41 || c === 93 ? P_VALUE : P_NONE;
 			prev_code = c;
 			i++;
-			class_ctx = as_ctx = import_ctx = false;
+			// `import a, {…}`: the default binding's comma keeps the import context
+			import_ctx = c === 44 && import_ctx;
+			class_ctx = as_ctx = false;
 			continue;
 		}
 

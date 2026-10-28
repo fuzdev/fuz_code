@@ -2,10 +2,10 @@
 Sample length: 2517 characters
 Total tokens: 696
 
-Token types (40 unique):
+Token types (39 unique):
   punctuation: 303
   tag: 78
-  operator: 32
+  operator: 41
   lang_ts: 28
   svelte_expression: 28
   function: 24
@@ -17,7 +17,6 @@ Token types (40 unique):
   comment: 10
   builtin: 10
   type_annotation: 9
-  :: 9
   type: 9
   property: 8
   block: 7
@@ -104,7 +103,7 @@ Token types (40 unique):
  250-251   punctuation               ,
  253-254   punctuation               }
  254-354   type_annotation           : {\n\t\tthing: Record<string, any>;\n\t\tbound?: boolean;\n\t\tchildren: Snippet;\n\t\tonclick?: () => void;\n\t}
- 254-255   :                         :
+ 254-255   operator                  :
  256-354   type                      {\n\t\tthing: Record<string, any>;\n\t\tbound?: boolean;\n\t\tchildren: Snippet;\n\t\tonclick?: () => void;\n\t}
  256-257   punctuation               {
  265-266   operator                  :
@@ -151,7 +150,7 @@ Token types (40 unique):
  461-462   punctuation               ;
  465-468   keyword                   let
  470-479   type_annotation           : boolean
- 470-471   :                         :
+ 470-471   operator                  :
  472-479   type                      boolean
  472-479   builtin                   boolean
  480-481   operator                  =
@@ -165,12 +164,12 @@ Token types (40 unique):
  510-511   operator                  =
  512-513   punctuation               (
  514-519   type_annotation           : any
- 514-515   :                         :
+ 514-515   operator                  :
  516-519   type                      any
  516-519   builtin                   any
  519-520   punctuation               )
  520-525   type_annotation           : any
- 520-521   :                         :
+ 520-521   operator                  :
  522-525   type                      any
  522-525   builtin                   any
  526-528   operator                  =>
@@ -180,12 +179,12 @@ Token types (40 unique):
  551-552   operator                  =
  553-554   punctuation               (
  557-565   type_annotation           : string
- 557-558   :                         :
+ 557-558   operator                  :
  559-565   type                      string
  559-565   builtin                   string
  565-566   punctuation               ,
  570-578   type_annotation           : number
- 570-571   :                         :
+ 570-571   operator                  :
  572-578   type                      number
  572-578   builtin                   number
  578-579   punctuation               )
@@ -194,7 +193,7 @@ Token types (40 unique):
  587-593   special_keyword           return
  594-595   punctuation               (
  597-610   type_annotation           : HTMLElement
- 597-598   :                         :
+ 597-598   operator                  :
  599-610   type                      HTMLElement
  599-610   type_name                 HTMLElement
  610-611   punctuation               )
@@ -213,7 +212,7 @@ Token types (40 unique):
  680-683   punctuation               ]);
  685-688   keyword                   let
  700-713   type_annotation           : HTMLElement
- 700-701   :                         :
+ 700-701   operator                  :
  702-713   type                      HTMLElement
  702-713   type_name                 HTMLElement
  713-714   punctuation               ;
@@ -501,7 +500,7 @@ Token types (40 unique):
 1550-1560  function                  my_snippet
 1560-1561  punctuation               (
 1562-1570  type_annotation           : string
-1562-1563  :                         :
+1562-1563  operator                  :
 1564-1570  type                      string
 1564-1570  builtin                   string
 1570-1571  punctuation               )

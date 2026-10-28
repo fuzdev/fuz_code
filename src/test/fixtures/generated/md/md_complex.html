@@ -48,7 +48,7 @@ This is a <span class="token_link"><span class="token_link_text_wrapper"><span c
 <span class="token_heading"><span class="token_punctuation token_heading_punctuation">###</span> TypeScript</span>
 
 <span class="token_fenced_code"><span class="token_code_fence token_punctuation">```ts</span><span class="token_lang_ts">
-<span class="token_keyword">function</span> <span class="token_function">add</span><span class="token_punctuation">(</span>a<span class="token_type_annotation"><span class="token_:">:</span> <span class="token_type"><span class="token_builtin">number</span></span></span><span class="token_punctuation">,</span> b<span class="token_type_annotation"><span class="token_:">:</span> <span class="token_type"><span class="token_builtin">number</span></span></span><span class="token_punctuation">)</span><span class="token_type_annotation"><span class="token_:">:</span> <span class="token_type"><span class="token_builtin">number</span></span></span> <span class="token_punctuation">{</span>
+<span class="token_keyword">function</span> <span class="token_function">add</span><span class="token_punctuation">(</span>a<span class="token_type_annotation"><span class="token_operator">:</span> <span class="token_type"><span class="token_builtin">number</span></span></span><span class="token_punctuation">,</span> b<span class="token_type_annotation"><span class="token_operator">:</span> <span class="token_type"><span class="token_builtin">number</span></span></span><span class="token_punctuation">)</span><span class="token_type_annotation"><span class="token_operator">:</span> <span class="token_type"><span class="token_builtin">number</span></span></span> <span class="token_punctuation">{</span>
 	<span class="token_special_keyword">return</span> a <span class="token_operator">+</span> b<span class="token_punctuation">;</span>
 <span class="token_punctuation">}</span>
 </span><span class="token_code_fence token_punctuation">```</span></span>
@@ -57,11 +57,11 @@ This is a <span class="token_link"><span class="token_link_text_wrapper"><span c
 
 <span class="token_fenced_code"><span class="token_code_fence token_punctuation">```typescript</span><span class="token_lang_ts">
 <span class="token_keyword">interface</span> <span class="token_class_name">User</span> <span class="token_punctuation">{</span>
-	name<span class="token_type_annotation"><span class="token_:">:</span> <span class="token_type"><span class="token_builtin">string</span></span></span><span class="token_punctuation">;</span>
-	age<span class="token_type_annotation"><span class="token_:">:</span> <span class="token_type"><span class="token_builtin">number</span></span></span><span class="token_punctuation">;</span>
+	name<span class="token_type_annotation"><span class="token_operator">:</span> <span class="token_type"><span class="token_builtin">string</span></span></span><span class="token_punctuation">;</span>
+	age<span class="token_type_annotation"><span class="token_operator">:</span> <span class="token_type"><span class="token_builtin">number</span></span></span><span class="token_punctuation">;</span>
 <span class="token_punctuation">}</span>
 
-<span class="token_keyword">const</span> user<span class="token_type_annotation"><span class="token_:">:</span> <span class="token_type"><span class="token_type_name token_class_name">User</span></span></span> <span class="token_operator">=</span> <span class="token_punctuation">{</span>name<span class="token_operator">:</span> <span class="token_string">'Alice'</span><span class="token_punctuation">,</span> age<span class="token_operator">:</span> <span class="token_number">30</span><span class="token_punctuation">};</span>
+<span class="token_keyword">const</span> user<span class="token_type_annotation"><span class="token_operator">:</span> <span class="token_type"><span class="token_type_name token_class_name">User</span></span></span> <span class="token_operator">=</span> <span class="token_punctuation">{</span>name<span class="token_operator">:</span> <span class="token_string">'Alice'</span><span class="token_punctuation">,</span> age<span class="token_operator">:</span> <span class="token_number">30</span><span class="token_punctuation">};</span>
 </span><span class="token_code_fence token_punctuation">```</span></span>
 
 <span class="token_heading"><span class="token_punctuation token_heading_punctuation">###</span> JS</span>
@@ -122,7 +122,7 @@ This is a <span class="token_link"><span class="token_link_text_wrapper"><span c
 
 <span class="token_fenced_code"><span class="token_code_fence token_punctuation">```svelte</span><span class="token_lang_svelte">
 <span class="token_tag"><span class="token_tag"><span class="token_punctuation token_tag_punctuation">&lt;</span>script</span> <span class="token_attr_name">lang</span><span class="token_attr_value"><span class="token_punctuation token_attr_equals">=</span><span class="token_punctuation token_attr_quote">"</span>ts<span class="token_punctuation token_attr_quote">"</span></span><span class="token_punctuation token_tag_punctuation">></span></span><span class="token_script"><span class="token_lang_ts">
-	<span class="token_keyword">let</span> count<span class="token_type_annotation"><span class="token_:">:</span> <span class="token_type"><span class="token_builtin">number</span></span></span> <span class="token_operator">=</span> <span class="token_function">$state</span><span class="token_punctuation">(</span><span class="token_number">0</span><span class="token_punctuation">);</span>
+	<span class="token_keyword">let</span> count<span class="token_type_annotation"><span class="token_operator">:</span> <span class="token_type"><span class="token_builtin">number</span></span></span> <span class="token_operator">=</span> <span class="token_function">$state</span><span class="token_punctuation">(</span><span class="token_number">0</span><span class="token_punctuation">);</span>
 	<span class="token_keyword">const</span> <span class="token_function_variable token_function">increment</span> <span class="token_operator">=</span> <span class="token_punctuation">()</span> <span class="token_operator">=></span> count<span class="token_operator">++</span><span class="token_punctuation">;</span>
 </span></span><span class="token_tag"><span class="token_tag"><span class="token_punctuation token_tag_punctuation">&lt;/</span>script</span><span class="token_punctuation token_tag_punctuation">></span></span>
 
