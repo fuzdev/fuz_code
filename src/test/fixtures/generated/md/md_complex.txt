@@ -1,6 +1,6 @@
 === STATS ===
 Sample length: 2799 characters
-Total tokens: 535
+Total tokens: 538
 
 Token types (50 unique):
   punctuation: 223
@@ -10,6 +10,7 @@ Token types (50 unique):
   operator: 22
   fenced_code: 17
   keyword: 12
+  number: 10
   list: 9
   bold: 7
   italic: 7
@@ -19,7 +20,6 @@ Token types (50 unique):
   type_annotation: 7
   type: 7
   builtin: 7
-  number: 7
   attr_name: 7
   property: 6
   attr_value: 6
@@ -236,6 +236,7 @@ Token types (50 unique):
 1129-1130  punctuation               ;
 1132-1141  property                  font-size
 1141-1142  punctuation               :
+1143-1147  number                    14px
 1147-1148  punctuation               ;
 1149-1150  punctuation               }
 1151-1154  code_fence                ```
@@ -410,6 +411,8 @@ Token types (50 unique):
 1678-1679  punctuation               {
 1682-1689  property                  padding
 1689-1690  punctuation               :
+1691-1694  number                    8px
+1695-1699  number                    16px
 1699-1700  punctuation               ;
 1702-1703  punctuation               }
 1704-1712  tag                       </style>

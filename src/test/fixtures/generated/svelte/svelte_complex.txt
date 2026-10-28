@@ -1,6 +1,6 @@
 === STATS ===
 Sample length: 2517 characters
-Total tokens: 696
+Total tokens: 705
 
 Token types (39 unique):
   punctuation: 303
@@ -13,6 +13,7 @@ Token types (39 unique):
   attr_value: 16
   special_keyword: 15
   keyword: 15
+  number: 15
   string: 12
   comment: 10
   builtin: 10
@@ -21,7 +22,6 @@ Token types (39 unique):
   property: 8
   block: 7
   selector: 7
-  number: 6
   at_directive: 6
   at_keyword: 6
   capitalized_identifier: 4
@@ -691,17 +691,25 @@ Token types (39 unique):
 2171-2172  punctuation               {
 2175-2184  property                  font-size
 2184-2185  punctuation               :
+2186-2190  number                    16px
 2190-2191  punctuation               ;
 2193-2194  punctuation               }
 2197-2198  selector                  p
 2199-2200  punctuation               {
 2203-2213  property                  box-shadow
 2213-2214  punctuation               :
+2215-2216  number                    0
+2217-2218  number                    0
+2219-2223  number                    10px
 2224-2228  function                  rgba
 2228-2229  punctuation               (
+2229-2230  number                    0
 2230-2231  punctuation               ,
+2232-2233  number                    0
 2233-2234  punctuation               ,
+2235-2236  number                    0
 2236-2237  punctuation               ,
+2238-2241  number                    0.1
 2241-2243  punctuation               );
 2245-2246  punctuation               }
 2249-2262  comment                   /* comment */
@@ -717,6 +725,7 @@ Token types (39 unique):
 2351-2352  punctuation               (
 2352-2361  property                  max-width
 2361-2362  punctuation               :
+2363-2368  number                    600px
 2368-2369  punctuation               )
 2370-2371  punctuation               {
 2374-2387  selector                  :global(body)

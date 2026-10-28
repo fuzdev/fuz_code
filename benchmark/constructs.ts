@@ -91,6 +91,7 @@ export const constructs: Record<string, Array<Construct>> = {
 	css: [
 		{ name: 'declaration', unit: 'color: red;\n', kind: 'property' },
 		{ name: 'declaration, function', unit: 'width: calc(1px + 2em);\n' },
+		{ name: 'declaration, number', unit: 'width: 12px;\n', kind: 'number', minus: ['declaration'] },
 		{ name: 'rule', unit: '.abc {}\n', kind: 'selector' },
 		{ name: 'rule, compound selector', unit: 'a.b > c:hover, d[e] {}\n' },
 		{ name: 'comment', unit: `/* ${LINE_OF_PROSE} */\n`, kind: 'comment', per_char: true },
