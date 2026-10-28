@@ -1,5 +1,13 @@
 # @fuzdev/fuz_code
 
+## 0.55.0
+
+### Minor Changes
+
+- feat: style CSS numbers with their units as `number` and `#hex` colors as `color` (aliased to `number`) in declaration values and at-rule preludes ([9ab09ee](https://github.com/fuzdev/fuz_code/commit/9ab09ee))
+- fix: style the TS type-annotation colon as `operator` (was the unstylable `token_:`), stop styling `import`/`export` renames (`a as B`, `* as ns`) as type assertions, and style `bigint` as a builtin ([b63ae4d](https://github.com/fuzdev/fuz_code/commit/b63ae4d))
+- chore: upgrade fuz_css 0.71.1 and fuz_util 0.78.0 ([414abd3](https://github.com/fuzdev/fuz_code/commit/414abd3))
+
 ## 0.54.0
 
 ### Minor Changes
