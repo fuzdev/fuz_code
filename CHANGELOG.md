@@ -1,5 +1,16 @@
 # @fuzdev/fuz_code
 
+## 0.56.0
+
+### Minor Changes
+
+- Update dependencies (BREAKING CHANGES) ([d979f5e](https://github.com/fuzdev/fuz_code/commit/d979f5e))
+
+  Breaking dependency changes:
+
+  - @fuzdev/fuz_util: 0.78.0 → 0.79.0 (minor)
+  - @fuzdev/fuz_css: 0.71.1 → 0.72.0 (minor)
+
 ## 0.55.0
 
 ### Minor Changes
