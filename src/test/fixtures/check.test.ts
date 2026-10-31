@@ -22,7 +22,7 @@ describe('generated fixtures match runtime', async () => {
 				// Basic sanity check - fixtures must be generated before tests can run
 				assert.ok(
 					existsSync(html_fixture_path),
-					`Fixture file missing: ${html_fixture_path}. Run 'npm run task src/test/fixtures/update' to generate.`
+					`Fixture file missing: ${html_fixture_path}. Run 'gro task src/test/fixtures/update.task.ts' to generate.`
 				);
 			});
 

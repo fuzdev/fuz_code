@@ -18,7 +18,7 @@ gro typecheck                   # typecheck only (faster iteration)
 gro test                        # run tests with vitest
 gro gen                         # regenerate .gen files
 gro build                       # build the package for production
-gro src/test/fixtures/update    # regenerate test fixtures
+gro task src/test/fixtures/update.task.ts  # regenerate test fixtures
 ```
 
 ## Dependencies
@@ -294,7 +294,7 @@ As registered in `syntax_styler_global`:
 Fixture workflow:
 
 1. Edit `src/test/fixtures/samples/sample_{variant}.{ext}`
-2. `gro src/test/fixtures/update` — runs `gen` first, so it also refreshes
+2. `gro task src/test/fixtures/update.task.ts` — runs `gen` first, so it also refreshes
    `src/routes/samples/all.ts`
 3. `gro test src/test/fixtures/check`
 4. Review with `git diff src/test/fixtures/`
