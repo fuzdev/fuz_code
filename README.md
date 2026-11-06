@@ -149,6 +149,7 @@ Add a language by writing a `SyntaxLang` lexer and registering it with
   [benchmark](https://code.fuz.dev/docs/benchmark), and
   [API](https://code.fuz.dev/docs/api)
 - [CLAUDE.md](./CLAUDE.md) - architecture and development guidelines
+- [fuz-stack skill](https://docs.fuz.dev/skills/fuz-stack) - coding conventions shared across the Fuz stack
 - [sample files](src/test/fixtures/samples/) and [tests](src/test/)
 
 Issues and questions are welcome.
