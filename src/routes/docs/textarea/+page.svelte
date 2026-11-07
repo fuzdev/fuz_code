@@ -46,7 +46,7 @@
 			</p>
 		{/if}
 
-		<div class="row gap_xs flex-wrap:wrap mb_md">
+		<div class="row_wrap gap_xs mb_md">
 			{#each sample_langs as l (l)}
 				<button
 					type="button"

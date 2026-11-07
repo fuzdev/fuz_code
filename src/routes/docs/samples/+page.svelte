@@ -69,7 +69,7 @@
 				With both on, each sample renders side by side.
 			</p>
 
-			<div class="row gap_xs flex-wrap:wrap mb_md">
+			<div class="row_wrap gap_xs mb_md">
 				{#each sample_langs as lang (lang)}
 					<button
 						type="button"
@@ -90,7 +90,7 @@
 				</button>
 			</div>
 
-			<div class="row gap_xs flex-wrap:wrap mb_lg">
+			<div class="row_wrap gap_xs mb_lg">
 				<button
 					type="button"
 					class="deselectable"
