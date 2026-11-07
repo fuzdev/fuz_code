@@ -53,8 +53,9 @@
 			inline?: boolean;
 			/**
 			 * Whether to wrap long lines in block code (`white-space: pre-wrap`
-			 * instead of `pre`). Wraps at whitespace — long unbroken tokens (URLs,
-			 * hashes) still scroll horizontally. Ignored for inline code.
+			 * instead of `pre`). Wraps at whitespace, and fuz_css's `overflow-wrap: break-word`
+			 * breaks a long unbroken token (URL, hash) only when it would overflow
+			 * the line. Ignored for inline code.
 			 *
 			 * @default false
 			 */
