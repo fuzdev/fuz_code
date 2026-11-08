@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
-import { fs_search } from '@fuzdev/fuz_util/fs.ts';
+import { fs } from '@fuzdev/gro/fs.ts';
+import { create_fs_paths } from '@fuzdev/gro/fs_paths.ts';
 import { basename, join, relative } from 'node:path';
 import { syntax_styler_global } from '#lib/syntax_styler_global.ts';
 import { syntax_events_to_tokens } from '#lib/lexer.ts';
@@ -21,7 +22,7 @@ export interface GeneratedOutput {
  * Discover all sample files in src/test/fixtures/samples
  */
 export const discover_samples = async (): Promise<Array<SampleSpec>> => {
-	const sample_files = await fs_search('src/test/fixtures/samples', {
+	const sample_files = await create_fs_paths(fs).search_path('src/test/fixtures/samples', {
 		file_filter: (path) => /sample_[^/]+\.(ts|rs|css|html|json|svelte|md|sh)$/.test(path)
 	});
 

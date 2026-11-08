@@ -1,6 +1,7 @@
 import type { Gen } from '@fuzdev/gro';
 import { readFileSync } from 'node:fs';
-import { fs_search } from '@fuzdev/fuz_util/fs.ts';
+import { fs } from '@fuzdev/gro/fs.ts';
+import { create_fs_paths } from '@fuzdev/gro/fs_paths.ts';
 import { basename } from 'node:path';
 
 import { sample_langs } from '#lib/code_sample.ts';
@@ -8,7 +9,7 @@ import { sample_langs } from '#lib/code_sample.ts';
 /** @nodocs */
 export const gen: Gen = async ({ origin_path }) => {
 	// Discover all sample files dynamically
-	const sample_files = await fs_search('src/test/fixtures/samples', {
+	const sample_files = await create_fs_paths(fs).search_path('src/test/fixtures/samples', {
 		file_filter: (path) => /sample_[^/]+\.(ts|rs|css|html|json|svelte|md|sh)$/.test(path)
 	});
 
