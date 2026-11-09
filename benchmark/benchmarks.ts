@@ -2,12 +2,22 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { Benchmark } from '@fuzdev/fuz_util/benchmark.ts';
 import { benchmark_format_markdown_grouped } from '@fuzdev/fuz_util/benchmark_format.ts';
 import {
-	benchmark_baseline_save,
+	benchmark_baseline_create,
 	benchmark_baseline_compare,
-	benchmark_baseline_format
+	benchmark_baseline_format,
+	benchmark_baseline_parse,
+	benchmark_baseline_serialize,
+	type BenchmarkBaseline
 } from '@fuzdev/fuz_util/benchmark_baseline.ts';
 import type { BenchmarkGroup, BenchmarkResult } from '@fuzdev/fuz_util/benchmark_types.ts';
 import { format_file } from '@fuzdev/gro/format_file.ts';
+import {
+	GIT_LOCAL_PASS_ENV,
+	git_current_branch_name,
+	git_current_commit_hash,
+	to_git_program
+} from '@fuzdev/gro/git.ts';
+import { spawn } from '@fuzdev/gro/spawn.ts';
 
 import { samples as all_samples } from '../src/routes/samples/all.ts';
 import { syntax_styler_global } from '../src/lib/syntax_styler_global.ts';
@@ -26,8 +36,7 @@ const LARGE_CONTENT_MULTIPLIER = 100;
 const PATHOLOGICAL_BENCHMARK_TIME = 3000;
 const PATHOLOGICAL_SIZE = 32768;
 
-const BASELINE_PATH = 'benchmark';
-const BASELINE_FILE = `${BASELINE_PATH}/baseline.json`;
+const BASELINE_FILE = 'benchmark/baseline.json';
 // 10% threshold matches fuz_ui — system-level variance (thermal, scheduler)
 // easily causes 5-8% swings in hot tokenizer loops.
 const REGRESSION_THRESHOLD = 1.1;
@@ -187,14 +196,30 @@ const format_section = (results: Array<BenchmarkResult>, metrics: Array<OutputMe
 	`## Benchmark Results\n\n${benchmark_format_markdown_grouped(results, GROUPS)}\n\n${format_output_metrics(metrics)}`;
 
 /**
+ * Read the stored baseline. A missing file is no baseline, and so is one that
+ * can't be used (invalid, or written by another baseline version), with a
+ * warning. The file is left in place for `--save` to replace.
+ */
+const load_baseline = async (): Promise<BenchmarkBaseline | null> => {
+	const stored = await readFile(BASELINE_FILE, 'utf-8').catch(() => null);
+	if (stored === null) return null;
+	const parsed = benchmark_baseline_parse(stored);
+	if (!parsed.ok) {
+		console.warn(`Ignoring baseline ${BASELINE_FILE}: ${parsed.message}`);
+		return null;
+	}
+	return parsed.baseline;
+};
+
+/**
  * Compare results against the stored baseline and print the report plus any
  * regression / methodology / noise banners. A missing baseline is not an
  * error — the run still succeeds, the comparison just prints a "no baseline"
  * notice and skips the banners (typical on first run or after `benchmark:clean`).
  */
 const print_baseline_comparison = async (results: Array<BenchmarkResult>): Promise<void> => {
-	const comparison = await benchmark_baseline_compare(results, {
-		path: BASELINE_PATH,
+	const comparison = benchmark_baseline_compare(results, await load_baseline(), {
+		runtime_version: process.version,
 		regression_threshold: REGRESSION_THRESHOLD,
 		staleness_warning_days: STALENESS_WARNING_DAYS
 	});
@@ -225,12 +250,30 @@ const print_baseline_comparison = async (results: Array<BenchmarkResult>): Promi
 	}
 };
 
-/** Save the baseline to disk, then reformat with tsv so `gro check` stays clean. */
+/**
+ * Best-effort git labels for the baseline, null for either when git can't say
+ * (no repo, or an unborn branch).
+ */
+const read_git_labels = async (): Promise<{
+	git_commit: string | null;
+	git_branch: string | null;
+}> => {
+	const git = to_git_program(spawn, { pass_env: GIT_LOCAL_PASS_ENV });
+	const git_commit = await git_current_commit_hash(git).catch(() => null);
+	const git_branch = await git_current_branch_name(git).catch(() => null);
+	return { git_commit, git_branch };
+};
+
+/** Save the baseline to disk, formatted with tsv so `gro check` stays clean. */
 const save_baseline = async (results: Array<BenchmarkResult>): Promise<void> => {
-	await benchmark_baseline_save(results, { path: BASELINE_PATH });
-	const content = await readFile(BASELINE_FILE, 'utf-8');
-	const formatted = format_file(content, { filepath: BASELINE_FILE });
-	await writeFile(BASELINE_FILE, formatted);
+	const baseline = benchmark_baseline_create(results, {
+		...(await read_git_labels()),
+		runtime_version: process.version
+	});
+	await writeFile(
+		BASELINE_FILE,
+		format_file(benchmark_baseline_serialize(baseline), { filepath: BASELINE_FILE })
+	);
 	console.log(`\n✓ Baseline saved to ${BASELINE_FILE}`);
 };
 

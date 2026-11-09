@@ -392,7 +392,7 @@ Result files:
 - `benchmark/baseline.json` - gitignored, per machine. The compare runs before
   the save, so a `--save` run still reports changes against the prior baseline
   (10% regression threshold, 30-day staleness warning); a corrupt or
-  schema-outdated baseline is deleted with a warning
+  schema-outdated baseline is ignored with a warning and replaced by `--save`
 
 ## Experimental: CSS Custom Highlight API
 
