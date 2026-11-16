@@ -1,9 +1,10 @@
 === STATS ===
 Sample length: 502 characters
-Total tokens: 73
+Total tokens: 83
 
-Token types (9 unique):
+Token types (10 unique):
   punctuation: 45
+  number: 10
   property: 9
   selector: 8
   function: 3
@@ -24,17 +25,25 @@ Token types (9 unique):
   43-44    punctuation               {
   46-55    property                  font-size
   55-56    punctuation               :
+  57-61    number                    16px
   61-62    punctuation               ;
   63-64    punctuation               }
   66-67    selector                  p
   68-69    punctuation               {
   71-81    property                  box-shadow
   81-82    punctuation               :
+  83-84    number                    0
+  85-86    number                    0
+  87-91    number                    10px
   92-96    function                  rgba
   96-97    punctuation               (
+  97-98    number                    0
   98-99    punctuation               ,
+ 100-101   number                    0
  101-102   punctuation               ,
+ 103-104   number                    0
  104-105   punctuation               ,
+ 106-109   number                    0.1
  109-111   punctuation               );
  112-113   punctuation               }
  115-128   comment                   /* comment */
@@ -49,6 +58,7 @@ Token types (9 unique):
  220-221   punctuation               {
  223-229   property                  margin
  229-230   punctuation               :
+ 231-235   number                    10px
  235-236   punctuation               ;
  237-238   punctuation               }
  240-265   atrule                    @media (max-width: 600px)
@@ -56,6 +66,7 @@ Token types (9 unique):
  247-248   punctuation               (
  248-257   property                  max-width
  257-258   punctuation               :
+ 259-264   number                    600px
  264-265   punctuation               )
  266-267   punctuation               {
  269-273   selector                  body

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import '$lib/theme_diff.css';
+	import '#lib/theme_diff.css';
 
 	import { page } from '$app/state';
 	import { DOCS_PATH } from '@fuzdev/fuz_ui/docs_helpers.svelte.ts';
@@ -8,9 +8,9 @@
 	import TomeLink from '@fuzdev/fuz_ui/TomeLink.svelte';
 	import DeclarationLink from '@fuzdev/fuz_ui/DeclarationLink.svelte';
 
-	import Code from '$lib/Code.svelte';
-	import CodeDiff from '$lib/CodeDiff.svelte';
-	import CodeDiffSplit from '$lib/CodeDiffSplit.svelte';
+	import Code from '#lib/Code.svelte';
+	import CodeDiff from '#lib/CodeDiff.svelte';
+	import CodeDiffSplit from '#lib/CodeDiffSplit.svelte';
 
 	const TOME_SLUG = 'diff';
 	const tome = tome_get_by_slug(TOME_SLUG);

@@ -1,6 +1,6 @@
 import { describe, test, assert } from 'vitest';
 
-import { render_diff_unified_html, render_diff_split_html } from '$lib/diff_html.ts';
+import { render_diff_unified_html, render_diff_split_html } from '#lib/diff_html.ts';
 import { strip_tags, assert_balanced } from './html_test_helpers.ts';
 
 const A = 'const a = 1;\nconst b = 2;\nconst c = 3;\n';

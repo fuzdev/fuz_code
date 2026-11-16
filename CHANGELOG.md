@@ -1,11 +1,129 @@
 # @fuzdev/fuz_code
 
+## 0.59.0
+
+### Minor Changes
+
+- Update dependencies (BREAKING CHANGES) ([926fe69](https://github.com/fuzdev/fuz_code/commit/926fe69))
+  
+  Breaking dependency changes:
+  - @fuzdev/fuz_util: 0.80.0 → 0.81.0 (minor)
+  - @fuzdev/fuz_css: 0.79.0 → 0.81.0 (minor)
+
+## 0.58.0
+
+### Minor Changes
+
+- Update dependencies (BREAKING CHANGES) ([edb0d8b](https://github.com/fuzdev/fuz_code/commit/edb0d8b))
+  
+  Breaking dependency changes:
+  - @fuzdev/fuz_util: 0.79.0 → 0.80.0 (minor)
+  - @fuzdev/fuz_css: 0.78.0 → 0.79.0 (minor)
+- break: upgrade to fuz_css 0.78 - the `@fuzdev/fuz_css` peer is `>=0.78.0` ([c6ae313](https://github.com/fuzdev/fuz_code/commit/c6ae313))
+  
+  fuz_css 0.77 and 0.78 hold raised surfaces like `shade_10` nearer the ground, derive the default control border by mixing `shade_30` toward `shade_50` (a quarter of the way at no contrast, all the way at high contrast), and move the neutral `.selected` fill to `shade_70`. Nothing fuz_code imports or styles changed; the optional peer moves with the stack.
+
+## 0.57.0
+
+### Minor Changes
+
+- break: upgrade to fuz_css 0.76 - the `@fuzdev/fuz_css` peer is `>=0.76.0`, and with `wrap`, long unbroken tokens now break onto the next line instead of scrolling, from fuz_css's base `overflow-wrap` on `code` ([b626d61](https://github.com/fuzdev/fuz_code/commit/b626d61))
+
+## 0.56.0
+
+### Minor Changes
+
+- Update dependencies (BREAKING CHANGES) ([d979f5e](https://github.com/fuzdev/fuz_code/commit/d979f5e))
+
+  Breaking dependency changes:
+
+  - @fuzdev/fuz_util: 0.78.0 → 0.79.0 (minor)
+  - @fuzdev/fuz_css: 0.71.1 → 0.72.0 (minor)
+
+## 0.55.0
+
+### Minor Changes
+
+- feat: style CSS numbers with their units as `number` and `#hex` colors as `color` (aliased to `number`) in declaration values and at-rule preludes ([9ab09ee](https://github.com/fuzdev/fuz_code/commit/9ab09ee))
+- fix: style the TS type-annotation colon as `operator` (was the unstylable `token_:`), stop styling `import`/`export` renames (`a as B`, `* as ns`) as type assertions, and style `bigint` as a builtin ([b63ae4d](https://github.com/fuzdev/fuz_code/commit/b63ae4d))
+- chore: upgrade fuz_css 0.71.1 and fuz_util 0.78.0 ([414abd3](https://github.com/fuzdev/fuz_code/commit/414abd3))
+
+## 0.54.0
+
+### Minor Changes
+
+- chore: upgrade fuz_css 0.70.0 and fuz_util 0.77.0 ([17dce1b](https://github.com/fuzdev/fuz_code/commit/17dce1b))
+
+## 0.53.0
+
+### Minor Changes
+
+- perf: `render_syntax_html` appends flat strings and fewer of them, so `stylize` plus the first read of its result takes about a third less time: open tags are single strings instead of concatenation trees, a one-char leaf appends its whole span from the new `TokenTypeInfo.char_spans` cache, and text is sliced without a scan up to the next character that needs an escape; breaking: `TokenTypeInfo` has the new required `char_spans` field ([6f060d6](https://github.com/fuzdev/fuz_code/commit/6f060d6))
+- perf: the TypeScript, Rust and bash lexers classify a word from one integer instead of string-keyed `Map` and `Set` lookups, so lexing takes about 8% less time for TypeScript, 12% less for bash and 5% less for Rust; breaking: `WordIndex` takes `[word, value]` entries (a `words_map` result as it is) in place of words, and `find` returns the word's value, or `0` for a miss, in place of the word or `undefined` ([902cc6f](https://github.com/fuzdev/fuz_code/commit/902cc6f))
+- perf: a Svelte `{expression}` is lexed in one pass, about 3% less lex time on Svelte files and 9–18% on an expression: the TypeScript lexer finds the closing brace as it tokenizes through the new optional `SyntaxLang.lex_to_brace` and `Lexer.embed_to_brace` (with `EMBED_UNAVAILABLE`), in place of a scan for the brace followed by the lex; a brace inside a regex no longer closes the expression (`{x.replace(/}/g, '')}`, `{#if /}/.test(s)}`); `{#each}` and `{#await}` split at the `as`/`then` the TypeScript lexer reaches, through an optional `stop_word` on both, so `{#await api.load().then(parse)}` is no longer split at the `.then` call ([c10f87d](https://github.com/fuzdev/fuz_code/commit/c10f87d))
+- feat: TypeScript type annotations are recognized without an initializer (`(x: T)`, `let x: T;`, `): T {`, class and interface members), along with a type alias's body and the tail of an `as` assertion, so names in type positions are `type_name` and each annotation has its `type_annotation` and `type` containers; fix: a `case` clause, a destructuring rename with a default, and a template literal containing `=` are no longer read as annotations. TypeScript lexing takes about 9% longer and JavaScript 5% ([b9882af](https://github.com/fuzdev/fuz_code/commit/b9882af))
+
+### Patch Changes
+
+- fix: in TypeScript a single uppercase letter (`T`, `K`, `V`) is a `capitalized_identifier` instead of a `constant`, so a type parameter is styled as a type at its uses ([c366894](https://github.com/fuzdev/fuz_code/commit/c366894))
+
+## 0.52.1
+
+### Patch Changes
+
+- fix: the shell lexer treats a backslash outside quotes as an escape, so ` \``,  `\'`, and `\"` no longer open a substitution or string that runs on through later lines; perf: the markdown inline scan and the CSS statement scan skip plain chars through a lookup table ([4d72632](https://github.com/fuzdev/fuz_code/commit/4d72632))
+- perf: `WordIndex` keeps a 256-slot table with exact-size buckets, cutting each lexer's retained memory by about 15KB ([9c9a3a5](https://github.com/fuzdev/fuz_code/commit/9c9a3a5))
+
+## 0.52.0
+
+### Minor Changes
+
+- perf: lexers allocate almost nothing per call: keywords are looked up with the new `WordIndex` instead of slicing every identifier, the TS and Rust number scanners make no closures, and the TS and shell lexers reuse their machines across embedded regions ([dcf3bd9](https://github.com/fuzdev/fuz_code/commit/dcf3bd9))
+- perf: lex into one reused buffer instead of allocating an input-sized `Int32Array` per call; breaking: a `lex_syntax` / `SyntaxStyler#lex` result is valid until the next lex (keep one with the new `copy_lexed_syntax`), and `new Lexer(events?)` takes the buffer to emit into, not a capacity ([a99d615](https://github.com/fuzdev/fuz_code/commit/a99d615))
+
+## 0.51.0
+
+### Minor Changes
+
+- perf: keep the lexers' optimized code across major GCs: `advance_probe` returns the new `PROBE_NOT_FOUND` instead of `Infinity` when there is no further occurrence, and `Lexer.shape_anchor` keeps one lexer alive so its hidden class survives between `lex` calls ([aa1977a](https://github.com/fuzdev/fuz_code/commit/aa1977a))
+
+## 0.50.0
+
+### Minor Changes
+
+- feat: require fuz_css 0.65 and read its OKLCH palette ([db18591](https://github.com/fuzdev/fuz_code/commit/db18591))
+
+  Breaking:
+
+  - The optional `@fuzdev/fuz_css` peer is `>=0.65.0` (was `>=0.62.0`).
+  - `theme.css` and `theme_highlight.css` read `--palette_a_50` through
+    `--palette_j_50` (was `--color_a_50` through `--color_j_50`), fuz_css's
+    renamed palette variables. A consumer that sets the token colors itself
+    sets the `--palette_X_50` names.
+  - `theme_variables.css`, the fallback for consumers not using fuz_css,
+    declares `--text_50` and `--palette_a_50` through `--palette_j_50` as sRGB
+    snapshots of fuz_css's derived OKLCH palette, so the default token colors
+    shift.
+
+## 0.49.1
+
+### Patch Changes
+
+- fix: give `CodeTextarea`'s wrapper fuz_css's flow margin so it drops in for a `<textarea>` ([503cf1f](https://github.com/fuzdev/fuz_code/commit/503cf1f))
+
+## 0.49.0
+
+### Minor Changes
+
+- replace the `create_range_highlighting` getter factory with a `RangeHighlighting` class (the interface of that name is replaced by the class; construct during component init) ([#47](https://github.com/fuzdev/fuz_code/pull/47)) ([refactor](https://github.com/fuzdev/fuz_code/commit/refactor))
+- fix: `theme_variables.css` declares the `--text_50` and `--color_*_50` variables that the themes read, replacing the stale `--text_color_5` and `--color_*_5` names ([3c7017e](https://github.com/fuzdev/fuz_code/commit/3c7017e))
+
 ## 0.48.0
 
 ### Minor Changes
 
 - feat: add rust lexer ([#42](https://github.com/fuzdev/fuz_code/pull/42))
-- refactor: make `sh` the primary shell lang, with `bash` and `shell` as aliases ([#41](https://github.com/fuzdev/fuz_code/pull/41))
+- make `sh` the primary shell lang, with `bash` and `shell` as aliases ([#41](https://github.com/fuzdev/fuz_code/pull/41)) ([refactor](https://github.com/fuzdev/fuz_code/commit/refactor))
 
 ### Patch Changes
 
@@ -46,6 +164,7 @@
 ### Minor Changes
 
 - fix: reclassify preprocessor deps ([b0d5932](https://github.com/fuzdev/fuz_code/commit/b0d5932))
+
   - `magic-string` and `zimmerframe` from optional peers to `dependencies`
   - `@fuzdev/fuz_util` from an optional to a required
 

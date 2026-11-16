@@ -1,6 +1,6 @@
 <script lang="ts">
 	// the Highlight API rules live in theme_highlight.css (not theme.css)
-	import '$lib/theme_highlight.css';
+	import '#lib/theme_highlight.css';
 
 	import { page } from '$app/state';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -10,11 +10,11 @@
 	import TomeLink from '@fuzdev/fuz_ui/TomeLink.svelte';
 	import DeclarationLink from '@fuzdev/fuz_ui/DeclarationLink.svelte';
 
-	import Code from '$lib/Code.svelte';
-	import CodeHighlight from '$lib/CodeHighlight.svelte';
-	import { sample_langs } from '$lib/code_sample.ts';
-	import { samples } from '$routes/samples/all.ts';
-	import { lang_colors } from '$routes/lang_color.ts';
+	import Code from '#lib/Code.svelte';
+	import CodeHighlight from '#lib/CodeHighlight.svelte';
+	import { sample_langs } from '#lib/code_sample.ts';
+	import { samples } from '#routes/samples/all.ts';
+	import { lang_colors } from '#routes/lang_color.ts';
 
 	const TOME_SLUG = 'samples';
 	const tome = tome_get_by_slug(TOME_SLUG);
@@ -55,7 +55,7 @@
 	{#if at_root}
 		<section>
 			<p>
-				Syntax-highlighted <TomeLink slug="samples" /> in every supported language, rendered with
+				Syntax-styled <TomeLink slug="samples" /> in every supported language, rendered with
 				<DeclarationLink name="Code" /> and the experimental
 				<DeclarationLink name="CodeHighlight" />.
 			</p>
@@ -69,11 +69,11 @@
 				With both on, each sample renders side by side.
 			</p>
 
-			<div class="row gap_xs flex-wrap:wrap mb_md">
+			<div class="row_wrap gap_xs mb_md">
 				{#each sample_langs as lang (lang)}
 					<button
 						type="button"
-						class="sm deselectable {lang_colors[lang]}"
+						class="sized_sm deselectable {lang_colors[lang]}"
 						class:selected={shown_langs.has(lang)}
 						onclick={() => toggle_lang(lang)}
 					>
@@ -82,7 +82,7 @@
 				{/each}
 				<button
 					type="button"
-					class="sm deselectable"
+					class="sized_sm deselectable"
 					class:selected={all_shown}
 					onclick={toggle_all}
 				>
@@ -90,7 +90,7 @@
 				</button>
 			</div>
 
-			<div class="row gap_xs flex-wrap:wrap mb_lg">
+			<div class="row_wrap gap_xs mb_lg">
 				<button
 					type="button"
 					class="deselectable"

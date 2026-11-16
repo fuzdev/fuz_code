@@ -1,9 +1,9 @@
 import { describe, test, assert } from 'vitest';
 import { readFileSync } from 'node:fs';
 
-import { render_syntax_html_lines, type SyntaxHtmlMark } from '$lib/lexer.ts';
-import { syntax_styler_global } from '$lib/syntax_styler_global.ts';
-import { sample_langs } from '$lib/code_sample.ts';
+import { render_syntax_html_lines, type SyntaxHtmlMark } from '#lib/lexer.ts';
+import { syntax_styler_global } from '#lib/syntax_styler_global.ts';
+import { sample_langs } from '#lib/code_sample.ts';
 import { strip_tags, assert_balanced } from './html_test_helpers.ts';
 
 const lex = (text: string, lang: string) => syntax_styler_global.lex(text, lang);

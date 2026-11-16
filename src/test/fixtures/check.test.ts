@@ -9,7 +9,7 @@ import {
 	generate_diff_debug_text,
 	get_diff_fixture_path
 } from './helpers.ts';
-import { sample_langs } from '$lib/code_sample.ts';
+import { sample_langs } from '#lib/code_sample.ts';
 
 /**
  * Verifies runtime lexer output against the generated fixtures: HTML
@@ -30,7 +30,7 @@ describe('generated fixtures match runtime', async () => {
 				// Basic sanity check - fixtures must be generated before tests can run
 				assert.ok(
 					existsSync(html_fixture_path),
-					`Fixture file missing: ${html_fixture_path}. Run 'npm run task src/test/fixtures/update' to generate.`
+					`Fixture file missing: ${html_fixture_path}. Run 'gro task src/test/fixtures/update.task.ts' to generate.`
 				);
 			});
 
@@ -39,7 +39,7 @@ describe('generated fixtures match runtime', async () => {
 				 * Current: Tests exact HTML string match
 				 *
 				 * Ideal: Should test:
-				 * - All code is highlighted (no plain text except whitespace)
+				 * - All code is styled (no plain text except whitespace)
 				 * - Token boundaries are correct
 				 * - Token types are semantically correct
 				 * - No overlapping spans
@@ -208,13 +208,13 @@ describe('all expected languages are tested', () => {
  *     // Compare token positions are valid
  *   });
  *
- *   test('no code is left unhighlighted', () => {
+ *   test('no code is left unstyled', () => {
  *     // Verify 95%+ coverage (allowing for whitespace)
  *   });
  * });
  *
  * describe('performance benchmarks', () => {
- *   test('highlighting completes within time budget', () => {
+ *   test('styling completes within time budget', () => {
  *     // Track time per KB of code
  *   });
  *
@@ -225,7 +225,7 @@ describe('all expected languages are tested', () => {
  *
  * describe('edge cases', () => {
  *   test('handles malformed code gracefully', () => {
- *     // Should not crash, should highlight what it can
+ *     // Should not crash, should style what it can
  *   });
  *
  *   test('handles extremely long lines', () => {
@@ -238,7 +238,7 @@ describe('all expected languages are tested', () => {
  * });
  *
  * describe('visual regression', () => {
- *   test('highlighted code screenshots match', () => {
+ *   test('styled code screenshots match', () => {
  *     // Render to canvas, compare pixels
  *   });
  * });
