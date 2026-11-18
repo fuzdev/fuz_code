@@ -1745,7 +1745,7 @@ const lex_ts_to_brace = (l: Lexer, stop_word = ''): number => {
 /**
  * The TypeScript language registration for the lexer engine.
  *
- * JavaScript reuses this lexer via the `js`/`javascript` aliases: TypeScript is
+ * JS reuses this lexer via the `js`/`javascript` aliases: TypeScript is
  * a syntactic superset, and the TS-only constructs the lexer recognizes (type
  * annotations, `as`, generics before a call) can't appear in valid JS, so
  * running the full TS lexer on JS is a no-op for those paths. There is no

@@ -1,0 +1,144 @@
+/*
+
+Styles for the diff viewer (`CodeDiff.svelte`, unified and split views, and
+the `diff_html.ts` renderers beneath it). Import alongside theme.css. Row
+tints key off fuz_css's semantic intent variables (positive/negative) through
+a small indirection layer — override the four `--diff_*` custom properties to
+retheme. Without fuz_css, theme_variables.css supplies the intent variables.
+
+*/
+
+.code_diff {
+	--diff_add_bg: var(--positive_05);
+	--diff_remove_bg: var(--negative_05);
+	--diff_add_emph_bg: var(--positive_20);
+	--diff_remove_emph_bg: var(--negative_20);
+	/* the gutters and markers align by character, so never a proportional font */
+	font-family: var(--font_family_mono, monospace);
+	overflow: auto;
+	max-width: 100%;
+	padding: var(--space_xs3) 0;
+	/* unified view: one column as wide as the longest row, so every row's tint
+	   spans the full scroll width instead of stopping at the container's edge */
+	display: grid;
+	grid-template-columns: minmax(max-content, 1fr);
+	align-content: start;
+}
+
+.code_diff.wrap {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+/* split view: two columns of half-row cells, which always wrap — a cell is
+   one side of one row, so there is no column to scroll as a unit */
+.code_diff.split,
+.diff_split_rows {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.code_diff:not(.nomargin):not(:last-child) {
+	margin-bottom: var(--space_lg);
+}
+
+/* an elision spans both columns of the split view, and the rows inside an
+   expandable one are a nested `.diff_split_rows` grid */
+.code_diff.split .diff_skip {
+	grid-column: 1 / -1;
+}
+
+/* a row is gutter + text side by side, so wrapped text hangs after the gutter */
+.diff_line,
+.diff_cell {
+	display: flex;
+}
+
+/* restore code styling on the semantic add/remove rows */
+del.diff_line,
+ins.diff_line,
+del.diff_cell,
+ins.diff_cell {
+	text-decoration: none;
+	color: inherit;
+}
+
+.diff_add {
+	background-color: var(--diff_add_bg);
+}
+
+.diff_remove {
+	background-color: var(--diff_remove_bg);
+}
+
+/* the text is its own block, so tab stops measure from its edge and not the
+   row's (a gutter in the same block would shift them by its width), and the
+   marker column is padding, so tabs and wrapped lines start past the marker */
+.diff_text {
+	flex: 1;
+	min-width: 0;
+	position: relative;
+	padding-left: 1ch;
+	white-space: pre;
+}
+
+.code_diff.wrap .diff_text,
+.code_diff.split .diff_text {
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+/* the +/- markers are generated content with accessible alt text, so copied
+   text stays clean code; the plain declarations are for browsers without
+   alt text support in `content`, which would otherwise drop the marker */
+.diff_add > .diff_text::before,
+.diff_remove > .diff_text::before {
+	position: absolute;
+	left: 0;
+}
+
+.diff_add > .diff_text::before {
+	content: '+';
+	content: '+' / 'added';
+}
+
+.diff_remove > .diff_text::before {
+	content: '-';
+	content: '-' / 'removed';
+}
+
+.diff_gutter {
+	flex: none;
+	user-select: none;
+	white-space: pre;
+	padding-inline: var(--space_xs);
+	color: var(--text_50);
+}
+
+/* intra-line emphasis — marks wrap text runs inside token spans */
+.diff_add mark {
+	background-color: var(--diff_add_emph_bg);
+	color: inherit;
+}
+
+.diff_remove mark {
+	background-color: var(--diff_remove_emph_bg);
+	color: inherit;
+}
+
+.diff_skip {
+	color: var(--text_50);
+	padding-inline: var(--space_xs);
+}
+
+.diff_skip summary {
+	user-select: none;
+	cursor: pointer;
+}
+
+/* marks the final line of a side that lacks a trailing newline */
+.diff_no_newline::before {
+	content: '⏎';
+	content: '⏎' / 'no newline at end of file';
+	opacity: 0.5;
+	text-decoration: line-through;
+}

@@ -1,0 +1,23 @@
+=== STATS ===
+a: 116 chars, b: 147 chars
+lines: 15 (7 changed), hunks: 1
+
+=== DIFF ===
+--- a.svelte
++++ b.svelte
+@@ -1,11 +1,12 @@
+ <script lang="ts">
+-	const {name} = $props();
++	const {title, subtitle} = $props();
+ </script>
+ 
+-<h1>Hi {name}</h1>
++<h1>Hi {title}</h1>
++<p>{subtitle}</p>
+ 
+ <style>
+ 	h1 {
+-		color: red;
++		color: blue;
+ 	}
+ </style>

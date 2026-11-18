@@ -31,12 +31,12 @@
 				ranges for the
 				<a href="https://developer.mozilla.org/en-US/docs/Web/API/CSS_Custom_Highlight_API">
 					CSS Custom Highlight API
-				</a>. It originated as a fork of <a href="https://prismjs.com/">Prism</a> by
-				<a href="https://lea.verou.me/">Lea Verou</a> and has since been rewritten: each language
-				has a lexer that scans without regular expressions and emits tokens as a flat stream in a
-				typed array, for high performance. The flat token stream is an idea borrowed from
-				<a href="https://pngwn.at/">pngwn</a>, the author of
-				<a href="https://twinkleplop.pngwn.at/">Twinkleplop</a> (a featureful alternative to
+				</a>, and renders syntax-highlighted diffs. It originated as a fork of
+				<a href="https://prismjs.com/">Prism</a> by <a href="https://lea.verou.me/">Lea Verou</a>
+				and has since been rewritten: each language has a lexer that scans without regular
+				expressions and emits tokens as a flat stream in a typed array, for high performance. The
+				flat token stream is an idea borrowed from <a href="https://pngwn.at/">pngwn</a>, the author
+				of <a href="https://twinkleplop.pngwn.at/">Twinkleplop</a> (a featureful alternative to
 				fuz_code). See
 				<a href="https://syntax-highlighter-bench.ryanatkn.com/">syntax-highlighter-bench</a> to
 				compare them with Prism and Shiki.

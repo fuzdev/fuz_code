@@ -1,0 +1,18 @@
+=== STATS ===
+a: 63 chars, b: 101 chars
+lines: 10 (5 changed), hunks: 1
+
+=== DIFF ===
+--- a.md
++++ b.md
+@@ -1,7 +1,8 @@
+-# Notes
++# Notes on widgets
+ 
+-Some _text_ about the widget.
++Some _text_ about the widget, expanded.
+ 
+ ```ts
+ const a = 1;
++const b = a + 1;
+ ```

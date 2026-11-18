@@ -13,13 +13,16 @@ import svelte_docinfo from 'svelte-docinfo/vite.js';
 import { vite_plugin_pkg_json } from '@fuzdev/fuz_ui/vite_plugin_pkg_json.ts';
 
 // Self-referencing import from dist — unavailable on first build after clean checkout,
-// but subsequent builds use the preprocessor for static Code compilation.
+// but subsequent builds use the preprocessor for static Code and CodeDiff compilation.
 let fuz_code_preprocessors: Array<PreprocessorGroup> = [];
 try {
 	const { svelte_preprocess_fuz_code } =
 		await import('@fuzdev/fuz_code/svelte_preprocess_fuz_code.ts');
 	fuz_code_preprocessors = [
-		svelte_preprocess_fuz_code({ component_imports: ['#lib/Code.svelte'] })
+		svelte_preprocess_fuz_code({
+			code_imports: ['#lib/Code.svelte'],
+			code_diff_imports: ['#lib/CodeDiff.svelte']
+		})
 	];
 } catch {}
 

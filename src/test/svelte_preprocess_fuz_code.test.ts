@@ -651,7 +651,7 @@ const y = 2;" lang="ts" />`;
 			assert.strictEqual(raw_html, syntax_styler_global.stylize('const x = 1;', 'ts'));
 		});
 
-		test('respects custom component_imports', async () => {
+		test('respects custom code_imports', async () => {
 			const input = `<script lang="ts">
 	import Code from '#lib/MyCode.svelte';
 </script>
@@ -661,7 +661,7 @@ const y = 2;" lang="ts" />`;
 				input,
 				[
 					svelte_preprocess_fuz_code({
-						component_imports: ['#lib/MyCode.svelte']
+						code_imports: ['#lib/MyCode.svelte']
 					})
 				],
 				{ filename: 'Test.svelte' }
@@ -670,7 +670,7 @@ const y = 2;" lang="ts" />`;
 			assert.include(result.code, 'dangerous_raw_html=');
 		});
 
-		test('custom component_imports with path not containing "Code"', async () => {
+		test('custom code_imports with path not containing "Code"', async () => {
 			const input = `<script lang="ts">
 	import Highlighter from '#lib/Highlighter.svelte';
 </script>
@@ -680,7 +680,7 @@ const y = 2;" lang="ts" />`;
 				input,
 				[
 					svelte_preprocess_fuz_code({
-						component_imports: ['#lib/Highlighter.svelte']
+						code_imports: ['#lib/Highlighter.svelte']
 					})
 				],
 				{ filename: 'Test.svelte' }

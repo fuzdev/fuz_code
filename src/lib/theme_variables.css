@@ -4,7 +4,9 @@ CSS variables for the fuz_code themes when not using fuz_css.
 Import this alongside theme.css or theme_highlight.css.
 
 Values are sRGB snapshots of fuz_css's derived OKLCH palette at stop 50
-(`--palette_X_50`) and the neutral text scale (`--text_50`), per scheme.
+(`--palette_X_50`) and the neutral text scale (`--text_50`), per scheme,
+plus the positive and negative intent stops that theme_diff.css tints
+diff rows with.
 
 TODO: hand-snapshotted from fuz_css's evaluators, regenerate when fuz_css's palette changes.
 
@@ -22,4 +24,8 @@ TODO: hand-snapshotted from fuz_css's evaluators, regenerate when fuz_css's pale
 	--palette_h_50: light-dark(#b1684d, #c17255);
 	--palette_i_50: light-dark(#008ea0, #059cae);
 	--palette_j_50: light-dark(#189281, #1e9f8d);
+	--positive_05: light-dark(#e9f5e8, #142114);
+	--positive_20: light-dark(#b4d9b3, #2d4e2d);
+	--negative_05: light-dark(#ffece9, #2b1714);
+	--negative_20: light-dark(#f5beb5, #643630);
 }

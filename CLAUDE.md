@@ -24,7 +24,8 @@ gro task src/test/fixtures/update.task.ts  # regenerate test fixtures
 ## Dependencies
 
 - `esm-env` (required peer) - the `DEV` flag
-- `@fuzdev/fuz_util` (required peer) - preprocessor helpers
+- `@fuzdev/fuz_util` (required peer) - preprocessor helpers, and the diff
+  data the diff viewer renders
 - `svelte` (optional peer) - `Code.svelte` and the other components
 - `@fuzdev/fuz_css` (optional peer) - color variables for the theme
 - `magic-string`, `zimmerframe` (`dependencies`) - used only by
@@ -35,7 +36,10 @@ gro task src/test/fixtures/update.task.ts  # regenerate test fixtures
 
 A runtime syntax styler: lexers (built-in, or your own `SyntaxLang`) produce
 HTML with `.token_*` classes, plus an optional `Code.svelte` component and a
-build-time preprocessor that pre-renders static `Code` content.
+build-time preprocessor that pre-renders static `Code` and `CodeDiff`
+content. Diffs render
+syntax-highlighted too, unified and side-by-side (`CodeDiff.svelte` over
+`diff_html.ts`).
 
 Out of scope:
 
@@ -66,7 +70,9 @@ src/
 │   ├── syntax_styler_global.ts # instance with every built-in language
 │   ├── lexer.ts                # lexer substrate: Lexer, TokenTypeRegistry, events, HTML render
 │   ├── lexer_*.ts              # per-language lexers
+│   ├── diff_html.ts            # diff viewer: unified + split rendering over fuz_util's diff data
 │   ├── Code.svelte             # main component
+│   ├── CodeDiff.svelte         # diff viewer, unified or side-by-side (`split`)
 │   ├── svelte_preprocess_fuz_code.ts # build-time preprocessor
 │   ├── code_sample.ts          # `CodeSample` + `sample_langs` for the docs site
 │   ├── CodeHighlight.svelte    # experimental CSS Highlight API
@@ -75,18 +81,22 @@ src/
 │   ├── range_highlighting.svelte.ts # shared range-highlighting helper
 │   ├── highlight_priorities.ts # generated token priorities
 │   ├── theme.css               # token classes
+│   ├── theme_diff.css          # diff viewer theme (row tints from fuz_css intent variables)
 │   ├── theme_variables.css     # color variable fallbacks
 │   └── theme_highlight.css     # CSS Highlight API theme
 ├── test/
 │   ├── syntax_styler.test.ts   # registry/facade
 │   ├── lexer*.test.ts          # substrate + per-language suites
+│   ├── lexer.html_lines.test.ts # per-line rendering + marks
+│   ├── diff_html.test.ts       # diff rendering, both views
+│   ├── html_test_helpers.ts    # HTML assertions (diff + line rendering)
 │   ├── lexer.pathological.test.ts # linearity + validity on adversarial inputs
 │   ├── pathological.ts         # adversarial input generators (tests + benchmark)
 │   ├── svelte_preprocess_fuz_code.test.ts
 │   ├── highlight_manager.test.ts
-│   └── fixtures/               # samples/, generated/, helpers.ts, check.test.ts, update.task.ts
+│   └── fixtures/               # samples/, diff/ (a/b pairs), generated/, helpers.ts, check.test.ts, update.task.ts
 └── routes/                     # docs site
-    ├── docs/                   # tomes: usage, samples, textarea, benchmark, api
+    ├── docs/                   # tomes: usage, samples, diff, textarea, benchmark, api
     ├── benchmark/              # interactive browser benchmark
     ├── samples/                # all.gen.ts → all.ts
     ├── lang_color.ts           # per-language tint for the docs language buttons
@@ -101,8 +111,12 @@ is implicit between events (recovered from offsets). `render_syntax_html`
 streams HTML from it in one forward pass, wrapping spans in classes like
 `.token_keyword` (styled by `theme.css`); a one-char leaf appends its whole
 span from a per-type cache, and text is sliced unscanned up to the next
-character that needs an escape. Token types intern into a
-`TokenTypeRegistry` (`token_types_global` by default).
+character that needs an escape. `render_syntax_html_lines` renders one
+balanced fragment per source line (spans open at a newline close there and
+reopen on the next line), with optional `marks` ranges wrapped in `<mark>` —
+marks wrap text runs only, cut at token boundaries, so nesting stays valid.
+Token types intern into a `TokenTypeRegistry` (`token_types_global` by
+default).
 
 Lexers:
 
@@ -141,6 +155,41 @@ at a closing brace the host hasn't located (a svelte `{…}`) goes through
 finds the brace as it tokenizes, so the host doesn't scan for it first. Its
 optional stop word ends the region at a top-level word too, which is how
 `{#each … as …}` and `{#await … then …}` split.
+
+### Diff viewer
+
+`diff_html.ts` renders syntax-highlighted diffs:
+`render_diff_unified_html(a, b, options)` composes `@fuzdev/fuz_util/diff.ts`
+(Myers line diff, hunks, intra-line segments) with whole-document lexing per
+side and `render_syntax_html_lines`. Rows are semantic `<ins>`/`<del>`
+(context rows are `<span>`) carrying `diff_line` + `diff_add`/`diff_remove`/
+`diff_same`, with aria-hidden unselectable gutters, `+`/`-` markers as CSS
+generated content (copied text stays clean code, and an empty line carries
+a `<br>` so a copy keeps it), intra-line `<mark>` emphasis, and elided
+unchanged regions as zero-JS `<details>` blocks (options:
+`'details' | 'omit' | 'none'`). `render_diff_split_html` is the
+side-by-side sibling — a flat cell sequence for a two-column grid, padding
+a side with no line in a row with a `.diff_spacer` cell.
+
+Within a change (a run of removes and the adds after it), lines pair by
+similarity: among the ways to pair removed with added lines without
+crossing, `pair_lines` takes the one with the highest total similarity, so a
+removed line pairs with the line it became wherever that sits in the run.
+Pairs get the intra-line emphasis and sit side by side in the split view;
+the unpaired lines between two pairs are top-aligned. A change whose
+estimated pairing work passes `PAIR_MAX_COST` pairs by position instead.
+
+`CodeDiff.svelte` is the thin wrapper owning the `<div class="code_diff">`
+element (`split` adds the `split` class and selects the side-by-side
+renderer); `theme_diff.css` (opt-in, alongside `theme.css`) styles it, with
+row tints keyed off fuz_css intent variables (`--positive_*`/`--negative_*`,
+snapshotted in `theme_variables.css` for consumers without fuz_css) through
+`--diff_*` custom properties. The unified wrapper is a one-column grid as
+wide as its longest row, so tints span the scroll width, and each row is a
+flex pair of gutter and text: the text is its own block (tab stops measure
+from its edge, not the gutter's) with the marker in its padding, so wrapped
+lines hang past both. The split view always wraps — a cell is one side of
+one row, so there is no column to scroll as a unit.
 
 ### Generated files
 
@@ -198,11 +247,30 @@ optional stop word ends the region at a top-level word too, which is how
 - `children` - snippet receiving the generated HTML, to customize rendering;
   remaining props spread onto `<code>`
 
+**`CodeDiff.svelte` props:**
+
+- `a`, `b` - the original and updated source, or `dangerous_raw_html` -
+  pre-rendered rows (what the preprocessor emits; skips runtime diffing and
+  styling) — mutually exclusive
+- `split` - side by side instead of unified; the split view always wraps
+- `lang`, `syntax_styler`, `children` - as on `Code`
+- `context_lines`, `elide`, `intraline`, `line_numbers`, `max_cost` - passed
+  to the renderer (`RenderDiffOptions`)
+- `wrap` (unified view only), `nomargin` - layout booleans; remaining props
+  spread onto the `<div>`
+
 **`svelte_preprocess_fuz_code`** finds `Code` usages whose `content` is
 statically known (strings and ternary chains, resolved through module-level
-bindings) and rewrites them to `dangerous_raw_html`. It skips usages with
-spreads, a custom `syntax_styler`, or a non-static `lang`, leaving them to
-runtime styling.
+bindings) and rewrites them to `dangerous_raw_html`. It does the same for
+`CodeDiff` usages whose `a` and `b` are static strings: `a` becomes
+`dangerous_raw_html` and `b` is removed. The props that shape the rows must
+each be absent or a literal, since the rows are rendered at build time; a
+`split` that is any other expression gets both views pre-rendered behind it
+(`(expr) ? split_html : unified_html`), so a view toggle stays static. It
+skips usages with spreads, a custom `syntax_styler`, or a non-static or
+unregistered `lang`, leaving them to runtime. The `code_imports` and
+`code_diff_imports` options name the import sources that resolve to each
+component.
 
 ## Supported languages
 
@@ -425,7 +493,8 @@ Rust's extra token types alias onto existing ones (`lifetime`→`symbol`,
 `macro`→`function`, `attribute`→`attr_name`, `doc_comment`→`comment`), so
 they need no theme rules. `theme_variables.css`, the fallback for consumers
 without fuz_css, declares these variables as sRGB snapshots of fuz_css's OKLCH
-palette, with `light-dark()` values.
+palette, with `light-dark()` values, along with the `--positive_*` and
+`--negative_*` stops `theme_diff.css` tints diff rows with.
 
 ## Project standards
 

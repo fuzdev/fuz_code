@@ -62,8 +62,8 @@ import '@fuzdev/fuz_code/theme_variables.css';"
 			The
 			<ModuleLink module_path="svelte_preprocess_fuz_code.ts">
 				svelte_preprocess_fuz_code
-			</ModuleLink> preprocessor styles static <DeclarationLink name="Code" /> content at build
-			time:
+			</ModuleLink> preprocessor styles static <DeclarationLink name="Code" /> and
+			<DeclarationLink name="CodeDiff" /> content at build time:
 		</p>
 		<Code
 			lang="ts"
@@ -88,6 +88,12 @@ export default defineConfig({
 			A <code>content</code> that is statically known (a string, a module-level constant, or a
 			ternary of those) is replaced with pre-rendered HTML. Anything else is left for runtime
 			styling.
+		</p>
+		<p>
+			A <DeclarationLink name="CodeDiff" /> is pre-rendered when its <code>a</code> and
+			<code>b</code> are statically known strings and the props that shape its rows are literals.
+			Its <code>split</code> can be any expression: a dynamic one gets both views pre-rendered, so
+			switching between them needs no diffing at runtime.
 		</p>
 	</TomeSection>
 	<TomeSection>
@@ -212,6 +218,15 @@ styler.add_lang(lexer_css);
 
 const html = styler.stylize('<div class="example">hello</div>', 'html');`}
 		/>
+	</TomeSection>
+	<TomeSection>
+		<TomeSectionHeader text="Diff viewer" />
+		<p>
+			<DeclarationLink name="CodeDiff" /> renders a syntax-highlighted diff of two versions of a
+			source text, unified or side by side with <code>split</code>, keeping the normal token styling
+			and overlaying the diff information. Import <code>theme_diff.css</code> alongside the main
+			theme. See <TomeLink slug="diff" />.
+		</p>
 	</TomeSection>
 	<TomeSection>
 		<TomeSectionHeader text="Experimental highlighting API" />
