@@ -1,53 +1,56 @@
 /*
 
-Styles for the diff viewer (`CodeDiff.svelte` unified view,
-`CodeDiffSplit.svelte` side-by-side view, and the `diff_html.ts` renderers
-beneath them). Import alongside theme.css. Row tints key off fuz_css's
-semantic intent variables (positive/negative) through a small indirection
-layer — override the four `--diff_*` custom properties to retheme.
+Styles for the diff viewer (`CodeDiff.svelte`, unified and split views, and
+the `diff_html.ts` renderers beneath it). Import alongside theme.css. Row
+tints key off fuz_css's semantic intent variables (positive/negative) through
+a small indirection layer — override the four `--diff_*` custom properties to
+retheme. Without fuz_css, theme_variables.css supplies the intent variables.
 
 */
 
-.code_diff,
-.code_diff_split {
+.code_diff {
 	--diff_add_bg: var(--positive_05);
 	--diff_remove_bg: var(--negative_05);
 	--diff_add_emph_bg: var(--positive_20);
 	--diff_remove_emph_bg: var(--negative_20);
-	font-family: var(--font_family_mono);
+	/* the gutters and markers align by character, so never a proportional font */
+	font-family: var(--font_family_mono, monospace);
 	overflow: auto;
 	max-width: 100%;
 	padding: var(--space_xs3) 0;
-}
-
-.code_diff:not(.nomargin):not(:last-child),
-.code_diff_split:not(.nomargin):not(:last-child) {
-	margin-bottom: var(--space_lg);
-}
-
-.diff_line {
-	display: block;
-}
-
-/* split view: a two-column grid of half-row cells */
-.code_diff_split {
+	/* unified view: one column as wide as the longest row, so every row's tint
+	   spans the full scroll width instead of stopping at the container's edge */
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	grid-template-columns: minmax(max-content, 1fr);
 	align-content: start;
 }
 
-.code_diff_split .diff_skip {
-	grid-column: 1 / -1;
+.code_diff.wrap {
+	grid-template-columns: minmax(0, 1fr);
 }
 
-/* rows inside an expandable elision replicate the two-column layout */
+/* split view: two columns of half-row cells, which always wrap — a cell is
+   one side of one row, so there is no column to scroll as a unit */
+.code_diff.split,
 .diff_split_rows {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
+.code_diff:not(.nomargin):not(:last-child) {
+	margin-bottom: var(--space_lg);
+}
+
+/* an elision spans both columns of the split view, and the rows inside an
+   expandable one are a nested `.diff_split_rows` grid */
+.code_diff.split .diff_skip {
+	grid-column: 1 / -1;
+}
+
+/* a row is gutter + text side by side, so wrapped text hangs after the gutter */
+.diff_line,
 .diff_cell {
-	overflow-x: auto;
+	display: flex;
 }
 
 /* restore code styling on the semantic add/remove rows */
@@ -67,30 +70,44 @@ ins.diff_cell {
 	background-color: var(--diff_remove_bg);
 }
 
+/* the text is its own block, so tab stops measure from its edge and not the
+   row's (a gutter in the same block would shift them by its width), and the
+   marker column is padding, so tabs and wrapped lines start past the marker */
 .diff_text {
+	flex: 1;
+	min-width: 0;
+	position: relative;
+	padding-left: 1ch;
 	white-space: pre;
 }
 
 .code_diff.wrap .diff_text,
-.code_diff_split.wrap .diff_text {
+.code_diff.split .diff_text {
 	white-space: pre-wrap;
+	overflow-wrap: anywhere;
 }
 
-/* the +/-/space markers are generated content with accessible alt text,
-   so copied text stays clean code */
-.diff_text::before {
-	content: ' ' / '';
+/* the +/- markers are generated content with accessible alt text, so copied
+   text stays clean code; the plain declarations are for browsers without
+   alt text support in `content`, which would otherwise drop the marker */
+.diff_add > .diff_text::before,
+.diff_remove > .diff_text::before {
+	position: absolute;
+	left: 0;
 }
 
 .diff_add > .diff_text::before {
+	content: '+';
 	content: '+' / 'added';
 }
 
 .diff_remove > .diff_text::before {
+	content: '-';
 	content: '-' / 'removed';
 }
 
 .diff_gutter {
+	flex: none;
 	user-select: none;
 	white-space: pre;
 	padding-inline: var(--space_xs);
@@ -120,6 +137,7 @@ ins.diff_cell {
 
 /* marks the final line of a side that lacks a trailing newline */
 .diff_no_newline::before {
+	content: '⏎';
 	content: '⏎' / 'no newline at end of file';
 	opacity: 0.5;
 	text-decoration: line-through;

@@ -33,7 +33,7 @@ export const tomes: Array<Tome> = [
 		Component: DiffPage,
 		related_tomes: ['usage', 'samples'],
 		related_modules: ['diff_html.ts'],
-		related_declarations: ['CodeDiff', 'CodeDiffSplit']
+		related_declarations: ['CodeDiff']
 	},
 	{
 		slug: 'textarea',

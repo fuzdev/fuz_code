@@ -38,7 +38,7 @@ Optional integrations:
     [`CodeHighlight`](src/lib/CodeHighlight.svelte) and
     [`CodeTextarea`](src/lib/CodeTextarea.svelte) use the CSS Custom Highlight API
   - a [build-time preprocessor](src/lib/svelte_preprocess_fuz_code.ts)
-    that pre-renders static `Code` content
+    that pre-renders static `Code` and `CodeDiff` content
 - the [default theme](src/lib/theme.css) uses
   [fuz_css](https://github.com/fuzdev/fuz_css) variables for colors that adapt
   to the user's `color-scheme` — without fuz_css, import
@@ -115,11 +115,17 @@ import '@fuzdev/fuz_code/theme_variables.css';
 - [@fuzdev/fuz_code/theme.css](src/lib/theme.css) -
   default theme that depends on [fuz_css](https://github.com/fuzdev/fuz_css)
 - [@fuzdev/fuz_code/theme_variables.css](src/lib/theme_variables.css) -
-  CSS variables for non-fuz_css users
+  CSS variables for non-fuz_css users, for both themes
 - [@fuzdev/fuz_code/Code.svelte](src/lib/Code.svelte) -
   Svelte component for syntax styling with HTML generation
 - [@fuzdev/fuz_code/svelte_preprocess_fuz_code.ts](src/lib/svelte_preprocess_fuz_code.ts) -
-  build-time preprocessor for static `Code` content
+  build-time preprocessor for static `Code` and `CodeDiff` content
+- [@fuzdev/fuz_code/CodeDiff.svelte](src/lib/CodeDiff.svelte) -
+  Svelte component for syntax-styled diffs, unified or side by side
+- [@fuzdev/fuz_code/diff_html.ts](src/lib/diff_html.ts) -
+  the diff renderers behind them, for use without Svelte
+- [@fuzdev/fuz_code/theme_diff.css](src/lib/theme_diff.css) -
+  diff viewer theme, imported alongside `theme.css`
 
 See [`src/lib`](src/lib) for the full set of modules.
 

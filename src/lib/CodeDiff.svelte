@@ -5,13 +5,18 @@
 
 	import { syntax_styler_global } from './syntax_styler_global.ts';
 	import type { SyntaxStyler } from './syntax_styler.ts';
-	import { render_diff_unified_html, type RenderDiffOptions } from './diff_html.ts';
+	import {
+		render_diff_unified_html,
+		render_diff_split_html,
+		type RenderDiffOptions
+	} from './diff_html.ts';
 
 	const {
 		a,
 		b,
 		dangerous_raw_html,
 		lang = 'svelte',
+		split = false,
 		context_lines = 3,
 		elide = 'details',
 		intraline = true,
@@ -35,7 +40,10 @@
 					a?: undefined;
 					b?: undefined;
 					/**
-					 * Pre-rendered diff rows, bypassing runtime diffing and highlighting.
+					 * Pre-rendered diff rows from the `svelte_preprocess_fuz_code`
+					 * preprocessor, in the form `split` selects. When provided, skips
+					 * runtime diffing and syntax styling entirely.
+					 *
 					 * Named `dangerous_raw_html` to signal that it bypasses sanitization,
 					 * matching the `{@html}` pattern used by `Code.svelte`.
 					 */
@@ -43,13 +51,21 @@
 			  }
 		) & {
 			/**
-			 * Language identifier for syntax highlighting. `null` disables
-			 * highlighting (rows render as plain text with diff chrome);
-			 * `undefined` falls back to the default ('svelte').
+			 * Language identifier for syntax styling. `null` or an unregistered id
+			 * disables styling (rows render as plain text with the diff chrome, and
+			 * an unregistered id logs an error in DEV); `undefined` falls back to
+			 * the default ('svelte').
 			 *
 			 * @default 'svelte'
 			 */
 			lang?: string | null;
+			/**
+			 * Whether to render the two versions side by side instead of as one
+			 * unified column. The split view always wraps long lines.
+			 *
+			 * @default false
+			 */
+			split?: boolean;
 			/**
 			 * Unchanged lines of context around changes.
 			 *
@@ -79,7 +95,9 @@
 			 */
 			max_cost?: number;
 			/**
-			 * Whether to wrap long lines (`pre-wrap` instead of `pre`).
+			 * Whether to wrap long lines in the unified view (`pre-wrap` instead
+			 * of `pre`, breaking a long unbroken token where it would overflow).
+			 * The split view wraps regardless.
 			 *
 			 * @default false
 			 */
@@ -121,7 +139,8 @@
 
 	const html_content = $derived.by(() => {
 		if (dangerous_raw_html != null) return dangerous_raw_html;
-		return render_diff_unified_html(a, b, {
+		const render = split ? render_diff_split_html : render_diff_unified_html;
+		return render(a, b, {
 			lang,
 			syntax_styler,
 			context_lines,
@@ -135,6 +154,13 @@
 
 <!-- eslint-disable svelte/no-at-html-tags -->
 
-<div {...rest} class={['code_diff', rest.class]} class:wrap class:nomargin data-lang={lang}>
+<div
+	{...rest}
+	class={['code_diff', rest.class]}
+	class:split
+	class:wrap
+	class:nomargin
+	data-lang={lang}
+>
 	{#if children}{@render children(html_content)}{:else}{@html html_content}{/if}
 </div>

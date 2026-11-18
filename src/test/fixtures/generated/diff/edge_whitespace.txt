@@ -1,7 +1,13 @@
 === STATS ===
-a: 20 chars, b: 20 chars
-lines: 3 (0 changed), hunks: 0
+a: 20 chars, b: 24 chars
+lines: 5 (4 changed), hunks: 1
 
 === DIFF ===
 --- a.css
 +++ b.css
+@@ -1,3 +1,3 @@
+ .a {
+-	color: red;
+-}
++    color: red;
++} 

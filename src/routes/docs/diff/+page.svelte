@@ -10,7 +10,6 @@
 
 	import Code from '#lib/Code.svelte';
 	import CodeDiff from '#lib/CodeDiff.svelte';
-	import CodeDiffSplit from '#lib/CodeDiffSplit.svelte';
 
 	const TOME_SLUG = 'diff';
 	const tome = tome_get_by_slug(TOME_SLUG);
@@ -43,20 +42,25 @@ export const VERSION = 2;
 		<section>
 			<p>
 				A syntax-highlighted <TomeLink slug="diff" /> viewer backed by
-				<DeclarationLink name="CodeDiff" /> and <DeclarationLink name="CodeDiffSplit" />.
+				<DeclarationLink name="CodeDiff" />.
 			</p>
 		</section>
 	{:else}
 		<section>
 			<p>
 				<DeclarationLink name="CodeDiff" /> renders a unified diff of two versions of a source text,
-				and <DeclarationLink name="CodeDiffSplit" /> renders the same diff side-by-side. Both sides
-				are lexed as whole documents, so the normal syntax highlighting is preserved and the diff
-				information — row tints, line-number gutters, intra-line <code>&lt;mark&gt;</code> emphasis
-				— is overlaid on top. Added and removed rows are semantic
-				<code>&lt;ins&gt;</code>/<code>&lt;del&gt;</code> elements, the markers and gutters stay out
-				of copied text, and unchanged regions collapse into expandable <code>&lt;details&gt;</code>
-				blocks with no JS. Requires <code>theme_diff.css</code>.
+				or the same diff side by side with <code>split</code>. Both sides are lexed as whole
+				documents, so the normal syntax highlighting is preserved and the diff information — row
+				tints, line-number gutters, intra-line <code>&lt;mark&gt;</code> emphasis — is overlaid on
+				top. Added and removed rows are semantic <code>&lt;ins&gt;</code>/<code>&lt;del&gt;</code>
+				elements, the markers and gutters stay out of copied text, and unchanged regions collapse
+				into expandable <code>&lt;details&gt;</code> blocks with no JS. Requires
+				<code>theme_diff.css</code>.
+			</p>
+			<p>
+				Within a change, a removed line pairs with the added line most similar to it. The pair gets
+				the emphasis and shares a row in the split view. A diff of two static strings is rendered at
+				build time by the preprocessor, described in <TomeLink slug="usage" />.
 			</p>
 
 			<Code
@@ -74,11 +78,7 @@ export const VERSION = 2;
 				</button>
 			</div>
 
-			{#if split}
-				<CodeDiffSplit {a} {b} lang="ts" />
-			{:else}
-				<CodeDiff {a} {b} lang="ts" />
-			{/if}
+			<CodeDiff {a} {b} lang="ts" {split} />
 
 			<p>Edit either version and the diff re-renders:</p>
 
