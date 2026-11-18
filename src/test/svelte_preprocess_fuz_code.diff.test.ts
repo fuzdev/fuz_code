@@ -278,6 +278,8 @@ describe('svelte_preprocess_fuz_code with CodeDiff', () => {
 			['an unregistered lang', '<CodeDiff {a} {b} lang="nope" />'],
 			['a spread', '<CodeDiff {a} {b} lang="ts" {...rest} />'],
 			['a custom syntax_styler', '<CodeDiff {a} {b} lang="ts" syntax_styler={styler} />'],
+			['a highlight', '<CodeDiff {a} {b} lang="ts" highlight={lines} />'],
+			['a model', '<CodeDiff {model} lang="ts" />'],
 			['an existing dangerous_raw_html', '<CodeDiff dangerous_raw_html={html} lang="ts" />']
 		] as const) {
 			test(`${label} is left to runtime`, async () => {

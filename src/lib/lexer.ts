@@ -570,7 +570,8 @@ export const render_syntax_html = (lexed: LexedSyntax): string => {
 
 /**
  * An absolute `[start, end)` text range wrapped with mark tags by
- * `render_syntax_html_lines` — e.g. diff intra-line emphasis.
+ * `render_syntax_html_lines` and `render_syntax_html_line_range` — e.g. diff
+ * intra-line emphasis.
  */
 export interface SyntaxHtmlMark {
 	start: number;
@@ -578,7 +579,7 @@ export interface SyntaxHtmlMark {
 }
 
 /**
- * Options for `render_syntax_html_lines`.
+ * Options for `render_syntax_html_lines` and `render_syntax_html_line_range`.
  */
 export interface RenderSyntaxHtmlLinesOptions {
 	/**
@@ -610,6 +611,145 @@ export interface RenderSyntaxHtmlLinesOptions {
 export const render_syntax_html_lines = (
 	lexed: LexedSyntax,
 	options?: RenderSyntaxHtmlLinesOptions
+): Array<string> => render_lines_from(lexed, options, 0, 0, [], -1);
+
+/**
+ * Where each line of a lexed text starts, and the renderer's state there:
+ * what `render_syntax_html_line_range` resumes from, so rendering a few
+ * lines costs those lines and not the text before them. Built once per
+ * lexed text by `create_syntax_line_index`; valid only with the same
+ * `LexedSyntax`, so index a copy (`copy_lexed_syntax`) to keep both past the
+ * next lex.
+ */
+export interface SyntaxLineIndex {
+	/**
+	 * The start offset of each line; entry `i` is line `i + 1`, as in
+	 * `render_syntax_html_lines`'s fragments.
+	 */
+	line_starts: Int32Array;
+	/**
+	 * Per line, the index in `events` of the first event not yet rendered at
+	 * the line's start. When that event is a leaf that starts before the line,
+	 * the leaf spans the line break and the line opens inside it.
+	 */
+	event_starts: Int32Array;
+	/**
+	 * The containers opened in the text, as a tree of parent pointers: node
+	 * `n`'s type id is `container_types[n]` and its enclosing container is node
+	 * `container_parents[n]`, `-1` at the top level. One node per open event,
+	 * so the index is linear in the events however deep the nesting.
+	 */
+	container_types: Int32Array;
+	container_parents: Int32Array;
+	/**
+	 * Per line, the innermost container open at the line's start, a node in
+	 * `container_types`, or `-1` when none is.
+	 */
+	line_containers: Int32Array;
+}
+
+/**
+ * Indexes a lexed text by line for `render_syntax_html_line_range`, in one
+ * pass over its text's newlines and its events.
+ */
+export const create_syntax_line_index = (lexed: LexedSyntax): SyntaxLineIndex => {
+	const { text, events, events_len } = lexed;
+	const starts: Array<number> = [0];
+	let nl = text.indexOf('\n');
+	while (nl !== -1) {
+		starts.push(nl + 1);
+		nl = text.indexOf('\n', nl + 1);
+	}
+	const line_count = starts.length;
+	const line_starts = new Int32Array(starts);
+	const event_starts = new Int32Array(line_count);
+	const line_containers = new Int32Array(line_count);
+	const types: Array<number> = [];
+	const parents: Array<number> = [];
+	let current = -1;
+	let i = 0;
+	for (let l = 0; l < line_count; l++) {
+		const p = starts[l]!;
+		// render every event the line's start is past: a leaf that ends before
+		// it, and an open or close before it — a close at `p` follows the
+		// line break, so it renders on this line
+		while (i < events_len) {
+			const tag = events[i]!;
+			if (tag > 0) {
+				if (events[i + 2]! >= p) break;
+				i += 3;
+			} else if (tag < 0) {
+				if (events[i + 1]! >= p) break;
+				types.push(-tag);
+				parents.push(current);
+				current = types.length - 1;
+				i += 2;
+			} else {
+				if (events[i + 1]! >= p) break;
+				if (current !== -1) current = parents[current]!;
+				i += 2;
+			}
+		}
+		event_starts[l] = i;
+		line_containers[l] = current;
+	}
+	return {
+		line_starts,
+		event_starts,
+		container_types: new Int32Array(types),
+		container_parents: new Int32Array(parents),
+		line_containers
+	};
+};
+
+/**
+ * Renders the fragments of lines `[start, end)` — 0-based, so the result
+ * equals `render_syntax_html_lines(lexed, options).slice(start, end)` —
+ * resuming at `start` from `index` instead of rendering the lines before
+ * it. `start` and `end` are clamped to the line count. Marks outside the
+ * range are skipped.
+ */
+export const render_syntax_html_line_range = (
+	lexed: LexedSyntax,
+	index: SyntaxLineIndex,
+	start: number,
+	end: number,
+	options?: RenderSyntaxHtmlLinesOptions
+): Array<string> => {
+	const line_count = index.line_starts.length;
+	const from = Math.max(0, Math.min(start, line_count));
+	const to = Math.max(from, Math.min(end, line_count));
+	if (from === to) return [];
+	// the open containers, innermost first, then reversed to outermost first
+	const stack: Array<number> = [];
+	for (let n = index.line_containers[from]!; n !== -1; n = index.container_parents[n]!) {
+		stack.push(index.container_types[n]!);
+	}
+	stack.reverse();
+	return render_lines_from(
+		lexed,
+		options,
+		index.line_starts[from]!,
+		index.event_starts[from]!,
+		stack,
+		to - from
+	);
+};
+
+/**
+ * The line renderer's one pass, from line start offset `start_pos` with
+ * events before `start_event` already rendered and `stack` the containers
+ * open there, until `max_lines` lines are done (`-1` for the rest of the
+ * text). An event at `start_event` that is a leaf starting before
+ * `start_pos` spans the line break, so the line opens inside it.
+ */
+const render_lines_from = (
+	lexed: LexedSyntax,
+	options: RenderSyntaxHtmlLinesOptions | undefined,
+	start_pos: number,
+	start_event: number,
+	stack: Array<number>,
+	max_lines: number
 ): Array<string> => {
 	const { text, events, events_len } = lexed;
 	const { infos } = lexed.types;
@@ -619,12 +759,11 @@ export const render_syntax_html_lines = (
 
 	const lines: Array<string> = [];
 	let cur = '';
-	// open container type ids, for reopening after a line break
-	const stack: Array<number> = [];
 	// open tag of the in-progress leaf, '' when none
 	let leaf_tag = '';
 	let mi = 0;
 	let nl_probe = -1;
+	let done = false;
 
 	const close_spans = (): void => {
 		if (leaf_tag !== '') cur += '</span>';
@@ -646,6 +785,10 @@ export const render_syntax_html_lines = (
 			if (i === nl_probe) {
 				close_spans();
 				lines.push(cur);
+				if (lines.length === max_lines) {
+					done = true;
+					return;
+				}
 				cur = '';
 				reopen_spans();
 				i++;
@@ -677,38 +820,64 @@ export const render_syntax_html_lines = (
 		}
 	};
 
-	let pos = 0;
-	let i = 0;
+	reopen_spans();
+	let pos = start_pos;
+	let i = start_event;
+	// a leaf spanning the line break the render starts at
+	if (i < events_len && events[i]! > 0 && events[i + 1]! < pos) {
+		const end = events[i + 2]!;
+		leaf_tag = infos[events[i]!]!.open_tag;
+		cur += leaf_tag;
+		emit_text(pos, end);
+		if (done) return lines;
+		cur += '</span>';
+		leaf_tag = '';
+		pos = end;
+		i += 3;
+	}
 	while (i < events_len) {
 		const tag = events[i]!;
 		if (tag > 0) {
 			const start = events[i + 1]!;
 			const end = events[i + 2]!;
-			if (start > pos) emit_text(pos, start);
+			if (start > pos) {
+				emit_text(pos, start);
+				if (done) return lines;
+			}
 			leaf_tag = infos[tag]!.open_tag;
 			cur += leaf_tag;
 			emit_text(start, end);
+			if (done) return lines;
 			cur += '</span>';
 			leaf_tag = '';
 			pos = end;
 			i += 3;
 		} else if (tag < 0) {
 			const start = events[i + 1]!;
-			if (start > pos) emit_text(pos, start);
+			if (start > pos) {
+				emit_text(pos, start);
+				if (done) return lines;
+			}
 			cur += infos[-tag]!.open_tag;
 			stack.push(-tag);
 			pos = start;
 			i += 2;
 		} else {
 			const end = events[i + 1]!;
-			if (end > pos) emit_text(pos, end);
+			if (end > pos) {
+				emit_text(pos, end);
+				if (done) return lines;
+			}
 			cur += '</span>';
 			stack.pop();
 			pos = end;
 			i += 2;
 		}
 	}
-	if (pos < text.length) emit_text(pos, text.length);
+	if (pos < text.length) {
+		emit_text(pos, text.length);
+		if (done) return lines;
+	}
 	lines.push(cur);
 	return lines;
 };

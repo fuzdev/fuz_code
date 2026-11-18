@@ -22,9 +22,9 @@ describe('render_diff_unified_html', () => {
 	test('renders semantic rows with diff classes', () => {
 		const html = render_diff_unified_html(A, B, { lang: 'ts' });
 		assert_balanced(html);
-		assert.include(html, '<del class="diff_line diff_remove">');
-		assert.include(html, '<ins class="diff_line diff_add">');
-		assert.include(html, '<span class="diff_line diff_same">');
+		assert.include(html, '<del class="diff_line diff_remove" data-a="2" data-hunk="0">');
+		assert.include(html, '<ins class="diff_line diff_add" data-b="2" data-hunk="0">');
+		assert.include(html, '<span class="diff_line diff_same" data-a="1" data-b="1" data-hunk="0">');
 	});
 
 	test('highlights rows with token spans', () => {
@@ -177,7 +177,10 @@ describe('render_diff_unified_html', () => {
 			lang: null,
 			line_numbers: false
 		});
-		assert.include(html, '<span class="diff_line diff_same"><span class="diff_text"><br></span>');
+		assert.include(
+			html,
+			'<span class="diff_line diff_same" data-a="2" data-b="2" data-hunk="0"><span class="diff_text"><br></span>'
+		);
 		assert.lengthOf(html.split('<br>'), 2);
 	});
 
@@ -213,7 +216,10 @@ describe('render_diff_unified_html', () => {
 			lang: 'ts',
 			line_numbers: false
 		});
-		assert.include(html, '<span class="diff_line diff_same"><span class="diff_text">foo</span>');
+		assert.include(
+			html,
+			'<span class="diff_line diff_same" data-a="2" data-b="2" data-hunk="0"><span class="diff_text">foo</span>'
+		);
 	});
 
 	test('a newline-only change shows the unterminated line removed and re-added', () => {
@@ -237,7 +243,11 @@ describe('render_diff_unified_html', () => {
 			tag: 'span',
 			gutter: '2 2',
 			text: 'x',
-			no_newline: true
+			no_newline: true,
+			highlighted: false,
+			data_a: 2,
+			data_b: 2,
+			data_hunk: 0
 		});
 		assert.isFalse(rows[0]!.no_newline);
 	});
@@ -464,8 +474,8 @@ describe('render_diff_split_html', () => {
 	test('pairs a modification as del cell then ins cell', () => {
 		const html = render_diff_split_html(A, B, { lang: 'ts' });
 		assert_balanced(html);
-		const del_at = html.indexOf('<del class="diff_cell diff_remove">');
-		const ins_at = html.indexOf('<ins class="diff_cell diff_add">');
+		const del_at = html.indexOf('<del class="diff_cell diff_remove" data-a="2" data-hunk="0">');
+		const ins_at = html.indexOf('<ins class="diff_cell diff_add" data-b="2" data-hunk="0">');
 		assert.isAbove(del_at, -1);
 		assert.isAbove(ins_at, del_at);
 	});
@@ -473,14 +483,14 @@ describe('render_diff_split_html', () => {
 	test('context renders as two same cells per row', () => {
 		const html = render_diff_split_html('a\nb\n', 'a\nx\n', { lang: null, intraline: false });
 		// the context row 'a' appears once per side
-		assert.lengthOf(html.split('<span class="diff_cell diff_same">'), 3);
+		assert.lengthOf(html.split('<span class="diff_cell diff_same" data-a="1" data-b="1"'), 3);
 	});
 
 	test('pure addition pads the a side with a spacer cell', () => {
 		const html = render_diff_split_html('a\nb\n', 'a\nx\nb\n', { lang: null });
 		assert.include(
 			html,
-			'<span class="diff_cell diff_spacer"></span><ins class="diff_cell diff_add">'
+			'<span class="diff_cell diff_spacer" data-hunk="0"></span><ins class="diff_cell diff_add" data-b="2" data-hunk="0">'
 		);
 	});
 
@@ -490,7 +500,7 @@ describe('render_diff_split_html', () => {
 			intraline: false
 		});
 		// 2 removes vs 1 add: row 1 = del+ins, row 2 = del+spacer
-		assert.include(html, '</del><span class="diff_cell diff_spacer"></span>');
+		assert.include(html, '</del><span class="diff_cell diff_spacer" data-hunk="0"></span>');
 	});
 
 	test('gutter cells carry one number per side', () => {
@@ -529,7 +539,7 @@ describe('render_diff_split_html', () => {
 
 	test('pure removal pads the b side with a spacer cell', () => {
 		const html = render_diff_split_html('a\nx\nb\n', 'a\nb\n', { lang: null });
-		assert.include(html, '</del><span class="diff_cell diff_spacer"></span>');
+		assert.include(html, '</del><span class="diff_cell diff_spacer" data-hunk="0"></span>');
 		assert_split_diff_valid(html, 'a\nx\nb\n', 'a\nb\n');
 	});
 
@@ -603,8 +613,8 @@ describe('render_diff_split_html', () => {
 		});
 		assert.include(
 			html,
-			'<span class="diff_cell diff_same"><span class="diff_text"><span class="token_comment">foo</span></span></span>' +
-				'<span class="diff_cell diff_same"><span class="diff_text">foo</span></span>'
+			'<span class="diff_cell diff_same" data-a="2" data-b="2" data-hunk="0"><span class="diff_text"><span class="token_comment">foo</span></span></span>' +
+				'<span class="diff_cell diff_same" data-a="2" data-b="2" data-hunk="0"><span class="diff_text">foo</span></span>'
 		);
 	});
 

@@ -31,6 +31,7 @@ gro task src/test/fixtures/update.task.ts  # regenerate test fixtures
 - `magic-string`, `zimmerframe` (`dependencies`) - used only by
   `svelte_preprocess_fuz_code`
 - `@fuzdev/fuz_ui` (dev) - docs site
+- `jsdom` (dev) - the DOM for component tests
 
 ## Scope
 
@@ -70,7 +71,7 @@ src/
 │   ├── syntax_styler_global.ts # instance with every built-in language
 │   ├── lexer.ts                # lexer substrate: Lexer, TokenTypeRegistry, events, HTML render
 │   ├── lexer_*.ts              # per-language lexers
-│   ├── diff_html.ts            # diff viewer: unified + split rendering over fuz_util's diff data
+│   ├── diff_html.ts            # diff viewer: DiffSide/DiffModel, unified + split rendering over fuz_util's diff data
 │   ├── Code.svelte             # main component
 │   ├── CodeDiff.svelte         # diff viewer, unified or side-by-side (`split`)
 │   ├── svelte_preprocess_fuz_code.ts # build-time preprocessor
@@ -88,7 +89,11 @@ src/
 │   ├── syntax_styler.test.ts   # registry/facade
 │   ├── lexer*.test.ts          # substrate + per-language suites
 │   ├── lexer.html_lines.test.ts # per-line rendering + marks
+│   ├── lexer.html_line_range.test.ts # line-range rendering equals the whole render's slice
 │   ├── diff_html.test.ts       # diff rendering, both views
+│   ├── diff_html.model.test.ts # DiffSide/DiffModel caching, supplied lines, row identity, ranges, highlight
+│   ├── CodeDiff.test.ts        # CodeDiff server render
+│   ├── CodeDiff.dom.svelte.test.ts # CodeDiff mounted in jsdom: highlight in place, scroll_to_line
 │   ├── html_test_helpers.ts    # HTML assertions (diff + line rendering)
 │   ├── lexer.pathological.test.ts # linearity + validity on adversarial inputs
 │   ├── pathological.ts         # adversarial input generators (tests + benchmark)
@@ -158,10 +163,31 @@ optional stop word ends the region at a top-level word too, which is how
 
 ### Diff viewer
 
-`diff_html.ts` renders syntax-highlighted diffs:
-`render_diff_unified_html(a, b, options)` composes `@fuzdev/fuz_util/diff.ts`
-(Myers line diff, hunks, intra-line segments) with whole-document lexing per
-side and `render_syntax_html_lines`. Rows are semantic `<ins>`/`<del>`
+`diff_html.ts` renders syntax-highlighted diffs in three cacheable stages.
+A `DiffSide` (`create_diff_side(text, {lang, syntax_styler})`) is one text
+lexed once as a whole document — its own copy of the lex, since
+`LexedSyntax` is valid only until the next lex — with per-line fragments
+rendered on demand through `render_syntax_html_line_range`, which resumes at
+a line from a `SyntaxLineIndex` instead of rendering the lines before it. A
+side knows nothing of its partner, so one serves many diffs (consumers cache
+it by content). A `DiffModel` (`create_diff_model(a_side, b_side, {lines?,
+max_cost?})`) is two sides plus `lines: Array<DiffLine>` — supplied (git's
+own diff, converted) or `diff_lines` by default — with hunk ranges per
+context size, the pairing, and marked fragments computed lazily per change;
+supplied lines must number every line of both sides (contiguous integers
+from 1 to `diff_line_count`) or the model throws (a producer bug: lines
+from outside are validated where they're parsed, and a `-U0` patch's hunks
+are a different input). The renderers read only `DiffRowSource` — `lines`,
+`width`, `hunk_ranges`, `elided_count` (from line numbers, so a source
+holding only hunks counts the lines it lacks; `null` when unknown, as after
+a patch's last hunk; a gap with no rows renders as a count row whatever
+`elide` says), `partner`, `fragment`,
+`prepare` — which `DiffModel` extends, and draw rows by range of `lines`
+indices (`render_diff_unified_rows_html`,
+`render_diff_split_rows_html`, no elision) or whole with elision
+(`render_diff_model_unified_html`, `render_diff_model_split_html`), and
+`render_diff_unified_html(a, b, options)` / `render_diff_split_html` build
+the sides and model from two strings. Rows are semantic `<ins>`/`<del>`
 (context rows are `<span>`) carrying `diff_line` + `diff_add`/`diff_remove`/
 `diff_same`, with aria-hidden unselectable gutters, `+`/`-` markers as CSS
 generated content (copied text stays clean code, and an empty line carries
@@ -170,6 +196,19 @@ unchanged regions as zero-JS `<details>` blocks (options:
 `'details' | 'omit' | 'none'`). `render_diff_split_html` is the
 side-by-side sibling — a flat cell sequence for a two-column grid, padding
 a side with no line in a row with a `.diff_spacer` cell.
+
+Row identity is attributes, never wrappers, so the grid layouts stay flat
+and unified ranges compose by concatenation at any cut (split ranges only
+at cuts outside a change, since a change lays out as a unit): every row or cell carries
+`data-a` / `data-b` (absent on the side it lacks; a split context line's two
+cells both carry both), and rows inside a hunk carry `data-hunk` (the
+index into `hunk_ranges(context_lines)`; elided rows have none, spacers only
+it). The `highlight` option (`DiffLineRange`s: side plus 1-based inclusive
+lines) adds `diff_highlight` to matching rows, a context line matching
+through either side; `apply_diff_highlight(root, highlight)` toggles the
+same class on rendered rows, which is how `CodeDiff` applies a changed
+`highlight` without re-rendering (it reads `highlight` untracked for the
+HTML, and `scroll_to_line` awaits `tick()` before querying).
 
 Within a change (a run of removes and the adds after it), lines pair by
 similarity: among the ways to pair removed with added lines without
@@ -219,7 +258,13 @@ one row, so there is no column to scroll as a unit.
 - `lex_syntax(text, lang, langs?, types?)` / `render_syntax_html(lexed)` - the
   two halves `SyntaxStyler` composes. Lexing writes into one reused module
   buffer; `copy_lexed_syntax(lexed)` keeps a result past the next lex (as
-  `RangeHighlighting` does)
+  `RangeHighlighting` and `DiffSide` do)
+- `render_syntax_html_lines(lexed, options?)` - one balanced fragment per
+  line, optional `marks`; `create_syntax_line_index(lexed)` +
+  `render_syntax_html_line_range(lexed, index, start, end, options?)` render
+  lines `[start, end)` equal to the whole render's slice. The index keeps
+  the open containers as a parent-pointer tree (a node per open event, a
+  node id per line), so it's linear in the events however deep the nesting
 - `syntax_events_to_tokens(lexed)` - flatten to `{type, start, end}`
 - `validate_syntax_events(lexed)` - structural invariant issues, empty when
   valid
@@ -249,13 +294,18 @@ one row, so there is no column to scroll as a unit.
 
 **`CodeDiff.svelte` props:**
 
-- `a`, `b` - the original and updated source, or `dangerous_raw_html` -
-  pre-rendered rows (what the preprocessor emits; skips runtime diffing and
-  styling) — mutually exclusive
+- `a`, `b` - the original and updated source, or `model` - a prepared
+  `DiffModel` (its sides are already lexed, so `lang`, `syntax_styler`, and
+  `max_cost` don't apply), or `dangerous_raw_html` - pre-rendered rows (what
+  the preprocessor emits; skips runtime diffing and styling) — mutually
+  exclusive
 - `split` - side by side instead of unified; the split view always wraps
 - `lang`, `syntax_styler`, `children` - as on `Code`
-- `context_lines`, `elide`, `intraline`, `line_numbers`, `max_cost` - passed
-  to the renderer (`RenderDiffOptions`)
+- `context_lines`, `elide`, `intraline`, `line_numbers`, `max_cost`,
+  `highlight` - passed to the renderer (`RenderDiffOptions`)
+- `scroll_to_line(side, line, options?)` - exported async method: after
+  pending updates render, scrolls the row into view, opening a collapsed
+  `<details>` elision holding it; resolves `false` when no row has the line
 - `wrap` (unified view only), `nomargin` - layout booleans; remaining props
   spread onto the `<div>`
 
@@ -267,8 +317,8 @@ bindings) and rewrites them to `dangerous_raw_html`. It does the same for
 each be absent or a literal, since the rows are rendered at build time; a
 `split` that is any other expression gets both views pre-rendered behind it
 (`(expr) ? split_html : unified_html`), so a view toggle stays static. It
-skips usages with spreads, a custom `syntax_styler`, or a non-static or
-unregistered `lang`, leaving them to runtime. The `code_imports` and
+skips usages with spreads, a custom `syntax_styler`, a `highlight`, or a
+non-static or unregistered `lang`, leaving them to runtime. The `code_imports` and
 `code_diff_imports` options name the import sources that resolve to each
 component.
 
@@ -358,6 +408,11 @@ As registered in `syntax_styler_global`:
    determinism — mirror the existing suites), then generate fixtures and test
 
 ## Testing
+
+Component tests mount with svelte's `mount` in a file marked
+`@vitest-environment jsdom`; `vite.config.ts` resolves the `browser`
+condition in test mode so `mount` gets Svelte's client build. A test that
+changes props uses `$state`, so its file is `*.svelte.test.ts`.
 
 Fixture workflow:
 

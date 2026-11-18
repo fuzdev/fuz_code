@@ -69,7 +69,8 @@ export interface PreprocessFuzCodeOptions {
  * absent or a literal. Its `split` may be any expression: a dynamic one
  * gets both views pre-rendered behind the expression, so toggling views
  * stays static. Usages with spreads, a custom `syntax_styler`, or a
- * non-static or unregistered `lang` are left to runtime.
+ * non-static or unregistered `lang` are left to runtime, as are `CodeDiff`
+ * usages with a `highlight`.
  *
  * @param options - `PreprocessFuzCodeOptions` configuration
  * @returns a Svelte preprocessor group
@@ -348,6 +349,12 @@ const transform_code_diff_usage = (
 	const a_attr = find_attribute(node, 'a');
 	const b_attr = find_attribute(node, 'b');
 	if (!a_attr || !b_attr) return;
+	// highlighted lines are almost always runtime state (a line link, a
+	// selection), and though the component's effect could highlight
+	// pre-rendered rows, it runs only once mounted: the page would first show
+	// them unhighlighted until hydration. Rendered at runtime, the rows carry
+	// the highlight from the start
+	if (find_attribute(node, 'highlight')) return;
 	const a = extract_static_string(a_attr.value, options.bindings);
 	if (a === null) return;
 	const b = extract_static_string(b_attr.value, options.bindings);

@@ -26,7 +26,7 @@ try {
 	];
 } catch {}
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
 	server: {
 		// Vite watches the whole root, an inotify watch per file, and gro's `.gro/` output
 		// needn't come out of the user's `max_user_watches` budget
@@ -47,6 +47,8 @@ export default defineConfig({
 		vite_plugin_pkg_json()
 	],
 	resolve: {
+		// in test mode, browser conditions so Svelte's `mount` resolves to the client version
+		conditions: mode === 'test' ? ['browser'] : undefined,
 		// fuz_ui imports `@fuzdev/fuz_code/Code.svelte`, an optional peer that isn't installed
 		// here, so point it at the source to share one `Code` with the site's `#lib` imports
 		alias: [
@@ -57,4 +59,4 @@ export default defineConfig({
 		]
 	},
 	optimizeDeps: { exclude: ['@fuzdev/blake3-wasm'] }
-});
+}));

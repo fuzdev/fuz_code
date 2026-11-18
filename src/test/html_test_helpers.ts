@@ -103,9 +103,22 @@ export interface ParsedDiffRow {
 	 */
 	text: string;
 	no_newline: boolean;
+	highlighted: boolean;
+	/**
+	 * The row's `data-a`, `data-b`, and `data-hunk`, `null` when absent.
+	 */
+	data_a: number | null;
+	data_b: number | null;
+	data_hunk: number | null;
 }
 
-const ROW_OPEN = /^<(ins|del|span) class="diff_(?:line|cell) diff_(add|remove|same|spacer)">/;
+const ROW_OPEN =
+	/^<(ins|del|span) class="diff_(?:line|cell) diff_(add|remove|same|spacer)( diff_highlight)?"((?: data-(?:a|b|hunk)="\d+")*)>/;
+
+const parse_data_attr = (attrs: string, name: string): number | null => {
+	const match = new RegExp(` data-${name}="(\\d+)"`).exec(attrs);
+	return match ? Number(match[1]) : null;
+};
 const GUTTER = /<span class="diff_gutter" aria-hidden="true">([^<]*)<\/span>/;
 
 /**
@@ -129,7 +142,11 @@ export const parse_diff_rows = (html: string): Array<ParsedDiffRow> => {
 			tag: open[1]!,
 			gutter: gutter ? gutter[1]! : null,
 			text: strip_tags(gutter ? chunk.replace(gutter[0], '') : chunk),
-			no_newline: chunk.includes('<span class="diff_no_newline"></span>')
+			no_newline: chunk.includes('<span class="diff_no_newline"></span>'),
+			highlighted: open[3] !== undefined,
+			data_a: parse_data_attr(open[4]!, 'a'),
+			data_b: parse_data_attr(open[4]!, 'b'),
+			data_hunk: parse_data_attr(open[4]!, 'hunk')
 		});
 	}
 	return rows;
@@ -145,6 +162,27 @@ export const source_lines = (text: string): Array<string> => {
 	const lines = text.replaceAll('\xa0', ' ').split('\n');
 	if (lines[lines.length - 1] === '') lines.pop();
 	return lines;
+};
+
+// checks each row's `data-a` and `data-b` against the line numbers counted
+// up to it: present exactly on the sides the row's line has
+const assert_row_numbers = (rows: Array<ParsedDiffRow>, split: boolean): void => {
+	let a_line = 0;
+	let b_line = 0;
+	for (let i = 0; i < rows.length; i++) {
+		const row = rows[i]!;
+		if (row.type === 'spacer') {
+			assert.isNull(row.data_a);
+			assert.isNull(row.data_b);
+			continue;
+		}
+		// a split context row is two cells for one line, counted at the first
+		const counted = !(split && row.type === 'same' && i % 2 === 1);
+		if (counted && row.type !== 'add') a_line++;
+		if (counted && row.type !== 'remove') b_line++;
+		assert.strictEqual(row.data_a, row.type === 'add' ? null : a_line, 'data-a');
+		assert.strictEqual(row.data_b, row.type === 'remove' ? null : b_line, 'data-b');
+	}
 };
 
 // checks each present gutter against the line numbers counted up to its row
@@ -189,6 +227,7 @@ export const assert_unified_diff_valid = (html: string, a: string, b: string): v
 			row.type === 'add' ? 'ins' : row.type === 'remove' ? 'del' : 'span'
 		);
 	}
+	assert_row_numbers(rows, false);
 	const width = String(Math.max(a_lines.length, b_lines.length, 1)).length;
 	const pad = ' '.repeat(width);
 	assert_gutters(rows, (row, a_line, b_line) => {
@@ -229,6 +268,7 @@ export const assert_split_diff_valid = (html: string, a: string, b: string): voi
 		b_cells.filter((c) => c.type !== 'spacer').map((c) => c.text),
 		b_lines
 	);
+	assert_row_numbers(cells, true);
 	const width = String(Math.max(a_lines.length, b_lines.length, 1)).length;
 	assert_gutters(a_cells, (_, a_line) => String(a_line).padStart(width));
 	assert_gutters(b_cells, (_, __, b_line) => String(b_line).padStart(width));

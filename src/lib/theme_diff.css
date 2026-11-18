@@ -3,8 +3,10 @@
 Styles for the diff viewer (`CodeDiff.svelte`, unified and split views, and
 the `diff_html.ts` renderers beneath it). Import alongside theme.css. Row
 tints key off fuz_css's semantic intent variables (positive/negative) through
-a small indirection layer — override the four `--diff_*` custom properties to
-retheme. Without fuz_css, theme_variables.css supplies the intent variables.
+a small indirection layer — override the `--diff_*` custom properties to
+retheme. Highlighted rows key off the accent intent, the color fuz_css gives
+selection and focus. Without fuz_css, theme_variables.css supplies the intent
+variables.
 
 */
 
@@ -13,6 +15,8 @@ retheme. Without fuz_css, theme_variables.css supplies the intent variables.
 	--diff_remove_bg: var(--negative_05);
 	--diff_add_emph_bg: var(--positive_20);
 	--diff_remove_emph_bg: var(--negative_20);
+	--diff_highlight_bg: color-mix(in oklab, var(--accent_50) 20%, transparent);
+	--diff_highlight_edge: var(--accent_50);
 	/* the gutters and markers align by character, so never a proportional font */
 	font-family: var(--font_family_mono, monospace);
 	overflow: auto;
@@ -68,6 +72,14 @@ ins.diff_cell {
 
 .diff_remove {
 	background-color: var(--diff_remove_bg);
+}
+
+/* highlighted lines (a line link, a selection): a translucent layer over the
+   row's own tint, so an added or removed row still reads as one, and an edge
+   on the row's leading side */
+.diff_highlight {
+	background-image: linear-gradient(var(--diff_highlight_bg), var(--diff_highlight_bg));
+	box-shadow: inset 2px 0 0 var(--diff_highlight_edge);
 }
 
 /* the text is its own block, so tab stops measure from its edge and not the

@@ -6,7 +6,7 @@ Import this alongside theme.css or theme_highlight.css.
 Values are sRGB snapshots of fuz_css's derived OKLCH palette at stop 50
 (`--palette_X_50`) and the neutral text scale (`--text_50`), per scheme,
 plus the positive and negative intent stops that theme_diff.css tints
-diff rows with.
+diff rows with and the accent stop it highlights rows with.
 
 TODO: hand-snapshotted from fuz_css's evaluators, regenerate when fuz_css's palette changes.
 
@@ -28,4 +28,6 @@ TODO: hand-snapshotted from fuz_css's evaluators, regenerate when fuz_css's pale
 	--positive_20: light-dark(#b4d9b3, #2d4e2d);
 	--negative_05: light-dark(#ffece9, #2b1714);
 	--negative_20: light-dark(#f5beb5, #643630);
+	/* the accent intent shares palette a's hue and ramp */
+	--accent_50: light-dark(#4c82b9, #548eca);
 }
