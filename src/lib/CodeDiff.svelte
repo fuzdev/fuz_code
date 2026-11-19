@@ -6,17 +6,24 @@
 	import { syntax_styler_global } from './syntax_styler_global.ts';
 	import type { SyntaxStyler } from './syntax_styler.ts';
 	import {
-		render_diff_unified_html,
-		render_diff_split_html,
+		create_diff_model,
+		create_diff_side,
 		render_diff_model_unified_html,
 		render_diff_model_split_html,
+		render_diff_segments,
+		clamp_diff_expanded,
+		diff_expand_range,
+		diff_expand_line_range,
 		apply_diff_highlight,
+		type DiffExpandDirection,
+		type DiffExpandedRange,
 		type DiffLineRange,
 		type DiffModel,
+		type DiffSegment,
 		type RenderDiffOptions
 	} from './diff_html.ts';
 
-	const {
+	let {
 		a,
 		b,
 		model,
@@ -29,6 +36,8 @@
 		line_numbers = true,
 		max_cost,
 		highlight,
+		expanded = $bindable(),
+		expand_step,
 		wrap = false,
 		nomargin = false,
 		syntax_styler = syntax_styler_global,
@@ -96,6 +105,9 @@
 			context_lines?: number;
 			/**
 			 * How elided unchanged regions render — see `RenderDiffOptions.elide`.
+			 * With `'expand'`, each region is a count row whose controls reveal
+			 * its lines (`expand_step` at a time, or all), rendering only the
+			 * rows they reveal; what's revealed is `expanded`.
 			 *
 			 * @default 'details'
 			 */
@@ -122,6 +134,23 @@
 			 * rendered rows rather than re-rendering them.
 			 */
 			highlight?: Array<DiffLineRange>;
+			/**
+			 * With `elide: 'expand'`, the unchanged lines shown as rows: `b` line
+			 * ranges (see `DiffExpandedRange`). Internal state unless bound —
+			 * `bind:expanded` lets a consumer persist and restore it. An expansion
+			 * writes it normalized and clamped to the current diff's elided
+			 * regions; a value set from outside renders clamped and stays as set,
+			 * so a new model of the same diff (or one holding more of its lines)
+			 * shows the same lines.
+			 */
+			expanded?: Array<DiffExpandedRange>;
+			/**
+			 * With `elide: 'expand'`, how many lines an expand-up or expand-down
+			 * control reveals — see `RenderDiffModelOptions.expand_step`.
+			 *
+			 * @default DIFF_EXPAND_STEP
+			 */
+			expand_step?: number;
 			/**
 			 * Whether to wrap long lines in the unified view (`pre-wrap` instead
 			 * of `pre`, breaking a long unbroken token where it would overflow).
@@ -151,11 +180,34 @@
 
 	let el: HTMLDivElement | undefined = $state();
 
+	// the sides re-lex only when their own text or language changes, so a
+	// change of view options re-renders rows from the same lexes
+	const side_a = $derived(
+		dangerous_raw_html == null && !model ? create_diff_side(a ?? '', { lang, syntax_styler }) : null
+	);
+	const side_b = $derived(
+		dangerous_raw_html == null && !model ? create_diff_side(b ?? '', { lang, syntax_styler }) : null
+	);
+	const source: DiffModel | null = $derived(
+		model ?? (side_a && side_b ? create_diff_model(side_a, side_b, { max_cost }) : null)
+	);
+
 	/**
-	 * Scrolls the row of `line` on `side` into view, opening the collapsed
-	 * elided region holding it, once pending updates have rendered. Resolves
-	 * to `false` when no row has the line — out of range, or in a region
-	 * `elide: 'omit'` dropped.
+	 * Adds `range` to `expanded`, normalized and clamped to the current diff.
+	 */
+	const reveal = (range: DiffExpandedRange): void => {
+		if (!source) return;
+		expanded = clamp_diff_expanded(source, [...(expanded ?? []), range], context_lines);
+	};
+
+	/**
+	 * Scrolls the row of `line` on `side` into view once pending updates have
+	 * rendered, opening the collapsed `<details>` elision holding it, or with
+	 * `elide: 'expand'` first revealing a window of `expand_step` lines
+	 * centered on it (see `diff_expand_line_range`) and adding it to
+	 * `expanded`. Resolves to `false` when no row has the line — out of range,
+	 * in a region `elide: 'omit'` dropped, or in one whose rows the diff
+	 * doesn't hold.
 	 *
 	 * @param side - which version `line` numbers, `'a'` the original
 	 * @param line - 1-based line number
@@ -169,7 +221,16 @@
 		// let pending updates land first, so a call right after changing props
 		// (a new `highlight`, a new `model`) acts on the rows they produce
 		await tick();
-		const row = el?.querySelector<HTMLElement>(`[data-${side}="${line}"]`);
+		const selector = `[data-${side}="${line}"]`;
+		let row = el?.querySelector<HTMLElement>(selector);
+		if (!row && elide === 'expand' && source) {
+			const range = diff_expand_line_range(source, side, line, { context_lines, expand_step });
+			if (range) {
+				reveal(range);
+				await tick();
+				row = el?.querySelector<HTMLElement>(selector);
+			}
+		}
 		if (!row) return false;
 		const details = row.closest('details');
 		if (details && !details.open) details.open = true;
@@ -193,39 +254,151 @@
 		});
 	}
 
+	// the last expand render, whose segments the next one reuses when only
+	// `expanded` (or `highlight`, which never re-renders) changed — plain
+	// state, written by the derived that reads it
+	let previous: { inputs: Array<unknown>; segments: Array<DiffSegment> } | null = null;
+	// segments rendered while a highlight was set, whose HTML may carry
+	// `diff_highlight` classes the current highlight doesn't
+	const highlighted_segments: WeakSet<DiffSegment> = new WeakSet();
+
 	// `highlight` is read untracked: the first render includes it, and later
 	// changes only toggle classes (the effect below), so changing it keeps the
 	// rows — opened elisions stay open, and nothing is re-rendered
-	const html_content = $derived.by(() => {
-		if (dangerous_raw_html != null) return dangerous_raw_html;
+	const segments: Array<DiffSegment> | null = $derived.by(() => {
+		if (elide !== 'expand' || !source) return null;
+		const inputs = [source, split, context_lines, intraline, line_numbers, expand_step];
+		const reusable =
+			previous !== null && previous.inputs.every((input, i) => input === inputs[i])
+				? previous.segments
+				: undefined;
 		const highlight_now = untrack(() => highlight);
-		if (model) {
-			const render = split ? render_diff_model_split_html : render_diff_model_unified_html;
-			return render(model, {
+		const next = render_diff_segments(
+			source,
+			{
+				split,
 				context_lines,
 				elide,
 				intraline,
 				line_numbers,
+				expanded,
+				expand_step,
 				highlight: highlight_now
-			});
+			},
+			reusable
+		);
+		// conservative: a reused segment marked here only costs a pass
+		if (highlight_now && highlight_now.length > 0) {
+			for (const segment of next) highlighted_segments.add(segment);
 		}
-		const render = split ? render_diff_split_html : render_diff_unified_html;
-		return render(a, b, {
-			lang,
-			syntax_styler,
+		previous = { inputs, segments: next };
+		return next;
+	});
+
+	const html_content = $derived.by(() => {
+		if (dangerous_raw_html != null) return dangerous_raw_html;
+		if (segments) {
+			let html = '';
+			for (const segment of segments) html += segment.html;
+			return html;
+		}
+		if (!source) return '';
+		const render = split ? render_diff_model_split_html : render_diff_model_unified_html;
+		return render(source, {
 			context_lines,
 			elide,
 			intraline,
 			line_numbers,
-			max_cost,
-			highlight: highlight_now
+			highlight: untrack(() => highlight)
 		});
 	});
+
+	// whether a pass may have left `diff_highlight` on a row
+	let dom_highlighted = false;
 
 	$effect(() => {
 		// re-applies after the rows re-render too, which also covers rows from
 		// `dangerous_raw_html` or a `children` snippet that rendered them
-		if (el && html_content) apply_diff_highlight(el, highlight);
+		// (tracks whichever the DOM renders from)
+		const rendered = children || !segments ? html_content : segments;
+		if (!el || !rendered) return;
+		const on = !!highlight && highlight.length > 0;
+		// the pass is the safety net for classes no render put there now: ones
+		// an earlier pass set, and ones in a reused segment's HTML from an
+		// earlier highlight. An expansion with nothing highlighted, and neither
+		// possible, skips the walk over every row
+		if (!on && !dom_highlighted && segments?.every((s) => !highlighted_segments.has(s))) return;
+		apply_diff_highlight(el, highlight);
+		dom_highlighted = on;
+	});
+
+	/**
+	 * Reveals what an expand control names, then, when the control had focus,
+	 * moves focus to the same control of what's still hidden, which replaced
+	 * it, or its expand-all control when that's the only one left. When
+	 * nothing of the region stays hidden, focus goes to the nearest other
+	 * count row's control (the next, else the previous), else the root.
+	 */
+	const expand_from = async (
+		button: HTMLElement,
+		direction: DiffExpandDirection
+	): Promise<void> => {
+		const root = el;
+		const row = button.closest<HTMLElement>('.diff_expand[data-b-start]');
+		if (!root || !row || elide !== 'expand' || !source) return;
+		const start = Number(row.dataset.bStart);
+		const end = Number(row.dataset.bEnd);
+		const range = diff_expand_range(start, end, direction, expand_step);
+		const focused = button === document.activeElement;
+		const rows = focused ? [...root.querySelectorAll<HTMLElement>('.diff_expand')] : [];
+		reveal(range);
+		if (!focused) return;
+		await tick();
+		const hidden_start = direction === 'down' ? range.end + 1 : start;
+		const hidden_end = direction === 'up' ? range.start - 1 : end;
+		const hidden =
+			hidden_start <= hidden_end
+				? root.querySelector(`[data-b-start="${hidden_start}"][data-b-end="${hidden_end}"]`)
+				: null;
+		let next =
+			hidden?.querySelector<HTMLElement>(`[data-expand="${direction}"]`) ??
+			hidden?.querySelector<HTMLElement>('[data-expand="all"]');
+		if (!next) {
+			// the other count rows are untouched, so still in the DOM
+			const index = rows.indexOf(row);
+			const after = rows.slice(index + 1).find((r) => r.isConnected);
+			const before = rows
+				.slice(0, index)
+				.reverse()
+				.find((r) => r.isConnected);
+			next =
+				after?.querySelector<HTMLElement>('[data-expand]') ??
+				[...(before?.querySelectorAll<HTMLElement>('[data-expand]') ?? [])].at(-1);
+		}
+		if (next) {
+			next.focus();
+		} else {
+			// focusable by script only, so it never joins the tab order
+			if (!root.hasAttribute('tabindex')) root.tabIndex = -1;
+			root.focus({ preventScroll: true });
+		}
+	};
+
+	// one listener for every expand control, which are HTML, not components
+	$effect(() => {
+		const root = el;
+		if (!root) return;
+		const onclick = (event: MouseEvent): void => {
+			const button = (event.target as Element | null)?.closest?.<HTMLElement>('[data-expand]');
+			if (!button || !root.contains(button)) return;
+			// a consumer's own `data-expand` elements aren't controls
+			const direction = button.dataset.expand;
+			if (direction === 'up' || direction === 'down' || direction === 'all') {
+				void expand_from(button, direction);
+			}
+		};
+		root.addEventListener('click', onclick);
+		return () => root.removeEventListener('click', onclick);
 	});
 </script>
 
@@ -240,5 +413,11 @@
 	class:nomargin
 	data-lang={model ? model.b.lang : lang}
 >
-	{#if children}{@render children(html_content)}{:else}{@html html_content}{/if}
+	{#if children}
+		{@render children(html_content)}
+	{:else if segments}
+		{#each segments as segment (segment.key)}{@html segment.html}{/each}
+	{:else}
+		{@html html_content}
+	{/if}
 </div>

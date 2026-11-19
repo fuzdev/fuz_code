@@ -92,8 +92,10 @@ src/
 │   ├── lexer.html_line_range.test.ts # line-range rendering equals the whole render's slice
 │   ├── diff_html.test.ts       # diff rendering, both views
 │   ├── diff_html.model.test.ts # DiffSide/DiffModel caching, supplied lines, row identity, ranges, highlight
-│   ├── CodeDiff.test.ts        # CodeDiff server render
+│   ├── diff_html.expand.test.ts # 'expand' count rows, segments and their reuse, expanded-range helpers
+│   ├── CodeDiff.test.ts        # CodeDiff server render, incl. the 'expand' hydration fixtures
 │   ├── CodeDiff.dom.svelte.test.ts # CodeDiff mounted in jsdom: highlight in place, scroll_to_line
+│   ├── CodeDiff.expand.dom.svelte.test.ts # CodeDiff 'expand' in jsdom: controls, bind:expanded, node identity, focus, hydration
 │   ├── html_test_helpers.ts    # HTML assertions (diff + line rendering)
 │   ├── lexer.pathological.test.ts # linearity + validity on adversarial inputs
 │   ├── pathological.ts         # adversarial input generators (tests + benchmark)
@@ -193,7 +195,7 @@ the sides and model from two strings. Rows are semantic `<ins>`/`<del>`
 generated content (copied text stays clean code, and an empty line carries
 a `<br>` so a copy keeps it), intra-line `<mark>` emphasis, and elided
 unchanged regions as zero-JS `<details>` blocks (options:
-`'details' | 'omit' | 'none'`). `render_diff_split_html` is the
+`'details' | 'omit' | 'expand' | 'none'`). `render_diff_split_html` is the
 side-by-side sibling — a flat cell sequence for a two-column grid, padding
 a side with no line in a row with a `.diff_spacer` cell.
 
@@ -209,6 +211,36 @@ through either side; `apply_diff_highlight(root, highlight)` toggles the
 same class on rendered rows, which is how `CodeDiff` applies a changed
 `highlight` without re-rendering (it reads `highlight` untracked for the
 HTML, and `scroll_to_line` awaits `tick()` before querying).
+
+`elide: 'expand'` renders each elided region as a count row
+(`.diff_skip.diff_expand`, `data-b-start` / `data-b-end` naming the
+hidden `b` lines) holding `<button data-expand="down|up|all">` controls:
+down and up reveal `DIFF_EXPAND_STEP` lines (`expand_step`) from the
+rows above or below, so the file's start offers no down and its end no
+up (an unchanged file, one region, offers both); a region no bigger than
+a step offers only all. The `expanded` option (`DiffExpandedRange`s)
+lists the revealed lines by `b` number — line numbers, not row indices,
+so they mean the same in any model of the same diff (a hunks-only source
+upgraded to a full one) — normalized and clamped to the regions
+(`normalize_diff_expanded`, `clamp_diff_expanded`; ends cap at
+`Number.MAX_SAFE_INTEGER`, so values survive JSON; lines the source
+holds no rows for stay in the value but render as plain count rows with
+no controls, and a region of unknown length keeps every line past its
+start). A region splits into runs of rows numbered consecutively on both
+sides, with a count row for each stretch of lines between them, in every
+mode but `'omit'` — a full model's region is always one run.
+`render_diff_segments` renders the whole document as keyed
+`DiffSegment`s (hunks, revealed row runs, hidden regions) that join to
+the whole render in every mode — the whole-document renderers are that
+join — and, given the previous render's segments, reuses them by key and
+keeps their row runs' bounds as cuts, so revealing lines renders only
+those. `CodeDiff` with `'expand'` renders each segment in a keyed
+`{#each}` with its own `{@html}` (the split view's cells and count rows
+stay children of the one grid), wires the buttons with one delegated
+click listener on its root, and moves focus to the replacing control
+(or, when the region is all revealed, the nearest other count row's,
+else the root with `tabindex="-1"`). The server render includes the
+buttons, inert until hydration, so the hydrated markup is the server's.
 
 Within a change (a run of removes and the adds after it), lines pair by
 similarity: among the ways to pair removed with added lines without
@@ -302,10 +334,16 @@ one row, so there is no column to scroll as a unit.
 - `split` - side by side instead of unified; the split view always wraps
 - `lang`, `syntax_styler`, `children` - as on `Code`
 - `context_lines`, `elide`, `intraline`, `line_numbers`, `max_cost`,
-  `highlight` - passed to the renderer (`RenderDiffOptions`)
+  `highlight`, `expand_step` - passed to the renderer (`RenderDiffOptions`)
+- `expanded` - bindable, with `elide: 'expand'`: the revealed `b` line
+  ranges, internal state unless bound. An expansion writes it normalized
+  and clamped to the current diff; a value from outside (or a new model)
+  renders clamped and stays as set
 - `scroll_to_line(side, line, options?)` - exported async method: after
   pending updates render, scrolls the row into view, opening a collapsed
-  `<details>` elision holding it; resolves `false` when no row has the line
+  `<details>` elision holding it, or with `'expand'` first revealing a
+  step-sized window centered on a hidden line (`diff_expand_line_range`);
+  resolves `false` when no row has the line
 - `wrap` (unified view only), `nomargin` - layout booleans; remaining props
   spread onto the `<div>`
 
@@ -317,7 +355,8 @@ bindings) and rewrites them to `dangerous_raw_html`. It does the same for
 each be absent or a literal, since the rows are rendered at build time; a
 `split` that is any other expression gets both views pre-rendered behind it
 (`(expr) ? split_html : unified_html`), so a view toggle stays static. It
-skips usages with spreads, a custom `syntax_styler`, a `highlight`, or a
+skips usages with spreads, a custom `syntax_styler`, a `highlight`,
+`elide="expand"`, or a
 non-static or unregistered `lang`, leaving them to runtime. The `code_imports` and
 `code_diff_imports` options name the import sources that resolve to each
 component.
@@ -423,7 +462,11 @@ Fixture workflow:
 4. Review with `git diff src/test/fixtures/`
 
 Generated fixtures in `generated/{ext}/` are named `{ext}_{variant}`, as
-`.html` (rendered output) and `.txt` (token debug output).
+`.html` (rendered output) and `.txt` (token debug output). The exception is
+`generated/code_diff/*.ssr.html`, `CodeDiff`'s server render that the
+hydration test reads: a file snapshot, rewritten by
+`vitest -u src/test/CodeDiff.test.ts` (a Svelte upgrade changes its
+hydration markers).
 
 ## Performance
 

@@ -17,6 +17,8 @@ variables.
 	--diff_remove_emph_bg: var(--negative_20);
 	--diff_highlight_bg: color-mix(in oklab, var(--accent_50) 20%, transparent);
 	--diff_highlight_edge: var(--accent_50);
+	--diff_expand_bg: color-mix(in oklab, var(--text_50) 8%, transparent);
+	--diff_expand_hover_bg: color-mix(in oklab, var(--text_50) 25%, transparent);
 	/* the gutters and markers align by character, so never a proportional font */
 	font-family: var(--font_family_mono, monospace);
 	overflow: auto;
@@ -145,6 +147,42 @@ ins.diff_cell {
 .diff_skip summary {
 	user-select: none;
 	cursor: pointer;
+}
+
+/* an `elide: 'expand'` count row: its controls, then the count. It's chrome,
+   so a selection across the diff copies none of it */
+.diff_expand {
+	display: flex;
+	align-items: center;
+	gap: var(--space_xs2);
+	user-select: none;
+	background-color: var(--diff_expand_bg);
+}
+
+/* small text controls in a code row, not fuz_css's full-size buttons */
+.diff_expand > button {
+	min-height: 0;
+	min-width: 3ch;
+	margin: 0;
+	padding: 0 var(--space_xs3);
+	border: none;
+	border-radius: var(--border_radius_xs3);
+	box-shadow: none;
+	background-color: transparent;
+	color: inherit;
+	font: inherit;
+	line-height: inherit;
+	cursor: pointer;
+}
+
+.diff_expand > button:hover {
+	background-color: var(--diff_expand_hover_bg);
+	color: var(--text_color, inherit);
+}
+
+.diff_expand > button:focus-visible {
+	outline: var(--outline_width_focus, 2px) solid var(--diff_highlight_edge);
+	outline-offset: -1px;
 }
 
 /* marks the final line of a side that lacks a trailing newline */

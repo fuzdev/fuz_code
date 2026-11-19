@@ -12,7 +12,12 @@
 
 	import Code from '#lib/Code.svelte';
 	import CodeDiff from '#lib/CodeDiff.svelte';
-	import { create_diff_model, create_diff_side, type DiffLineRange } from '#lib/diff_html.ts';
+	import {
+		create_diff_model,
+		create_diff_side,
+		type DiffExpandedRange,
+		type DiffLineRange
+	} from '#lib/diff_html.ts';
 
 	const TOME_SLUG = 'diff';
 	const tome = tome_get_by_slug(TOME_SLUG);
@@ -60,6 +65,20 @@ export const VERSION = 2;
 		{ side: highlight_side, start: highlight_start, end: highlight_end }
 	]);
 	let model_diff: CodeDiff | undefined = $state();
+
+	// a long file with two small edits far apart, so most of it elides
+	const EXPAND_A = Array.from(
+		{ length: 160 },
+		(_, i) => `export const value_${i + 1} = ${i + 1};`
+	).join('\n');
+	const EXPAND_B = EXPAND_A.replace('value_40 = 40;', 'value_40 = 40_000;').replace(
+		'value_120 = 120;',
+		'value_120 = 120 * 2;'
+	);
+	let expanded: Array<DiffExpandedRange> = $state([]);
+	let expand_split = $state(false);
+	let expand_line = $state(80);
+	let expand_diff: CodeDiff | undefined = $state();
 </script>
 
 <TomeContent {tome}>
@@ -203,6 +222,77 @@ const model = create_diff_model(side(a_hash, a), side(b_hash, b));`}
 
 			<CodeDiff bind:this={model_diff} {model} {highlight} {split} />
 		</TomeSection>
+		<TomeSection>
+			<TomeSectionHeader text="Expanding elided lines" />
+			<p>
+				<code>elide="expand"</code> keeps the DOM bounded on big files and gives the hidden lines
+				back on demand: each elided region is a count row whose buttons reveal 20 lines down from
+				the hunk above, 20 up from the hunk below, or all of them (<code>expand_step</code> sets the
+				20). Only the revealed rows render; the rest of the diff's DOM stays as it was. What's
+				revealed is <code>expanded</code>, ranges of <code>b</code> line numbers — internal by
+				default, or bound to persist and restore it. Line numbers rather than rows keep it
+				meaningful across models of the same diff. <code>scroll_to_line</code> on a hidden line
+				reveals the lines around it first.
+			</p>
+			<p>
+				The default <code>'details'</code> needs no JS but puts every elided line in the DOM, and
+				<code>'omit'</code> renders only the count. For a static render,
+				<DeclarationLink name="render_diff_segments" /> draws the same rows in keyed pieces.
+			</p>
+
+			<Code
+				lang="svelte"
+				content={`<CodeDiff bind:this={diff} {a} {b} lang="ts" elide="expand" bind:expanded />`}
+			/>
+
+			<div class="row gap_md mb_md demo-controls">
+				<div class="row gap_xs">
+					<button
+						type="button"
+						class="sm"
+						class:selected={!expand_split}
+						onclick={() => (expand_split = false)}
+					>
+						unified
+					</button>
+					<button
+						type="button"
+						class="sm"
+						class:selected={expand_split}
+						onclick={() => (expand_split = true)}
+					>
+						split
+					</button>
+				</div>
+				<label class="row gap_xs">
+					<span>b line</span>
+					<input type="number" min="1" bind:value={expand_line} />
+				</label>
+				<button
+					type="button"
+					class="sm"
+					onclick={() => expand_diff?.scroll_to_line('b', expand_line)}
+				>
+					scroll to line
+				</button>
+				<button type="button" class="sm" onclick={() => (expanded = [])}>collapse all</button>
+			</div>
+			<p>
+				<code>expanded</code>: <code>{JSON.stringify(expanded)}</code>
+			</p>
+
+			<div class="demo-expand">
+				<CodeDiff
+					bind:this={expand_diff}
+					a={EXPAND_A}
+					b={EXPAND_B}
+					lang="ts"
+					elide="expand"
+					split={expand_split}
+					bind:expanded
+				/>
+			</div>
+		</TomeSection>
 	{/if}
 </TomeContent>
 
@@ -216,5 +306,9 @@ const model = create_diff_model(side(a_hash, a), side(b_hash, b));`}
 	}
 	.demo-controls input {
 		width: 6ch;
+	}
+	.demo-expand {
+		max-height: var(--distance_sm);
+		overflow: auto;
 	}
 </style>

@@ -23,6 +23,12 @@
  * consumer maps an element to its line by event delegation;
  * `apply_diff_highlight` restyles highlighted rows in place.
  *
+ * `elide: 'expand'` bounds the DOM of a big diff with a way back: elided
+ * regions render as count rows with expand controls, and the lines in
+ * `expanded` (`b` line numbers) as rows. `render_diff_segments` renders the
+ * document in keyed pieces, so a component re-renders only the pieces an
+ * expansion changes.
+ *
  * @module
  */
 
@@ -853,11 +859,29 @@ export interface RenderDiffModelOptions extends RenderDiffRowsOptions {
 	 * How elided unchanged regions render: `'details'` as collapsed native
 	 * `<details>` blocks (expandable with zero JS, full content in the DOM),
 	 * `'omit'` as an inert count row (bounded output for huge inputs),
-	 * `'none'` fully expanded.
+	 * `'expand'` as count rows with expand controls, showing the lines in
+	 * `expanded` as rows (bounded output with a way back — the controls are
+	 * `<button>`s that do nothing until a script wires them, as `CodeDiff`
+	 * does; see `render_diff_segments`), `'none'` fully expanded.
 	 *
 	 * @default 'details'
 	 */
-	elide?: 'details' | 'omit' | 'none';
+	elide?: 'details' | 'omit' | 'expand' | 'none';
+	/**
+	 * With `elide: 'expand'`, the unchanged lines to show as rows rather than
+	 * count — `b` line numbers, normalized as `normalize_diff_expanded` does.
+	 * Lines outside the elided regions are ignored, and so is a region whose
+	 * rows the source doesn't hold.
+	 */
+	expanded?: ReadonlyArray<DiffExpandedRange>;
+	/**
+	 * With `elide: 'expand'`, how many lines an expand-up or expand-down
+	 * control reveals; a region of at most this many offers only expand-all.
+	 * Floored, and a value under 1 or `NaN` is the default.
+	 *
+	 * @default DIFF_EXPAND_STEP
+	 */
+	expand_step?: number;
 }
 
 /**
@@ -959,9 +983,6 @@ const render_text = (line: DiffLine, fragment: string): string =>
 		line.no_newline ? '<span class="diff_no_newline"></span>' : '',
 		'</span>'
 	].join('');
-
-const elided_summary = (count: number | null): string =>
-	count === null ? 'unchanged lines' : `${count} unchanged line${count === 1 ? '' : 's'}`;
 
 const render_unified_rows = (ctx: RowsContext, start: number, end: number, out: Array<string>) => {
 	const { model, intraline, line_numbers, hunks, pad } = ctx;
@@ -1119,6 +1140,505 @@ export const render_diff_split_rows_html = (
 };
 
 /**
+ * How many lines an expand-up or expand-down control of an `elide: 'expand'`
+ * render reveals unless `expand_step` says otherwise, as GitHub's controls
+ * do.
+ */
+export const DIFF_EXPAND_STEP = 20;
+
+/**
+ * A run of unchanged lines an `elide: 'expand'` render shows as rows: `b`
+ * line numbers, 1-based and inclusive. An unchanged line has a number on
+ * both sides; `b` is the key because it's the version a reader links into
+ * and edits, and because line numbers, unlike row indices, mean the same
+ * thing in every model of the same two texts — a range survives a new model
+ * of the same diff, such as a source holding only hunks upgraded to one
+ * holding every line.
+ *
+ * `normalize_diff_expanded` caps `end` at `Number.MAX_SAFE_INTEGER`, which
+ * reads as "to the end of the file", so a normalized value is finite and
+ * survives `JSON.stringify`; clamping to a diff whose length is known
+ * brings it down to the last line.
+ */
+export interface DiffExpandedRange {
+	start: number;
+	end: number;
+}
+
+/**
+ * Which way an expand control reveals lines: `'down'` from the top of a
+ * hidden region (continuing the rows above it), `'up'` from its bottom
+ * (continuing the rows below it), or `'all'` of it.
+ */
+export type DiffExpandDirection = 'up' | 'down' | 'all';
+
+/**
+ * Returns `ranges` sorted, with overlapping and adjacent ranges merged, the
+ * bounds rounded inward to whole lines, a start below 1 raised to 1 and an
+ * end past `Number.MAX_SAFE_INTEGER` (an `Infinity`, say) lowered to it, and
+ * empty or `NaN` ranges dropped. Doesn't mutate `ranges`.
+ */
+export const normalize_diff_expanded = (
+	ranges: ReadonlyArray<DiffExpandedRange>
+): Array<DiffExpandedRange> => {
+	const valid: Array<DiffExpandedRange> = [];
+	for (const range of ranges) {
+		const start = Math.max(1, Math.ceil(range.start));
+		const end = Math.min(Number.MAX_SAFE_INTEGER, Math.floor(range.end));
+		// `NaN` fails the comparison
+		if (start <= end) valid.push({ start, end });
+	}
+	valid.sort((x, y) => x.start - y.start);
+	const merged: Array<DiffExpandedRange> = [];
+	for (const range of valid) {
+		const last = merged[merged.length - 1];
+		if (last !== undefined && range.start <= last.end + 1) {
+			if (range.end > last.end) last.end = range.end;
+		} else {
+			merged.push(range);
+		}
+	}
+	return merged;
+};
+
+/**
+ * A piece of an elided region: rows `[start, end)` whose `a` and `b` numbers
+ * both count up by one — a run the region can show — or, with `start`
+ * equal to `end`, lines the source holds no rows for, which render as a
+ * count. `b_start` through `b_end` are the piece's `b` lines; `b_end` is
+ * `Infinity` for lines of unknown count.
+ */
+interface DiffGapPiece {
+	start: number;
+	end: number;
+	b_start: number;
+	b_end: number;
+	count: number | null;
+}
+
+/**
+ * An elided region: rows `[start, end)` of the source, possibly none, the
+ * `b` lines `[b_start, b_end]` it stands for (`b_end` is `Infinity` when the
+ * count is unknown), and its pieces in order. A full model's region with
+ * rows is one run; a source holding only some of a region's rows has a
+ * piece per run and per stretch of lines it lacks.
+ */
+interface DiffGap {
+	start: number;
+	end: number;
+	b_start: number;
+	b_end: number;
+	count: number | null;
+	pieces: Array<DiffGapPiece>;
+}
+
+/**
+ * Returns the elided regions between `hunks` (and before the first and after
+ * the last), skipping those with no lines.
+ */
+const find_gaps = (
+	model: DiffRowSource,
+	hunks: ReadonlyArray<Readonly<DiffRowRange>>
+): Array<DiffGap> => {
+	const { lines } = model;
+	const gaps: Array<DiffGap> = [];
+	const add = (start: number, end: number): void => {
+		const count = model.elided_count(start, end);
+		if (count === 0) return;
+		let before = 0;
+		for (let i = start - 1; i >= 0; i--) {
+			const b_line = lines[i]!.b_line;
+			if (b_line !== null) {
+				before = b_line;
+				break;
+			}
+		}
+		const b_start = before + 1;
+		const b_end = count === null ? Infinity : before + count;
+		const pieces: Array<DiffGapPiece> = [];
+		const missing = (at: number, from: number, to: number): void => {
+			if (from > to) return;
+			pieces.push({
+				start: at,
+				end: at,
+				b_start: from,
+				b_end: to,
+				count: to === Infinity ? null : to - from + 1
+			});
+		};
+		// a region holding all of its lines is one run - every region of a full model - known
+		// from its ends alone, since line numbers strictly increase: no walk over its rows
+		if (count === end - start) {
+			const first = lines[start]!;
+			const last = lines[end - 1]!;
+			if (
+				first.b_line === b_start &&
+				(last.b_line ?? 0) - b_start === count - 1 &&
+				(last.a_line ?? 0) - (first.a_line ?? 0) === count - 1
+			) {
+				pieces.push({ start, end, b_start, b_end, count });
+				gaps.push({ start, end, b_start, b_end, count, pieces });
+				return;
+			}
+		}
+		// the rows of an elided region are unchanged lines, numbered on both sides
+		let next_b = b_start;
+		let i = start;
+		while (i < end) {
+			const first = lines[i]!;
+			let j = i + 1;
+			while (
+				j < end &&
+				lines[j]!.b_line === lines[j - 1]!.b_line! + 1 &&
+				lines[j]!.a_line === lines[j - 1]!.a_line! + 1
+			) {
+				j++;
+			}
+			missing(i, next_b, first.b_line! - 1);
+			const run_b_end = lines[j - 1]!.b_line!;
+			pieces.push({ start: i, end: j, b_start: first.b_line!, b_end: run_b_end, count: j - i });
+			next_b = run_b_end + 1;
+			i = j;
+		}
+		missing(end, next_b, b_end);
+		gaps.push({ start, end, b_start, b_end, count, pieces });
+	};
+	let cursor = 0;
+	for (const hunk of hunks) {
+		add(cursor, hunk.start);
+		cursor = hunk.end;
+	}
+	add(cursor, lines.length);
+	return gaps;
+};
+
+/**
+ * Returns `expanded` normalized (see `normalize_diff_expanded`) and clamped
+ * to the elided regions of `model` for `context_lines` — the lines an
+ * `elide: 'expand'` render of it would show as rows from `expanded`, plus
+ * any it counts because the source holds no rows for them. A region of
+ * unknown length (after a patch's last hunk) keeps every line past its
+ * start.
+ */
+export const clamp_diff_expanded = (
+	model: DiffRowSource,
+	expanded: ReadonlyArray<DiffExpandedRange>,
+	context_lines = 3
+): Array<DiffExpandedRange> => {
+	const ranges = normalize_diff_expanded(expanded);
+	const out: Array<DiffExpandedRange> = [];
+	let j = 0;
+	for (const gap of find_gaps(model, model.hunk_ranges(context_lines))) {
+		while (j < ranges.length && ranges[j]!.end < gap.b_start) j++;
+		// a range can span several regions, so `j` stays for the next one
+		for (let k = j; k < ranges.length && ranges[k]!.start <= gap.b_end; k++) {
+			const start = Math.max(ranges[k]!.start, gap.b_start);
+			const end = Math.min(ranges[k]!.end, gap.b_end);
+			const last = out[out.length - 1];
+			// regions either side of a hunk with no `b` lines are adjacent
+			if (last !== undefined && start <= last.end + 1) last.end = end;
+			else out.push({ start, end });
+		}
+	}
+	return out;
+};
+
+const to_expand_step = (step: number | undefined): number =>
+	step !== undefined && step >= 1 ? Math.floor(step) : DIFF_EXPAND_STEP;
+
+/**
+ * Returns the lines an expand control reveals in a hidden region of `b`
+ * lines `start` through `end` — what `CodeDiff` adds to its `expanded` on a
+ * click, from the count row's `data-b-start` and `data-b-end`.
+ *
+ * @param start - the region's first `b` line
+ * @param end - the region's last `b` line
+ * @param direction - the control's `data-expand`
+ * @param step - lines revealed up or down, as `expand_step`
+ */
+export const diff_expand_range = (
+	start: number,
+	end: number,
+	direction: DiffExpandDirection,
+	step?: number
+): DiffExpandedRange => {
+	const n = to_expand_step(step);
+	if (direction === 'down') return { start, end: Math.min(end, start + n - 1) };
+	if (direction === 'up') return { start: Math.max(start, end - n + 1), end };
+	return { start, end };
+};
+
+/**
+ * Options for `diff_expand_line_range`.
+ */
+export interface DiffExpandLineOptions {
+	/**
+	 * @default 3
+	 */
+	context_lines?: number;
+	/**
+	 * The window's size — see `RenderDiffModelOptions.expand_step`.
+	 *
+	 * @default DIFF_EXPAND_STEP
+	 */
+	expand_step?: number;
+}
+
+/**
+ * Returns the lines to reveal so an `elide: 'expand'` render shows `line`
+ * of `side` with context: a window of `expand_step` lines centered on it,
+ * kept inside the run of rows holding it. `null` when no elided row has the
+ * line — it's in a hunk, out of range, not an integer, or among lines the
+ * source holds no rows for. `CodeDiff`'s `scroll_to_line` reveals this
+ * window before scrolling.
+ */
+export const diff_expand_line_range = (
+	model: DiffRowSource,
+	side: 'a' | 'b',
+	line: number,
+	options: DiffExpandLineOptions = {}
+): DiffExpandedRange | null => {
+	if (!Number.isInteger(line)) return null;
+	const { context_lines = 3, expand_step } = options;
+	const n = to_expand_step(expand_step);
+	const { lines } = model;
+	for (const gap of find_gaps(model, model.hunk_ranges(context_lines))) {
+		for (const run of gap.pieces) {
+			if (run.start === run.end) continue;
+			// a run numbers each side consecutively
+			const first = side === 'a' ? lines[run.start]!.a_line! : run.b_start;
+			if (line < first || line > first + (run.end - run.start) - 1) continue;
+			const b_line = run.b_start + (line - first);
+			const end = Math.min(run.b_end, Math.max(run.b_start, b_line - Math.floor(n / 2)) + n - 1);
+			return { start: Math.max(run.b_start, end - n + 1), end };
+		}
+	}
+	return null;
+};
+
+/**
+ * A piece of a whole-document render, as `render_diff_segments` returns it.
+ * Rendering each with its own `{@html}`, keyed by `key`, lets an expansion
+ * replace only the segments it changes.
+ */
+export interface DiffSegment {
+	/**
+	 * Names the segment's rows: from renders of one source with the same
+	 * options apart from `expanded`, equal keys are equal segments.
+	 */
+	readonly key: string;
+	/**
+	 * A `'hunk'`, a run of `'rows'` an elided region shows (all of it with
+	 * `elide: 'none'`, or what `expanded` reveals with `'expand'`), or an
+	 * `'elided'` region or the hidden part of one, rendered as `elide` says.
+	 */
+	readonly kind: 'hunk' | 'rows' | 'elided';
+	/**
+	 * The first row, an index into `DiffRowSource.lines`.
+	 */
+	readonly start: number;
+	/**
+	 * The row after the last; equal to `start` for lines with no rows.
+	 */
+	readonly end: number;
+	readonly html: string;
+}
+
+/**
+ * Options for `render_diff_segments`.
+ */
+export interface RenderDiffSegmentsOptions extends RenderDiffModelOptions {
+	/**
+	 * Side-by-side cells, as `render_diff_model_split_html` draws them, rather
+	 * than unified rows.
+	 *
+	 * @default false
+	 */
+	split?: boolean;
+}
+
+const lines_label = (count: number): string => `${count} line${count === 1 ? '' : 's'}`;
+
+const elided_summary = (count: number | null): string =>
+	count === null ? 'unchanged lines' : `${count} unchanged line${count === 1 ? '' : 's'}`;
+
+const render_count_row = (count: number | null): string =>
+	`<div class="diff_skip">${elided_summary(count)}</div>`;
+
+const render_expand_button = (direction: DiffExpandDirection, count: number): string => {
+	const label = `Expand ${direction}: ${lines_label(count)}`;
+	const glyph = direction === 'down' ? '↓' : direction === 'up' ? '↑' : '↕';
+	return `<button type="button" class="diff_expand_${direction}" data-expand="${direction}" aria-label="${label}" title="${label}">${glyph}</button>`;
+};
+
+/**
+ * Renders the count row of the hidden rows `[start, end)` of an elided run,
+ * with its expand controls: down from the rows above and up from the rows
+ * below — both when the hidden rows are the whole file, as in an unchanged
+ * one — and all, alone for hidden rows no more than a step.
+ */
+const render_expand_row = (
+	lines: ReadonlyArray<DiffLine>,
+	start: number,
+	end: number,
+	step: number
+): string => {
+	const count = end - start;
+	let controls = '';
+	if (count > step) {
+		const whole = start === 0 && end === lines.length;
+		if (start > 0 || whole) controls += render_expand_button('down', step);
+		if (end < lines.length || whole) controls += render_expand_button('up', step);
+	}
+	controls += render_expand_button('all', count);
+	return `<div class="diff_skip diff_expand" data-b-start="${lines[start]!.b_line}" data-b-end="${lines[end - 1]!.b_line}">${controls}<span class="diff_expand_count">${elided_summary(count)}</span></div>`;
+};
+
+/**
+ * Renders a `DiffModel` (or any `DiffRowSource`) whole, as
+ * `render_diff_model_unified_html` or, with `split`,
+ * `render_diff_model_split_html` does, but in pieces whose HTML joins to
+ * that render: each hunk, each elided region, and with `elide: 'expand'`
+ * each run of revealed rows and each count row between them.
+ *
+ * A component renders each segment with its own keyed `{@html}`, so an
+ * expansion replaces the segments it changes and leaves the rest of the DOM
+ * alone; the split view's segments are cells of one flat grid, its count
+ * rows spanning both columns. Pass the last render's segments as `previous`
+ * — of the same source with the same options apart from `expanded` — and
+ * segments with the same key are reused rather than rendered, and runs of
+ * revealed rows keep their old bounds as cuts, so revealing lines next to a
+ * run renders only those lines as a new segment.
+ *
+ * A count row with expand controls is
+ * `<div class="diff_skip diff_expand" data-b-start data-b-end>` naming the
+ * hidden `b` lines, holding a `<button data-expand>` per `DiffExpandDirection`
+ * it offers, labeled for assistive tech; `diff_expand_range` says what a
+ * control reveals. Lines of an elided region the source holds no rows for
+ * render as a count row with no controls in every mode but `'omit'`, which
+ * counts the whole region in one row.
+ */
+export const render_diff_segments = (
+	model: DiffRowSource,
+	options: RenderDiffSegmentsOptions = {},
+	previous?: ReadonlyArray<DiffSegment>
+): Array<DiffSegment> => {
+	const { elide = 'details', split = false, expanded } = options;
+	const step = to_expand_step(options.expand_step);
+	const ctx = to_rows_context(model, options);
+	const render_rows = split ? render_split_rows : render_unified_rows;
+	const segments: Array<DiffSegment> = [];
+
+	// the previous render's segments are reused by key, and its runs of
+	// revealed rows keep their bounds as cuts, so revealing more lines next to
+	// a run renders only the new ones
+	const reuse: Map<string, DiffSegment> = new Map();
+	const cuts: Array<number> = [];
+	if (previous) {
+		for (const segment of previous) {
+			reuse.set(segment.key, segment);
+			if (segment.kind === 'rows') cuts.push(segment.start, segment.end);
+		}
+		cuts.sort((x, y) => x - y);
+	}
+	const push = (
+		kind: DiffSegment['kind'],
+		start: number,
+		end: number,
+		render: (out: Array<string>) => void
+	): void => {
+		const key = `${kind}:${start}-${end}`;
+		const reused = reuse.get(key);
+		if (reused) {
+			segments.push(reused);
+			return;
+		}
+		const out: Array<string> = [];
+		render(out);
+		segments.push(Object.freeze({ key, kind, start, end, html: out.join('') }));
+	};
+	const push_rows = (start: number, end: number): void => {
+		push('rows', start, end, (out) => render_rows(ctx, start, end, out));
+	};
+	const push_revealed = (start: number, end: number): void => {
+		let from = start;
+		for (const cut of cuts) {
+			if (cut <= from) continue;
+			if (cut >= end) break;
+			push_rows(from, cut);
+			from = cut;
+		}
+		push_rows(from, end);
+	};
+	const push_details = (start: number, end: number, count: number | null): void => {
+		push('elided', start, end, (out) => {
+			out.push(`<details class="diff_skip"><summary>${elided_summary(count)}</summary>`);
+			if (split) out.push('<div class="diff_split_rows">');
+			render_rows(ctx, start, end, out);
+			out.push(split ? '</div></details>' : '</details>');
+		});
+	};
+	// lines with no rows still show how many they are, as a count row, since
+	// there are no rows to expand or show
+	const push_count = (at: number, count: number | null): void => {
+		push('elided', at, at, (out) => out.push(render_count_row(count)));
+	};
+
+	const ranges = elide === 'expand' && expanded ? normalize_diff_expanded(expanded) : [];
+	let j = 0;
+	const render_run = (run: DiffGapPiece): void => {
+		const { start, end } = run;
+		let pos = start;
+		while (j < ranges.length && ranges[j]!.end < run.b_start) j++;
+		for (let k = j; k < ranges.length && ranges[k]!.start <= run.b_end; k++) {
+			const revealed_start = start + Math.max(ranges[k]!.start, run.b_start) - run.b_start;
+			const revealed_end = start + Math.min(ranges[k]!.end, run.b_end) - run.b_start + 1;
+			if (pos < revealed_start) {
+				const hidden_start = pos;
+				push('elided', hidden_start, revealed_start, (out) =>
+					out.push(render_expand_row(model.lines, hidden_start, revealed_start, step))
+				);
+			}
+			push_revealed(revealed_start, revealed_end);
+			pos = revealed_end;
+		}
+		if (pos < end) {
+			const hidden_start = pos;
+			push('elided', hidden_start, end, (out) =>
+				out.push(render_expand_row(model.lines, hidden_start, end, step))
+			);
+		}
+	};
+	const render_gap = (gap: DiffGap): void => {
+		if (elide === 'omit' || gap.start === gap.end) {
+			push_count(gap.start, gap.count);
+			return;
+		}
+		const { pieces } = gap;
+		// a full model's region is one run, counted as the source counts it
+		if (elide === 'details' && pieces.length === 1) {
+			push_details(gap.start, gap.end, gap.count);
+			return;
+		}
+		for (const piece of pieces) {
+			if (piece.start === piece.end) push_count(piece.start, piece.count);
+			else if (elide === 'none') push_rows(piece.start, piece.end);
+			else if (elide === 'details') push_details(piece.start, piece.end, piece.count);
+			else render_run(piece);
+		}
+	};
+
+	const gaps = find_gaps(model, ctx.hunks);
+	let g = 0;
+	for (const hunk of ctx.hunks) {
+		while (g < gaps.length && gaps[g]!.start <= hunk.start) render_gap(gaps[g++]!);
+		push('hunk', hunk.start, hunk.end, (out) => render_rows(ctx, hunk.start, hunk.end, out));
+	}
+	while (g < gaps.length) render_gap(gaps[g++]!);
+	return segments;
+};
+
+/**
  * Renders the whole document: each hunk's rows, and between them the elided
  * unchanged regions as `elide` says.
  */
@@ -1127,35 +1647,9 @@ const render_model = (
 	options: RenderDiffModelOptions,
 	split: boolean
 ): string => {
-	const { elide = 'details' } = options;
-	const ctx = to_rows_context(model, options);
-	const render_rows = split ? render_split_rows : render_unified_rows;
-	const out: Array<string> = [];
-	// the gap's count comes from line numbers, so a source that doesn't hold
-	// the gap's rows still shows how many lines it stands for — as a count
-	// row, since there are no rows to expand or show
-	const render_elided = (start: number, end: number): void => {
-		const count = model.elided_count(start, end);
-		if (count === 0) return;
-		if (elide === 'omit' || start === end) {
-			out.push(`<div class="diff_skip">${elided_summary(count)}</div>`);
-		} else if (elide === 'none') {
-			render_rows(ctx, start, end, out);
-		} else {
-			out.push(`<details class="diff_skip"><summary>${elided_summary(count)}</summary>`);
-			if (split) out.push('<div class="diff_split_rows">');
-			render_rows(ctx, start, end, out);
-			out.push(split ? '</div></details>' : '</details>');
-		}
-	};
-	let cursor = 0;
-	for (const hunk of ctx.hunks) {
-		render_elided(cursor, hunk.start);
-		render_rows(ctx, hunk.start, hunk.end, out);
-		cursor = hunk.end;
-	}
-	render_elided(cursor, model.lines.length);
-	return out.join('');
+	let html = '';
+	for (const segment of render_diff_segments(model, { ...options, split })) html += segment.html;
+	return html;
 };
 
 /**

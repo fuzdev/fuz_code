@@ -70,7 +70,8 @@ export interface PreprocessFuzCodeOptions {
  * gets both views pre-rendered behind the expression, so toggling views
  * stays static. Usages with spreads, a custom `syntax_styler`, or a
  * non-static or unregistered `lang` are left to runtime, as are `CodeDiff`
- * usages with a `highlight`.
+ * usages with a `highlight` or `elide="expand"`, whose expand controls
+ * render rows from the component's model.
  *
  * @param options - `PreprocessFuzCodeOptions` configuration
  * @returns a Svelte preprocessor group
@@ -371,6 +372,7 @@ const transform_code_diff_usage = (
 	const elide_attr = find_attribute(node, 'elide');
 	if (elide_attr) {
 		const elide = extract_static_string(elide_attr.value, options.bindings);
+		// `'expand'` stays at runtime: its controls render rows on demand
 		if (elide !== 'details' && elide !== 'omit' && elide !== 'none') return;
 		render_options.elide = elide;
 	}
