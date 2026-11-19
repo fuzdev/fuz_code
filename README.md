@@ -121,9 +121,12 @@ import '@fuzdev/fuz_code/theme_variables.css';
 - [@fuzdev/fuz_code/svelte_preprocess_fuz_code.ts](src/lib/svelte_preprocess_fuz_code.ts) -
   build-time preprocessor for static `Code` and `CodeDiff` content
 - [@fuzdev/fuz_code/CodeDiff.svelte](src/lib/CodeDiff.svelte) -
-  Svelte component for syntax-styled diffs, unified or side by side
+  Svelte component for syntax-styled diffs, unified or side by side, from
+  two texts, a prepared model, or a patch's hunks, with expandable elision
+  and line highlighting
 - [@fuzdev/fuz_code/diff_html.ts](src/lib/diff_html.ts) -
-  the diff renderers behind them, for use without Svelte
+  the diff renderers behind them, for use without Svelte: prepared sides
+  and models, row-range rendering, and patch sources
 - [@fuzdev/fuz_code/theme_diff.css](src/lib/theme_diff.css) -
   diff viewer theme, imported alongside `theme.css`
 
