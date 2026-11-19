@@ -1,0 +1,1 @@
+export{t as component}from"../chunks/fi4kbYMu.js";
