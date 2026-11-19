@@ -1,0 +1,1 @@
+export{t as component}from"../chunks/B4hexg4u.js";
