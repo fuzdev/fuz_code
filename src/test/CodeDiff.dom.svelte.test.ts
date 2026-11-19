@@ -86,9 +86,9 @@ describe('CodeDiff in the DOM', () => {
 
 	test('scroll_to_line acts on the rows a just-set highlight or model produced', async () => {
 		const b_side = create_diff_side(B);
-		const props: { model: ReturnType<typeof create_diff_model>; highlight: Array<DiffLineRange> } =
+		const props: { source: ReturnType<typeof create_diff_model>; highlight: Array<DiffLineRange> } =
 			$state({
-				model: create_diff_model(create_diff_side(A), b_side),
+				source: create_diff_model(create_diff_side(A), b_side),
 				highlight: []
 			});
 		const { instance, container } = mount_diff(props);
@@ -103,7 +103,7 @@ describe('CodeDiff in the DOM', () => {
 		assert.isTrue(details.open);
 
 		// a new model replaces the rows: the scroll finds the new one
-		props.model = create_diff_model(create_diff_side(C), b_side);
+		props.source = create_diff_model(create_diff_side(C), b_side);
 		assert.isTrue(await instance.scroll_to_line('a', 4));
 		const row = scrolled[1]!;
 		assert.isTrue(row.isConnected);
@@ -123,16 +123,16 @@ describe('CodeDiff in the DOM', () => {
 
 	test('a model swap keeps the highlight on the new rows', () => {
 		const a_side = create_diff_side(A);
-		const props: { model: ReturnType<typeof create_diff_model>; highlight: Array<DiffLineRange> } =
+		const props: { source: ReturnType<typeof create_diff_model>; highlight: Array<DiffLineRange> } =
 			$state({
-				model: create_diff_model(a_side, create_diff_side(B)),
+				source: create_diff_model(a_side, create_diff_side(B)),
 				highlight: [{ side: 'b', start: 4 }]
 			});
 		const { container } = mount_diff(props);
 		assert.deepEqual(highlighted(container), ['4:4']);
 
 		props.highlight = [{ side: 'a', start: 4 }];
-		props.model = create_diff_model(a_side, create_diff_side(C));
+		props.source = create_diff_model(a_side, create_diff_side(C));
 		flushSync();
 		assert.deepEqual(highlighted(container), ['4:null']);
 	});

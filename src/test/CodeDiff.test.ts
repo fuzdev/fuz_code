@@ -24,12 +24,12 @@ describe('CodeDiff server render', () => {
 		assert.include(body, 'data-lang="ts"');
 	});
 
-	test('a model renders its rows, its b side naming the language', () => {
+	test('a model source renders its rows, its b side naming the language', () => {
 		const model = create_diff_model(
 			create_diff_side(A, { lang: 'ts' }),
 			create_diff_side(B, { lang: 'ts' })
 		);
-		const { body } = render(CodeDiff, { props: { model, split: true, lang: 'svelte' } });
+		const { body } = render(CodeDiff, { props: { source: model, split: true, lang: 'svelte' } });
 		assert.include(body, render_diff_model_split_html(model));
 		assert.include(body, 'data-lang="ts"');
 		assert.include(body, 'class="code_diff split');

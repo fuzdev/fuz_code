@@ -279,7 +279,7 @@ describe('svelte_preprocess_fuz_code with CodeDiff', () => {
 			['a spread', '<CodeDiff {a} {b} lang="ts" {...rest} />'],
 			['a custom syntax_styler', '<CodeDiff {a} {b} lang="ts" syntax_styler={styler} />'],
 			['a highlight', '<CodeDiff {a} {b} lang="ts" highlight={lines} />'],
-			['a model', '<CodeDiff {model} lang="ts" />'],
+			['a source', '<CodeDiff {source} lang="ts" />'],
 			['hunks', '<CodeDiff {hunks} lang="ts" />'],
 			['hunks with a line count', '<CodeDiff hunks={[]} b_line_count={3} lang="ts" />'],
 			['an existing dangerous_raw_html', '<CodeDiff dangerous_raw_html={html} lang="ts" />']

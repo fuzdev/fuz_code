@@ -360,14 +360,17 @@ one row, so there is no column to scroll as a unit.
 
 **`CodeDiff.svelte` props:**
 
-- `a`, `b` - the original and updated source, or `model` - a prepared
-  `DiffModel` (its sides are already lexed, so `lang`, `syntax_styler`, and
-  `max_cost` don't apply), or `hunks` - a patch's `DiffHunk`s, through
+- `a`, `b` - the original and updated source, or `source` - any prepared
+  `DiffRowSource`: a `DiffModel`, or a `DiffPatchSource` the consumer built
+  to cache it or catch malformed hunks (already lexed, so `lang`,
+  `syntax_styler`, `max_cost`, and the hunk hints don't apply; `data-lang`
+  takes its language), or `hunks` - a patch's `DiffHunk`s, through
   `create_diff_patch_source` (`a_line_count` / `b_line_count` count the
   lines after the last hunk, ignored otherwise), or `dangerous_raw_html` -
   pre-rendered rows (what the preprocessor emits; skips runtime diffing and
   styling) — mutually exclusive. Any new source keeps `expanded` and
-  `highlight`; swapping `hunks` for `model` or `a`/`b` (the upgrade) also
+  `highlight`; swapping a patch source (`hunks`, or a `DiffPatchSource` as
+  `source`, told apart by its `hunks` field) for a full one (the upgrade) also
   keeps the first row in view in place, and only that swap does — an edited
   text or another file's hunks would map a line number elsewhere. An
   `$effect.pre` captures the row (by `data-b`, or `data-a` for a removed

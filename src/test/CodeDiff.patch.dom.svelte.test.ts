@@ -8,10 +8,12 @@ import { diff_hunks, diff_lines, type DiffHunk } from '@fuzdev/fuz_util/diff.ts'
 import CodeDiff from '#lib/CodeDiff.svelte';
 import {
 	create_diff_model,
+	create_diff_patch_source,
 	create_diff_side,
 	type DiffExpandedRange,
 	type DiffLineRange,
-	type DiffModel
+	type DiffModel,
+	type DiffRowSource
 } from '#lib/diff_html.ts';
 
 const numbered = (count: number): string =>
@@ -222,7 +224,7 @@ describe('CodeDiff with hunks', () => {
 		test(`upgrading to the full model keeps expanded, highlight, and the row in view, ${split ? 'split' : 'unified'}, scrolled by the ${scrolls_with}`, () => {
 			const state: {
 				hunks?: Array<DiffHunk>;
-				model?: DiffModel;
+				source?: DiffModel;
 				highlight: Array<DiffLineRange>;
 				expanded?: Array<DiffExpandedRange>;
 			} = $state({
@@ -233,7 +235,7 @@ describe('CodeDiff with hunks', () => {
 			const { container } = mount_diff(
 				state_props(state, { lang: 'ts', elide: 'expand', split }, [
 					'hunks',
-					'model',
+					'source',
 					'highlight',
 					'expanded'
 				]),
@@ -246,7 +248,7 @@ describe('CodeDiff with hunks', () => {
 			const initial = scroll_top;
 
 			state.hunks = undefined;
-			state.model = create_model();
+			state.source = create_model();
 			flushSync();
 
 			// every line now has a row, and line 48 is where it was
@@ -274,31 +276,93 @@ describe('CodeDiff with hunks', () => {
 	}
 
 	test('an upgrade with the anchor row out of view, or a first render, leaves the scroll alone', () => {
-		const state: { hunks?: Array<DiffHunk>; model?: DiffModel } = $state({ hunks: HUNKS });
+		const state: { hunks?: Array<DiffHunk>; source?: DiffModel } = $state({ hunks: HUNKS });
 		const { container } = mount_diff(
-			state_props(state, { lang: 'ts', elide: 'expand' }, ['hunks', 'model'])
+			state_props(state, { lang: 'ts', elide: 'expand' }, ['hunks', 'source'])
 		);
 		assert.strictEqual(scroll_top, 0);
 		// past the last row: nothing is in view
 		scroll_top = 10_000;
 		state.hunks = undefined;
-		state.model = create_model();
+		state.source = create_model();
 		flushSync();
 		assert.strictEqual(scroll_top, 10_000);
 		assert.isNotNull(container.querySelector('[data-b="48"]'));
 	});
 
+	test('a patch source passed as source upgrades to a model in place', () => {
+		const state: { source: DiffRowSource; expanded: Array<DiffExpandedRange> } = $state({
+			source: create_diff_patch_source(HUNKS, { lang: 'ts' }),
+			// every elided line as a row once the model holds it, so the upgrade
+			// adds rows above line 48 that the anchor must make up for
+			expanded: [{ start: 1, end: Number.MAX_SAFE_INTEGER }]
+		});
+		const { container } = mount_diff(
+			state_props(state, { elide: 'expand', lang: 'svelte' }, ['source', 'expanded'])
+		);
+		const root = container.querySelector<HTMLElement>('.code_diff')!;
+		// the source's language, not the ignored `lang`
+		assert.strictEqual(root.dataset.lang, 'ts');
+		assert.isNull(container.querySelector('[data-b="30"]'));
+		scroll_top = top_of(container, 48);
+		const initial = scroll_top;
+
+		state.source = create_model();
+		flushSync();
+
+		// the lines the patch lacked now have rows above line 48, which stays put
+		assert.isNotNull(container.querySelector('[data-b="30"]'));
+		assert.isAbove(scroll_top, initial);
+		assert.strictEqual(top_of(container, 48), 0);
+		assert.deepEqual(scrolls, [{ top: scroll_top - initial, behavior: 'instant' }]);
+		assert.strictEqual(root.dataset.lang, 'ts');
+	});
+
+	test("a patch source swapped for another's doesn't anchor", () => {
+		const state: { source: DiffRowSource } = $state({
+			source: create_diff_patch_source(HUNKS, { lang: 'ts' })
+		});
+		const { container } = mount_diff(state_props(state, { elide: 'none' }, ['source']));
+		scroll_top = top_of(container, 48);
+		const initial = scroll_top;
+		// another file's hunks, with a change above line 48
+		const other = diff_lines(A, B.replace('line 30\n', 'line thirty\n'));
+		state.source = create_diff_patch_source(diff_hunks(other, 3), { lang: 'ts' });
+		flushSync();
+		assert.strictEqual(scroll_top, initial);
+		assert.deepEqual(scrolls, []);
+	});
+
+	test('a source with no language renders no data-lang', () => {
+		const model = create_model();
+		// a hand-written source over a model's rows, with neither sides nor a lang
+		const source: DiffRowSource = {
+			lines: model.lines,
+			width: model.width,
+			hunk_ranges: (context_lines) => model.hunk_ranges(context_lines),
+			elided_count: (start, end) => model.elided_count(start, end),
+			b_through: (index) => model.b_through(index),
+			partner: (index) => model.partner(index),
+			fragment: (index, side, intraline) => model.fragment(index, side, intraline),
+			prepare: (start, end, options) => model.prepare(start, end, options)
+		};
+		const { container } = mount_diff({ source, lang: 'svelte' });
+		const root = container.querySelector<HTMLElement>('.code_diff')!;
+		assert.isUndefined(root.dataset.lang);
+		assert.isNotNull(container.querySelector('[data-b="50"]'));
+	});
+
 	test('revealing lines after the upgrade expands the lines the patch lacked', () => {
 		const state: {
 			hunks?: Array<DiffHunk>;
-			model?: DiffModel;
+			source?: DiffModel;
 			expanded?: Array<DiffExpandedRange>;
 		} = $state({ hunks: HUNKS });
 		const { container } = mount_diff(
-			state_props(state, { lang: 'ts', elide: 'expand' }, ['hunks', 'model', 'expanded'])
+			state_props(state, { lang: 'ts', elide: 'expand' }, ['hunks', 'source', 'expanded'])
 		);
 		state.hunks = undefined;
-		state.model = create_model();
+		state.source = create_model();
 		flushSync();
 		const row = container.querySelector<HTMLElement>('.diff_expand[data-b-start="14"]')!;
 		row.querySelector<HTMLElement>('[data-expand="all"]')!.click();
@@ -308,9 +372,9 @@ describe('CodeDiff with hunks', () => {
 	});
 
 	test('an upgrade that makes the root overflow scrolls the root, not the page', () => {
-		const state: { hunks?: Array<DiffHunk>; model?: DiffModel } = $state({ hunks: HUNKS });
+		const state: { hunks?: Array<DiffHunk>; source?: DiffModel } = $state({ hunks: HUNKS });
 		const { container } = mount_diff(
-			state_props(state, { lang: 'ts', elide: 'none' }, ['hunks', 'model']),
+			state_props(state, { lang: 'ts', elide: 'none' }, ['hunks', 'source']),
 			'root'
 		);
 		// a height-bounded root the patch's rows fit in, so the page scrolls them,
@@ -327,7 +391,7 @@ describe('CodeDiff with hunks', () => {
 		scroll_top = top_of(container, 48);
 
 		state.hunks = undefined;
-		state.model = create_model();
+		state.source = create_model();
 		flushSync();
 
 		assert.isAbove(root.scrollHeight, bound);
@@ -339,21 +403,21 @@ describe('CodeDiff with hunks', () => {
 
 	test('a new source rendering the same rows leaves no anchor for a later render', () => {
 		// plain text with known counts: the patch renders exactly the model's HTML
-		const state: { hunks?: Array<DiffHunk>; model?: DiffModel; context_lines: number } = $state({
+		const state: { hunks?: Array<DiffHunk>; source?: DiffModel; context_lines: number } = $state({
 			hunks: HUNKS,
 			context_lines: 3
 		});
 		const { container } = mount_diff(
 			state_props(state, { lang: null, b_line_count: 60, elide: 'omit' }, [
 				'hunks',
-				'model',
+				'source',
 				'context_lines'
 			])
 		);
 		const before = container.querySelector('.code_diff')!.innerHTML;
 		scroll_top = 100;
 		state.hunks = undefined;
-		state.model = create_diff_model(
+		state.source = create_diff_model(
 			create_diff_side(A, { lang: null }),
 			create_diff_side(B, { lang: null })
 		);

@@ -206,21 +206,23 @@ describe("CodeDiff with elide: 'expand'", () => {
 
 	test('a new model keeps expanded and applies it to its own regions', () => {
 		const b_side = create_diff_side(B);
-		const props: { model: DiffModel; elide: 'expand'; expanded: Array<DiffExpandedRange> } = $state(
-			{
-				model: create_diff_model(create_diff_side(A), b_side),
+		const props: { source: DiffModel; elide: 'expand'; expanded: Array<DiffExpandedRange> } =
+			$state({
+				source: create_diff_model(create_diff_side(A), b_side),
 				elide: 'expand',
 				expanded: [
 					{ start: 5, end: 6 },
 					{ start: 40, end: 41 }
 				]
-			}
-		);
+			});
 		const { container } = mount_diff(props);
 		assert.deepEqual(b_rows(container), [5, 6, ...HUNK, 40, 41]);
 
 		// line 40 changes too: its lines join a hunk, the rest stay revealed
-		props.model = create_diff_model(create_diff_side(A.replace('line 40\n', 'line 40!\n')), b_side);
+		props.source = create_diff_model(
+			create_diff_side(A.replace('line 40\n', 'line 40!\n')),
+			b_side
+		);
 		flushSync();
 		assert.deepEqual(b_rows(container), [5, 6, ...HUNK, 37, 38, 39, null, 40, 41, 42, 43]);
 		assert.deepEqual(props.expanded, [

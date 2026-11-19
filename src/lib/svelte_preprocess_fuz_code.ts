@@ -71,7 +71,7 @@ export interface PreprocessFuzCodeOptions {
  * stays static. Usages with spreads, a custom `syntax_styler`, or a
  * non-static or unregistered `lang` are left to runtime, as are `CodeDiff`
  * usages with a `highlight` or `elide="expand"`, whose expand controls
- * render rows from the component's model.
+ * render rows from the component's diff.
  *
  * @param options - `PreprocessFuzCodeOptions` configuration
  * @returns a Svelte preprocessor group

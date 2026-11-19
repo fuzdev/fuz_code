@@ -156,7 +156,7 @@
 	let {
 		a,
 		b,
-		model,
+		source: given_source,
 		hunks,
 		a_line_count,
 		b_line_count,
@@ -184,7 +184,7 @@
 					a: string;
 					/** The updated version of the source. */
 					b: string;
-					model?: undefined;
+					source?: undefined;
 					hunks?: undefined;
 					dangerous_raw_html?: undefined;
 			  }
@@ -192,19 +192,25 @@
 					a?: undefined;
 					b?: undefined;
 					/**
-					 * A prepared diff — two `DiffSide`s and their lines, from
-					 * `create_diff_model` — for sides reused across diffs or lines
-					 * supplied by the caller. Its sides were lexed when created, so
-					 * `lang`, `syntax_styler`, and `max_cost` don't apply.
+					 * Prepared rows: a `DiffModel` from `create_diff_model` (two
+					 * `DiffSide`s and their lines, for sides reused across diffs or
+					 * lines supplied by the caller), a `DiffPatchSource` from
+					 * `create_diff_patch_source` (to cache it, or to handle malformed
+					 * hunks yourself rather than have `hunks` throw), or any other
+					 * `DiffRowSource`. It was lexed when created, so `lang`,
+					 * `syntax_styler`, `max_cost`, `a_line_count`, `b_line_count`,
+					 * and `patch_context` don't apply. Swapping a patch source (one
+					 * with a `hunks` field) for a full source of the same diff
+					 * upgrades the view in place, as `hunks` does.
 					 */
-					model: DiffModel;
+					source: DiffRowSource;
 					hunks?: undefined;
 					dangerous_raw_html?: undefined;
 			  }
 			| {
 					a?: undefined;
 					b?: undefined;
-					model?: undefined;
+					source?: undefined;
 					/**
 					 * A patch's hunks, without either text — one file's, as
 					 * `@fuzdev/fuz_util/diff.ts` parses them from `git diff` output —
@@ -212,8 +218,8 @@
 					 * approximately, each run of hunks lexed on its own, with a count
 					 * row for the unchanged lines the patch lacks, which has no expand
 					 * controls since there are no rows to reveal (context the patch
-					 * holds past `context_lines` still expands). Swapping it for
-					 * `model`, or `a` and `b`, of the same diff upgrades the view in
+					 * holds past `context_lines` still expands). Swapping it for a
+					 * `source`, or `a` and `b`, of the same diff upgrades the view in
 					 * place: the same `expanded` and `highlight`, and the first row in
 					 * view stays where it was. Only that swap anchors the scroll: other
 					 * changes of source (an edit to `b`, another file's hunks) render
@@ -225,7 +231,7 @@
 			| {
 					a?: undefined;
 					b?: undefined;
-					model?: undefined;
+					source?: undefined;
 					hunks?: undefined;
 					/**
 					 * Pre-rendered diff rows from the `svelte_preprocess_fuz_code`
@@ -242,9 +248,9 @@
 			 * Language identifier for syntax styling. `null` or an unregistered id
 			 * disables styling (rows render as plain text with the diff chrome, and
 			 * an unregistered id logs an error in DEV); `undefined` falls back to
-			 * the default ('svelte'). With `model`, the `data-lang` attribute takes
-			 * the model's `b` side's language instead. With `hunks`, it lexes the
-			 * snippets.
+			 * the default ('svelte'). With `source`, the `data-lang` attribute takes
+			 * the source's language instead (a `DiffModel`'s `b` side's), absent
+			 * when it has none. With `hunks`, it lexes the snippets.
 			 *
 			 * @default 'svelte'
 			 */
@@ -320,7 +326,7 @@
 			 * `bind:expanded` lets a consumer persist and restore it. An expansion
 			 * writes it normalized and clamped to the current diff's elided
 			 * regions; a value set from outside renders clamped and stays as set,
-			 * so a new model of the same diff (or one holding more of its lines)
+			 * so a new source of the same diff (or one holding more of its lines)
 			 * shows the same lines.
 			 */
 			expanded?: Array<DiffExpandedRange>;
@@ -358,15 +364,33 @@
 			children?: Snippet<[markup: string]>;
 		} = $props();
 
+	/**
+	 * Whether `source` is a patch's, lacking the rows between its hunks — a
+	 * `DiffPatchSource`, whether `CodeDiff` built it from `hunks` or a
+	 * consumer passed it as `source`.
+	 */
+	const is_patch_source = (source: DiffRowSource): source is DiffPatchSource => 'hunks' in source;
+
+	/**
+	 * Returns the language a given source was lexed with: a `DiffModel`'s `b`
+	 * side's, a `DiffPatchSource`'s own, else none.
+	 */
+	const to_source_lang = (source: DiffRowSource): string | null | undefined =>
+		is_patch_source(source)
+			? source.lang
+			: 'b' in source
+				? (source as Partial<DiffModel>).b?.lang
+				: undefined;
+
 	let el: HTMLDivElement | undefined = $state();
 
 	// the sides re-lex only when their own text or language changes, so a
 	// change of view options re-renders rows from the same lexes
-	const texts = $derived(dangerous_raw_html == null && !model && !hunks);
+	const texts = $derived(dangerous_raw_html == null && !given_source && !hunks);
 	const side_a = $derived(texts ? create_diff_side(a ?? '', { lang, syntax_styler }) : null);
 	const side_b = $derived(texts ? create_diff_side(b ?? '', { lang, syntax_styler }) : null);
 	const patch_source: DiffPatchSource | null = $derived.by(() => {
-		if (dangerous_raw_html != null || model || !hunks) return null;
+		if (dangerous_raw_html != null || given_source || !hunks) return null;
 		const options = { lang, syntax_styler };
 		try {
 			return create_diff_patch_source(hunks, {
@@ -391,7 +415,7 @@
 		}
 	});
 	const source: DiffRowSource | null = $derived(
-		model ??
+		given_source ??
 			patch_source ??
 			(side_a && side_b ? create_diff_model(side_a, side_b, { max_cost }) : null)
 	);
@@ -424,7 +448,7 @@
 		options: ScrollIntoViewOptions = { block: 'center' }
 	): Promise<boolean> => {
 		// let pending updates land first, so a call right after changing props
-		// (a new `highlight`, a new `model`) acts on the rows they produce
+		// (a new `highlight`, a new `source`) acts on the rows they produce
 		await tick();
 		const selector = `[data-${side}="${line}"]`;
 		let row = el?.querySelector<HTMLElement>(selector);
@@ -446,7 +470,7 @@
 	// DEV-only validation warnings
 	if (DEV) {
 		$effect(() => {
-			if (dangerous_raw_html != null || model) return;
+			if (dangerous_raw_html != null || given_source) return;
 
 			if (lang && !syntax_styler.has_lang(lang)) {
 				const langs = [...syntax_styler.langs.keys()].join(', ');
@@ -530,7 +554,7 @@
 		const next = source;
 		const root = el;
 		untrack(() => {
-			const is_patch = next !== null && next === patch_source;
+			const is_patch = next !== null && is_patch_source(next);
 			if (root && rendered_patch && next !== null && !is_patch) {
 				anchor = capture_diff_scroll_anchor(root);
 			}
@@ -648,7 +672,7 @@
 	class:split
 	class:wrap
 	class:nomargin
-	data-lang={model ? model.b.lang : lang}
+	data-lang={given_source ? to_source_lang(given_source) : lang}
 >
 	{#if children}
 		{@render children(html_content)}

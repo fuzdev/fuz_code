@@ -90,7 +90,7 @@ export const VERSION = 2;
 	const patch_input = $derived(
 		patch_loaded
 			? {
-					model: create_diff_model(
+					source: create_diff_model(
 						create_diff_side(EXPAND_A, { lang: 'ts' }),
 						create_diff_side(EXPAND_B, { lang: 'ts' })
 					)
@@ -164,7 +164,7 @@ export const VERSION = 2;
 				<code>diff_lines</code> by default, or supplied, like git's own diff converted to
 				<code>DiffLine</code>s. A side serves any number of models, so a consumer caches it by
 				content and moving the compared range lexes nothing twice. Pass the model as
-				<code>model</code>.
+				<code>source</code>, which takes any <code>DiffRowSource</code>.
 			</p>
 			<p>
 				Every row carries <code>data-a</code> and <code>data-b</code> line numbers, absent on the
@@ -185,7 +185,7 @@ const model = create_diff_model(side(a_hash, a), side(b_hash, b));`}
 			/>
 			<Code
 				lang="svelte"
-				content={`<CodeDiff bind:this={diff} {model} highlight={[{side: 'b', start: 4, end: 5}]} />`}
+				content={`<CodeDiff bind:this={diff} source={model} highlight={[{side: 'b', start: 4, end: 5}]} />`}
 			/>
 
 			<div class="row gap_md mb_md demo-controls">
@@ -238,7 +238,7 @@ const model = create_diff_model(side(a_hash, a), side(b_hash, b));`}
 				</button>
 			</div>
 
-			<CodeDiff bind:this={model_diff} {model} {highlight} {split} />
+			<CodeDiff bind:this={model_diff} source={model} {highlight} {split} />
 		</TomeSection>
 		<TomeSection>
 			<TomeSectionHeader text="Expanding elided lines" />
@@ -321,18 +321,19 @@ const model = create_diff_model(side(a_hash, a), side(b_hash, b));`}
 				comment or string opened above it, and the lines between hunks show as counts with nothing
 				to expand. The lines after the last hunk count when <code>b_line_count</code> is known, or
 				when <code>patch_context</code>, the patch's <code>-U</code>, proves the last hunk reaches
-				the end of the file.
+				the end of the file. To cache the patch source, or to handle malformed hunks rather than
+				have <code>hunks</code> throw, build it yourself and pass it as <code>source</code>.
 			</p>
 			<p>
-				When both texts arrive, swap <code>hunks</code> for <code>model</code> (or <code>a</code>
-				and <code>b</code>) on the same component: the view upgrades in place, keeping
-				<code>expanded</code> and <code>highlight</code>, and the first row in view stays where it
-				was.
+				When both texts arrive, swap <code>hunks</code> for a model as <code>source</code> (or
+				<code>a</code> and <code>b</code>) on the same component: the view upgrades in place,
+				keeping <code>expanded</code> and <code>highlight</code>, and the first row in view stays
+				where it was.
 			</p>
 
 			<Code
 				lang="svelte"
-				content={`<CodeDiff {...(model ? {model} : {hunks})} patch_context={3} lang="ts" elide="expand" bind:expanded />`}
+				content={`<CodeDiff {...(model ? {source: model} : {hunks})} patch_context={3} lang="ts" elide="expand" bind:expanded />`}
 			/>
 
 			<div class="row gap_md mb_md demo-controls">
