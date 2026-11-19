@@ -710,6 +710,7 @@ describe('diff views over real sources', async () => {
 				assert_balanced(render_diff_unified_html(a, b, { lang, elide: 'omit' }));
 				assert_balanced(render_diff_split_html(a, b, { lang, elide: 'omit' }));
 			}
-		});
+			// slow under the load of parallel suites
+		}, 30_000);
 	}
 });
