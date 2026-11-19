@@ -1,12 +1,140 @@
+<script lang="ts" module>
+	/**
+	 * Where the first diff row in view sat before a new source re-rendered
+	 * the rows, so the same line can go back there: by its `b` number, or
+	 * its `a` number for a removed row — line numbers, which mean the same
+	 * in any source of the same diff, unlike the rows.
+	 */
+	interface DiffScrollAnchor {
+		side: 'a' | 'b';
+		line: number;
+		/**
+		 * The row's top in viewport coordinates when captured.
+		 */
+		top: number;
+	}
+
+	interface Box {
+		top: number;
+		bottom: number;
+	}
+
+	/**
+	 * Returns the element scrolling `root` vertically: `root` itself or its
+	 * nearest ancestor whose `overflow-y` scrolls and whose content overflows
+	 * it (a wrapper that only scrolls sideways computes `overflow-y: auto`
+	 * too), else the document's.
+	 */
+	const find_scroll_container = (root: Element): Element => {
+		for (let node: Element | null = root; node; node = node.parentElement) {
+			if (node === document.scrollingElement) break;
+			const overflow = getComputedStyle(node).overflowY;
+			if (
+				(overflow === 'auto' || overflow === 'scroll' || overflow === 'overlay') &&
+				node.scrollHeight > node.clientHeight
+			) {
+				return node;
+			}
+		}
+		return document.scrollingElement ?? document.documentElement;
+	};
+
+	/**
+	 * The part of the viewport `container` shows, in viewport coordinates.
+	 */
+	const view_of = (container: Element): Box => {
+		const viewport = { top: 0, bottom: window.innerHeight };
+		if (container === document.scrollingElement || container === document.documentElement) {
+			return viewport;
+		}
+		const rect = container.getBoundingClientRect();
+		return {
+			top: Math.max(rect.top, viewport.top),
+			bottom: Math.min(rect.bottom, viewport.bottom)
+		};
+	};
+
+	const is_row = (el: Element): boolean => el.hasAttribute('data-a') || el.hasAttribute('data-b');
+
+	/**
+	 * Returns the first row among `items` and their descendants in view,
+	 * with its rect: a binary search for the first item reaching into the
+	 * view, then a walk from it, descending into an item that holds rows —
+	 * an open `<details>`, a split view's nested grid — but not a closed
+	 * `<details>`, whose rows have no box. A handful of layout reads, however
+	 * many rows a closed elision hides.
+	 */
+	const find_row_in_view = (
+		items: HTMLCollection,
+		view: Box
+	): { row: Element; rect: DOMRect } | null => {
+		let low = 0;
+		let high = items.length;
+		while (low < high) {
+			const mid = (low + high) >>> 1;
+			if (items[mid]!.getBoundingClientRect().bottom > view.top) high = mid;
+			else low = mid + 1;
+		}
+		for (let i = low; i < items.length; i++) {
+			const item = items[i]!;
+			const rect = item.getBoundingClientRect();
+			if (rect.top >= view.bottom) return null;
+			if (rect.height === 0 && rect.width === 0) continue;
+			if (is_row(item)) return { row: item, rect };
+			if (item instanceof HTMLDetailsElement && !item.open) continue;
+			const found = find_row_in_view(item.children, view);
+			if (found) return found;
+		}
+		return null;
+	};
+
+	/**
+	 * Captures the first diff row in view under `root`, `null` when none is.
+	 */
+	const capture_diff_scroll_anchor = (root: Element): DiffScrollAnchor | null => {
+		const container = find_scroll_container(root);
+		const found = find_row_in_view(root.children, view_of(container));
+		if (!found) return null;
+		const b = found.row.getAttribute('data-b');
+		return {
+			side: b === null ? 'a' : 'b',
+			line: Number(b ?? found.row.getAttribute('data-a')),
+			top: found.rect.top
+		};
+	};
+
+	/**
+	 * Scrolls the element scrolling `root` so the row of `anchor`'s line
+	 * under it sits where it sat when captured — instantly, whatever the
+	 * page's `scroll-behavior`, since it corrects a jump rather than moving
+	 * the reader. The scroller is found again here, not kept from the
+	 * capture: the new rows can make `root` overflow where the old ones
+	 * didn't. Does nothing when no rendered row with a box has the line.
+	 *
+	 * @mutates root - scrolls it or an ancestor, or the document
+	 */
+	const restore_diff_scroll_anchor = (root: Element, anchor: DiffScrollAnchor): void => {
+		for (const row of root.querySelectorAll(`[data-${anchor.side}="${anchor.line}"]`)) {
+			const rect = row.getBoundingClientRect();
+			if (rect.height === 0 && rect.width === 0) continue;
+			const delta = rect.top - anchor.top;
+			if (delta !== 0) find_scroll_container(root).scrollBy({ top: delta, behavior: 'instant' });
+			return;
+		}
+	};
+</script>
+
 <script lang="ts">
 	import { tick, untrack, type Snippet } from 'svelte';
 	import { DEV } from 'esm-env';
 	import type { SvelteHTMLElements } from 'svelte/elements';
+	import type { DiffHunk } from '@fuzdev/fuz_util/diff.ts';
 
 	import { syntax_styler_global } from './syntax_styler_global.ts';
 	import type { SyntaxStyler } from './syntax_styler.ts';
 	import {
 		create_diff_model,
+		create_diff_patch_source,
 		create_diff_side,
 		render_diff_model_unified_html,
 		render_diff_model_split_html,
@@ -19,6 +147,8 @@
 		type DiffExpandedRange,
 		type DiffLineRange,
 		type DiffModel,
+		type DiffPatchSource,
+		type DiffRowSource,
 		type DiffSegment,
 		type RenderDiffOptions
 	} from './diff_html.ts';
@@ -27,6 +157,10 @@
 		a,
 		b,
 		model,
+		hunks,
+		a_line_count,
+		b_line_count,
+		patch_context,
 		dangerous_raw_html,
 		lang = 'svelte',
 		split = false,
@@ -51,6 +185,7 @@
 					/** The updated version of the source. */
 					b: string;
 					model?: undefined;
+					hunks?: undefined;
 					dangerous_raw_html?: undefined;
 			  }
 			| {
@@ -63,12 +198,35 @@
 					 * `lang`, `syntax_styler`, and `max_cost` don't apply.
 					 */
 					model: DiffModel;
+					hunks?: undefined;
 					dangerous_raw_html?: undefined;
 			  }
 			| {
 					a?: undefined;
 					b?: undefined;
 					model?: undefined;
+					/**
+					 * A patch's hunks, without either text — one file's, as
+					 * `@fuzdev/fuz_util/diff.ts` parses them from `git diff` output —
+					 * rendered through `create_diff_patch_source`: highlighted
+					 * approximately, each run of hunks lexed on its own, with a count
+					 * row for the unchanged lines the patch lacks, which has no expand
+					 * controls since there are no rows to reveal (context the patch
+					 * holds past `context_lines` still expands). Swapping it for
+					 * `model`, or `a` and `b`, of the same diff upgrades the view in
+					 * place: the same `expanded` and `highlight`, and the first row in
+					 * view stays where it was. Only that swap anchors the scroll: other
+					 * changes of source (an edit to `b`, another file's hunks) render
+					 * as a new diff would.
+					 */
+					hunks: ReadonlyArray<DiffHunk>;
+					dangerous_raw_html?: undefined;
+			  }
+			| {
+					a?: undefined;
+					b?: undefined;
+					model?: undefined;
+					hunks?: undefined;
 					/**
 					 * Pre-rendered diff rows from the `svelte_preprocess_fuz_code`
 					 * preprocessor, in the form `split` selects. When provided, skips
@@ -85,7 +243,8 @@
 			 * disables styling (rows render as plain text with the diff chrome, and
 			 * an unregistered id logs an error in DEV); `undefined` falls back to
 			 * the default ('svelte'). With `model`, the `data-lang` attribute takes
-			 * the model's `b` side's language instead.
+			 * the model's `b` side's language instead. With `hunks`, it lexes the
+			 * snippets.
 			 *
 			 * @default 'svelte'
 			 */
@@ -128,6 +287,27 @@
 			 * Cost cap for the line diff — see `RenderDiffOptions.max_cost`.
 			 */
 			max_cost?: number;
+			/**
+			 * With `hunks`, how many lines the original text has, when known —
+			 * see `DiffPatchSourceOptions.a_line_count`. Ignored otherwise, so it
+			 * can stay set when the full diff replaces the hunks. A count the
+			 * hunks contradict (one meant for the previous hunks, say, while new
+			 * ones arrive) is treated as unknown, with an error logged in DEV.
+			 */
+			a_line_count?: number | null;
+			/**
+			 * With `hunks`, how many lines the updated text has, when known — it
+			 * counts the unchanged lines after the last hunk, rendered as
+			 * `unchanged lines` without a number otherwise. As `a_line_count`.
+			 */
+			b_line_count?: number | null;
+			/**
+			 * With `hunks`, the context the patch was made with (`git diff -U3`
+			 * is `3`), which proves where a file ends when its last change is
+			 * near the end — see `DiffPatchSourceOptions.patch_context`.
+			 * Ignored without `hunks`.
+			 */
+			patch_context?: number | null;
 			/**
 			 * Lines whose rows get the `diff_highlight` class — see
 			 * `RenderDiffRowsOptions.highlight`. A change toggles classes on the
@@ -182,14 +362,38 @@
 
 	// the sides re-lex only when their own text or language changes, so a
 	// change of view options re-renders rows from the same lexes
-	const side_a = $derived(
-		dangerous_raw_html == null && !model ? create_diff_side(a ?? '', { lang, syntax_styler }) : null
-	);
-	const side_b = $derived(
-		dangerous_raw_html == null && !model ? create_diff_side(b ?? '', { lang, syntax_styler }) : null
-	);
-	const source: DiffModel | null = $derived(
-		model ?? (side_a && side_b ? create_diff_model(side_a, side_b, { max_cost }) : null)
+	const texts = $derived(dangerous_raw_html == null && !model && !hunks);
+	const side_a = $derived(texts ? create_diff_side(a ?? '', { lang, syntax_styler }) : null);
+	const side_b = $derived(texts ? create_diff_side(b ?? '', { lang, syntax_styler }) : null);
+	const patch_source: DiffPatchSource | null = $derived.by(() => {
+		if (dangerous_raw_html != null || model || !hunks) return null;
+		const options = { lang, syntax_styler };
+		try {
+			return create_diff_patch_source(hunks, {
+				...options,
+				a_line_count,
+				b_line_count,
+				patch_context
+			});
+		} catch (error) {
+			// malformed hunks throw again without the hints; a hint the hunks
+			// contradict, as one left over from other hunks may, counts as unknown
+			if (a_line_count == null && b_line_count == null && patch_context == null) throw error;
+			const source = create_diff_patch_source(hunks, options);
+			if (DEV) {
+				// eslint-disable-next-line no-console
+				console.error(
+					'[CodeDiff] The hunks contradict a_line_count, b_line_count, or ' +
+						`patch_context, so the lines after the last hunk count as unknown: ${String(error)}`
+				);
+			}
+			return source;
+		}
+	});
+	const source: DiffRowSource | null = $derived(
+		model ??
+			patch_source ??
+			(side_a && side_b ? create_diff_model(side_a, side_b, { max_cost }) : null)
 	);
 
 	/**
@@ -207,7 +411,8 @@
 	 * centered on it (see `diff_expand_line_range`) and adding it to
 	 * `expanded`. Resolves to `false` when no row has the line — out of range,
 	 * in a region `elide: 'omit'` dropped, or in one whose rows the diff
-	 * doesn't hold.
+	 * doesn't hold, as the lines between `hunks` are: nothing can reveal
+	 * those until the full diff replaces the hunks.
 	 *
 	 * @param side - which version `line` numbers, `'a'` the original
 	 * @param line - 1-based line number
@@ -311,6 +516,38 @@
 			line_numbers,
 			highlight: untrack(() => highlight)
 		});
+	});
+
+	// upgrading `hunks` to the full diff renders new rows: the first row in
+	// view is captured before they replace the old ones and put back where it
+	// was after, found again by its line number. A browser's own scroll
+	// anchoring can't do it, since its anchor node is removed. Only that swap
+	// anchors: line numbers of an edited text or another file would land
+	// elsewhere than the line they named
+	let rendered_patch = false;
+	let anchor: DiffScrollAnchor | null = null;
+	$effect.pre(() => {
+		const next = source;
+		const root = el;
+		untrack(() => {
+			const is_patch = next !== null && next === patch_source;
+			if (root && rendered_patch && next !== null && !is_patch) {
+				anchor = capture_diff_scroll_anchor(root);
+			}
+			rendered_patch = is_patch;
+		});
+	});
+	$effect(() => {
+		// after the rows render, whichever way the DOM renders them; tracks the
+		// source too, so a new source rendering the same HTML still clears the
+		// anchor rather than leaving it for some later render
+		const rendered = children || !segments ? html_content : segments;
+		const current = source;
+		const captured = anchor;
+		anchor = null;
+		const root = el;
+		if (!rendered || !current || !root || !captured) return;
+		untrack(() => restore_diff_scroll_anchor(root, captured));
 	});
 
 	// whether a pass may have left `diff_highlight` on a row

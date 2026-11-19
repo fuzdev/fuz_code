@@ -1,0 +1,9 @@
+diff --git a/a.ts b/b.ts
+index 84032ad..2401661 100644
+--- a/a.ts
++++ b/b.ts
+@@ -11,2 +10,0 @@ export const v10 = 10;
+-export const v11 = 11;
+-export const v12 = 12;
+@@ -20 +17,0 @@ export const v19 = 19;
+-export const v20 = 20;

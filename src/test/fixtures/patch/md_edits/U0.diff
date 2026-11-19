@@ -1,0 +1,14 @@
+diff --git a/a.md b/b.md
+index 87ada06..2f325d7 100644
+--- a/a.md
++++ b/b.md
+@@ -30 +30 @@ This is a [link to example](https://example.com) in text.
+-
++ (edited)
+@@ -101,2 +101,2 @@ const fifteen = multiply(5, 3);
+-```
+-
++A rewritten paragraph line.
++And its second line.
+@@ -217,0 +218 @@ const example = 'embedded code';
++A line added near the end.

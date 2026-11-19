@@ -1,0 +1,31 @@
+diff --git a/a.md b/b.md
+index 87ada06..2f325d7 100644
+--- a/a.md
++++ b/b.md
+@@ -27,7 +27,7 @@ This is a [link to example](https://example.com) in text.
+ - list item 1
+ - list item 2
+ - list item 3
+-
++ (edited)
+ * alternative list item 1
+ * alternative list item 2
+   - indented list item 1
+@@ -98,8 +98,8 @@ const fifteen = multiply(5, 3);
+ <button type="button" disabled>click me</button>
+ 
+ <!-- comment -->
+-```
+-
++A rewritten paragraph line.
++And its second line.
+ #### HTML with alias 'markup'
+ 
+ ```markup
+@@ -215,5 +215,6 @@ HTML can wrap code blocks:
+ ```ts
+ const example = 'embedded code';
+ ```
++A line added near the end.
+ 
+ </div>

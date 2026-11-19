@@ -23,6 +23,11 @@
  * consumer maps an element to its line by event delegation;
  * `apply_diff_highlight` restyles highlighted rows in place.
  *
+ * A diff known only by a patch's hunks renders through
+ * `create_diff_patch_source`, highlighted approximately — each run of hunks
+ * lexed on its own — with the lines between hunks counted, until the texts
+ * arrive and a `DiffModel` replaces it.
+ *
  * `elide: 'expand'` bounds the DOM of a big diff with a way back: elided
  * regions render as count rows with expand controls, and the lines in
  * `expanded` (`b` line numbers) as rows. `render_diff_segments` renders the
@@ -36,6 +41,7 @@ import {
 	diff_lines,
 	diff_hunks,
 	diff_segments,
+	type DiffHunk,
 	type DiffLine,
 	type DiffSegments
 } from '@fuzdev/fuz_util/diff.ts';
@@ -237,6 +243,14 @@ export interface DiffRowSource {
 	 * is. A gap with no rows renders as a count row whatever `elide` says.
 	 */
 	elided_count(start: number, end: number): number | null;
+	/**
+	 * Returns the last `b` line number at or before row `index` in the file,
+	 * `0` before the first — for a removed row, the `b` line it follows. A
+	 * source lacking rows counts the lines it lacks: a run of removals that
+	 * starts past the file's first line follows a `b` line no row holds, so
+	 * the renderers can't find it by looking at earlier rows. `-1` is `0`.
+	 */
+	b_through(index: number): number;
 	/**
 	 * Returns the index of the line that the line at `index` pairs with, or
 	 * `-1` for an unpaired or unchanged line.
@@ -592,6 +606,16 @@ class DiffModelState implements DiffModel {
 		return Math.max(0, after - before - 1);
 	}
 
+	b_through(index: number): number {
+		const { lines } = this;
+		// every line is held, so the nearest `b` line before is the one
+		for (let i = Math.min(index, lines.length - 1); i >= 0; i--) {
+			const b_line = lines[i]!.b_line;
+			if (b_line !== null) return b_line;
+		}
+		return 0;
+	}
+
 	#check_index(index: number): DiffLine {
 		const line = Number.isInteger(index) ? this.lines[index] : undefined;
 		if (line === undefined) {
@@ -797,6 +821,424 @@ export const create_diff_model = (
 	b: DiffSide,
 	options: DiffModelOptions = {}
 ): DiffModel => new DiffModelState(a, b, options);
+
+/**
+ * Options for `create_diff_patch_source`.
+ */
+export interface DiffPatchSourceOptions extends DiffSideOptions {
+	/**
+	 * How many lines the original text has, when known, counted as
+	 * `DiffSide.diff_line_count` counts them (a trailing newline adds no
+	 * line). It counts the unchanged lines after the last hunk, which a
+	 * patch doesn't say, and widens the gutter to fit the final line number.
+	 * A `null` or absent count is unknown, unless `patch_context` or a final
+	 * line's `no_newline` proves where the file ends.
+	 */
+	a_line_count?: number | null;
+	/**
+	 * How many lines the updated text has, when known — see `a_line_count`.
+	 */
+	b_line_count?: number | null;
+	/**
+	 * The context the patch was made with, the `<n>` of `git diff -U<n>`.
+	 * A patch gives each change that many unchanged lines after it where the
+	 * file has them, so a last hunk ending in fewer proves the file ends
+	 * there, and the count after it is `0`. Unrelated to the renderers'
+	 * `context_lines`, which says how much of the held context to show. A
+	 * value larger than the patch's real context wrongly proves the end of
+	 * any file whose last change is near it; `null`, absent, or `0` proves
+	 * nothing.
+	 */
+	patch_context?: number | null;
+}
+
+/**
+ * A diff known only by its hunks — a patch's, as from `git diff`, without
+ * either text — that the row renderers draw like a `DiffModel` of the same
+ * two texts: the same rows with the same numbers, pairing, and emphasis
+ * wherever it holds the rows, and a count row for each stretch of unchanged
+ * lines it doesn't. Up to the patch's own context, `context_lines` makes the
+ * same hunks with the same `data-hunk` indices; past it the patch has no
+ * more lines to show, so its hunks are smaller than the model's and may
+ * index differently. Until the line counts are known, the gutter fits the
+ * largest line number the hunks hold, so it can be a char narrower than the
+ * model's.
+ *
+ * Its highlighting is approximate. With no whole text to lex, each run of
+ * contiguous hunks lexes as a snippet, one per side (its context and
+ * removed lines for `a`, its context and added lines for `b`), so a hunk
+ * that starts inside a construct opened in the lines before it — a block
+ * comment, a template literal, a markdown fence — highlights as if the
+ * construct weren't open. A snippet's damage stays in its own hunk. The
+ * cure is to fetch both texts and render a `DiffModel` instead, which
+ * `CodeDiff` swaps in without losing its place (see `CodeDiff`'s `hunks`).
+ */
+export interface DiffPatchSource extends DiffRowSource {
+	/**
+	 * The hunks the source was created from. Don't mutate.
+	 */
+	readonly hunks: ReadonlyArray<DiffHunk>;
+	/**
+	 * The language id the source was created with, `null` for plain text —
+	 * as given, like `DiffSide.lang`: an unregistered id is reported as is,
+	 * and its snippets lex as plain text.
+	 */
+	readonly lang: string | null;
+	/**
+	 * How many lines the original text has: given, or proven by
+	 * `patch_context` or a final line's `no_newline`, else `null`.
+	 */
+	readonly a_line_count: number | null;
+	/**
+	 * How many lines the updated text has — see `a_line_count`.
+	 */
+	readonly b_line_count: number | null;
+	/**
+	 * Cached per count. A count above the patch's own context can't show
+	 * more lines than the patch holds, so the hunks are as big as the
+	 * patch's (merged where the patch's lines touch); a smaller count trims
+	 * them, and splits a hunk whose changes are far enough apart, the rows
+	 * it trims rendering as elided runs.
+	 */
+	hunk_ranges(context_lines?: number): ReadonlyArray<Readonly<DiffRowRange>>;
+}
+
+/**
+ * A run of hunks whose lines are contiguous on both sides: rows `[start,
+ * end)` of the source, lexed together as one snippet per side, with `a_base`
+ * and `b_base` lines on each side before it. Its model, numbered from 1
+ * within the snippets, is built on first use.
+ */
+interface DiffPatchBlock {
+	start: number;
+	end: number;
+	a_base: number;
+	b_base: number;
+	model: DiffModel | null;
+}
+
+class DiffPatchSourceState implements DiffPatchSource {
+	readonly hunks: ReadonlyArray<DiffHunk>;
+	readonly lang: string | null;
+	readonly lines: Array<DiffLine> = [];
+	readonly width: number;
+	readonly a_line_count: number | null;
+	readonly b_line_count: number | null;
+
+	readonly #syntax_styler: SyntaxStyler;
+	readonly #blocks: Array<DiffPatchBlock> = [];
+	readonly #hunk_ranges: Map<number, ReadonlyArray<Readonly<DiffRowRange>>> = new Map();
+	/**
+	 * Per row, how many `b` lines come before it in the file, and how many
+	 * through it — what `elided_count` subtracts, across the lines no row
+	 * holds.
+	 */
+	readonly #b_before: Int32Array;
+	readonly #b_through: Int32Array;
+	/**
+	 * How many lines of each side follow the last hunk, `null` when unknown.
+	 */
+	readonly #trailing: number | null;
+	readonly #b_last: number;
+
+	constructor(hunks: ReadonlyArray<DiffHunk>, options: DiffPatchSourceOptions) {
+		const { lang = null, syntax_styler = syntax_styler_global } = options;
+		this.hunks = hunks;
+		this.lang = lang;
+		this.#syntax_styler = syntax_styler;
+		const { lines } = this;
+		const blocks = this.#blocks;
+
+		// each side's last line so far, through the previous hunk
+		let a_after = 0;
+		let b_after = 0;
+		// the final line of each side, once a line without a newline says so
+		let a_final = 0;
+		let b_final = 0;
+		for (let k = 0; k < hunks.length; k++) {
+			const hunk = hunks[k]!;
+			const fail = (problem: string): never => {
+				throw Error(
+					`Invalid diff hunk ${k} (@@ -${hunk.a_start},${hunk.a_count} +${hunk.b_start},${hunk.b_count} @@): ${problem}`
+				);
+			};
+			const { a_start, a_count, b_start, b_count } = hunk;
+			for (const n of [a_start, a_count, b_start, b_count]) {
+				if (!(Number.isInteger(n) && n >= 0)) fail('a start or count is not a whole number');
+			}
+			if (hunk.lines.length === 0) fail('no lines');
+			// a side with no lines starts at the line before the hunk
+			const a_before = a_count > 0 ? a_start - 1 : a_start;
+			const b_before = b_count > 0 ? b_start - 1 : b_start;
+			if (a_before < a_after || b_before < b_after) fail('out of order or overlapping');
+			if (a_before - a_after !== b_before - b_after) {
+				fail('the unchanged lines before it differ in number between the sides');
+			}
+			if ((a_final !== 0 && a_count > 0) || (b_final !== 0 && b_count > 0)) {
+				fail("lines after a side's final line");
+			}
+			if (k === 0 || a_before !== a_after) {
+				if (blocks.length > 0) blocks[blocks.length - 1]!.end = lines.length;
+				blocks.push({
+					start: lines.length,
+					end: 0,
+					a_base: a_before,
+					b_base: b_before,
+					model: null
+				});
+			}
+			let a_next = a_before + 1;
+			let b_next = b_before + 1;
+			for (const line of hunk.lines) {
+				const { type, text, a_line, b_line } = line;
+				const fail_line = (problem: string): never =>
+					fail(`line ${lines.length} (${type} ${String(a_line)} ${String(b_line)}): ${problem}`);
+				if (type !== 'same' && type !== 'add' && type !== 'remove') fail_line('unknown type');
+				if ((type === 'add') !== (a_line === null)) fail_line('its a line disagrees with its type');
+				if ((type === 'remove') !== (b_line === null)) {
+					fail_line('its b line disagrees with its type');
+				}
+				if (typeof text !== 'string' || text.includes('\n')) fail_line('its text is not one line');
+				if (a_final !== 0 && a_line !== null) fail_line("it follows the a side's final line");
+				if (b_final !== 0 && b_line !== null) fail_line("it follows the b side's final line");
+				if (a_line !== null) {
+					if (a_line !== a_next) fail_line(`expected a line ${a_next}`);
+					a_next++;
+				}
+				if (b_line !== null) {
+					if (b_line !== b_next) fail_line(`expected b line ${b_next}`);
+					b_next++;
+				}
+				if (line.no_newline) {
+					// a final line without a newline has text, or it would be no line
+					if (text === '') fail_line('an empty line marked no_newline');
+					if (a_line !== null) a_final = a_line;
+					if (b_line !== null) b_final = b_line;
+				}
+				lines.push(line);
+			}
+			if (a_next - 1 - a_before !== a_count || b_next - 1 - b_before !== b_count) {
+				fail("its lines don't match its counts");
+			}
+			a_after = a_before + a_count;
+			b_after = b_before + b_count;
+		}
+		if (blocks.length > 0) blocks[blocks.length - 1]!.end = lines.length;
+
+		// the lines after the last hunk: unchanged, so as many on each side
+		let trailing: number | null = null;
+		const known = (count: number | null | undefined, after: number, side: string): void => {
+			if (count == null) return;
+			if (!(Number.isInteger(count) && count >= after)) {
+				throw Error(`Invalid ${side}_line_count ${count}: the hunks reach ${side} line ${after}`);
+			}
+			if (trailing !== null && trailing !== count - after) {
+				throw Error(
+					`Invalid ${side}_line_count ${count}: it leaves ${count - after} lines after the last hunk, not ${trailing}`
+				);
+			}
+			trailing = count - after;
+		};
+		if (a_final !== 0 || b_final !== 0) trailing = 0;
+		const { patch_context } = options;
+		if (patch_context != null && patch_context > 0 && lines.length > 0) {
+			// the unchanged lines ending the last hunk: fewer than the patch's
+			// context means the file has no more
+			let tail = 0;
+			while (tail < lines.length && lines[lines.length - 1 - tail]!.type === 'same') tail++;
+			if (tail < patch_context) trailing = 0;
+		}
+		known(options.a_line_count, a_after, 'a');
+		known(options.b_line_count, b_after, 'b');
+		this.#trailing = trailing;
+		this.#b_last = b_after;
+		this.a_line_count = trailing === null ? null : a_after + trailing;
+		this.b_line_count = trailing === null ? null : b_after + trailing;
+		this.width = String(
+			Math.max(a_after, b_after, this.a_line_count ?? 0, this.b_line_count ?? 0, 1)
+		).length;
+
+		const b_before = new Int32Array(lines.length);
+		const b_through = new Int32Array(lines.length);
+		for (const block of blocks) {
+			let count = block.b_base;
+			for (let i = block.start; i < block.end; i++) {
+				b_before[i] = count;
+				const b_line = lines[i]!.b_line;
+				if (b_line !== null) count = b_line;
+				b_through[i] = count;
+			}
+		}
+		this.#b_before = b_before;
+		this.#b_through = b_through;
+	}
+
+	/**
+	 * Returns the index of the block holding row `index`.
+	 */
+	#find_block(index: number): number {
+		const blocks = this.#blocks;
+		let low = 0;
+		let high = blocks.length - 1;
+		while (low < high) {
+			const mid = (low + high + 1) >>> 1;
+			if (blocks[mid]!.start <= index) low = mid;
+			else high = mid - 1;
+		}
+		return low;
+	}
+
+	/**
+	 * Returns the model of `block`, lexing its snippets on first use: its
+	 * lines renumbered from 1 within them, so the model pairs and emphasizes
+	 * as a whole text's model does.
+	 */
+	#block_model(block: DiffPatchBlock): DiffModel {
+		if (block.model) return block.model;
+		const { a_base, b_base } = block;
+		const local: Array<DiffLine> = [];
+		const a_texts: Array<string> = [];
+		const b_texts: Array<string> = [];
+		let a_newline = true;
+		let b_newline = true;
+		for (let i = block.start; i < block.end; i++) {
+			const line = this.lines[i]!;
+			const copy: DiffLine = {
+				type: line.type,
+				text: line.text,
+				a_line: line.a_line === null ? null : line.a_line - a_base,
+				b_line: line.b_line === null ? null : line.b_line - b_base
+			};
+			if (line.no_newline) copy.no_newline = true;
+			local.push(copy);
+			if (line.a_line !== null) {
+				a_texts.push(line.text);
+				a_newline = !line.no_newline;
+			}
+			if (line.b_line !== null) {
+				b_texts.push(line.text);
+				b_newline = !line.no_newline;
+			}
+		}
+		const side_options = { lang: this.lang, syntax_styler: this.#syntax_styler };
+		const snippet = (texts: Array<string>, newline: boolean): string =>
+			texts.length === 0 ? '' : texts.join('\n') + (newline ? '\n' : '');
+		block.model = create_diff_model(
+			create_diff_side(snippet(a_texts, a_newline), side_options),
+			create_diff_side(snippet(b_texts, b_newline), side_options),
+			{ lines: local }
+		);
+		return block.model;
+	}
+
+	hunk_ranges(context_lines = 3): ReadonlyArray<Readonly<DiffRowRange>> {
+		const count = context_lines >= 0 ? Math.floor(context_lines) : 0;
+		const cached = this.#hunk_ranges.get(count);
+		if (cached) return cached;
+		const ranges: Array<Readonly<DiffRowRange>> = [];
+		for (const block of this.#blocks) {
+			// windowed within the block, since the lines either side of it are
+			// missing; hunk lines are shared with `block_lines`, so identity
+			// finds each hunk
+			const block_lines = this.lines.slice(block.start, block.end);
+			let cursor = 0;
+			for (const hunk of diff_hunks(block_lines, count)) {
+				const start = block_lines.indexOf(hunk.lines[0]!, cursor);
+				cursor = start + hunk.lines.length;
+				ranges.push(Object.freeze({ start: block.start + start, end: block.start + cursor }));
+			}
+		}
+		const frozen = Object.freeze(ranges);
+		this.#hunk_ranges.set(count, frozen);
+		return frozen;
+	}
+
+	elided_count(start: number, end: number): number | null {
+		const { length } = this.lines;
+		const before = start <= 0 ? 0 : this.#b_through[Math.min(start, length) - 1]!;
+		let after: number;
+		if (end >= length) {
+			if (this.#trailing === null) return null;
+			after = this.#b_last + this.#trailing;
+		} else {
+			after = this.#b_before[end]!;
+		}
+		return Math.max(0, after - before);
+	}
+
+	b_through(index: number): number {
+		return index < 0 ? 0 : (this.#b_through[Math.min(index, this.lines.length - 1)] ?? 0);
+	}
+
+	#check_index(index: number): DiffLine {
+		const line = Number.isInteger(index) ? this.lines[index] : undefined;
+		if (line === undefined) {
+			throw RangeError(`Row ${index} is not in the diff's ${this.lines.length} rows`);
+		}
+		return line;
+	}
+
+	partner(index: number): number {
+		this.#check_index(index);
+		const block = this.#blocks[this.#find_block(index)]!;
+		const partner = this.#block_model(block).partner(index - block.start);
+		return partner === -1 ? -1 : block.start + partner;
+	}
+
+	fragment(index: number, side: 'a' | 'b', intraline = false): string {
+		const line = this.#check_index(index);
+		if ((side === 'a' ? line.a_line : line.b_line) === null) {
+			throw RangeError(`The diff line at index ${index} has no ${side} line`);
+		}
+		const block = this.#blocks[this.#find_block(index)]!;
+		return this.#block_model(block).fragment(index - block.start, side, intraline);
+	}
+
+	prepare(start: number, end: number, options?: DiffPrepareOptions): void {
+		const from = Math.max(0, start);
+		const to = Math.min(end, this.lines.length);
+		if (from >= to) return;
+		const blocks = this.#blocks;
+		for (let k = this.#find_block(from); k < blocks.length; k++) {
+			const block = blocks[k]!;
+			if (block.start >= to) break;
+			this.#block_model(block).prepare(
+				Math.max(from, block.start) - block.start,
+				Math.min(to, block.end) - block.start,
+				options
+			);
+		}
+	}
+}
+
+/**
+ * Creates a `DiffPatchSource` from a patch's `hunks` — one file's, in order,
+ * as fuz_util's `diff_hunks` returns them or its patch parser reads them
+ * from `git diff` output. Each hunk's lines must number its header's lines
+ * consecutively (a side with no lines starts at the line before the hunk,
+ * as in `@@` headers), hunks must be in order without overlapping, and the
+ * unchanged lines between two hunks must be as many on both sides. Throws
+ * otherwise — a bug in whatever produced the hunks, since a patch from
+ * outside is validated where it's parsed. Nothing is lexed until rows are
+ * drawn.
+ *
+ * The line counts and `patch_context` are claims about the texts that the
+ * hunks can contradict — a count short of the hunks' last line, two counts
+ * leaving different numbers of lines after the last hunk, or a count past a
+ * proven end — and a contradiction throws too. `CodeDiff`, which may get a
+ * count meant for other hunks while new ones arrive, treats a contradicted
+ * count as unknown instead.
+ *
+ * @throws Error when a hunk has no lines, a start or count that isn't a
+ *   whole number, lines that don't number its header's, a line after a
+ *   side's `no_newline` line, or comes out of order; or when a line count
+ *   is short of the hunks' lines or disagrees with the other side's or with
+ *   a proven end
+ */
+export const create_diff_patch_source = (
+	hunks: ReadonlyArray<DiffHunk>,
+	options: DiffPatchSourceOptions = {}
+): DiffPatchSource => new DiffPatchSourceState(hunks, options);
 
 /**
  * A range of lines on one side of a diff, 1-based and inclusive, as in a
@@ -1245,14 +1687,7 @@ const find_gaps = (
 	const add = (start: number, end: number): void => {
 		const count = model.elided_count(start, end);
 		if (count === 0) return;
-		let before = 0;
-		for (let i = start - 1; i >= 0; i--) {
-			const b_line = lines[i]!.b_line;
-			if (b_line !== null) {
-				before = b_line;
-				break;
-			}
-		}
+		const before = start > 0 ? model.b_through(start - 1) : 0;
 		const b_start = before + 1;
 		const b_end = count === null ? Infinity : before + count;
 		const pieces: Array<DiffGapPiece> = [];

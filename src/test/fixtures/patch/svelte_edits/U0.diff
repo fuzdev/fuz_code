@@ -1,0 +1,10 @@
+diff --git a/a.svelte b/b.svelte
+index 3dc6131..b69f9d0 100644
+--- a/a.svelte
++++ b/b.svelte
+@@ -10 +10 @@
+-	const {
++	const { // edited
+@@ -122 +122 @@
+-		color: red;
++		color: red; /* edited */

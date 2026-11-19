@@ -1,0 +1,22 @@
+diff --git a/a.svelte b/b.svelte
+index 3dc6131..b69f9d0 100644
+--- a/a.svelte
++++ b/b.svelte
+@@ -7,7 +7,7 @@
+ 	import Thing from './Thing.svelte';
+ 	import type {Snippet} from 'svelte';
+ 
+-	const {
++	const { // edited
+ 		thing,
+ 		bound = $bindable(true),
+ 		children,
+@@ -119,7 +119,7 @@
+ 
+ <style>
+ 	.some_class {
+-		color: red;
++		color: red; /* edited */
+ 	}
+ 
+ 	.hypen-class {

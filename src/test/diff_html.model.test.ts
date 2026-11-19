@@ -24,7 +24,8 @@ import {
 	assert_balanced,
 	assert_split_diff_valid,
 	assert_unified_diff_valid,
-	parse_diff_rows
+	parse_diff_rows,
+	walk_b_through
 } from './html_test_helpers.ts';
 import { discover_diff_cases, get_diff_fixture_path } from './fixtures/helpers.ts';
 
@@ -584,6 +585,7 @@ describe('DiffRowSource', () => {
 					(side === 'a' ? line.a_line : line.b_line)!
 				);
 			},
+			b_through: (index) => walk_b_through(lines, index),
 			prepare: () => {}
 		};
 		return { source, model };

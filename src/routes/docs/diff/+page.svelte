@@ -10,6 +10,8 @@
 	import TomeSectionHeader from '@fuzdev/fuz_ui/TomeSectionHeader.svelte';
 	import DeclarationLink from '@fuzdev/fuz_ui/DeclarationLink.svelte';
 
+	import { diff_hunks, diff_lines } from '@fuzdev/fuz_util/diff.ts';
+
 	import Code from '#lib/Code.svelte';
 	import CodeDiff from '#lib/CodeDiff.svelte';
 	import {
@@ -79,6 +81,22 @@ export const VERSION = 2;
 	let expand_split = $state(false);
 	let expand_line = $state(80);
 	let expand_diff: CodeDiff | undefined = $state();
+
+	// the same edits as a patch: the hunks alone, as `git diff` gives them, and
+	// the full model once "loaded"
+	const PATCH_HUNKS = diff_hunks(diff_lines(EXPAND_A, EXPAND_B), 3);
+	let patch_loaded = $state(false);
+	let patch_expanded: Array<DiffExpandedRange> = $state([]);
+	const patch_input = $derived(
+		patch_loaded
+			? {
+					model: create_diff_model(
+						create_diff_side(EXPAND_A, { lang: 'ts' }),
+						create_diff_side(EXPAND_B, { lang: 'ts' })
+					)
+				}
+			: { hunks: PATCH_HUNKS }
+	);
 </script>
 
 <TomeContent {tome}>
@@ -290,6 +308,47 @@ const model = create_diff_model(side(a_hash, a), side(b_hash, b));`}
 					elide="expand"
 					split={expand_split}
 					bind:expanded
+				/>
+			</div>
+		</TomeSection>
+		<TomeSection>
+			<TomeSectionHeader text="Patches" />
+			<p>
+				A file too big to fetch whole can render from its patch alone: pass the hunks — one file's
+				<code>DiffHunk</code>s, which fuz_util parses from <code>git diff</code> output — as
+				<code>hunks</code>, through <DeclarationLink name="create_diff_patch_source" />. Each run of
+				hunks is lexed on its own, so highlighting is approximate where a hunk starts inside a
+				comment or string opened above it, and the lines between hunks show as counts with nothing
+				to expand. The lines after the last hunk count when <code>b_line_count</code> is known, or
+				when <code>patch_context</code>, the patch's <code>-U</code>, proves the last hunk reaches
+				the end of the file.
+			</p>
+			<p>
+				When both texts arrive, swap <code>hunks</code> for <code>model</code> (or <code>a</code>
+				and <code>b</code>) on the same component: the view upgrades in place, keeping
+				<code>expanded</code> and <code>highlight</code>, and the first row in view stays where it
+				was.
+			</p>
+
+			<Code
+				lang="svelte"
+				content={`<CodeDiff {...(model ? {model} : {hunks})} patch_context={3} lang="ts" elide="expand" bind:expanded />`}
+			/>
+
+			<div class="row gap_md mb_md demo-controls">
+				<button type="button" class="sm" onclick={() => (patch_loaded = !patch_loaded)}>
+					{patch_loaded ? 'back to the patch' : 'load full file'}
+				</button>
+				<span>{patch_loaded ? 'full model' : 'patch only'}</span>
+			</div>
+
+			<div class="demo-expand">
+				<CodeDiff
+					{...patch_input}
+					patch_context={3}
+					lang="ts"
+					elide="expand"
+					bind:expanded={patch_expanded}
 				/>
 			</div>
 		</TomeSection>

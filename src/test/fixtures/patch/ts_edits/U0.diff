@@ -1,0 +1,15 @@
+diff --git a/a.ts b/b.ts
+index 0360340..a82506c 100644
+--- a/a.ts
++++ b/b.ts
+@@ -32 +32 @@ class D extends Base {
+-		// implementation
++		// implementation (edited)
+@@ -70 +69,0 @@ class D extends Base {
+-		// foo
+@@ -107,0 +107,2 @@ class D extends Base {
++// inserted one
++// inserted two
+@@ -151 +152 @@ export const complex_regex = /^(?:\/\*.*?\*\/|\/\/.*|[^/])+$/;
+-// string in comment should not be highlighted as string
++// a string in a comment is not a string

@@ -1,4 +1,5 @@
 import { assert } from 'vitest';
+import type { DiffLine } from '@fuzdev/fuz_util/diff.ts';
 
 /**
  * Strips tags and unescapes the entities `escape_html_slice` produces,
@@ -308,4 +309,16 @@ export const mutate_lines = (text: string, random: () => number): string => {
 		}
 	}
 	return out.join('\n');
+};
+
+/**
+ * `DiffRowSource.b_through` for a test source whose every region starts after
+ * a row with a `b` line: the nearest one at or before `index`.
+ */
+export const walk_b_through = (lines: ReadonlyArray<DiffLine>, index: number): number => {
+	for (let i = Math.min(index, lines.length - 1); i >= 0; i--) {
+		const b_line = lines[i]!.b_line;
+		if (b_line !== null) return b_line;
+	}
+	return 0;
 };

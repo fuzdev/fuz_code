@@ -71,7 +71,7 @@ src/
 │   ├── syntax_styler_global.ts # instance with every built-in language
 │   ├── lexer.ts                # lexer substrate: Lexer, TokenTypeRegistry, events, HTML render
 │   ├── lexer_*.ts              # per-language lexers
-│   ├── diff_html.ts            # diff viewer: DiffSide/DiffModel, unified + split rendering over fuz_util's diff data
+│   ├── diff_html.ts            # diff viewer: DiffSide/DiffModel/DiffPatchSource, unified + split rendering over fuz_util's diff data
 │   ├── Code.svelte             # main component
 │   ├── CodeDiff.svelte         # diff viewer, unified or side-by-side (`split`)
 │   ├── svelte_preprocess_fuz_code.ts # build-time preprocessor
@@ -96,12 +96,14 @@ src/
 │   ├── CodeDiff.test.ts        # CodeDiff server render, incl. the 'expand' hydration fixtures
 │   ├── CodeDiff.dom.svelte.test.ts # CodeDiff mounted in jsdom: highlight in place, scroll_to_line
 │   ├── CodeDiff.expand.dom.svelte.test.ts # CodeDiff 'expand' in jsdom: controls, bind:expanded, node identity, focus, hydration
+│   ├── diff_html.patch.test.ts # DiffPatchSource against the full model: fixtures, fuzz, real git patches; counts, re-windowing, malformed hunks
+│   ├── CodeDiff.patch.dom.svelte.test.ts # CodeDiff `hunks` in jsdom: count rows, hints, scroll_to_line, upgrade in place + scroll anchor
 │   ├── html_test_helpers.ts    # HTML assertions (diff + line rendering)
 │   ├── lexer.pathological.test.ts # linearity + validity on adversarial inputs
 │   ├── pathological.ts         # adversarial input generators (tests + benchmark)
 │   ├── svelte_preprocess_fuz_code.test.ts
 │   ├── highlight_manager.test.ts
-│   └── fixtures/               # samples/, diff/ (a/b pairs), generated/, helpers.ts, check.test.ts, update.task.ts
+│   └── fixtures/               # samples/, diff/ (a/b pairs), patch/ (a/b + real git patches), generated/, helpers.ts, check.test.ts, update.task.ts
 └── routes/                     # docs site
     ├── docs/                   # tomes: usage, samples, diff, textarea, benchmark, api
     ├── benchmark/              # interactive browser benchmark
@@ -183,13 +185,45 @@ are a different input). The renderers read only `DiffRowSource` — `lines`,
 `width`, `hunk_ranges`, `elided_count` (from line numbers, so a source
 holding only hunks counts the lines it lacks; `null` when unknown, as after
 a patch's last hunk; a gap with no rows renders as a count row whatever
-`elide` says), `partner`, `fragment`,
+`elide` says), `b_through` (the last `b` line at or before a row, so a
+region's first line is known even after rows with none, as a pure-removal
+hunk past the first line has), `partner`, `fragment`,
 `prepare` — which `DiffModel` extends, and draw rows by range of `lines`
 indices (`render_diff_unified_rows_html`,
 `render_diff_split_rows_html`, no elision) or whole with elision
 (`render_diff_model_unified_html`, `render_diff_model_split_html`), and
 `render_diff_unified_html(a, b, options)` / `render_diff_split_html` build
-the sides and model from two strings. Rows are semantic `<ins>`/`<del>`
+the sides and model from two strings.
+
+A `DiffPatchSource` (`create_diff_patch_source(hunks, {lang,
+syntax_styler, a_line_count?, b_line_count?, patch_context?})`) is the
+patch-only
+`DiffRowSource`: one file's `DiffHunk`s (`git diff` output parsed by
+fuz_util) with no texts. Hunks are validated (numbered as their headers
+say, in order, equal gaps on both sides, nothing after a `no_newline`
+line) and throw when malformed. Each run of contiguous hunks is a block
+with its own lazily built `DiffModel` over two snippet sides (context +
+removed lines for `a`, context + added for `b`), lines renumbered from 1,
+so pairing and emphasis are the full model's code; only highlighting
+differs, where a hunk starts inside a construct opened above it. Snippets
+are per block, not one per side: measured against whole-text lexing over
+the fixtures and samples with syntax-preserving edits, per block diverges
+on fewer rows in every language (svelte is the weak spot either way — a
+hunk inside `<script>` lexes as markup), since a construct left open in
+one hunk can't spill into the next. `hunk_ranges` re-windows within each
+block, so a smaller `context_lines` than the patch's trims and splits
+hunks exactly as the full model would, and a larger one keeps the
+patch's. `elided_count` and `b_through` count from per-row `b` counts (a
+pure-removal hunk has no `b` line of its own); the gap after the last hunk
+is `null` unless a line count (`diff_line_count` semantics), a final
+`no_newline`, or `patch_context` (the patch's `-U`: a last hunk ending in
+fewer unchanged lines reaches the end of the file) makes it known. A count
+the hunks contradict throws; `CodeDiff` drops its hints to unknown instead
+(DEV logs). The real-git fixtures in `src/test/fixtures/patch/` (exact
+`git diff` command in `diff_html.patch.test.ts`) check it against the full
+model.
+
+Rows are semantic `<ins>`/`<del>`
 (context rows are `<span>`) carrying `diff_line` + `diff_add`/`diff_remove`/
 `diff_same`, with aria-hidden unselectable gutters, `+`/`-` markers as CSS
 generated content (copied text stays clean code, and an empty line carries
@@ -328,9 +362,25 @@ one row, so there is no column to scroll as a unit.
 
 - `a`, `b` - the original and updated source, or `model` - a prepared
   `DiffModel` (its sides are already lexed, so `lang`, `syntax_styler`, and
-  `max_cost` don't apply), or `dangerous_raw_html` - pre-rendered rows (what
-  the preprocessor emits; skips runtime diffing and styling) — mutually
-  exclusive
+  `max_cost` don't apply), or `hunks` - a patch's `DiffHunk`s, through
+  `create_diff_patch_source` (`a_line_count` / `b_line_count` count the
+  lines after the last hunk, ignored otherwise), or `dangerous_raw_html` -
+  pre-rendered rows (what the preprocessor emits; skips runtime diffing and
+  styling) — mutually exclusive. Any new source keeps `expanded` and
+  `highlight`; swapping `hunks` for `model` or `a`/`b` (the upgrade) also
+  keeps the first row in view in place, and only that swap does — an edited
+  text or another file's hunks would map a line number elsewhere. An
+  `$effect.pre` captures the row (by `data-b`, or `data-a` for a removed
+  one; a binary search over the root's children, descending into open
+  elisions only, so a few layout reads) before the rows re-render, and an
+  `$effect` tracking the source and the rows restores it once, by
+  `scrollBy({behavior: 'instant'})` on the scroller: the root or nearest
+  ancestor whose `overflow-y` scrolls and whose content overflows, else
+  `document.scrollingElement`. The helpers are module-private in
+  `CodeDiff.svelte`
+- `a_line_count`, `b_line_count`, `patch_context` - with `hunks`, the
+  source's hints (ignored otherwise, so they can stay set across the
+  upgrade); hints the hunks contradict count as unknown
 - `split` - side by side instead of unified; the split view always wraps
 - `lang`, `syntax_styler`, `children` - as on `Code`
 - `context_lines`, `elide`, `intraline`, `line_numbers`, `max_cost`,
@@ -343,7 +393,8 @@ one row, so there is no column to scroll as a unit.
   pending updates render, scrolls the row into view, opening a collapsed
   `<details>` elision holding it, or with `'expand'` first revealing a
   step-sized window centered on a hidden line (`diff_expand_line_range`);
-  resolves `false` when no row has the line
+  resolves `false` when no row has the line, as for lines between `hunks`
+  (nothing can reveal them until the full diff replaces the hunks)
 - `wrap` (unified view only), `nomargin` - layout booleans; remaining props
   spread onto the `<div>`
 

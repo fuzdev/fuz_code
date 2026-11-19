@@ -19,7 +19,8 @@ import {
 import {
 	assert_balanced,
 	assert_split_diff_valid,
-	assert_unified_diff_valid
+	assert_unified_diff_valid,
+	walk_b_through
 } from './html_test_helpers.ts';
 import { discover_diff_cases } from './fixtures/helpers.ts';
 
@@ -348,6 +349,7 @@ const create_hunks_source = (known_length: boolean): { source: DiffRowSource } =
 				(side === 'a' ? line.a_line : line.b_line)!
 			);
 		},
+		b_through: (index) => walk_b_through(lines, index),
 		prepare: () => {}
 	};
 	return { source };
@@ -555,6 +557,7 @@ const create_partial_source = (): DiffRowSource => {
 			return partner === -1 ? -1 : index_of.get(partner)!;
 		},
 		fragment: (i, side, intraline) => model.fragment(keep[i]!, side, intraline),
+		b_through: (index) => walk_b_through(lines, index),
 		prepare: () => {}
 	};
 };

@@ -1,3 +1,4 @@
 src/test/fixtures/generated/**
 src/test/fixtures/samples/sample_*.*
 src/test/fixtures/diff/**
+src/test/fixtures/patch/**

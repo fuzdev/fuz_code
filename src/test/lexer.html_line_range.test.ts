@@ -74,14 +74,17 @@ describe('create_syntax_line_index', () => {
 	});
 
 	test('stays linear in the events for containers nested a line at a time', () => {
-		const depth = 3000;
-		const text = '`${\n'.repeat(depth) + '}`\n'.repeat(depth);
-		const lexed = lex(text, 'ts');
-		const index = create_syntax_line_index(lexed);
+		const nested = (depth: number): string => '`${\n'.repeat(depth) + '}`\n'.repeat(depth);
 		// one node per open event, against the depth times lines a stack per line costs
-		assert.isBelow(index.container_types.length, lexed.events_len);
-		assert.strictEqual(index.container_parents.length, index.container_types.length);
-		// and the deepest lines still render as the whole render does
+		const deep = lex(nested(3000), 'ts');
+		const deep_index = create_syntax_line_index(deep);
+		assert.isBelow(deep_index.container_types.length, deep.events_len);
+		assert.strictEqual(deep_index.container_parents.length, deep_index.container_types.length);
+		// the deepest lines still render as the whole render does, checked shallower:
+		// the whole render reopens every container on every line, quadratic in the depth
+		const depth = 300;
+		const lexed = lex(nested(depth), 'ts');
+		const index = create_syntax_line_index(lexed);
 		const whole = render_syntax_html_lines(lexed);
 		for (const line of [0, 1, depth - 1, depth, depth + 1, 2 * depth]) {
 			assert.deepEqual(render_syntax_html_line_range(lexed, index, line, line + 1), [whole[line]!]);
