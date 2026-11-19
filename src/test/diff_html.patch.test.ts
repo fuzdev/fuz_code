@@ -28,6 +28,8 @@ import {
 	type ParsedDiffRow
 } from './html_test_helpers.ts';
 import { discover_diff_cases, discover_samples } from './fixtures/helpers.ts';
+import { SyntaxStyler } from '#lib/syntax_styler.ts';
+import { lexer_ts } from '#lib/lexer_ts.ts';
 
 const numbered = (count: number): string =>
 	Array.from({ length: count }, (_, i) => `line ${i + 1}`).join('\n') + '\n';
@@ -675,5 +677,114 @@ describe('real git patches', () => {
 			)
 		].map((m) => m[1]);
 		assert.deepEqual(counts, ['10 unchanged lines', '7 unchanged lines', '20 unchanged lines']);
+	});
+});
+
+describe('snippet prefixes', () => {
+	/**
+	 * Returns how many rows of `hunks`' patch source draw a fragment other
+	 * than the full model's, over both sides, and how many it draws.
+	 */
+	const count_diverging = (
+		a: string,
+		b: string,
+		lang: string,
+		intraline = false
+	): { rows: number; diverging: number } => {
+		const model = create_diff_model(create_diff_side(a, { lang }), create_diff_side(b, { lang }));
+		const patch = create_diff_patch_source(diff_hunks(model.lines, 3), { lang });
+		const by_number = new Map(model.lines.map((l, i) => [`${l.a_line}:${l.b_line}`, i]));
+		let rows = 0;
+		let diverging = 0;
+		for (let i = 0; i < patch.lines.length; i++) {
+			const line = patch.lines[i]!;
+			const m = by_number.get(`${line.a_line}:${line.b_line}`)!;
+			for (const side of ['a', 'b'] as const) {
+				if ((side === 'a' ? line.a_line : line.b_line) === null) continue;
+				rows++;
+				if (patch.fragment(i, side, intraline) !== model.fragment(m, side, intraline)) {
+					diverging++;
+				}
+			}
+		}
+		return { rows, diverging };
+	};
+
+	const lines_of = (prefix: string, count: number): string =>
+		Array.from({ length: count }, (_, i) => `${prefix}${i}`).join('\n') + '\n';
+
+	test('a Svelte hunk inside the script and one inside the style lex as there', () => {
+		const a =
+			'<script lang="ts">\n' +
+			lines_of('\tconst value_', 20).replaceAll(/(\d+)\n/g, '$1 = $1;\n') +
+			'</script>\n\n<p>text</p>\n\n<style>\n' +
+			lines_of('\t.class_', 20).replaceAll(/(\d+)\n/g, '$1 {\n\t\tcolor: red;\n\t}\n') +
+			'</style>\n';
+		const b = a
+			.replace('const value_10 = 10;', 'const value_10 = 100;')
+			.replace('.class_12 {\n\t\tcolor: red;', '.class_12 {\n\t\tcolor: blue;');
+		for (const intraline of [false, true]) {
+			const { rows, diverging } = count_diverging(a, b, 'svelte', intraline);
+			assert.isAbove(rows, 20);
+			assert.strictEqual(diverging, 0);
+		}
+	});
+
+	test('each side threads its own state, skipping a block it has no lines in', () => {
+		const calls: Array<{ lines: ReadonlyArray<string>; state: unknown }> = [];
+		const styler = new SyntaxStyler();
+		styler.add_lang({
+			...lexer_ts,
+			id: 'probe',
+			aliases: [],
+			snippet_prefix: (lines, state) => {
+				calls.push({ lines, state });
+				return { prefix: '', state: `after ${lines[0]}` };
+			}
+		});
+		// a block that only adds (no a lines), then one that changes a line
+		const a = numbered(30);
+		const b = a.replace('line 3\n', 'line 3\nadded\n').replace('line 20\n', 'line twenty\n');
+		const hunks = diff_hunks(diff_lines(a, b), 0);
+		const patch = create_diff_patch_source(hunks, { lang: 'probe', syntax_styler: styler });
+		patch.fragment(0, 'b');
+		// both sides of every block, in order, each from its own previous state
+		assert.deepEqual(calls, [
+			{ lines: ['added'], state: null },
+			{ lines: ['line 20'], state: null },
+			{ lines: ['line twenty'], state: 'after added' }
+		]);
+		// once per source
+		patch.fragment(patch.lines.length - 1, 'b');
+		assert.strictEqual(calls.length, 3);
+	});
+
+	test('an HTML hunk closing its style lexes as CSS', () => {
+		const a =
+			'<style>\n' +
+			lines_of('\tp { margin: ', 12).replaceAll(/(\d+)\n/g, '$1px; }\n') +
+			'</style>\n<p>a</p>\n';
+		const b = a.replace('margin: 10px', 'margin: 11px');
+		const { rows, diverging } = count_diverging(a, b, 'html');
+		assert.isAbove(rows, 6);
+		assert.strictEqual(diverging, 0);
+	});
+
+	test('a markdown hunk closing a fence lexes its lines as the fence', () => {
+		const a =
+			'# title\n\n```ts\n' +
+			lines_of('const value_', 12).replaceAll(/(\d+)\n/g, '$1 = $1;\n') +
+			'```\n\ntext\n';
+		const b = a.replace('const value_10 = 10;', 'const value_10 = 100;');
+		const { rows, diverging } = count_diverging(a, b, 'md');
+		assert.isAbove(rows, 6);
+		assert.strictEqual(diverging, 0);
+	});
+
+	test('a language without snippet_prefix lexes snippets as documents', () => {
+		// a TS hunk inside a block comment opened above it highlights as code
+		const a = '/*\n' + lines_of(' * line ', 12) + ' */\nconst a = 1;\n';
+		const b = a.replace(' * line 8', ' * line eight');
+		assert.isAbove(count_diverging(a, b, 'ts').diverging, 0);
 	});
 });

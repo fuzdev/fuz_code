@@ -217,6 +217,33 @@ export interface SyntaxLang {
 	 * there.
 	 */
 	lex_to_brace?: (lexer: Lexer, stop_word?: string) => number;
+	/**
+	 * Guesses what came before a snippet cut from a larger text — a diff
+	 * hunk's lines without the rest of the file — so it lexes in the context
+	 * it had there: the returned `prefix` (an opening `<script>` for a hunk
+	 * inside one, say) is lexed before the snippet's lines and left out of
+	 * the output. Consecutive snippets of one text call it in order, each
+	 * given the `state` the previous call returned (`null` for the first), so
+	 * a boundary one snippet shows carries to the next. Optional: without it
+	 * a snippet lexes as a whole document. A guess, not a parse — a wrong
+	 * prefix mis-highlights lines a plain lex would have right, so it should
+	 * guess only where the snippet's lines say enough.
+	 */
+	snippet_prefix?: (lines: ReadonlyArray<string>, state: unknown) => SyntaxSnippetPrefix;
+}
+
+/**
+ * What `SyntaxLang.snippet_prefix` returns.
+ */
+export interface SyntaxSnippetPrefix {
+	/**
+	 * Text to lex before the snippet: `''`, or lines ending in a newline.
+	 */
+	prefix: string;
+	/**
+	 * Passed to the call for the next snippet of the same text.
+	 */
+	state: unknown;
 }
 
 /**
@@ -1027,6 +1054,22 @@ export const is_ascii_alnum = (c: number): boolean =>
  * A `\w` word char — ASCII letters, digits, and `_`.
  */
 export const is_ascii_word = (c: number): boolean => is_ascii_alnum(c) || c === 95;
+
+/**
+ * Whether `word` occurs in `text` with no `\w` word char on either side.
+ */
+export const includes_word = (text: string, word: string): boolean => {
+	if (word === '') return false;
+	for (let i = text.indexOf(word); i !== -1; i = text.indexOf(word, i + 1)) {
+		if (
+			(i === 0 || !is_ascii_word(text.charCodeAt(i - 1))) &&
+			!is_ascii_word(text.charCodeAt(i + word.length))
+		) {
+			return true;
+		}
+	}
+	return false;
+};
 
 export const is_hex_digit = (c: number): boolean =>
 	(c >= 48 && c <= 57) || ((c | 0x20) >= 97 && (c | 0x20) <= 102);

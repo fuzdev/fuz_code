@@ -140,16 +140,30 @@ class DiffSideState implements DiffSide {
 
 	readonly #index: SyntaxLineIndex;
 	readonly #fragments: Array<string | undefined>;
+	/**
+	 * Lines lexed before the side's own, from a snippet prefix, and hidden:
+	 * line 1 is the line after them.
+	 */
+	readonly #hidden: number;
 
-	constructor(text: string, options: DiffSideOptions) {
+	/**
+	 * @param prefix - lines lexed before `text` as its context and hidden, so
+	 *   `text` is `prefix` and the side's own text, and line numbers and
+	 *   `line_start` count past the prefix — a patch snippet's guessed
+	 *   context (see `SyntaxLang.snippet_prefix`). Ends in a newline, or `''`.
+	 */
+	constructor(text: string, options: DiffSideOptions, prefix = '') {
 		const { lang = null, syntax_styler = syntax_styler_global } = options;
 		const effective_lang = lang !== null && syntax_styler.has_lang(lang) ? lang : 'plaintext';
-		this.text = text;
+		this.text = prefix + text;
 		this.lang = lang;
 		// `lex` writes into a buffer the next lex reuses, so the side keeps a copy
-		this.lexed = copy_lexed_syntax(syntax_styler.lex(text, effective_lang));
+		this.lexed = copy_lexed_syntax(syntax_styler.lex(this.text, effective_lang));
 		this.#index = create_syntax_line_index(this.lexed);
-		this.line_count = this.#index.line_starts.length;
+		let hidden = 0;
+		for (let i = prefix.indexOf('\n'); i !== -1; i = prefix.indexOf('\n', i + 1)) hidden++;
+		this.#hidden = hidden;
+		this.line_count = this.#index.line_starts.length - hidden;
 		this.diff_line_count =
 			text === '' ? 0 : text.endsWith('\n') ? this.line_count - 1 : this.line_count;
 		this.#fragments = Array.from({ length: this.line_count });
@@ -163,7 +177,7 @@ class DiffSideState implements DiffSide {
 
 	line_start(line: number): number {
 		this.#check_line(line);
-		return this.#index.line_starts[line - 1]!;
+		return this.#index.line_starts[this.#hidden + line - 1]!;
 	}
 
 	fragment(line: number): string {
@@ -185,14 +199,27 @@ class DiffSideState implements DiffSide {
 			}
 			let j = i + 1;
 			while (j < end && fragments[j] === undefined) j++;
-			const rendered = render_syntax_html_line_range(this.lexed, this.#index, i, j);
+			const hidden = this.#hidden;
+			const rendered = render_syntax_html_line_range(
+				this.lexed,
+				this.#index,
+				hidden + i,
+				hidden + j
+			);
 			for (let k = 0; k < rendered.length; k++) fragments[i + k] = rendered[k];
 			i = j;
 		}
 	}
 
 	render_fragments(first: number, last: number, marks?: Array<SyntaxHtmlMark>): Array<string> {
-		return render_syntax_html_line_range(this.lexed, this.#index, first - 1, last, { marks });
+		const hidden = this.#hidden;
+		return render_syntax_html_line_range(
+			this.lexed,
+			this.#index,
+			hidden + Math.max(first, 1) - 1,
+			hidden + Math.min(last, this.line_count),
+			{ marks }
+		);
 	}
 }
 
@@ -889,8 +916,12 @@ export interface DiffPatchSourceOptions extends DiffSideOptions {
  * contiguous hunks lexes as a snippet, one per side (its context and
  * removed lines for `a`, its context and added lines for `b`), so a hunk
  * that starts inside a construct opened in the lines before it — a block
- * comment, a template literal, a markdown fence — highlights as if the
- * construct weren't open. A snippet's damage stays in its own hunk. The
+ * comment, a template literal — highlights as if the construct weren't
+ * open. A language with a `snippet_prefix` guesses the context a snippet
+ * starts in, carried from snippet to snippet of a side — the built-in
+ * Svelte, HTML, and markdown lexers find a hunk inside a `<script>` or
+ * `<style>`, or a fence — and a wrong guess mis-highlights the snippet. A
+ * snippet's damage stays in its own hunk. The
  * cure is to fetch both texts and render a `DiffModel` instead, which
  * `CodeDiff` swaps in without losing its place (see `CodeDiff`'s `hunks`).
  */
@@ -925,6 +956,13 @@ export interface DiffPatchSource extends DiffRowSource {
 }
 
 /**
+ * Returns `prefix` ending in a newline, so the snippet's first line starts
+ * a line of its own.
+ */
+const to_prefix_lines = (prefix: string): string =>
+	prefix === '' || prefix.endsWith('\n') ? prefix : prefix + '\n';
+
+/**
  * A run of hunks whose lines are contiguous on both sides: rows `[start,
  * end)` of the source, lexed together as one snippet per side, with `a_base`
  * and `b_base` lines on each side before it. Its model, numbered from 1
@@ -936,6 +974,12 @@ interface DiffPatchBlock {
 	a_base: number;
 	b_base: number;
 	model: DiffModel | null;
+	/**
+	 * The snippet prefix per side, set for every block on first use (see
+	 * `#prepare_prefixes`).
+	 */
+	a_prefix: string;
+	b_prefix: string;
 }
 
 class DiffPatchSourceState implements DiffPatchSource {
@@ -948,6 +992,10 @@ class DiffPatchSourceState implements DiffPatchSource {
 
 	readonly #syntax_styler: SyntaxStyler;
 	readonly #blocks: Array<DiffPatchBlock> = [];
+	/**
+	 * Whether the blocks' snippet prefixes are guessed yet.
+	 */
+	#prefixed = false;
 	readonly #hunk_ranges: Map<number, ReadonlyArray<Readonly<DiffRowRange>>> = new Map();
 	/**
 	 * Per row, how many `b` lines come before it in the file, and how many
@@ -1005,7 +1053,9 @@ class DiffPatchSourceState implements DiffPatchSource {
 					end: 0,
 					a_base: a_before,
 					b_base: b_before,
-					model: null
+					model: null,
+					a_prefix: '',
+					b_prefix: ''
 				});
 			}
 			let a_next = a_before + 1;
@@ -1118,8 +1168,6 @@ class DiffPatchSourceState implements DiffPatchSource {
 		if (block.model) return block.model;
 		const { a_base, b_base } = block;
 		const local: Array<DiffLine> = [];
-		const a_texts: Array<string> = [];
-		const b_texts: Array<string> = [];
 		let a_newline = true;
 		let b_newline = true;
 		for (let i = block.start; i < block.end; i++) {
@@ -1132,24 +1180,65 @@ class DiffPatchSourceState implements DiffPatchSource {
 			};
 			if (line.no_newline) copy.no_newline = true;
 			local.push(copy);
-			if (line.a_line !== null) {
-				a_texts.push(line.text);
-				a_newline = !line.no_newline;
-			}
-			if (line.b_line !== null) {
-				b_texts.push(line.text);
-				b_newline = !line.no_newline;
-			}
+			if (line.a_line !== null) a_newline = !line.no_newline;
+			if (line.b_line !== null) b_newline = !line.no_newline;
 		}
+		this.#prepare_prefixes();
+		const [a_texts, b_texts] = this.#block_texts(block);
 		const side_options = { lang: this.lang, syntax_styler: this.#syntax_styler };
 		const snippet = (texts: Array<string>, newline: boolean): string =>
 			texts.length === 0 ? '' : texts.join('\n') + (newline ? '\n' : '');
 		block.model = create_diff_model(
-			create_diff_side(snippet(a_texts, a_newline), side_options),
-			create_diff_side(snippet(b_texts, b_newline), side_options),
+			new DiffSideState(snippet(a_texts, a_newline), side_options, block.a_prefix),
+			new DiffSideState(snippet(b_texts, b_newline), side_options, block.b_prefix),
 			{ lines: local }
 		);
 		return block.model;
+	}
+
+	/**
+	 * Returns the texts of `block`'s lines on each side.
+	 */
+	#block_texts(block: DiffPatchBlock): [a: Array<string>, b: Array<string>] {
+		const a_texts: Array<string> = [];
+		const b_texts: Array<string> = [];
+		for (let i = block.start; i < block.end; i++) {
+			const line = this.lines[i]!;
+			if (line.a_line !== null) a_texts.push(line.text);
+			if (line.b_line !== null) b_texts.push(line.text);
+		}
+		return [a_texts, b_texts];
+	}
+
+	/**
+	 * Sets each block's snippet prefix per side, from the language's
+	 * `snippet_prefix`, called over every block of a side in order, so what
+	 * one block shows carries to the next — `''` throughout for a language
+	 * without one. Once, on the first block's lex: the guesses are a scan of
+	 * the lines, no lexing.
+	 */
+	#prepare_prefixes(): void {
+		if (this.#prefixed) return;
+		this.#prefixed = true;
+		const lang = this.lang === null ? undefined : this.#syntax_styler.langs.get(this.lang);
+		const snippet_prefix = lang?.snippet_prefix;
+		if (!snippet_prefix) return;
+		let a_state: unknown = null;
+		let b_state: unknown = null;
+		for (const block of this.#blocks) {
+			const [a_texts, b_texts] = this.#block_texts(block);
+			// a side with no lines in the block has nothing to lex or carry
+			if (a_texts.length > 0) {
+				const a = snippet_prefix(a_texts, a_state);
+				a_state = a.state;
+				block.a_prefix = to_prefix_lines(a.prefix);
+			}
+			if (b_texts.length > 0) {
+				const b = snippet_prefix(b_texts, b_state);
+				b_state = b.state;
+				block.b_prefix = to_prefix_lines(b.prefix);
+			}
+		}
 	}
 
 	hunk_ranges(context_lines = 3): ReadonlyArray<Readonly<DiffRowRange>> {

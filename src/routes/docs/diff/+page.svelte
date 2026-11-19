@@ -318,11 +318,13 @@ const model = create_diff_model(side(a_hash, a), side(b_hash, b));`}
 				<code>DiffHunk</code>s, which fuz_util parses from <code>git diff</code> output — as
 				<code>hunks</code>, through <DeclarationLink name="create_diff_patch_source" />. Each run of
 				hunks is lexed on its own, so highlighting is approximate where a hunk starts inside a
-				comment or string opened above it, and the lines between hunks show as counts with nothing
-				to expand. The lines after the last hunk count when <code>b_line_count</code> is known, or
-				when <code>patch_context</code>, the patch's <code>-U</code>, proves the last hunk reaches
-				the end of the file. To cache the patch source, or to handle malformed hunks rather than
-				have <code>hunks</code> throw, build it yourself and pass it as <code>source</code>.
+				comment or string opened above it (Svelte, HTML, and Markdown guess whether a hunk sits
+				inside a <code>&lt;script&gt;</code>, a <code>&lt;style&gt;</code>, or a fence, through the
+				language's <code>snippet_prefix</code>), and the lines between hunks show as counts with
+				nothing to expand. The lines after the last hunk count when <code>b_line_count</code> is
+				known, or when <code>patch_context</code>, the patch's <code>-U</code>, proves the last hunk
+				reaches the end of the file. To cache the patch source, or to handle malformed hunks rather
+				than have <code>hunks</code> throw, build it yourself and pass it as <code>source</code>.
 			</p>
 			<p>
 				When both texts arrive, swap <code>hunks</code> for a model as <code>source</code> (or

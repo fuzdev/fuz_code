@@ -1,11 +1,13 @@
 import {
 	advance_probe,
+	includes_word,
 	is_ascii_word,
 	is_space,
 	scan_to_line_end,
 	token_type,
 	type Lexer,
-	type SyntaxLang
+	type SyntaxLang,
+	type SyntaxSnippetPrefix
 } from './lexer.ts';
 import {
 	create_markup_probe_cache,
@@ -460,6 +462,139 @@ const lex_md = (l: Lexer): void => {
 };
 
 /**
+ * Returns a fence line's marker run and info word, or `null` for a line
+ * that isn't one: up to three spaces, three or more backticks or tildes,
+ * then the info string's first word.
+ */
+const parse_snippet_fence = (line: string): { marker: string; info: string } | null => {
+	let i = 0;
+	while (i < 3 && line.charCodeAt(i) === 32) i++;
+	const c = line.charCodeAt(i);
+	if (c !== 96 && c !== 126) return null; // ` ~
+	let j = i;
+	while (line.charCodeAt(j) === c) j++;
+	if (j - i < 3) return null;
+	let k = j;
+	while (is_space(line.charCodeAt(k))) k++;
+	let e = k;
+	while (e < line.length && line.charCodeAt(e) !== 96 && !is_space(line.charCodeAt(e))) e++;
+	return { marker: line.slice(i, j), info: line.slice(k, e) };
+};
+
+const SHELL_LINE_STARTS = ['$ ', 'cd ', 'npm ', 'gro ', 'cargo ', 'git '];
+
+/**
+ * Whether `line` starts, past indentation, like a shell command.
+ */
+const is_shell_line = (line: string): boolean => {
+	const t = line.trimStart();
+	if (SHELL_LINE_STARTS.some((s) => t.startsWith(s))) return true;
+	if (!t.startsWith('export ')) return false;
+	// `export NAME=`, an uppercase name
+	let i = 7;
+	while (i < t.length) {
+		const c = t.charCodeAt(i);
+		if (!((c >= 65 && c <= 90) || c === 95)) break; // A-Z _
+		i++;
+	}
+	return i > 7 && t.charCodeAt(i) === 61; // =
+};
+
+/**
+ * Whether `text` has a `use name::` path, `name` lowercase.
+ */
+const has_rust_use = (text: string): boolean => {
+	for (let i = text.indexOf('use '); i !== -1; i = text.indexOf('use ', i + 1)) {
+		if (i > 0 && is_ascii_word(text.charCodeAt(i - 1))) continue;
+		let j = i + 4;
+		while (j < text.length) {
+			const c = text.charCodeAt(j);
+			if (!((c >= 97 && c <= 122) || c === 95)) break; // a-z _
+			j++;
+		}
+		if (j > i + 4 && text.startsWith('::', j)) return true;
+	}
+	return false;
+};
+
+/**
+ * Guesses the language of a fence's lines, for a snippet that closes a
+ * fence it doesn't show the opener of.
+ */
+const guess_fence_lang = (lines: ReadonlyArray<string>): string => {
+	if (lines.some(is_shell_line)) return 'sh';
+	const text = lines.join('\n');
+	if (
+		['fn', 'let mut', 'impl', 'pub fn'].some((w) => includes_word(text, w)) ||
+		has_rust_use(text)
+	) {
+		return 'rust';
+	}
+	if (['<script', '</', '{#if', '{#each'].some((s) => text.includes(s))) return 'svelte';
+	return 'ts';
+};
+
+/**
+ * Returns the fence open after `lines`, as its opener line with a newline
+ * (`''` for none), given `start` open before them.
+ */
+const fence_after = (lines: ReadonlyArray<string>, start: string): string => {
+	let open = start;
+	for (const line of lines) {
+		const fence = parse_snippet_fence(line);
+		if (!fence) continue;
+		if (open === '') {
+			open = line + '\n';
+			continue;
+		}
+		const opener = parse_snippet_fence(open)!.marker;
+		if (
+			fence.info === '' &&
+			fence.marker.charCodeAt(0) === opener.charCodeAt(0) &&
+			fence.marker.length >= opener.length
+		) {
+			open = '';
+		}
+	}
+	return open;
+};
+
+/**
+ * Markdown's `snippet_prefix`: a snippet starts inside a fence its first
+ * fence line closes. A fence with an info string opens one, so nothing was
+ * open; a bare fence closes the fence the previous snippets left open, or
+ * else one whose opener the snippet doesn't show — but only when it ends a
+ * run of lines (text before it, a blank line or the snippet's end after),
+ * since bare fences open plain blocks too — whose language is guessed from
+ * the lines. Only fences a snippet showed carry to the next.
+ */
+const md_snippet_prefix = (lines: ReadonlyArray<string>, state: unknown): SyntaxSnippetPrefix => {
+	const carried = (state as string | null) ?? '';
+	let prefix = carried;
+	for (let i = 0; i < lines.length; i++) {
+		const fence = parse_snippet_fence(lines[i]!);
+		if (!fence) continue;
+		if (fence.info !== '') prefix = '';
+		else if (carried === '') {
+			const before = lines[i - 1];
+			const after = lines[i + 1];
+			const closes =
+				before !== undefined &&
+				before.trim() !== '' &&
+				(after === undefined || after.trim() === '');
+			prefix = closes ? fence.marker + guess_fence_lang(lines) + '\n' : '';
+		}
+		break;
+	}
+	return { prefix, state: fence_after(lines, prefix) };
+};
+
+/**
  * The Markdown language registration for the lexer engine.
  */
-export const lexer_md: SyntaxLang = { id: 'md', aliases: ['markdown'], lex: lex_md };
+export const lexer_md: SyntaxLang = {
+	id: 'md',
+	aliases: ['markdown'],
+	lex: lex_md,
+	snippet_prefix: md_snippet_prefix
+};

@@ -1,15 +1,18 @@
 import {
 	advance_probe,
 	is_ascii_alnum,
+	is_ascii_word,
 	is_digit,
 	is_hex_digit,
+	includes_word,
 	is_space,
 	matches_ci,
 	scan_to_line_end,
 	skip_space,
 	token_type,
 	type Lexer,
-	type SyntaxLang
+	type SyntaxLang,
+	type SyntaxSnippetPrefix
 } from './lexer.ts';
 
 /**
@@ -691,12 +694,256 @@ const lex_markup_xml = (l: Lexer): void => {
 };
 
 /**
+ * The region a markup snippet's lines sit in: inside a `<script>`, inside a
+ * `<style>`, or neither (`null`).
+ */
+type MarkupSnippetRegion = 'script' | 'style' | null;
+
+/**
+ * What a markup `snippet_prefix` carries from one snippet to the next.
+ */
+interface MarkupSnippetState {
+	/**
+	 * The region open after the previous snippets, from the script and style
+	 * tags they showed — never from a guess.
+	 */
+	region: MarkupSnippetRegion;
+	/**
+	 * Whether an earlier snippet showed template markup or a closing
+	 * `</script>`, so a later one without either is past the script.
+	 */
+	past_template: boolean;
+}
+
+/**
+ * The opening tags a markup `snippet_prefix` lexes before a snippet inside
+ * each region, and whether file order hints at a style region.
+ */
+export interface MarkupSnippetOptions {
+	script: string;
+	style: string;
+	/**
+	 * Whether a snippet past the template, with no script-like line, is in
+	 * the style — a Svelte component's usual order (script, template, style).
+	 */
+	order_cue: boolean;
+}
+
+/**
+ * Returns `[index, closing, region]` of the first `<script` or `<style`
+ * tag, opening or closing, in `line` at or after `from`, else `null`.
+ */
+const find_region_tag = (
+	line: string,
+	from: number
+): [index: number, closing: boolean, region: 'script' | 'style'] | null => {
+	for (let i = line.indexOf('<', from); i !== -1; i = line.indexOf('<', i + 1)) {
+		const closing = line.charCodeAt(i + 1) === 47; // /
+		const name = closing ? i + 2 : i + 1;
+		for (const region of ['script', 'style'] as const) {
+			if (matches_ci(line, name, region) && !is_ascii_word(line.charCodeAt(name + region.length))) {
+				return [i, closing, region];
+			}
+		}
+	}
+	return null;
+};
+
+/**
+ * Whether `line` starts, past indentation, like markup: a tag, a comment,
+ * or a Svelte block or at-tag.
+ */
+const is_markup_line = (line: string): boolean => {
+	const t = line.trimStart();
+	if (t.charCodeAt(0) === 60) return true; // <
+	if (t.charCodeAt(0) !== 123) return false; // {
+	const c = t.charCodeAt(1);
+	return c === 35 || c === 47 || c === 58 || c === 64; // # / : @
+};
+
+const SCRIPT_WORDS = ['const', 'let', 'import', 'export', 'function', 'return', 'await', 'if'];
+const SCRIPT_MARKS = ['=>', '()', '$state', '$derived', '$props'];
+const ORDER_SCRIPT_WORDS = ['const', 'let', 'import', 'function', 'return'];
+
+/**
+ * Whether `t`, trimmed, is a CSS declaration, `name: value;` with no
+ * `;`, `(`, or `=` in the value.
+ */
+const is_css_declaration = (t: string): boolean => {
+	// the name is lowercase, as a stylesheet's property names are
+	let i = 0;
+	while (i < t.length) {
+		const c = t.charCodeAt(i);
+		if (!((c >= 97 && c <= 122) || c === 45)) break; // a-z -
+		i++;
+	}
+	if (i === 0) return false;
+	while (is_space(t.charCodeAt(i))) i++;
+	if (t.charCodeAt(i) !== 58 || !t.endsWith(';')) return false; // :
+	for (let k = i + 1; k < t.length - 1; k++) {
+		const c = t.charCodeAt(k);
+		if (c === 59 || c === 40 || c === 61) return false; // ; ( =
+	}
+	return true;
+};
+
+/**
+ * Whether `t`, trimmed, opens a CSS rule: a selector starting with `.`,
+ * `#`, `&`, or `:`, ending in `{`, with no `=`, brackets, or `;` between.
+ */
+const is_css_rule_open = (t: string): boolean => {
+	const c0 = t.charCodeAt(0);
+	if (!(c0 === 46 || c0 === 35 || c0 === 38 || c0 === 58) || !t.endsWith('{')) return false;
+	for (let k = 1; k < t.length - 1; k++) {
+		const c = t.charCodeAt(k);
+		if (c === 61 || c === 40 || c === 41 || c === 123 || c === 125 || c === 59) return false;
+	}
+	return true;
+};
+
+/**
+ * Whether more of `lines` look like CSS than like script.
+ */
+const is_css_like = (lines: ReadonlyArray<string>): boolean => {
+	let css = 0;
+	let script = 0;
+	for (const line of lines) {
+		const t = line.trim();
+		if (is_css_declaration(t) || is_css_rule_open(t) || line.includes('var(--')) css++;
+		if (
+			SCRIPT_WORDS.some((w) => includes_word(line, w)) ||
+			SCRIPT_MARKS.some((m) => line.includes(m))
+		) {
+			script++;
+		}
+	}
+	return css > script;
+};
+
+/**
+ * Whether `t`, trimmed, could be a start tag's attribute line: a name
+ * followed by `=` or nothing, or a `{…}` attribute or spread.
+ */
+const is_attribute_line = (t: string): boolean => {
+	if (t.charCodeAt(0) === 123) {
+		const c = t.charCodeAt(1);
+		return t.length > 1 && !(c === 35 || c === 47 || c === 58 || c === 64);
+	}
+	let i = 0;
+	for (; i < t.length; i++) {
+		const c = t.charCodeAt(i);
+		if (!(is_ascii_word(c) || c === 58 || c === 124 || c === 46 || c === 45)) break; // : | . -
+	}
+	return i > 0 && (i === t.length || t.charCodeAt(i) === 61); // =
+};
+
+/**
+ * Whether `t`, trimmed, ends a start tag: a final `>` or `/>` not after
+ * `=`, which would make it an arrow.
+ */
+const ends_start_tag = (t: string): boolean => {
+	if (!t.endsWith('>')) return false;
+	let k = t.length - 2;
+	if (t.charCodeAt(k) === 47) k--; // /
+	return k < 0 || t.charCodeAt(k) !== 61; // =
+};
+
+/**
+ * The prefix for a snippet that starts inside a construct its lines then
+ * close: a block comment, inside a region (` * ` lines before a `*` + `/`),
+ * or a start tag outside one (attribute lines before the `>`).
+ */
+const markup_continuation = (lines: ReadonlyArray<string>, region: MarkupSnippetRegion): string => {
+	let first = 0;
+	while (first < lines.length && lines[first]!.trim() === '') first++;
+	if (first === lines.length) return '';
+	const t0 = lines[first]!.trimStart();
+	const c1 = t0.charCodeAt(1);
+	if (
+		region !== null &&
+		t0.charCodeAt(0) === 42 &&
+		(Number.isNaN(c1) || is_space(c1) || c1 === 47)
+	) {
+		for (let i = first; i < lines.length; i++) {
+			const line = lines[i]!;
+			if (line.includes('*/')) return '/*\n';
+			if (line.trimStart().charCodeAt(0) !== 42) break; // *
+		}
+		return '';
+	}
+	if (region === null) {
+		let i = first;
+		for (; i < lines.length; i++) {
+			const t = lines[i]!.trim();
+			if (t.charCodeAt(0) === 60) return ''; // <
+			if (ends_start_tag(t)) break;
+			if (!is_attribute_line(t)) return '';
+		}
+		// a short run only: a long one is more likely text than one tag's attributes
+		if (i < lines.length && i - first < 12) return '<x\n';
+	}
+	return '';
+};
+
+/**
+ * Creates a markup language's `snippet_prefix`. The snippet's first script
+ * or style tag decides the region it starts in (a closing tag means the
+ * region was open); else the region the previous snippets' tags left open;
+ * else a line starting like markup means none; else CSS-like lines (or,
+ * with `order_cue`, a place past the template and no script-like line)
+ * mean a style, and a script otherwise. Only tags a snippet showed carry to
+ * the next.
+ */
+export const create_markup_snippet_prefix =
+	(options: MarkupSnippetOptions) =>
+	(lines: ReadonlyArray<string>, state: unknown): SyntaxSnippetPrefix => {
+		const carried = (state as MarkupSnippetState | null) ?? { region: null, past_template: false };
+		let first: ReturnType<typeof find_region_tag> = null;
+		let after = carried.region;
+		let markup = false;
+		let closes_script = false;
+		for (const line of lines) {
+			for (let tag = find_region_tag(line, 0); tag; tag = find_region_tag(line, tag[0] + 1)) {
+				first ??= tag;
+				after = tag[1] ? null : tag[2];
+				if (tag[1] && tag[2] === 'script') closes_script = true;
+			}
+			if (!markup && is_markup_line(line)) markup = true;
+		}
+		let region: MarkupSnippetRegion;
+		if (first) region = first[1] ? first[2] : null;
+		else if (carried.region) region = carried.region;
+		else if (markup) region = null;
+		else if (
+			is_css_like(lines) ||
+			(options.order_cue &&
+				carried.past_template &&
+				!lines.some((l) => ORDER_SCRIPT_WORDS.some((w) => includes_word(l, w)) || l.includes('=>')))
+		) {
+			region = 'style';
+		} else region = 'script';
+		const opener = region === null ? '' : options[region];
+		return {
+			prefix: opener + markup_continuation(lines, region),
+			state: {
+				region: after,
+				past_template: carried.past_template || markup || closes_script
+			} satisfies MarkupSnippetState
+		};
+	};
+
+/**
  * The HTML markup language registration for the lexer engine.
  */
 export const lexer_markup: SyntaxLang = {
 	id: 'markup',
 	aliases: ['html', 'mathml', 'svg'],
-	lex: lex_markup_html
+	lex: lex_markup_html,
+	snippet_prefix: create_markup_snippet_prefix({
+		script: '<script>\n',
+		style: '<style>\n',
+		order_cue: false
+	})
 };
 
 /**

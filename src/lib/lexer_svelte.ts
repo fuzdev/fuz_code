@@ -9,7 +9,11 @@ import {
 	type Lexer,
 	type SyntaxLang
 } from './lexer.ts';
-import { lex_markup_window, type MarkupLexMode } from './lexer_markup.ts';
+import {
+	create_markup_snippet_prefix,
+	lex_markup_window,
+	type MarkupLexMode
+} from './lexer_markup.ts';
 
 /**
  * Svelte lexer — the shared markup scanner (`lexer_markup.ts`)
@@ -285,4 +289,12 @@ const lex_svelte = (l: Lexer): void => {
 /**
  * The Svelte language registration for the lexer engine.
  */
-export const lexer_svelte: SyntaxLang = { id: 'svelte', lex: lex_svelte };
+export const lexer_svelte: SyntaxLang = {
+	id: 'svelte',
+	lex: lex_svelte,
+	snippet_prefix: create_markup_snippet_prefix({
+		script: '<script lang="ts">\n',
+		style: '<style>\n',
+		order_cue: true
+	})
+};

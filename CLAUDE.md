@@ -100,6 +100,7 @@ src/
 │   ├── CodeDiff.patch.dom.svelte.test.ts # CodeDiff `hunks` in jsdom: count rows, hints, scroll_to_line, upgrade in place + scroll anchor
 │   ├── html_test_helpers.ts    # HTML assertions (diff + line rendering)
 │   ├── lexer.pathological.test.ts # linearity + validity on adversarial inputs
+│   ├── lexer.snippet_prefix.test.ts # svelte/markup/md `snippet_prefix` guesses
 │   ├── pathological.ts         # adversarial input generators (tests + benchmark)
 │   ├── svelte_preprocess_fuz_code.test.ts
 │   ├── highlight_manager.test.ts
@@ -208,9 +209,21 @@ so pairing and emphasis are the full model's code; only highlighting
 differs, where a hunk starts inside a construct opened above it. Snippets
 are per block, not one per side: measured against whole-text lexing over
 the fixtures and samples with syntax-preserving edits, per block diverges
-on fewer rows in every language (svelte is the weak spot either way — a
-hunk inside `<script>` lexes as markup), since a construct left open in
-one hunk can't spill into the next. `hunk_ranges` re-windows within each
+on fewer rows in every language, since a construct left open in one hunk
+can't spill into the next. A language's optional `SyntaxLang.snippet_prefix`
+guesses the context a snippet starts in — lines lexed before it and hidden
+(`DiffSideState`'s internal prefix, so line numbers and `line_start` count
+past it) — called over a side's blocks in order with the state the last
+returned, so only boundaries a snippet showed carry. Markup and svelte
+(`create_markup_snippet_prefix`) find a hunk inside `<script>` / `<style>`
+(the first tag decides; else the carried region; else a markup-like line
+means none; else CSS-like lines, or for svelte a place past the template,
+mean style; else script) plus block-comment and start-tag continuations;
+md finds one inside a fence (a bare fence ending a run of lines closes one,
+its language guessed). Measured against whole-text lexing (svelte and md
+on real history, html on synthetic edits), divergence drops from about a
+third of svelte rows, half of html's, and a fifth of md's to under a tenth
+each. `hunk_ranges` re-windows within each
 block, so a smaller `context_lines` than the patch's trims and splits
 hunks exactly as the full model would, and a larger one keeps the
 patch's. `elided_count` and `b_through` count from per-row `b` counts (a
