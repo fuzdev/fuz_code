@@ -434,8 +434,10 @@ describe('row ranges', () => {
 		const fragment_b = vi.spyOn(b, 'prepare_fragments');
 		const [hunk] = model.hunk_ranges(0);
 		render_diff_unified_rows_html(model, hunk!.start, hunk!.end, { context_lines: 0 });
-		assert.deepEqual(fragment_a.mock.calls, [[10, 11]]);
-		assert.deepEqual(fragment_b.mock.calls, [[10, 10]]);
+		// line 10 pairs across the sides and renders only in the emphasized
+		// pass, so just a's unpaired line 11 renders plain
+		assert.deepEqual(fragment_a.mock.calls, [[11, 11]]);
+		assert.deepEqual(fragment_b.mock.calls, []);
 	});
 });
 

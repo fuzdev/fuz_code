@@ -523,6 +523,13 @@ const validate_diff_lines = (lines: Array<DiffLine>, a: DiffSide, b: DiffSide): 
  * Emphasized lines at most this many lines apart render in one pass.
  */
 const MARKED_CLUSTER_GAP = 16;
+/**
+ * Plain lines render in runs of lines at most this many apart. An
+ * emphasized line between two plain ones splits the run: rendering it plain
+ * too, only for the emphasized pass to render it again, measured slower on
+ * edit-heavy diffs than the extra call.
+ */
+const PLAIN_GAP = 1;
 
 const line_number = (line: DiffLine, a: boolean): number => (a ? line.a_line! : line.b_line!);
 
@@ -656,28 +663,42 @@ class DiffModelState implements DiffModel {
 		const { lines } = this;
 		const from = Math.max(0, start);
 		const to = Math.min(end, lines.length);
+		if (intraline) {
+			this.#prepare_marked(from, to, 'remove');
+			this.#prepare_marked(from, to, 'add');
+		}
+		// plain fragments only for the lines drawn without emphasis
+		const marked = this.#marked_fragments;
 		let a_first = 0;
 		let a_last = 0;
 		let b_first = 0;
 		let b_last = 0;
 		for (let i = from; i < to; i++) {
 			const line = lines[i]!;
+			const emphasized = intraline && marked.has(i);
+			if (emphasized) continue;
 			// the unified view draws removed lines from `a`, the rest from `b`
-			if (line.a_line !== null && (split || line.type === 'remove')) {
-				if (a_first === 0) a_first = line.a_line;
-				a_last = line.a_line;
+			const a_line = line.a_line;
+			if (a_line !== null && (split || line.type === 'remove')) {
+				if (a_first !== 0 && a_line - a_last > PLAIN_GAP) {
+					this.a.prepare_fragments(a_first, a_last);
+					a_first = 0;
+				}
+				if (a_first === 0) a_first = a_line;
+				a_last = a_line;
 			}
-			if (line.b_line !== null) {
-				if (b_first === 0) b_first = line.b_line;
-				b_last = line.b_line;
+			const b_line = line.b_line;
+			if (b_line !== null) {
+				if (b_first !== 0 && b_line - b_last > PLAIN_GAP) {
+					this.b.prepare_fragments(b_first, b_last);
+					b_first = 0;
+				}
+				if (b_first === 0) b_first = b_line;
+				b_last = b_line;
 			}
 		}
 		if (a_first !== 0) this.a.prepare_fragments(a_first, a_last);
 		if (b_first !== 0) this.b.prepare_fragments(b_first, b_last);
-		if (intraline) {
-			this.#prepare_marked(from, to, 'remove');
-			this.#prepare_marked(from, to, 'add');
-		}
 	}
 
 	/**
@@ -1413,18 +1434,22 @@ const clamp_range = (model: DiffRowSource, start: number, end: number): [number,
 };
 
 /**
- * Renders a row's text span from its line's highlighted `fragment`. An empty
- * line gets a `<br>`: a row with no text contributes nothing to a copied
- * selection, which would drop the source's blank lines.
+ * Pushes a row's text span, from its line's highlighted `fragment`, onto
+ * `out` — pieces rather than one joined string, which edit-heavy diffs
+ * measured as garbage. An empty line gets a `<br>`: a row with no text
+ * contributes nothing to a copied selection, which would drop the source's
+ * blank lines.
+ *
+ * @mutates out - pushes the span's pieces
  */
-const render_text = (line: DiffLine, fragment: string): string =>
-	[
+const push_text = (out: Array<string>, line: DiffLine, fragment: string): void => {
+	out.push(
 		'<span class="diff_text">',
 		fragment,
 		line.text === '' ? '<br>' : '',
-		line.no_newline ? '<span class="diff_no_newline"></span>' : '',
-		'</span>'
-	].join('');
+		line.no_newline ? '<span class="diff_no_newline"></span></span>' : '</span>'
+	);
+};
 
 const render_unified_rows = (ctx: RowsContext, start: number, end: number, out: Array<string>) => {
 	const { model, intraline, line_numbers, hunks, pad } = ctx;
@@ -1435,24 +1460,27 @@ const render_unified_rows = (ctx: RowsContext, start: number, end: number, out: 
 		const line = lines[i]!;
 		while (h < hunks.length && hunks[h]!.end <= i) h++;
 		const hunk = h < hunks.length && hunks[h]!.start <= i ? h : -1;
-		let gutter = '';
-		if (line_numbers) {
-			const a_num = line.a_line === null ? pad : String(line.a_line).padStart(width);
-			const b_num = line.b_line === null ? pad : String(line.b_line).padStart(width);
-			gutter = `<span class="diff_gutter" aria-hidden="true">${a_num} ${b_num}</span>`;
-		}
-		const text = render_text(
-			line,
-			model.fragment(i, line.type === 'remove' ? 'a' : 'b', intraline)
+		const close = line.type === 'add' ? '</ins>' : line.type === 'remove' ? '</del>' : '</span>';
+		out.push(
+			line.type === 'add'
+				? '<ins class="diff_line diff_add'
+				: line.type === 'remove'
+					? '<del class="diff_line diff_remove'
+					: '<span class="diff_line diff_same',
+			render_row_attrs(ctx, line, hunk),
+			'>'
 		);
-		const attrs = render_row_attrs(ctx, line, hunk);
-		if (line.type === 'add') {
-			out.push(`<ins class="diff_line diff_add${attrs}>${gutter}${text}</ins>`);
-		} else if (line.type === 'remove') {
-			out.push(`<del class="diff_line diff_remove${attrs}>${gutter}${text}</del>`);
-		} else {
-			out.push(`<span class="diff_line diff_same${attrs}>${gutter}${text}</span>`);
+		if (line_numbers) {
+			out.push(
+				'<span class="diff_gutter" aria-hidden="true">',
+				line.a_line === null ? pad : String(line.a_line).padStart(width),
+				' ',
+				line.b_line === null ? pad : String(line.b_line).padStart(width),
+				'</span>'
+			);
 		}
+		push_text(out, line, model.fragment(i, line.type === 'remove' ? 'a' : 'b', intraline));
+		out.push(close);
 	}
 };
 
@@ -1488,25 +1516,37 @@ const render_split_rows = (ctx: RowsContext, start: number, end: number, out: Ar
 	let h = find_hunk(hunks, start);
 	let hunk = -1;
 
-	const render_cell = (index: number, side: 'a' | 'b'): string => {
+	const render_cell = (index: number, side: 'a' | 'b'): void => {
 		if (index === -1) {
-			return hunk === -1
-				? '<span class="diff_cell diff_spacer"></span>'
-				: `<span class="diff_cell diff_spacer" data-hunk="${hunk}"></span>`;
+			out.push(
+				hunk === -1
+					? '<span class="diff_cell diff_spacer"></span>'
+					: `<span class="diff_cell diff_spacer" data-hunk="${hunk}"></span>`
+			);
+			return;
 		}
 		const line = lines[index]!;
-		const num = side === 'a' ? line.a_line : line.b_line;
-		const gutter = line_numbers
-			? `<span class="diff_gutter" aria-hidden="true">${num === null ? pad : String(num).padStart(width)}</span>`
-			: '';
-		const text = render_text(line, model.fragment(index, side, intraline));
-		const attrs = render_row_attrs(ctx, line, hunk);
-		if (line.type === 'same') {
-			return `<span class="diff_cell diff_same${attrs}>${gutter}${text}</span>`;
+		const type = line.type;
+		const close = type === 'same' ? '</span>' : side === 'a' ? '</del>' : '</ins>';
+		out.push(
+			type === 'same'
+				? '<span class="diff_cell diff_same'
+				: side === 'a'
+					? '<del class="diff_cell diff_remove'
+					: '<ins class="diff_cell diff_add',
+			render_row_attrs(ctx, line, hunk),
+			'>'
+		);
+		if (line_numbers) {
+			const num = side === 'a' ? line.a_line : line.b_line;
+			out.push(
+				'<span class="diff_gutter" aria-hidden="true">',
+				num === null ? pad : String(num).padStart(width),
+				'</span>'
+			);
 		}
-		return side === 'a'
-			? `<del class="diff_cell diff_remove${attrs}>${gutter}${text}</del>`
-			: `<ins class="diff_cell diff_add${attrs}>${gutter}${text}</ins>`;
+		push_text(out, line, model.fragment(index, side, intraline));
+		out.push(close);
 	};
 
 	// lays out the visual rows: context beside itself, and within a change
@@ -1519,7 +1559,8 @@ const render_split_rows = (ctx: RowsContext, start: number, end: number, out: Ar
 		hunk = h < hunks.length && hunks[h]!.start <= i ? h : -1;
 		const line = lines[i]!;
 		if (line.type === 'same') {
-			out.push(render_cell(i, 'a'), render_cell(i, 'b'));
+			render_cell(i, 'a');
+			render_cell(i, 'b');
 			i++;
 			continue;
 		}
@@ -1543,13 +1584,12 @@ const render_split_rows = (ctx: RowsContext, start: number, end: number, out: Ar
 			const remove_count = pair_r - r;
 			const add_count = pair_c - c;
 			for (let k = 0; k < Math.max(remove_count, add_count); k++) {
-				out.push(
-					render_cell(k < remove_count ? r + k : -1, 'a'),
-					render_cell(k < add_count ? c + k : -1, 'b')
-				);
+				render_cell(k < remove_count ? r + k : -1, 'a');
+				render_cell(k < add_count ? c + k : -1, 'b');
 			}
 			if (pair_r === adds_start) break;
-			out.push(render_cell(pair_r, 'a'), render_cell(pair_c, 'b'));
+			render_cell(pair_r, 'a');
+			render_cell(pair_c, 'b');
 			r = pair_r + 1;
 			c = pair_c + 1;
 		}
