@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { fs } from '@fuzdev/gro/fs.ts';
 import { create_fs_paths } from '@fuzdev/gro/fs_paths.ts';
+import { cwd } from '@fuzdev/gro/cwd.ts';
+import { env } from '@fuzdev/gro/env.ts';
 import { diff_lines, diff_hunks, format_diff } from '@fuzdev/fuz_util/diff.ts';
 import { basename, dirname, join, relative } from 'node:path';
 import { syntax_styler_global } from '#lib/syntax_styler_global.ts';
@@ -24,7 +26,8 @@ export interface GeneratedOutput {
  * Discover all sample files in src/test/fixtures/samples
  */
 export const discover_samples = async (): Promise<Array<SampleSpec>> => {
-	const sample_files = await create_fs_paths(fs).search_path('src/test/fixtures/samples', {
+	const fs_paths = create_fs_paths(fs, { cwd: cwd(), home: env.get('HOME') });
+	const sample_files = await fs_paths.search_path('src/test/fixtures/samples', {
 		file_filter: (path) => /sample_[^/]+\.(ts|rs|css|html|json|svelte|md|sh)$/.test(path)
 	});
 
@@ -105,7 +108,8 @@ export interface DiffCaseSpec {
  * Throws on unpaired, duplicated, or extension-mismatched cases.
  */
 export const discover_diff_cases = async (): Promise<Array<DiffCaseSpec>> => {
-	const files = await create_fs_paths(fs).search_path('src/test/fixtures/diff', {
+	const fs_paths = create_fs_paths(fs, { cwd: cwd(), home: env.get('HOME') });
+	const files = await fs_paths.search_path('src/test/fixtures/diff', {
 		file_filter: (path) => /\/[ab]\.[^./]+$/.test(path)
 	});
 
